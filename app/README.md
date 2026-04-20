@@ -1,0 +1,30 @@
+# mastery — Flutter client
+
+Flutter app for Roundups AI Assistant English practice. Connects to the backend REST API at `backend/`.
+
+## Local dev target
+
+```sh
+flutter run -d chrome
+```
+
+iOS and Android targets are present in the project but require native toolchain (Xcode / Android SDK) not yet confirmed working.
+
+## Screens
+
+| Screen | Route | Description |
+|--------|-------|-------------|
+| LessonScreen | `/lesson/{id}` | Fetches lesson, shows loading/error states |
+| ExerciseScreen | (within lesson) | Renders one exercise; submits answer; shows inline result |
+| LessonCompleteScreen | (within lesson) | Shows final score X / N |
+
+## State model
+
+All state is in-memory for the current lesson session. No local storage.
+
+- `session_id`: UUID generated at lesson start, passed with every answer submission.
+- `LessonSession`: holds lesson data, current exercise index, and results. Discarded on exit.
+
+## Backend URL
+
+Set via build flavor or environment. Default: `http://localhost:3000` for local dev.
