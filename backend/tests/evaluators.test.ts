@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { evaluateFillBlank } from '../src/evaluators/fillBlank';
 import { evaluateMultipleChoice } from '../src/evaluators/multipleChoice';
-import { evaluateSentenceCorrection } from '../src/evaluators/sentenceCorrection';
+import { evaluateSentenceCorrection, evaluateSentenceCorrectionDeterministic } from '../src/evaluators/sentenceCorrection';
 import { levenshtein, minLevenshtein } from '../src/evaluators/levenshtein';
 import type { AiProvider } from '../src/ai/interface';
 import { StubAiProvider } from '../src/ai/stub';
@@ -54,6 +54,65 @@ describe('levenshtein', () => {
   it('both empty', () => expect(levenshtein('', '')).toBe(0));
   it('minLevenshtein picks nearest', () =>
     expect(minLevenshtein('cat', ['bat', 'car', 'cart'])).toBe(1));
+});
+
+// --- evaluateSentenceCorrectionDeterministic (canonical gate, sync) ---
+describe('evaluateSentenceCorrectionDeterministic', () => {
+  const accepted = ["She doesn't like coffee.", "She does not like coffee."];
+  const prompt = "She don't like coffee.";
+
+  it('exact match → correct: true, deterministic', () => {
+    const r = evaluateSentenceCorrectionDeterministic("She doesn't like coffee.", accepted, prompt);
+    expect(r).not.toBeNull();
+    expect(r!.correct).toBe(true);
+    expect(r!.evaluation_source).toBe('deterministic');
+  });
+
+  it('alternate accepted → correct: true, deterministic', () => {
+    const r = evaluateSentenceCorrectionDeterministic("She does not like coffee.", accepted, prompt);
+    expect(r).not.toBeNull();
+    expect(r!.correct).toBe(true);
+    expect(r!.evaluation_source).toBe('deterministic');
+  });
+
+  it('normalized match → correct: true, deterministic', () => {
+    const r = evaluateSentenceCorrectionDeterministic("SHE DOESN'T LIKE COFFEE", accepted, prompt);
+    expect(r).not.toBeNull();
+    expect(r!.correct).toBe(true);
+  });
+
+  it('empty input → correct: false, deterministic', () => {
+    const r = evaluateSentenceCorrectionDeterministic('', accepted, prompt);
+    expect(r).not.toBeNull();
+    expect(r!.correct).toBe(false);
+    expect(r!.evaluation_source).toBe('deterministic');
+  });
+
+  it('uncorrected prompt submitted → correct: false, deterministic', () => {
+    const r = evaluateSentenceCorrectionDeterministic("She don't like coffee.", accepted, prompt);
+    expect(r).not.toBeNull();
+    expect(r!.correct).toBe(false);
+    expect(r!.evaluation_source).toBe('deterministic');
+  });
+
+  it('clearly wrong → correct: false, deterministic', () => {
+    const r = evaluateSentenceCorrectionDeterministic('She enjoys tea.', accepted, prompt);
+    expect(r).not.toBeNull();
+    expect(r!.correct).toBe(false);
+    expect(r!.evaluation_source).toBe('deterministic');
+  });
+
+  it('borderline (1-char typo) → returns null (needs AI)', () => {
+    // "She does not like coffe." — 1 edit from accepted
+    const r = evaluateSentenceCorrectionDeterministic('She does not like coffe.', accepted, prompt);
+    expect(r).toBeNull();
+  });
+
+  it('canonical_answer is first accepted', () => {
+    const r = evaluateSentenceCorrectionDeterministic('completely wrong', accepted, prompt);
+    expect(r).not.toBeNull();
+    expect(r!.canonical_answer).toBe(accepted[0]);
+  });
 });
 
 // --- sentence_correction deterministic ---

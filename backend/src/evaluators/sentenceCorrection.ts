@@ -10,13 +10,16 @@ export interface SentenceCorrectionResult {
   canonical_answer: string;
 }
 
-export async function evaluateSentenceCorrection(
+/**
+ * Runs the deterministic gate and borderline classifier.
+ * Returns a settled result when the answer can be decided without AI,
+ * or null when the answer is borderline and should be sent to AI.
+ */
+export function evaluateSentenceCorrectionDeterministic(
   userAnswer: string,
   acceptedCorrections: string[],
-  exercisePrompt: string,
-  ai: AiProvider,
-  timeoutMs = 5000
-): Promise<SentenceCorrectionResult> {
+  exercisePrompt: string
+): SentenceCorrectionResult | null {
   const canonical = acceptedCorrections[0];
   const normUser = normalize(userAnswer);
   const normPrompt = normalize(exercisePrompt);
@@ -30,7 +33,7 @@ export async function evaluateSentenceCorrection(
     return { correct: true, evaluation_source: 'deterministic', feedback: null, canonical_answer: canonical };
   }
 
-  // If the user submits the original (incorrect) prompt, skip AI to avoid wasting tokens.
+  // Submitting the original (uncorrected) prompt wastes AI tokens — short-circuit.
   if (normPrompt && normUser === normPrompt) {
     return { correct: false, evaluation_source: 'deterministic', feedback: null, canonical_answer: canonical };
   }
@@ -46,6 +49,25 @@ export async function evaluateSentenceCorrection(
   if (!borderline) {
     return { correct: false, evaluation_source: 'deterministic', feedback: null, canonical_answer: canonical };
   }
+
+  return null;
+}
+
+export async function evaluateSentenceCorrection(
+  userAnswer: string,
+  acceptedCorrections: string[],
+  exercisePrompt: string,
+  ai: AiProvider,
+  timeoutMs = 5000
+): Promise<SentenceCorrectionResult> {
+  const canonical = acceptedCorrections[0];
+
+  const deterministic = evaluateSentenceCorrectionDeterministic(userAnswer, acceptedCorrections, exercisePrompt);
+  if (deterministic !== null) {
+    return deterministic;
+  }
+
+  const normUser = normalize(userAnswer);
 
   try {
     const controller = new AbortController();

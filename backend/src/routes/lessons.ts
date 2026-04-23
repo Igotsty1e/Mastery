@@ -4,19 +4,13 @@ import type { Exercise } from '../data/lessons';
 import { AnswerRequestSchema } from '../schemas';
 import { evaluateFillBlank } from '../evaluators/fillBlank';
 import { evaluateMultipleChoice } from '../evaluators/multipleChoice';
-import { evaluateSentenceCorrection } from '../evaluators/sentenceCorrection';
-import { normalize } from '../evaluators/normalize';
-import { minLevenshtein } from '../evaluators/levenshtein';
+import { evaluateSentenceCorrection, evaluateSentenceCorrectionDeterministic } from '../evaluators/sentenceCorrection';
+import type { SentenceCorrectionResult } from '../evaluators/sentenceCorrection';
 import { getLessonAttempts, recordAttempt } from '../store/memory';
 import { checkAiRateLimit, resolveRateLimitIp } from '../middleware/aiRateLimit';
 import type { AiProvider } from '../ai/interface';
 
-interface EvaluationResult {
-  correct: boolean;
-  evaluation_source: 'deterministic' | 'ai_fallback';
-  feedback: string | null;
-  canonical_answer: string;
-}
+type EvaluationResult = SentenceCorrectionResult;
 
 function slugifyLessonTitle(title: string): string {
   return title
@@ -37,43 +31,6 @@ function stripSecrets(exercise: Exercise): object {
   // sentence_correction
   const { accepted_corrections: _ac, ...pub } = exercise;
   return pub;
-}
-
-function evaluateSentenceCorrectionDeterministic(
-  userAnswer: string,
-  acceptedCorrections: string[],
-  exercisePrompt: string
-): EvaluationResult | null {
-  const canonical = acceptedCorrections[0];
-  const normUser = normalize(userAnswer);
-  const normPrompt = normalize(exercisePrompt);
-  const normAccepted = acceptedCorrections.map(normalize);
-
-  if (!normUser) {
-    return { correct: false, evaluation_source: 'deterministic', feedback: null, canonical_answer: canonical };
-  }
-
-  if (normAccepted.includes(normUser)) {
-    return { correct: true, evaluation_source: 'deterministic', feedback: null, canonical_answer: canonical };
-  }
-
-  if (normPrompt && normUser === normPrompt) {
-    return { correct: false, evaluation_source: 'deterministic', feedback: null, canonical_answer: canonical };
-  }
-
-  const minDist = minLevenshtein(normUser, normAccepted);
-  const shortestLen = Math.min(...normAccepted.map(s => s.length));
-  const userLen = normUser.length;
-  const borderline =
-    minDist <= 3 &&
-    userLen >= shortestLen * 0.5 &&
-    userLen <= shortestLen * 2.0;
-
-  if (!borderline) {
-    return { correct: false, evaluation_source: 'deterministic', feedback: null, canonical_answer: canonical };
-  }
-
-  return null;
 }
 
 export function makeLessonsRouter(ai: AiProvider): Router {
