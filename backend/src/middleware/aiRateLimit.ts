@@ -3,6 +3,7 @@
 
 const WINDOW_MS = 60_000;
 const MAX_AI_CALLS_PER_IP = 10;
+const MAX_BUCKETS = 10_000;
 
 const buckets = new Map<string, number[]>();
 
@@ -15,6 +16,12 @@ export function checkAiRateLimit(ip: string): boolean {
   }
   timestamps.push(now);
   buckets.set(ip, timestamps);
+  // When the map is too large, sweep out buckets whose entire window has expired.
+  if (buckets.size > MAX_BUCKETS) {
+    for (const [k, ts] of buckets) {
+      if (ts.every(t => now - t >= WINDOW_MS)) buckets.delete(k);
+    }
+  }
   return true;
 }
 

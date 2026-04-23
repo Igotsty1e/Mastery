@@ -5,6 +5,7 @@ import type { AiProvider } from './ai/interface';
 
 export function createApp(ai: AiProvider): express.Express {
   const app = express();
+  app.set('trust proxy', 1);
   app.use((_req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');

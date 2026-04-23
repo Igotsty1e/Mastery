@@ -81,9 +81,14 @@ export async function inject(
     path: string;
     headers?: Record<string, string>;
     json?: unknown;
+    /** Override the socket's remoteAddress. Pass null to leave it unset (simulates unknown IP). */
+    socketRemoteAddress?: string | null;
   }
 ): Promise<InjectResult> {
   const socket = new MockSocket();
+  if (opts.socketRemoteAddress !== undefined) {
+    (socket as any).remoteAddress = opts.socketRemoteAddress ?? undefined;
+  }
   const req = new http.IncomingMessage(socket as any);
   req.method = opts.method.toUpperCase();
   req.url = opts.path;

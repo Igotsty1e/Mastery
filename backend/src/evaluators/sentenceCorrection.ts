@@ -49,14 +49,16 @@ export async function evaluateSentenceCorrection(
 
   try {
     const controller = new AbortController();
-    const timeout = new Promise<null>(resolve =>
-      setTimeout(() => { controller.abort(); resolve(null); }, timeoutMs)
-    );
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    const timeout = new Promise<null>(resolve => {
+      timeoutId = setTimeout(() => { controller.abort(); resolve(null); }, timeoutMs);
+    });
     const aiCall = ai.evaluateSentenceCorrection({
       exercisePrompt, acceptedCorrections, userAnswer: normUser, signal: controller.signal,
     });
     aiCall.catch(() => {}); // suppress AbortError unhandled rejection after timeout
     const result = await Promise.race([aiCall, timeout]);
+    clearTimeout(timeoutId);
 
     if (!result) {
       return { correct: false, evaluation_source: 'deterministic', feedback: null, canonical_answer: canonical };

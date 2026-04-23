@@ -145,7 +145,10 @@ export function makeLessonsRouter(ai: AiProvider): Router {
       if (deterministicResult) {
         result = deterministicResult;
       } else {
-        const ip = req.socket?.remoteAddress ?? 'unknown';
+        const ip = req.ip;
+        if (!ip) {
+          return res.status(400).json({ error: 'invalid_request' });
+        }
         if (!checkAiRateLimit(ip)) {
           return res.status(429).json({ error: 'rate_limit_exceeded' });
         }
