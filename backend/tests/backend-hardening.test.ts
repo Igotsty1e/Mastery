@@ -1,14 +1,15 @@
 /**
  * Tests for the backend-hardening pass:
- *   - Rate limiter uses req.ip (trust proxy) not raw socket address
- *   - Unknown/missing IP returns 400 (no 'unknown' collapse)
+ *   - Rate limiter resolves IP via trusted-proxy logic (not raw req.ip)
+ *   - XFF spoofing from untrusted socket IP is rejected
+ *   - Unknown/missing IP returns 400
  *   - aiRateLimit bounded cleanup (MAX_BUCKETS sweep)
- *   - memory store TTL eviction and MAX_SESSIONS cap
+ *   - memory store TTL eviction, MAX_SESSIONS cap, O(1) LRU eviction order
  */
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { createApp } from '../src/app';
 import type { AiProvider } from '../src/ai/interface';
-import { resetMemoryStore, getOrCreateLessonAttempts, getLessonAttempts, recordAttempt, _storeSize } from '../src/store/memory';
+import { resetMemoryStore, getOrCreateLessonAttempts, getLessonAttempts, recordAttempt, _storeSize, _oldestKey } from '../src/store/memory';
 import { resetAiRateLimitStore, checkAiRateLimit } from '../src/middleware/aiRateLimit';
 import { inject } from './helpers/inject';
 
@@ -89,6 +90,30 @@ describe('rate limiter — trust proxy', () => {
       headers: { 'x-forwarded-for': '10.0.0.2' },
     });
     expect(allowedB.status).toBe(200);
+  });
+
+  it('XFF spoofing from untrusted (public) socket IP is ignored — socket IP is used instead', async () => {
+    const app = createApp(stubAi);
+
+    // Exhaust rate limit for the real public IP (non-private socket).
+    for (let i = 0; i < 10; i++) {
+      await inject(app, {
+        method: 'POST',
+        path: `/lessons/${LESSON_ID}/answers`,
+        json: borderlineBody(),
+        socketRemoteAddress: '5.5.5.5',
+      });
+    }
+
+    // Attacker tries to bypass by spoofing XFF — must still be blocked.
+    const spoofed = await inject(app, {
+      method: 'POST',
+      path: `/lessons/${LESSON_ID}/answers`,
+      json: borderlineBody(),
+      socketRemoteAddress: '5.5.5.5',
+      headers: { 'x-forwarded-for': '8.8.8.8' },
+    });
+    expect(spoofed.status).toBe(429);
   });
 });
 
@@ -184,5 +209,23 @@ describe('memory store — MAX_SESSIONS cap', () => {
       expect(r).toBeDefined();
     }
     expect(_storeSize()).toBe(5);
+  });
+
+  it('LRU insertion-order: re-accessing an entry moves it to MRU tail, oldestKey reflects true LRU front', () => {
+    // Insert A then B.
+    getOrCreateLessonAttempts('lru-A', 'lesson-lru');
+    getOrCreateLessonAttempts('lru-B', 'lesson-lru');
+
+    // A is oldest (inserted first). _oldestKey() must point to A.
+    expect(_oldestKey()).toBe('lru-A:lesson-lru');
+
+    // Re-access A — it should move to MRU tail, making B the new oldest.
+    getOrCreateLessonAttempts('lru-A', 'lesson-lru');
+    expect(_oldestKey()).toBe('lru-B:lesson-lru');
+
+    // Re-access B — both accessed equally recently, insert order puts A before B again?
+    // After: B is re-inserted → A is now at front again (LRU).
+    getLessonAttempts('lru-B', 'lesson-lru');
+    expect(_oldestKey()).toBe('lru-A:lesson-lru');
   });
 });

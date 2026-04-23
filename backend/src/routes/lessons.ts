@@ -8,7 +8,7 @@ import { evaluateSentenceCorrection } from '../evaluators/sentenceCorrection';
 import { normalize } from '../evaluators/normalize';
 import { minLevenshtein } from '../evaluators/levenshtein';
 import { getLessonAttempts, recordAttempt } from '../store/memory';
-import { checkAiRateLimit } from '../middleware/aiRateLimit';
+import { checkAiRateLimit, resolveRateLimitIp } from '../middleware/aiRateLimit';
 import type { AiProvider } from '../ai/interface';
 
 interface EvaluationResult {
@@ -145,7 +145,7 @@ export function makeLessonsRouter(ai: AiProvider): Router {
       if (deterministicResult) {
         result = deterministicResult;
       } else {
-        const ip = req.ip;
+        const ip = resolveRateLimitIp(req);
         if (!ip) {
           return res.status(400).json({ error: 'invalid_request' });
         }

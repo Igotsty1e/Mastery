@@ -34,17 +34,12 @@ function evictIfExpired(key: string, now: number): void {
 }
 
 // Evict the least-recently-used entry when at capacity.
+// Map preserves insertion order; re-inserting on access keeps MRU at the end,
+// so the first key is always the LRU — O(1) eviction with no scan.
 function evictOldestIfFull(): void {
   if (store.size < MAX_SESSIONS) return;
-  let oldestKey = '';
-  let oldestAccess = Infinity;
-  for (const [k, v] of store) {
-    if (v.lastAccessMs < oldestAccess) {
-      oldestAccess = v.lastAccessMs;
-      oldestKey = k;
-    }
-  }
-  if (oldestKey) store.delete(oldestKey);
+  const oldest = (store.keys().next().value) as string | undefined;
+  if (oldest !== undefined) store.delete(oldest);
 }
 
 export function getOrCreateLessonAttempts(sessionId: string, lessonId: string): LessonAttemptsRecord {
@@ -55,7 +50,11 @@ export function getOrCreateLessonAttempts(sessionId: string, lessonId: string): 
     evictOldestIfFull();
     store.set(key, { record: { lesson_id: lessonId, attempts: new Map() }, lastAccessMs: now });
   } else {
-    store.get(key)!.lastAccessMs = now;
+    const entry = store.get(key)!;
+    entry.lastAccessMs = now;
+    // Re-insert at end to maintain MRU-at-tail insertion order for O(1) LRU eviction.
+    store.delete(key);
+    store.set(key, entry);
   }
   return store.get(key)!.record;
 }
@@ -65,7 +64,12 @@ export function getLessonAttempts(sessionId: string, lessonId: string): LessonAt
   const now = Date.now();
   evictIfExpired(key, now);
   const entry = store.get(key);
-  if (entry) entry.lastAccessMs = now;
+  if (entry) {
+    entry.lastAccessMs = now;
+    // Re-insert at end to maintain MRU-at-tail insertion order for O(1) LRU eviction.
+    store.delete(key);
+    store.set(key, entry);
+  }
   return entry?.record;
 }
 
@@ -81,4 +85,8 @@ export function resetMemoryStore(): void {
 // Exposed for testing only.
 export function _storeSize(): number {
   return store.size;
+}
+
+export function _oldestKey(): string | undefined {
+  return (store.keys().next().value) as string | undefined;
 }
