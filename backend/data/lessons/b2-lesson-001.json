@@ -1,0 +1,116 @@
+{
+  "lesson_id": "a1b2c3d4-0001-4000-8000-000000000001",
+  "title": "B2 Grammar: Mixed Practice",
+  "language": "en",
+  "level": "B2",
+  "intro_rule": "At B2 level, accuracy depends on mastering three areas: (1) perfect and conditional tenses for past events and hypotheticals, (2) correct prepositions in fixed collocations, and (3) uncountable nouns that have no plural form.",
+  "intro_examples": [
+    "By the time she arrived, the meeting had already started. (past perfect for the earlier event)",
+    "If I had studied more, I would have passed. (third conditional — not 'If I would have...')",
+    "The advice was helpful. (not 'advices' — 'advice' is uncountable)"
+  ],
+  "exercises": [
+    {
+      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000011",
+      "type": "fill_blank",
+      "prompt": "By the time the ambulance arrived, the patient ___ already regained consciousness.",
+      "accepted_answers": ["had"],
+      "hint": "Past perfect: had + past participle. Use when one past action preceded another."
+    },
+    {
+      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000012",
+      "type": "fill_blank",
+      "prompt": "The government is responsible ___ protecting its citizens from harm.",
+      "accepted_answers": ["for"],
+      "hint": "Responsible always collocates with 'for' when followed by a noun or gerund."
+    },
+    {
+      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000013",
+      "type": "fill_blank",
+      "prompt": "The doctor suggested ___ less caffeine to improve sleep quality.",
+      "accepted_answers": ["drinking", "consuming", "having"],
+      "hint": "After 'suggest', use a gerund (-ing form), not an infinitive."
+    },
+    {
+      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000014",
+      "type": "fill_blank",
+      "prompt": "He spoke ___ though he had never encountered the concept before.",
+      "accepted_answers": ["as"],
+      "hint": "'as though' and 'as if' introduce hypothetical comparisons. Supply the first word."
+    },
+    {
+      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000015",
+      "type": "multiple_choice",
+      "prompt": "The contract ___ by both parties before the deadline next Friday.",
+      "options": [
+        { "id": "a", "text": "will have been signed" },
+        { "id": "b", "text": "will have signed" },
+        { "id": "c", "text": "has been signed" },
+        { "id": "d", "text": "would be signed" }
+      ],
+      "correct_option_id": "a"
+    },
+    {
+      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000016",
+      "type": "multiple_choice",
+      "prompt": "Which sentence correctly expresses regret about a past event?",
+      "options": [
+        { "id": "a", "text": "I wish I study harder for the exam." },
+        { "id": "b", "text": "I wish I studied harder for the exam." },
+        { "id": "c", "text": "I wish I had studied harder for the exam." },
+        { "id": "d", "text": "I wish I have studied harder for the exam." }
+      ],
+      "correct_option_id": "c"
+    },
+    {
+      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000017",
+      "type": "multiple_choice",
+      "prompt": "Despite ___ for the role, she did not receive a callback.",
+      "options": [
+        { "id": "a", "text": "she qualified" },
+        { "id": "b", "text": "her qualifying" },
+        { "id": "c", "text": "to qualify" },
+        { "id": "d", "text": "qualified" }
+      ],
+      "correct_option_id": "b"
+    },
+    {
+      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000018",
+      "type": "sentence_correction",
+      "prompt": "She has been working at this company since ten years.",
+      "accepted_corrections": [
+        "She has been working at this company for ten years.",
+        "She's been working at this company for ten years.",
+        "She has been working at this company for 10 years.",
+        "She has worked at this company for ten years.",
+        "She has been working at the company for ten years."
+      ],
+      "borderline_ai_fallback": true
+    },
+    {
+      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000019",
+      "type": "sentence_correction",
+      "prompt": "If I would have studied more, I would have passed the exam.",
+      "accepted_corrections": [
+        "If I had studied more, I would have passed the exam.",
+        "If I'd studied more, I would have passed the exam.",
+        "If I had studied more, I would've passed the exam.",
+        "Had I studied more, I would have passed the exam.",
+        "If I had studied more I would have passed the exam."
+      ],
+      "borderline_ai_fallback": true
+    },
+    {
+      "exercise_id": "a1b2c3d4-0001-4000-8000-00000000001a",
+      "type": "sentence_correction",
+      "prompt": "The advices she gave me were very useful.",
+      "accepted_corrections": [
+        "The advice she gave me was very useful.",
+        "The advice that she gave me was very useful.",
+        "The advice which she gave me was very useful.",
+        "The advice she gave me was very helpful."
+      ],
+      "borderline_ai_fallback": true
+    }
+  ]
+}

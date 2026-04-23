@@ -7,6 +7,7 @@ REST API for Mastery English practice. Node.js + TypeScript + Express.
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | `/health` | Liveness check |
+| GET | `/lessons` | Lightweight lesson summary list (`id`, `title`, `slug`, `order`) |
 | GET | `/lessons/:lessonId` | Lesson definition (secrets stripped) |
 | POST | `/lessons/:lessonId/answers` | Submit answer, get evaluation result |
 | GET | `/lessons/:lessonId/result` | Lesson score summary |
@@ -33,6 +34,14 @@ npm start         # node dist/server.js
 
 Default is `StubAiProvider` (always returns incorrect).
 
+Preparation artifacts for the next AI-focused session:
+- `../docs/ai-prompt-spec.md`
+- `../docs/ai-eval-dataset.template.jsonl`
+- `../docs/ai-readiness-checklist.md`
+- `.env.example`
+- `.env`
+- `scripts/dev-local-openai.sh`
+
 To enable the built-in OpenAI provider (Responses API structured outputs):
 
 ```sh
@@ -44,6 +53,11 @@ npm run dev
 
 Optional:
 - `OPENAI_BASE_URL` (defaults to `https://api.openai.com/v1`)
+
+For local-only setup without exporting shell variables manually:
+
+1. put the real key into `backend/.env`
+2. run `./scripts/dev-local-openai.sh`
 
 ## Lesson data
 

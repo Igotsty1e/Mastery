@@ -1,0 +1,27 @@
+# Node / Backend
+backend/node_modules/
+backend/dist/
+node_modules/
+
+# Build caches
+.cache/
+.vite/
+*.tsbuildinfo
+
+# Flutter / Dart
+app/.dart_tool/
+app/build/
+app/.flutter-plugins
+app/.flutter-plugins-dependencies
+app/.packages
+*.g.dart
+*.freezed.dart
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Env
+.env
+.env.*
+.gstack/

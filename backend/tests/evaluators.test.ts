@@ -1,0 +1,177 @@
+import { describe, it, expect, vi } from 'vitest';
+import { evaluateFillBlank } from '../src/evaluators/fillBlank';
+import { evaluateMultipleChoice } from '../src/evaluators/multipleChoice';
+import { evaluateSentenceCorrection } from '../src/evaluators/sentenceCorrection';
+import { levenshtein, minLevenshtein } from '../src/evaluators/levenshtein';
+import type { AiProvider } from '../src/ai/interface';
+import { StubAiProvider } from '../src/ai/stub';
+
+// --- fill_blank ---
+describe('evaluateFillBlank', () => {
+  const accepted = ['walks', 'goes'];
+
+  it('exact match', () => expect(evaluateFillBlank('walks', accepted).correct).toBe(true));
+  it('alternate accepted', () => expect(evaluateFillBlank('goes', accepted).correct).toBe(true));
+  it('trimmed input', () => expect(evaluateFillBlank('  walks  ', accepted).correct).toBe(true));
+  it('uppercase input', () => expect(evaluateFillBlank('Walks', accepted).correct).toBe(true));
+  it('trailing punct', () => expect(evaluateFillBlank('walks.', accepted).correct).toBe(true));
+  it('wrong word', () => expect(evaluateFillBlank('walk', accepted).correct).toBe(false));
+  it('empty string', () => expect(evaluateFillBlank('', accepted).correct).toBe(false));
+  it('whitespace only', () => expect(evaluateFillBlank('   ', accepted).correct).toBe(false));
+  it('canonical_answer is first accepted', () =>
+    expect(evaluateFillBlank('goes', accepted).canonical_answer).toBe('walks'));
+  it('evaluation_source is deterministic', () =>
+    expect(evaluateFillBlank('walks', accepted).evaluation_source).toBe('deterministic'));
+});
+
+// --- multiple_choice ---
+describe('evaluateMultipleChoice', () => {
+  const correct = 'b';
+  const options = [
+    { id: 'a', text: 'Sad' },
+    { id: 'b', text: 'Joyful' },
+    { id: 'c', text: 'Angry' },
+    { id: 'd', text: 'Tired' },
+  ];
+
+  it('exact match', () => expect(evaluateMultipleChoice('b', correct, options).correct).toBe(true));
+  it('uppercase', () => expect(evaluateMultipleChoice('B', correct, options).correct).toBe(true));
+  it('trimmed', () => expect(evaluateMultipleChoice(' b ', correct, options).correct).toBe(true));
+  it('wrong option', () => expect(evaluateMultipleChoice('a', correct, options).correct).toBe(false));
+  it('text instead of id', () => expect(evaluateMultipleChoice('Joyful', correct, options).correct).toBe(false));
+  it('empty', () => expect(evaluateMultipleChoice('', correct, options).correct).toBe(false));
+  it('canonical_answer is correct option text', () =>
+    expect(evaluateMultipleChoice('b', correct, options).canonical_answer).toBe('Joyful'));
+});
+
+// --- levenshtein ---
+describe('levenshtein', () => {
+  it('identical strings', () => expect(levenshtein('abc', 'abc')).toBe(0));
+  it('single insertion', () => expect(levenshtein('abc', 'abcd')).toBe(1));
+  it('single deletion', () => expect(levenshtein('abcd', 'abc')).toBe(1));
+  it('single substitution', () => expect(levenshtein('abc', 'axc')).toBe(1));
+  it('empty vs string', () => expect(levenshtein('', 'abc')).toBe(3));
+  it('both empty', () => expect(levenshtein('', '')).toBe(0));
+  it('minLevenshtein picks nearest', () =>
+    expect(minLevenshtein('cat', ['bat', 'car', 'cart'])).toBe(1));
+});
+
+// --- sentence_correction deterministic ---
+describe('evaluateSentenceCorrection deterministic', () => {
+  const accepted = ["She doesn't like coffee.", "She does not like coffee."];
+  const prompt = "She don't like coffee.";
+  const stub = new StubAiProvider();
+
+  it('exact match', async () => {
+    const r = await evaluateSentenceCorrection("She doesn't like coffee.", accepted, prompt, stub);
+    expect(r.correct).toBe(true);
+    expect(r.evaluation_source).toBe('deterministic');
+  });
+
+  it('alternate accepted', async () => {
+    const r = await evaluateSentenceCorrection("She does not like coffee.", accepted, prompt, stub);
+    expect(r.correct).toBe(true);
+    expect(r.evaluation_source).toBe('deterministic');
+  });
+
+  it('normalized match (trim + case + punct)', async () => {
+    const r = await evaluateSentenceCorrection("SHE DOESN'T LIKE COFFEE", accepted, prompt, stub);
+    expect(r.correct).toBe(true);
+    expect(r.evaluation_source).toBe('deterministic');
+  });
+
+  it('empty input', async () => {
+    const r = await evaluateSentenceCorrection('', accepted, prompt, stub);
+    expect(r.correct).toBe(false);
+    expect(r.evaluation_source).toBe('deterministic');
+  });
+
+  it('same as prompt (uncorrected)', async () => {
+    const r = await evaluateSentenceCorrection("She don't like coffee.", accepted, prompt, stub);
+    expect(r.correct).toBe(false);
+  });
+
+  it('canonical_answer is first accepted', async () => {
+    const r = await evaluateSentenceCorrection('bad answer', accepted, prompt, stub);
+    expect(r.canonical_answer).toBe(accepted[0]);
+  });
+});
+
+// --- sentence_correction borderline / AI path ---
+describe('evaluateSentenceCorrection AI fallback', () => {
+  const accepted = ["She doesn't like coffee.", "She does not like coffee."];
+  const prompt = "She don't like coffee.";
+
+  it('triggers AI for borderline (distance ≤ 3)', async () => {
+    // "she does not like the coffee" vs "she does not like coffee" = distance 4 (insert " the")
+    // Let's use a closer miss: "she does not like coffe" (1 typo)
+    const ai: AiProvider = { evaluateSentenceCorrection: vi.fn().mockResolvedValue({ correct: true, feedback: 'Minor typo.' }) };
+    const r = await evaluateSentenceCorrection("She does not like coffe.", accepted, prompt, ai);
+    expect(ai.evaluateSentenceCorrection).toHaveBeenCalled();
+    expect(r.correct).toBe(true);
+    expect(r.evaluation_source).toBe('ai_fallback');
+  });
+
+  it('skips AI when distance > 3', async () => {
+    const ai: AiProvider = { evaluateSentenceCorrection: vi.fn() };
+    // "She enjoys tea." is far from all accepted corrections
+    const r = await evaluateSentenceCorrection("She enjoys tea.", accepted, prompt, ai);
+    expect(ai.evaluateSentenceCorrection).not.toHaveBeenCalled();
+    expect(r.correct).toBe(false);
+    expect(r.evaluation_source).toBe('deterministic');
+  });
+
+  it('AI timeout → deterministic false', async () => {
+    const ai: AiProvider = {
+      evaluateSentenceCorrection: () => new Promise(resolve => setTimeout(() => resolve({ correct: true, feedback: 'late' }), 200)),
+    };
+    const r = await evaluateSentenceCorrection("She does not like coffe.", accepted, prompt, ai, 50);
+    expect(r.correct).toBe(false);
+    expect(r.evaluation_source).toBe('deterministic');
+    expect(r.feedback).toBeNull();
+  });
+
+  it('AI timeout aborts the signal passed to the provider', async () => {
+    let capturedSignal: AbortSignal | undefined;
+    const ai: AiProvider = {
+      evaluateSentenceCorrection: (args) => {
+        capturedSignal = args.signal;
+        return new Promise(resolve => setTimeout(() => resolve({ correct: true, feedback: '' }), 500));
+      },
+    };
+    await evaluateSentenceCorrection("She does not like coffe.", accepted, prompt, ai, 50);
+    expect(capturedSignal?.aborted).toBe(true);
+  });
+
+  it('AI error → deterministic false', async () => {
+    const ai: AiProvider = { evaluateSentenceCorrection: vi.fn().mockRejectedValue(new Error('fail')) };
+    const r = await evaluateSentenceCorrection("She does not like coffe.", accepted, prompt, ai);
+    expect(r.correct).toBe(false);
+    expect(r.evaluation_source).toBe('deterministic');
+  });
+
+  it('AI returns malformed response (missing correct field) → deterministic false', async () => {
+    const ai: AiProvider = { evaluateSentenceCorrection: vi.fn().mockResolvedValue({ feedback: 'looks ok' }) };
+    const r = await evaluateSentenceCorrection("She does not like coffe.", accepted, prompt, ai);
+    expect(r.correct).toBe(false);
+    expect(r.evaluation_source).toBe('deterministic');
+    expect(r.feedback).toBeNull();
+  });
+
+  it('AI returns wrong types (correct as string) → deterministic false', async () => {
+    const ai: AiProvider = { evaluateSentenceCorrection: vi.fn().mockResolvedValue({ correct: 'yes', feedback: 'ok' }) };
+    const r = await evaluateSentenceCorrection("She does not like coffe.", accepted, prompt, ai);
+    expect(r.correct).toBe(false);
+    expect(r.evaluation_source).toBe('deterministic');
+  });
+
+  it('AI returns oversized feedback → verdict preserved, feedback truncated to 80 chars', async () => {
+    const longFeedback = 'x'.repeat(100);
+    const ai: AiProvider = { evaluateSentenceCorrection: vi.fn().mockResolvedValue({ correct: true, feedback: longFeedback }) };
+    const r = await evaluateSentenceCorrection("She does not like coffe.", accepted, prompt, ai);
+    expect(r.correct).toBe(true);
+    expect(r.evaluation_source).toBe('ai_fallback');
+    expect(r.feedback).not.toBeNull();
+    expect(r.feedback!.length).toBeLessThanOrEqual(80);
+  });
+});

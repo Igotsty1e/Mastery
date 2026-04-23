@@ -1,0 +1,79 @@
+import { normalize } from './normalize';
+import { minLevenshtein } from './levenshtein';
+import type { AiProvider } from '../ai/interface';
+import { AiResponseSchema } from '../schemas';
+
+export interface SentenceCorrectionResult {
+  correct: boolean;
+  evaluation_source: 'deterministic' | 'ai_fallback';
+  feedback: string | null;
+  canonical_answer: string;
+}
+
+export async function evaluateSentenceCorrection(
+  userAnswer: string,
+  acceptedCorrections: string[],
+  exercisePrompt: string,
+  ai: AiProvider,
+  timeoutMs = 5000
+): Promise<SentenceCorrectionResult> {
+  const canonical = acceptedCorrections[0];
+  const normUser = normalize(userAnswer);
+  const normPrompt = normalize(exercisePrompt);
+  const normAccepted = acceptedCorrections.map(normalize);
+
+  if (!normUser) {
+    return { correct: false, evaluation_source: 'deterministic', feedback: null, canonical_answer: canonical };
+  }
+
+  if (normAccepted.includes(normUser)) {
+    return { correct: true, evaluation_source: 'deterministic', feedback: null, canonical_answer: canonical };
+  }
+
+  // If the user submits the original (incorrect) prompt, skip AI to avoid wasting tokens.
+  if (normPrompt && normUser === normPrompt) {
+    return { correct: false, evaluation_source: 'deterministic', feedback: null, canonical_answer: canonical };
+  }
+
+  const minDist = minLevenshtein(normUser, normAccepted);
+  const shortestLen = Math.min(...normAccepted.map(s => s.length));
+  const userLen = normUser.length;
+  const borderline =
+    minDist <= 3 &&
+    userLen >= shortestLen * 0.5 &&
+    userLen <= shortestLen * 2.0;
+
+  if (!borderline) {
+    return { correct: false, evaluation_source: 'deterministic', feedback: null, canonical_answer: canonical };
+  }
+
+  try {
+    const controller = new AbortController();
+    const timeout = new Promise<null>(resolve =>
+      setTimeout(() => { controller.abort(); resolve(null); }, timeoutMs)
+    );
+    const aiCall = ai.evaluateSentenceCorrection({
+      exercisePrompt, acceptedCorrections, userAnswer: normUser, signal: controller.signal,
+    });
+    aiCall.catch(() => {}); // suppress AbortError unhandled rejection after timeout
+    const result = await Promise.race([aiCall, timeout]);
+
+    if (!result) {
+      return { correct: false, evaluation_source: 'deterministic', feedback: null, canonical_answer: canonical };
+    }
+
+    const parsed = AiResponseSchema.safeParse(result);
+    if (!parsed.success) {
+      return { correct: false, evaluation_source: 'deterministic', feedback: null, canonical_answer: canonical };
+    }
+
+    return {
+      correct: parsed.data.correct,
+      evaluation_source: 'ai_fallback',
+      feedback: parsed.data.feedback || null,
+      canonical_answer: canonical,
+    };
+  } catch {
+    return { correct: false, evaluation_source: 'deterministic', feedback: null, canonical_answer: canonical };
+  }
+}
