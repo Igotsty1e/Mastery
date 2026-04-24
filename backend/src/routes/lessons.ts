@@ -6,7 +6,8 @@ import { evaluateFillBlank } from '../evaluators/fillBlank';
 import { evaluateMultipleChoice } from '../evaluators/multipleChoice';
 import { evaluateSentenceCorrection, evaluateSentenceCorrectionDeterministic } from '../evaluators/sentenceCorrection';
 import type { SentenceCorrectionResult } from '../evaluators/sentenceCorrection';
-import { getLessonAttempts, recordAttempt } from '../store/memory';
+import { getLessonAttempts, recordAttempt, getAiResult, setAiResult } from '../store/memory';
+import { normalize } from '../evaluators/normalize';
 import { checkAiRateLimit, resolveRateLimitIp } from '../middleware/aiRateLimit';
 import type { AiProvider } from '../ai/interface';
 
@@ -102,19 +103,27 @@ export function makeLessonsRouter(ai: AiProvider): Router {
       if (deterministicResult) {
         result = deterministicResult;
       } else {
-        const ip = resolveRateLimitIp(req);
-        if (!ip) {
-          return res.status(400).json({ error: 'invalid_request' });
+        const normAnswer = normalize(user_answer);
+        const cached = getAiResult(session_id, exercise_id, normAnswer);
+        if (cached) {
+          result = cached;
+        } else {
+          const ip = resolveRateLimitIp(req);
+          if (!ip) {
+            return res.status(400).json({ error: 'invalid_request' });
+          }
+          if (!checkAiRateLimit(ip)) {
+            return res.status(429).json({ error: 'rate_limit_exceeded' });
+          }
+          const aiResult = await evaluateSentenceCorrection(
+            user_answer,
+            exercise.accepted_corrections,
+            exercise.prompt,
+            ai
+          );
+          setAiResult(session_id, exercise_id, normAnswer, aiResult);
+          result = aiResult;
         }
-        if (!checkAiRateLimit(ip)) {
-          return res.status(429).json({ error: 'rate_limit_exceeded' });
-        }
-        result = await evaluateSentenceCorrection(
-          user_answer,
-          exercise.accepted_corrections,
-          exercise.prompt,
-          ai
-        );
       }
     }
 

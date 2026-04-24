@@ -1,6 +1,29 @@
 const SESSION_TTL_MS = 4 * 60 * 60 * 1000; // 4 hours
 const MAX_SESSIONS = 10_000;
 
+export interface AiEvalResult {
+  correct: boolean;
+  evaluation_source: 'deterministic' | 'ai_fallback';
+  feedback: string | null;
+  canonical_answer: string;
+}
+
+// Keyed by `${sessionId}:${exerciseId}:${normAnswer}` to deduplicate identical
+// AI evaluations within a session, avoiding redundant API calls on resubmission.
+const aiCache = new Map<string, AiEvalResult>();
+
+function aiCacheKey(sessionId: string, exerciseId: string, normAnswer: string): string {
+  return `${sessionId}:${exerciseId}:${normAnswer}`;
+}
+
+export function getAiResult(sessionId: string, exerciseId: string, normAnswer: string): AiEvalResult | undefined {
+  return aiCache.get(aiCacheKey(sessionId, exerciseId, normAnswer));
+}
+
+export function setAiResult(sessionId: string, exerciseId: string, normAnswer: string, result: AiEvalResult): void {
+  aiCache.set(aiCacheKey(sessionId, exerciseId, normAnswer), result);
+}
+
 export interface AttemptRecord {
   exercise_id: string;
   correct: boolean;
@@ -80,6 +103,7 @@ export function recordAttempt(sessionId: string, lessonId: string, attempt: Atte
 
 export function resetMemoryStore(): void {
   store.clear();
+  aiCache.clear();
 }
 
 // Exposed for testing only.

@@ -209,11 +209,19 @@ describe('POST /lessons/:lessonId/answers — sentence_correction via route', ()
 describe('POST /lessons/:lessonId/answers — AI rate limit', () => {
   // Each request with a borderline SC answer triggers one AI call.
   // Near-miss: one-letter typo from the accepted answer.
+  const BORDERLINE_ANSWER = 'She has been working at this company fo ten years.';
   const borderlineBody = makeBody({
     exercise_id: SC_EX_ID,
     exercise_type: 'sentence_correction',
-    user_answer: 'She has been working at this company fo ten years.',
+    user_answer: BORDERLINE_ANSWER,
   });
+
+  // Generates a borderline body with a unique session ID so each call is a
+  // cache miss and counts as a distinct AI call toward the rate limit.
+  function uniqueSessionBorderlineBody(i: number) {
+    const sessionId = `11111111-${String(i + 1).padStart(4, '0')}-4000-8000-000000000099`;
+    return { ...borderlineBody, session_id: sessionId };
+  }
 
   it('allows up to 10 AI-triggering requests per IP', async () => {
     const ai: AiProvider = {
@@ -222,7 +230,7 @@ describe('POST /lessons/:lessonId/answers — AI rate limit', () => {
     const app = createApp(ai);
 
     for (let i = 0; i < 10; i++) {
-      const res = await inject(app, { method: 'POST', path: `/lessons/${LESSON_ID}/answers`, json: borderlineBody });
+      const res = await inject(app, { method: 'POST', path: `/lessons/${LESSON_ID}/answers`, json: uniqueSessionBorderlineBody(i) });
       expect(res.status).toBe(200);
     }
   });
@@ -234,10 +242,10 @@ describe('POST /lessons/:lessonId/answers — AI rate limit', () => {
     const app = createApp(ai);
 
     for (let i = 0; i < 10; i++) {
-      await inject(app, { method: 'POST', path: `/lessons/${LESSON_ID}/answers`, json: borderlineBody });
+      await inject(app, { method: 'POST', path: `/lessons/${LESSON_ID}/answers`, json: uniqueSessionBorderlineBody(i) });
     }
 
-    const res = await inject(app, { method: 'POST', path: `/lessons/${LESSON_ID}/answers`, json: borderlineBody });
+    const res = await inject(app, { method: 'POST', path: `/lessons/${LESSON_ID}/answers`, json: uniqueSessionBorderlineBody(10) });
     expect(res.status).toBe(429);
     expect((res.json as any).error).toBe('rate_limit_exceeded');
     expect(ai.evaluateSentenceCorrection).toHaveBeenCalledTimes(10);
@@ -250,7 +258,7 @@ describe('POST /lessons/:lessonId/answers — AI rate limit', () => {
     const app = createApp(ai);
 
     for (let i = 0; i < 10; i++) {
-      await inject(app, { method: 'POST', path: `/lessons/${LESSON_ID}/answers`, json: borderlineBody });
+      await inject(app, { method: 'POST', path: `/lessons/${LESSON_ID}/answers`, json: uniqueSessionBorderlineBody(i) });
     }
 
     const res = await inject(app, {
@@ -276,7 +284,7 @@ describe('POST /lessons/:lessonId/answers — AI rate limit', () => {
     const app = createApp(ai);
 
     for (let i = 0; i < 10; i++) {
-      await inject(app, { method: 'POST', path: `/lessons/${LESSON_ID}/answers`, json: borderlineBody });
+      await inject(app, { method: 'POST', path: `/lessons/${LESSON_ID}/answers`, json: uniqueSessionBorderlineBody(i) });
     }
 
     const res = await inject(app, {
@@ -299,9 +307,9 @@ describe('POST /lessons/:lessonId/answers — AI rate limit', () => {
     const ai: AiProvider = { evaluateSentenceCorrection: vi.fn() };
     const app = createApp(ai);
 
-    // Exhaust the AI rate limit with SC requests
+    // Exhaust the AI rate limit with SC requests (unique sessions to bypass cache)
     for (let i = 0; i < 10; i++) {
-      await inject(app, { method: 'POST', path: `/lessons/${LESSON_ID}/answers`, json: borderlineBody });
+      await inject(app, { method: 'POST', path: `/lessons/${LESSON_ID}/answers`, json: uniqueSessionBorderlineBody(i) });
     }
 
     // fill_blank must still work
@@ -315,5 +323,107 @@ describe('POST /lessons/:lessonId/answers — AI rate limit', () => {
       json: makeBody({ exercise_id: MC_EX_ID, exercise_type: 'multiple_choice', user_answer: 'a' }),
     });
     expect(mcRes.status).toBe(200);
+  });
+});
+
+describe('POST /lessons/:lessonId/answers — AI result cache (identical resubmit)', () => {
+  const borderlineAnswer = 'She has been working at this company fo ten years.';
+  const borderlineBody = makeBody({
+    exercise_id: SC_EX_ID,
+    exercise_type: 'sentence_correction',
+    user_answer: borderlineAnswer,
+  });
+
+  it('identical resubmit within same session calls AI only once', async () => {
+    const ai: AiProvider = {
+      evaluateSentenceCorrection: vi.fn().mockResolvedValue({ correct: true, feedback: 'Minor typo.' }),
+    };
+    const app = createApp(ai);
+
+    const res1 = await inject(app, { method: 'POST', path: `/lessons/${LESSON_ID}/answers`, json: borderlineBody });
+    const res2 = await inject(app, { method: 'POST', path: `/lessons/${LESSON_ID}/answers`, json: borderlineBody });
+    const res3 = await inject(app, { method: 'POST', path: `/lessons/${LESSON_ID}/answers`, json: borderlineBody });
+
+    expect(res1.status).toBe(200);
+    expect(res2.status).toBe(200);
+    expect(res3.status).toBe(200);
+    expect((res1.json as any).correct).toBe(true);
+    expect((res2.json as any).correct).toBe(true);
+    expect((res3.json as any).correct).toBe(true);
+    expect((res1.json as any).evaluation_source).toBe('ai_fallback');
+    expect((res2.json as any).evaluation_source).toBe('ai_fallback');
+    expect((res3.json as any).evaluation_source).toBe('ai_fallback');
+    // AI must be called exactly once — subsequent identical submissions hit the cache
+    expect(ai.evaluateSentenceCorrection).toHaveBeenCalledTimes(1);
+  });
+
+  it('identical answer with different whitespace/casing hits cache (normalised)', async () => {
+    const ai: AiProvider = {
+      evaluateSentenceCorrection: vi.fn().mockResolvedValue({ correct: true, feedback: 'ok' }),
+    };
+    const app = createApp(ai);
+
+    // First call with normalised form
+    await inject(app, { method: 'POST', path: `/lessons/${LESSON_ID}/answers`, json: borderlineBody });
+    // Second call with leading/trailing whitespace — normalises to same key
+    const res2 = await inject(app, {
+      method: 'POST',
+      path: `/lessons/${LESSON_ID}/answers`,
+      json: { ...borderlineBody, user_answer: `  ${borderlineAnswer}  ` },
+    });
+
+    expect(res2.status).toBe(200);
+    expect(ai.evaluateSentenceCorrection).toHaveBeenCalledTimes(1);
+  });
+
+  it('different answer in same session calls AI again', async () => {
+    const ai: AiProvider = {
+      evaluateSentenceCorrection: vi.fn().mockResolvedValue({ correct: false, feedback: 'Not quite.' }),
+    };
+    const app = createApp(ai);
+
+    await inject(app, { method: 'POST', path: `/lessons/${LESSON_ID}/answers`, json: borderlineBody });
+    // Slightly different borderline answer (still borderline, different normalized form)
+    const differentBody = { ...borderlineBody, user_answer: 'She has been working at this company fo ten year.' };
+    await inject(app, { method: 'POST', path: `/lessons/${LESSON_ID}/answers`, json: differentBody });
+
+    expect(ai.evaluateSentenceCorrection).toHaveBeenCalledTimes(2);
+  });
+
+  it('same answer in different sessions calls AI per session', async () => {
+    const ai: AiProvider = {
+      evaluateSentenceCorrection: vi.fn().mockResolvedValue({ correct: true, feedback: 'ok' }),
+    };
+    const app = createApp(ai);
+
+    const session2 = '22222222-0002-4000-8000-000000000002';
+    await inject(app, { method: 'POST', path: `/lessons/${LESSON_ID}/answers`, json: borderlineBody });
+    await inject(app, {
+      method: 'POST',
+      path: `/lessons/${LESSON_ID}/answers`,
+      json: { ...borderlineBody, session_id: session2 },
+    });
+
+    // Different sessions = different cache buckets = 2 AI calls
+    expect(ai.evaluateSentenceCorrection).toHaveBeenCalledTimes(2);
+  });
+
+  it('cached resubmit does not consume rate limit quota', async () => {
+    const ai: AiProvider = {
+      evaluateSentenceCorrection: vi.fn().mockResolvedValue({ correct: true, feedback: 'ok' }),
+    };
+    const app = createApp(ai);
+
+    // First call consumes 1 quota unit
+    await inject(app, { method: 'POST', path: `/lessons/${LESSON_ID}/answers`, json: borderlineBody });
+
+    // 9 more identical resubmits (all cache hits — no rate limit consumed)
+    for (let i = 0; i < 9; i++) {
+      const res = await inject(app, { method: 'POST', path: `/lessons/${LESSON_ID}/answers`, json: borderlineBody });
+      expect(res.status).toBe(200);
+    }
+
+    // AI only called once; rate limit only charged once
+    expect(ai.evaluateSentenceCorrection).toHaveBeenCalledTimes(1);
   });
 });

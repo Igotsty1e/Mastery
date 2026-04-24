@@ -41,22 +41,28 @@ beforeEach(() => {
 // ──────────────────────────────────────────────────────────────────
 // Proxy trust: X-Forwarded-For is used as the rate-limit key
 // ──────────────────────────────────────────────────────────────────
+// Returns a borderline body with a unique session ID per index so each call
+// is a cache miss and counts as a distinct AI call toward the rate limit.
+function uniqueSessionBorderlineBody(i: number) {
+  return { ...borderlineBody(), session_id: `11111111-${String(i + 1).padStart(4, '0')}-4000-8000-000000000099` };
+}
+
 describe('rate limiter — trust proxy', () => {
   it('X-Forwarded-For IP is used as the rate-limit bucket, not socket address', async () => {
     const app = createApp(stubAi);
 
     // Exhaust rate limit for socket address 127.0.0.1 (no X-Forwarded-For)
     for (let i = 0; i < 10; i++) {
-      await inject(app, { method: 'POST', path: `/lessons/${LESSON_ID}/answers`, json: borderlineBody() });
+      await inject(app, { method: 'POST', path: `/lessons/${LESSON_ID}/answers`, json: uniqueSessionBorderlineBody(i) });
     }
-    const blocked = await inject(app, { method: 'POST', path: `/lessons/${LESSON_ID}/answers`, json: borderlineBody() });
+    const blocked = await inject(app, { method: 'POST', path: `/lessons/${LESSON_ID}/answers`, json: uniqueSessionBorderlineBody(10) });
     expect(blocked.status).toBe(429);
 
     // A request arriving via a different IP (via X-Forwarded-For) must not be blocked.
     const proxy = await inject(app, {
       method: 'POST',
       path: `/lessons/${LESSON_ID}/answers`,
-      json: borderlineBody(),
+      json: uniqueSessionBorderlineBody(11),
       headers: { 'x-forwarded-for': '203.0.113.5' },
     });
     expect(proxy.status).toBe(200);
@@ -70,14 +76,14 @@ describe('rate limiter — trust proxy', () => {
       await inject(app, {
         method: 'POST',
         path: `/lessons/${LESSON_ID}/answers`,
-        json: borderlineBody(),
+        json: uniqueSessionBorderlineBody(i),
         headers: { 'x-forwarded-for': '10.0.0.1' },
       });
     }
     const blockedA = await inject(app, {
       method: 'POST',
       path: `/lessons/${LESSON_ID}/answers`,
-      json: borderlineBody(),
+      json: uniqueSessionBorderlineBody(10),
       headers: { 'x-forwarded-for': '10.0.0.1' },
     });
     expect(blockedA.status).toBe(429);
@@ -86,7 +92,7 @@ describe('rate limiter — trust proxy', () => {
     const allowedB = await inject(app, {
       method: 'POST',
       path: `/lessons/${LESSON_ID}/answers`,
-      json: borderlineBody(),
+      json: uniqueSessionBorderlineBody(11),
       headers: { 'x-forwarded-for': '10.0.0.2' },
     });
     expect(allowedB.status).toBe(200);
@@ -100,7 +106,7 @@ describe('rate limiter — trust proxy', () => {
       await inject(app, {
         method: 'POST',
         path: `/lessons/${LESSON_ID}/answers`,
-        json: borderlineBody(),
+        json: uniqueSessionBorderlineBody(i),
         socketRemoteAddress: '5.5.5.5',
       });
     }
@@ -109,7 +115,7 @@ describe('rate limiter — trust proxy', () => {
     const spoofed = await inject(app, {
       method: 'POST',
       path: `/lessons/${LESSON_ID}/answers`,
-      json: borderlineBody(),
+      json: uniqueSessionBorderlineBody(10),
       socketRemoteAddress: '5.5.5.5',
       headers: { 'x-forwarded-for': '8.8.8.8' },
     });
