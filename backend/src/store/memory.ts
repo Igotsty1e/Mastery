@@ -1,6 +1,11 @@
 const SESSION_TTL_MS = 4 * 60 * 60 * 1000; // 4 hours
 const MAX_SESSIONS = 10_000;
 
+// aiCache uses the same TTL and cap as the session store.
+// Keys embed sessionId, so entries naturally expire with their session.
+const AI_CACHE_TTL_MS = SESSION_TTL_MS;
+const MAX_AI_CACHE = 10_000;
+
 export interface AiEvalResult {
   correct: boolean;
   evaluation_source: 'deterministic' | 'ai_fallback';
@@ -8,20 +13,43 @@ export interface AiEvalResult {
   canonical_answer: string;
 }
 
+interface AiCacheEntry {
+  result: AiEvalResult;
+  lastAccessMs: number;
+}
+
 // Keyed by `${sessionId}:${exerciseId}:${normAnswer}` to deduplicate identical
 // AI evaluations within a session, avoiding redundant API calls on resubmission.
-const aiCache = new Map<string, AiEvalResult>();
+const aiCache = new Map<string, AiCacheEntry>();
 
 function aiCacheKey(sessionId: string, exerciseId: string, normAnswer: string): string {
   return `${sessionId}:${exerciseId}:${normAnswer}`;
 }
 
 export function getAiResult(sessionId: string, exerciseId: string, normAnswer: string): AiEvalResult | undefined {
-  return aiCache.get(aiCacheKey(sessionId, exerciseId, normAnswer));
+  const key = aiCacheKey(sessionId, exerciseId, normAnswer);
+  const entry = aiCache.get(key);
+  if (!entry) return undefined;
+  const now = Date.now();
+  if (now - entry.lastAccessMs > AI_CACHE_TTL_MS) {
+    aiCache.delete(key);
+    return undefined;
+  }
+  // Re-insert at tail to maintain MRU order for O(1) LRU eviction.
+  entry.lastAccessMs = now;
+  aiCache.delete(key);
+  aiCache.set(key, entry);
+  return entry.result;
 }
 
 export function setAiResult(sessionId: string, exerciseId: string, normAnswer: string, result: AiEvalResult): void {
-  aiCache.set(aiCacheKey(sessionId, exerciseId, normAnswer), result);
+  const key = aiCacheKey(sessionId, exerciseId, normAnswer);
+  const now = Date.now();
+  if (!aiCache.has(key) && aiCache.size >= MAX_AI_CACHE) {
+    const oldest = (aiCache.keys().next().value) as string | undefined;
+    if (oldest !== undefined) aiCache.delete(oldest);
+  }
+  aiCache.set(key, { result, lastAccessMs: now });
 }
 
 export interface AttemptRecord {
@@ -113,4 +141,8 @@ export function _storeSize(): number {
 
 export function _oldestKey(): string | undefined {
   return (store.keys().next().value) as string | undefined;
+}
+
+export function _aiCacheSize(): number {
+  return aiCache.size;
 }
