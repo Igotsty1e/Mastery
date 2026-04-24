@@ -29,8 +29,8 @@ flutter config --no-analytics
 
 # ── Build ─────────────────────────────────────────────────────────────────
 # API_BASE_URL is set as a Render build-time env var (see render.yaml).
-# Default falls back to the free-tier backend slug.
-BACKEND_URL="${API_BASE_URL:-https://mastery-backend.onrender.com}"
+# Default falls back to the expected Render backend slug.
+BACKEND_URL="${API_BASE_URL:-https://mastery-backend-igotsty1e.onrender.com}"
 echo "[render-build] Building Flutter web → API_BASE_URL=$BACKEND_URL"
 
 cd app

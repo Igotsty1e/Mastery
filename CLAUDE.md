@@ -179,47 +179,47 @@ Key routing rules:
 ## Deploy Configuration (configured by /setup-deploy)
 
 - Platform: Render
-- Production URL (backend): https://mastery-backend.onrender.com
-- Production URL (frontend): https://mastery-web.onrender.com
+- Production URL (backend): https://mastery-backend-igotsty1e.onrender.com
+- Production URL (frontend): https://mastery-web-igotsty1e.onrender.com
 - Deploy workflow: auto-deploy on push to `main` (Render Blueprint — `render.yaml`)
 - Deploy status command: HTTP health check at `/health`
 - Merge method: squash
 - Project type: web app (Flutter SPA + Node/Express API)
-- Post-deploy health check: https://mastery-backend.onrender.com/health
+- Post-deploy health check: https://mastery-backend-igotsty1e.onrender.com/health
 
 ### Services
 
 | Service | Type | Root | Build | Start |
 |---|---|---|---|---|
-| mastery-backend | Web Service (Node) | `backend/` | `npm ci && npm run build` | `node dist/server.js` |
-| mastery-web | Static Site | `.` (repo root) | `bash scripts/render-build-web.sh` | n/a (static) |
+| mastery-backend-igotsty1e | Web Service (Node) | `backend/` | `npm ci && npm run build` | `node dist/server.js` |
+| mastery-web-igotsty1e | Static Site | `.` (repo root) | `bash scripts/render-build-web.sh` | n/a (static) |
 
 ### Environment variables
 
-**mastery-backend** — set in Render dashboard:
+**mastery-backend-igotsty1e** — set in Render dashboard:
 - `NODE_ENV=production`
 - `AI_PROVIDER=stub` (change to `openai` when ready)
 - `OPENAI_API_KEY` — set manually, never commit
 - `OPENAI_MODEL=gpt-4o-mini`
 
-**mastery-web** — build-time env var used by `scripts/render-build-web.sh`:
-- `API_BASE_URL=https://mastery-backend.onrender.com` (baked into Flutter binary via `--dart-define`)
+**mastery-web-igotsty1e** — build-time env var used by `scripts/render-build-web.sh`:
+- `API_BASE_URL=https://mastery-backend-igotsty1e.onrender.com` (baked into Flutter binary via `--dart-define`)
 
 ### Custom deploy hooks
 
 - Pre-merge: `cd backend && npm test`
 - Deploy trigger: automatic on push to `main` (Render reads `render.yaml`)
-- Deploy status: poll `https://mastery-backend.onrender.com/health` until `{"status":"ok"}`
-- Health check: https://mastery-backend.onrender.com/health
+- Deploy status: poll `https://mastery-backend-igotsty1e.onrender.com/health` until `{"status":"ok"}`
+- Health check: https://mastery-backend-igotsty1e.onrender.com/health
 
 ### First-time setup steps (one-off)
 
 1. Push this branch / merge to `main` so Render can read `render.yaml`
 2. Go to https://dashboard.render.com → New → Blueprint → connect this repo
 3. Render will provision both services from `render.yaml`
-4. In the `mastery-backend` service dashboard, add `OPENAI_API_KEY` as a secret env var if using AI
-5. Verify: `curl https://mastery-backend.onrender.com/health` → `{"status":"ok"}`
-6. Open https://mastery-web.onrender.com and run through a lesson
+4. In the `mastery-backend-igotsty1e` service dashboard, add `OPENAI_API_KEY` as a secret env var if using AI
+5. Verify: `curl https://mastery-backend-igotsty1e.onrender.com/health` → `{"status":"ok"}`
+6. Open https://mastery-web-igotsty1e.onrender.com and run through a lesson
 
 ### Known constraints
 

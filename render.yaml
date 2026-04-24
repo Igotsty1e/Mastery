@@ -1,7 +1,7 @@
 services:
   # ── Node/Express API ──────────────────────────────────────────────────────
   - type: web
-    name: mastery-backend
+    name: mastery-backend-igotsty1e
     runtime: node
     region: oregon
     plan: free
@@ -23,7 +23,7 @@ services:
 
   # ── Flutter web (static) ──────────────────────────────────────────────────
   - type: web
-    name: mastery-web
+    name: mastery-web-igotsty1e
     runtime: static
     rootDir: .
     buildCommand: bash scripts/render-build-web.sh
@@ -31,4 +31,4 @@ services:
     pullRequestPreviewsEnabled: false
     envVars:
       - key: API_BASE_URL
-        value: https://mastery-backend.onrender.com
+        value: https://mastery-backend-igotsty1e.onrender.com
