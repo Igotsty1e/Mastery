@@ -104,7 +104,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                     const SizedBox(height: 24),
                     _ResultPanel(
                       correct: state.lastResult!.correct,
-                      feedback: state.lastResult!.feedback,
+                      explanation: state.lastResult!.explanation,
+                      practicalTip: state.lastResult!.practicalTip,
                       canonicalAnswer: state.lastResult!.canonicalAnswer,
                       isLast: state.isLastExercise,
                       onNext: controller.advance,
@@ -163,14 +164,16 @@ class _ExerciseWidget extends StatelessWidget {
 
 class _ResultPanel extends StatelessWidget {
   final bool correct;
-  final String? feedback;
+  final String? explanation;
+  final String? practicalTip;
   final String canonicalAnswer;
   final bool isLast;
   final VoidCallback onNext;
 
   const _ResultPanel({
     required this.correct,
-    required this.feedback,
+    required this.explanation,
+    required this.practicalTip,
     required this.canonicalAnswer,
     required this.isLast,
     required this.onNext,
@@ -202,10 +205,34 @@ class _ResultPanel extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text('Answer: $canonicalAnswer'),
               ],
-              if (feedback != null) ...[
-                const SizedBox(height: 8),
-                Text(feedback!,
+              if (explanation != null) ...[
+                const SizedBox(height: 10),
+                Text(explanation!,
                     style: TextStyle(color: Colors.grey[800], fontSize: 14)),
+              ],
+              if (practicalTip != null) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.amber[50],
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colors.amber.shade200),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Icon(Icons.lightbulb_outline,
+                          size: 16, color: Colors.amber[700]),
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(practicalTip!,
+                            style: TextStyle(
+                                color: Colors.grey[800], fontSize: 13)),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ],
           ),

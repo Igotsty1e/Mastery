@@ -2,12 +2,18 @@ import fs from 'fs';
 import path from 'path';
 import { LessonSchema } from './lessonSchema';
 
+export interface ExerciseFeedback {
+  explanation: string;
+  practical_tip: string;
+}
+
 export interface FillBlankExercise {
   exercise_id: string;
   type: 'fill_blank';
   prompt: string;
   accepted_answers: string[];
   hint: string | null;
+  feedback?: ExerciseFeedback;
 }
 
 export interface MultipleChoiceOption {
@@ -21,6 +27,7 @@ export interface MultipleChoiceExercise {
   prompt: string;
   options: MultipleChoiceOption[];
   correct_option_id: string;
+  feedback?: ExerciseFeedback;
 }
 
 export interface SentenceCorrectionExercise {
@@ -29,6 +36,7 @@ export interface SentenceCorrectionExercise {
   prompt: string;
   accepted_corrections: string[];
   borderline_ai_fallback: true;
+  feedback?: ExerciseFeedback;
 }
 
 export type Exercise =

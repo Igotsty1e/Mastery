@@ -30,7 +30,8 @@ class EvaluateResponse {
   final String exerciseId;
   final bool correct;
   final String evaluationSource;
-  final String? feedback;
+  final String? explanation;
+  final String? practicalTip;
   final String canonicalAnswer;
 
   const EvaluateResponse({
@@ -38,7 +39,8 @@ class EvaluateResponse {
     required this.exerciseId,
     required this.correct,
     required this.evaluationSource,
-    this.feedback,
+    this.explanation,
+    this.practicalTip,
     required this.canonicalAnswer,
   });
 
@@ -47,7 +49,8 @@ class EvaluateResponse {
         exerciseId: j['exercise_id'] as String,
         correct: j['correct'] as bool,
         evaluationSource: j['evaluation_source'] as String,
-        feedback: j['feedback'] as String?,
+        explanation: j['explanation'] as String?,
+        practicalTip: j['practical_tip'] as String?,
         canonicalAnswer: j['canonical_answer'] as String,
       );
 }

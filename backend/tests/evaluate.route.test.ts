@@ -97,7 +97,7 @@ describe('POST /lessons/:lessonId/answers — 404 paths', () => {
 describe('POST /lessons/:lessonId/answers — fill_blank', () => {
   const app = createApp(stubAi);
 
-  it('correct answer → correct: true, source: deterministic', async () => {
+  it('correct answer → correct: true, source: deterministic, no feedback', async () => {
     const res = await inject(app, {
       method: 'POST',
       path: `/lessons/${LESSON_ID}/answers`,
@@ -106,10 +106,11 @@ describe('POST /lessons/:lessonId/answers — fill_blank', () => {
     expect(res.status).toBe(200);
     expect((res.json as any).correct).toBe(true);
     expect((res.json as any).evaluation_source).toBe('deterministic');
-    expect((res.json as any).feedback).toBeNull();
+    expect((res.json as any).explanation).toBeNull();
+    expect((res.json as any).practical_tip).toBeNull();
   });
 
-  it('wrong answer → correct: false', async () => {
+  it('wrong answer → correct: false, explanation and practical_tip populated', async () => {
     const res = await inject(app, {
       method: 'POST',
       path: `/lessons/${LESSON_ID}/answers`,
@@ -118,6 +119,10 @@ describe('POST /lessons/:lessonId/answers — fill_blank', () => {
     expect(res.status).toBe(200);
     expect((res.json as any).correct).toBe(false);
     expect((res.json as any).evaluation_source).toBe('deterministic');
+    expect(typeof (res.json as any).explanation).toBe('string');
+    expect((res.json as any).explanation!.length).toBeGreaterThan(0);
+    expect(typeof (res.json as any).practical_tip).toBe('string');
+    expect((res.json as any).practical_tip!.length).toBeGreaterThan(0);
   });
 });
 
@@ -135,7 +140,7 @@ describe('POST /lessons/:lessonId/answers — multiple_choice', () => {
     expect((res.json as any).correct).toBe(true);
   });
 
-  it('wrong option → correct: false', async () => {
+  it('wrong option → correct: false, explanation and practical_tip populated', async () => {
     const res = await inject(app, {
       method: 'POST',
       path: `/lessons/${LESSON_ID}/answers`,
@@ -143,11 +148,14 @@ describe('POST /lessons/:lessonId/answers — multiple_choice', () => {
     });
     expect(res.status).toBe(200);
     expect((res.json as any).correct).toBe(false);
+    expect(typeof (res.json as any).explanation).toBe('string');
+    expect((res.json as any).explanation!.length).toBeGreaterThan(0);
+    expect(typeof (res.json as any).practical_tip).toBe('string');
   });
 });
 
 describe('POST /lessons/:lessonId/answers — sentence_correction via route', () => {
-  it('exact accepted → deterministic, no AI called', async () => {
+  it('exact accepted → deterministic, no AI called, no feedback', async () => {
     const ai: AiProvider = { evaluateSentenceCorrection: vi.fn() };
     const app = createApp(ai);
     const res = await inject(app, {
@@ -162,15 +170,15 @@ describe('POST /lessons/:lessonId/answers — sentence_correction via route', ()
     expect(res.status).toBe(200);
     expect((res.json as any).correct).toBe(true);
     expect((res.json as any).evaluation_source).toBe('deterministic');
+    expect((res.json as any).explanation).toBeNull();
+    expect((res.json as any).practical_tip).toBeNull();
     expect(ai.evaluateSentenceCorrection).not.toHaveBeenCalled();
   });
 
-  it('borderline input → AI called via route', async () => {
-    // One-letter typo from accepted answer: "for" → "fo" — but let's use a near miss
-    // Accepted: "She has been working at this company for ten years."
-    // Close miss: "She has been working at this company fo ten years." (1 char edit)
+  it('borderline input → AI called via route, explanation = AI feedback, practical_tip null', async () => {
+    // One-letter typo from accepted answer: "for" → "fo"
     const ai: AiProvider = {
-      evaluateSentenceCorrection: vi.fn().mockResolvedValue({ correct: true, feedback: 'Minor typo.' }),
+      evaluateSentenceCorrection: vi.fn().mockResolvedValue({ correct: false, feedback: 'Minor typo.' }),
     };
     const app = createApp(ai);
     const res = await inject(app, {
@@ -185,9 +193,11 @@ describe('POST /lessons/:lessonId/answers — sentence_correction via route', ()
     expect(res.status).toBe(200);
     expect(ai.evaluateSentenceCorrection).toHaveBeenCalled();
     expect((res.json as any).evaluation_source).toBe('ai_fallback');
+    expect((res.json as any).explanation).toBe('Minor typo.');
+    expect((res.json as any).practical_tip).toBeNull();
   });
 
-  it('clearly wrong → deterministic false, AI not called', async () => {
+  it('clearly wrong → deterministic false, AI not called, explanation and practical_tip from exercise', async () => {
     const ai: AiProvider = { evaluateSentenceCorrection: vi.fn() };
     const app = createApp(ai);
     const res = await inject(app, {
@@ -203,6 +213,9 @@ describe('POST /lessons/:lessonId/answers — sentence_correction via route', ()
     expect((res.json as any).correct).toBe(false);
     expect((res.json as any).evaluation_source).toBe('deterministic');
     expect(ai.evaluateSentenceCorrection).not.toHaveBeenCalled();
+    expect(typeof (res.json as any).explanation).toBe('string');
+    expect((res.json as any).explanation!.length).toBeGreaterThan(0);
+    expect(typeof (res.json as any).practical_tip).toBe('string');
   });
 });
 

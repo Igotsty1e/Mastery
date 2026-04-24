@@ -22,15 +22,15 @@ function slugifyLessonTitle(title: string): string {
 
 function stripSecrets(exercise: Exercise): object {
   if (exercise.type === 'fill_blank') {
-    const { accepted_answers: _a, ...pub } = exercise;
+    const { accepted_answers: _a, feedback: _f, ...pub } = exercise;
     return pub;
   }
   if (exercise.type === 'multiple_choice') {
-    const { correct_option_id: _c, ...pub } = exercise;
+    const { correct_option_id: _c, feedback: _f, ...pub } = exercise;
     return pub;
   }
   // sentence_correction
-  const { accepted_corrections: _ac, ...pub } = exercise;
+  const { accepted_corrections: _ac, feedback: _f, ...pub } = exercise;
   return pub;
 }
 
@@ -129,12 +129,25 @@ export function makeLessonsRouter(ai: AiProvider): Router {
 
     recordAttempt(session_id, lessonId, { exercise_id, ...result });
 
+    let explanation: string | null = null;
+    let practical_tip: string | null = null;
+
+    if (!result.correct) {
+      if (result.evaluation_source === 'deterministic' && exercise.feedback) {
+        explanation = exercise.feedback.explanation;
+        practical_tip = exercise.feedback.practical_tip;
+      } else if (result.evaluation_source === 'ai_fallback' && result.feedback) {
+        explanation = result.feedback;
+      }
+    }
+
     return res.json({
       attempt_id,
       exercise_id,
       correct: result.correct,
       evaluation_source: result.evaluation_source,
-      feedback: result.correct && result.evaluation_source === 'deterministic' ? null : result.feedback,
+      explanation,
+      practical_tip,
       canonical_answer: result.canonical_answer,
     });
   });

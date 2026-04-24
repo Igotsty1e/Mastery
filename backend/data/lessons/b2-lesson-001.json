@@ -15,28 +15,44 @@
       "type": "fill_blank",
       "prompt": "By the time the ambulance arrived, the patient ___ already regained consciousness.",
       "accepted_answers": ["had"],
-      "hint": "Past perfect: had + past participle. Use when one past action preceded another."
+      "hint": "Past perfect: had + past participle. Use when one past action preceded another.",
+      "feedback": {
+        "explanation": "Past perfect ('had + past participle') marks the earlier of two past actions. Here, regaining consciousness happened before the ambulance arrived.",
+        "practical_tip": "When two past events are described together, the one that happened first needs 'had': 'By the time X happened, Y had already occurred.'"
+      }
     },
     {
       "exercise_id": "a1b2c3d4-0001-4000-8000-000000000012",
       "type": "fill_blank",
       "prompt": "The government is responsible ___ protecting its citizens from harm.",
       "accepted_answers": ["for"],
-      "hint": "Responsible always collocates with 'for' when followed by a noun or gerund."
+      "hint": "Responsible always collocates with 'for' when followed by a noun or gerund.",
+      "feedback": {
+        "explanation": "'Responsible' is always followed by 'for' — it is a fixed collocation. 'Responsible to protect' or 'responsible of protecting' are both incorrect.",
+        "practical_tip": "Memorise the trio: responsible for, accountable for, in charge of. All express obligation and all use 'for' or 'of', never 'to' or 'about'."
+      }
     },
     {
       "exercise_id": "a1b2c3d4-0001-4000-8000-000000000013",
       "type": "fill_blank",
       "prompt": "The doctor suggested ___ less caffeine to improve sleep quality.",
       "accepted_answers": ["drinking", "consuming", "having"],
-      "hint": "After 'suggest', use a gerund (-ing form), not an infinitive."
+      "hint": "After 'suggest', use a gerund (-ing form), not an infinitive.",
+      "feedback": {
+        "explanation": "After 'suggest', English requires a gerund (-ing form). 'Suggest to drink' is a common learner error but is not standard British or American English.",
+        "practical_tip": "After suggest, recommend, avoid, enjoy, and consider — always use -ing, never 'to + infinitive'. These verbs never take a to-infinitive directly."
+      }
     },
     {
       "exercise_id": "a1b2c3d4-0001-4000-8000-000000000014",
       "type": "fill_blank",
       "prompt": "He spoke ___ though he had never encountered the concept before.",
       "accepted_answers": ["as"],
-      "hint": "'as though' and 'as if' introduce hypothetical comparisons. Supply the first word."
+      "hint": "'as though' and 'as if' introduce hypothetical comparisons. Supply the first word.",
+      "feedback": {
+        "explanation": "'As though' is a two-word conjunction meaning 'in a way that suggests'. The first word is 'as'. Using only 'though' changes the meaning entirely.",
+        "practical_tip": "'As though' and 'as if' are interchangeable and both introduce hypothetical comparisons. After them, use past tense for present situations: 'He speaks as if he knew everything.'"
+      }
     },
     {
       "exercise_id": "a1b2c3d4-0001-4000-8000-000000000015",
@@ -48,7 +64,11 @@
         { "id": "c", "text": "has been signed" },
         { "id": "d", "text": "would be signed" }
       ],
-      "correct_option_id": "a"
+      "correct_option_id": "a",
+      "feedback": {
+        "explanation": "Future perfect passive ('will have been + past participle') is needed: the signing will be completed before a future deadline, and 'the contract' cannot sign itself.",
+        "practical_tip": "Spot two clues: 'before next Friday' signals a future deadline (future perfect), and 'the contract' as subject signals passive voice. Both clues must be satisfied."
+      }
     },
     {
       "exercise_id": "a1b2c3d4-0001-4000-8000-000000000016",
@@ -60,7 +80,11 @@
         { "id": "c", "text": "I wish I had studied harder for the exam." },
         { "id": "d", "text": "I wish I have studied harder for the exam." }
       ],
-      "correct_option_id": "c"
+      "correct_option_id": "c",
+      "feedback": {
+        "explanation": "To express regret about the past, use 'wish + past perfect'. 'I wish I had studied' expresses regret about something that is finished and cannot be changed.",
+        "practical_tip": "Wish + past simple = present wish ('I wish I knew'). Wish + past perfect = past regret ('I wish I had known'). Never use 'would have' directly after 'wish'."
+      }
     },
     {
       "exercise_id": "a1b2c3d4-0001-4000-8000-000000000017",
@@ -72,7 +96,11 @@
         { "id": "c", "text": "to qualify" },
         { "id": "d", "text": "qualified" }
       ],
-      "correct_option_id": "b"
+      "correct_option_id": "b",
+      "feedback": {
+        "explanation": "After 'despite', use a noun or gerund phrase, never a subject-verb clause. 'Her qualifying' is a possessive gerund — 'her' is the logical subject, 'qualifying' is the gerund.",
+        "practical_tip": "After 'despite' and 'in spite of': use noun or -ing form only. You cannot use a full clause ('she qualified') directly after these prepositions."
+      }
     },
     {
       "exercise_id": "a1b2c3d4-0001-4000-8000-000000000018",
@@ -85,7 +113,11 @@
         "She has worked at this company for ten years.",
         "She has been working at the company for ten years."
       ],
-      "borderline_ai_fallback": true
+      "borderline_ai_fallback": true,
+      "feedback": {
+        "explanation": "'Since' introduces a specific point in time ('since 2015', 'since Monday'). 'Ten years' is a duration, so 'for' is correct: 'for ten years'.",
+        "practical_tip": "Quick test: if you can say 'a period of ten years', use 'for'. If it names a starting moment (a date, an event), use 'since'. Duration = for; Starting point = since."
+      }
     },
     {
       "exercise_id": "a1b2c3d4-0001-4000-8000-000000000019",
@@ -98,7 +130,11 @@
         "Had I studied more, I would have passed the exam.",
         "If I had studied more I would have passed the exam."
       ],
-      "borderline_ai_fallback": true
+      "borderline_ai_fallback": true,
+      "feedback": {
+        "explanation": "In a third conditional, the 'if' clause uses past perfect ('had studied'), never 'would have'. 'Would have' belongs only in the result clause.",
+        "practical_tip": "Pattern: 'If + had + past participle, ... would have + past participle.' A simple rule: 'would' never appears in the 'if' clause of any conditional."
+      }
     },
     {
       "exercise_id": "a1b2c3d4-0001-4000-8000-00000000001a",
@@ -110,7 +146,11 @@
         "The advice which she gave me was very useful.",
         "The advice she gave me was very helpful."
       ],
-      "borderline_ai_fallback": true
+      "borderline_ai_fallback": true,
+      "feedback": {
+        "explanation": "'Advice' is an uncountable noun in English and has no plural form. 'Advices' does not exist. The verb must also change: 'were' becomes 'was'.",
+        "practical_tip": "Memorise these common uncountable nouns: advice, information, knowledge, research, furniture, equipment, progress, luggage. None take 's', and all use singular verbs."
+      }
     }
   ]
 }
