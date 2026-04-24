@@ -6,7 +6,7 @@ services:
     region: oregon
     plan: free
     rootDir: backend
-    buildCommand: npm ci && npm run build
+    buildCommand: npm ci --include=dev && npm run build
     startCommand: node dist/server.js
     healthCheckPath: /health
     envVars:
@@ -25,10 +25,8 @@ services:
   - type: web
     name: mastery-web-igotsty1e
     runtime: static
-    rootDir: .
     buildCommand: bash scripts/render-build-web.sh
     staticPublishPath: app/build/web
-    pullRequestPreviewsEnabled: false
     envVars:
       - key: API_BASE_URL
         value: https://mastery-backend-igotsty1e.onrender.com
