@@ -189,8 +189,8 @@ class _ResultPanel extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: color.withValues(alpha: 0.08),
-            border: Border.all(color: color.withValues(alpha: 0.4)),
+            color: color.withOpacity(0.08),
+            border: Border.all(color: color.withOpacity(0.4)),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Column(

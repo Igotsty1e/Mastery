@@ -115,7 +115,7 @@ class _LessonIntroScreenState extends State<LessonIntroScreen> {
                       padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: theme.colorScheme.primaryContainer
-                            .withValues(alpha: 0.35),
+                            .withOpacity(0.35),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
