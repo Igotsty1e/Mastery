@@ -25,7 +25,6 @@ services:
   - type: web
     name: mastery-web
     runtime: static
-    plan: free
     rootDir: .
     buildCommand: bash scripts/render-build-web.sh
     staticPublishPath: app/build/web
