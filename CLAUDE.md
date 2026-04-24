@@ -59,13 +59,22 @@ Autonomous execution does not include destructive commands. Still avoid:
 
 Require explicit user intent before any destructive action.
 
+## Secret Files
+
+- Never commit `.mcp.json`. It may contain MCP auth headers or API keys such as the Render token.
+
 ## Orchestration Mode
 
 - Primary execution path is `Claude Code` using `GSTACK` agents and skills
+- Use `GSTACK` agents and skills as the default execution layer for implementation, QA, review, deployment, and investigation
 - Prefer a concrete GSTACK skill over a free-form prompt whenever the task matches a known workflow
 - Think first in terms of: which GSTACK skill should run next
 - Use `Claude Code` as the shell and orchestration layer, and `GSTACK` as the execution workflow layer
-- Default to orchestrator behavior first, direct implementation second
+- `MCP` servers are explicitly allowed as a secondary execution layer when they provide direct system access or platform control
+- Prefer `GSTACK` first, then use `MCP` when it is the better path for platform-specific operations
+- Default to orchestrator behavior first
+- Do not act as the primary hands-on developer unless the user explicitly removes that restriction
+- Do not manually implement product code when the work can be delegated to `GSTACK` agents or completed via `MCP`
 
 ## Model Selection Policy
 
