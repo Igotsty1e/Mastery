@@ -79,6 +79,7 @@ class SessionController extends ChangeNotifier {
 
   void advance() {
     if (_state.isLastExercise) {
+      _emit(_state.copyWith(phase: SessionPhase.evaluating, clearLastResult: true));
       _fetchSummary();
     } else {
       _emit(_state.copyWith(
