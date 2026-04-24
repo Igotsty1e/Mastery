@@ -22,9 +22,9 @@ services:
         value: gpt-4o-mini    # ignored when AI_PROVIDER=stub
 
   # ── Flutter web (static) ──────────────────────────────────────────────────
-  - type: static
+  - type: web
     name: mastery-web
-    region: oregon
+    runtime: static
     plan: free
     rootDir: .
     buildCommand: bash scripts/render-build-web.sh
