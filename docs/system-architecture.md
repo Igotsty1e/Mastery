@@ -44,7 +44,10 @@ Client                    Backend                   AI
   │                          │   ┌─ hit → correct    │
   │                          │   └─ miss → borderline?│
   │                          │       ┌─ no → incorrect│
-  │                          │       └─ yes ─────────►│
+  │                          │       └─ yes            │
+  │                          │   cache hit? → result  │
+  │                          │   rate limit? → 429    │
+  │                          │   ────────────────────►│
   │                          │                       │ evaluate
   │                          │◄──────────────────────│
   │                          │ validate AI response   │
@@ -74,3 +77,10 @@ JSON fixtures in `backend/data/` (manifest + per-lesson files). Loaded at server
 No auth tokens. Client generates a `session_id` UUID at lesson start and passes it with every answer submission. Backend stores attempts in a process-lifetime in-memory map keyed by `session_id:lesson_id`. The result endpoint requires `?session_id=` to look up the correct attempt set.
 
 No cross-session persistence. Store is in-memory only — resets on server restart. Each `session_id` scopes one lesson visit.
+
+**Runtime constraints (ops):**
+
+- **Session store:** TTL 4 hours; LRU cap 10 000 entries. Oldest entry evicted when cap is reached.
+- **AI result cache:** separate in-memory map, same TTL (4h) and cap (10K). Key = `sessionId:exerciseId:normalizedAnswer`. Deduplicates identical AI evaluations within a session — resubmitting the same answer skips the AI call and does not consume rate-limit budget.
+- **AI rate limit:** 10 AI-eligible submissions per IP per 60-second sliding window. The rate-limit check runs only after the deterministic gate and cache miss both fail, so cached hits and deterministic results never count against the limit.
+- **X-Forwarded-For trust boundary:** XFF is accepted only when the socket connection comes from a loopback or RFC 1918 address (trusted proxy). The rightmost XFF entry is used; client-prepended entries are ignored to prevent bucket spoofing.

@@ -55,6 +55,14 @@ Fallback behavior:
 
 ## What Is Already Prepared
 
+### 0. Runtime safeguards in place
+
+- **Sentence-correction gating is centralized** — `evaluateSentenceCorrectionDeterministic` in `backend/src/evaluators/sentenceCorrection.ts` is the single gate used by both the route and the evaluator. No duplicate logic.
+- **AI result cache** — in-memory, keyed by `(session_id, exercise_id, normalizedAnswer)`. TTL 4h, LRU cap 10K. Repeat submissions with the same answer skip AI and rate-limit entirely.
+- **Rate limiter** — sliding window, 10 AI calls per IP per 60s. Checked only after gate + cache miss.
+- **XFF trust boundary** — XFF accepted only from loopback/RFC 1918 socket origin; rightmost entry used.
+- **AI timeout** — 5s hard cap. Timeout or parse failure → `correct=false, evaluation_source=deterministic`.
+
 ### 1. Prompt and contract map
 
 See:
@@ -137,7 +145,7 @@ Consequences:
 
 1. `sentence_correction` accepted corrections are sparse — some valid learner answers will be rejected because they fall outside the teacher-defined list. This is expected behavior under the frozen policy; flagged as a content-expansion opportunity, not a bug.
 2. Near-valid structural rewrites will not be rescued by AI; they are correctly gated out before AI is even considered.
-3. Route-level AI rate limiting currently happens before proving AI is needed.
+3. Rate limiting is gated correctly — the rate-limit check runs only after deterministic match and cache miss both fail. Cached results and deterministic decisions never consume rate-limit budget.
 4. There is no live-provider eval harness yet; only docs, dataset, and manual smoke tooling.
 
 ## Best Canary Rows

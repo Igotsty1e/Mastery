@@ -20,6 +20,13 @@ REST API for Mastery English practice. Node.js + TypeScript + Express.
 
 AI fallback on timeout (5s) or error defaults to `correct=false, evaluation_source=deterministic`.
 
+## Runtime constraints
+
+- **AI result cache:** in-memory, keyed by `(session_id, exercise_id, normalizedAnswer)`. TTL 4h, LRU cap 10K entries. Repeat submissions with the same answer return cached result — no AI call, no rate-limit consumption.
+- **AI rate limit:** 10 AI-eligible submissions per IP per 60s sliding window. Checked only after deterministic gate and cache miss. Returns `429 rate_limit_exceeded`.
+- **XFF trust boundary:** X-Forwarded-For accepted only when socket originates from loopback or RFC 1918 address. Rightmost entry used to prevent client spoofing.
+- **Session store:** attempts keyed by `session_id:lesson_id`. TTL 4h, LRU cap 10K. Resets on server restart — no persistence across deploys.
+
 ## Setup
 
 ```sh

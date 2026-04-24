@@ -130,6 +130,12 @@ If all pass → AI fallback. If any fail → incorrect, skip AI.
 
 ### Step 5 — AI fallback (sentence_correction borderline only)
 
+**Before calling AI:** the route checks the in-memory AI result cache keyed by `(session_id, exercise_id, normalizedAnswer)`. A cache hit returns the stored result immediately — no AI call, no rate-limit consumption. TTL 4h; LRU cap 10K entries.
+
+**Rate limit check:** if no cache hit, the route resolves the client IP and checks the sliding-window limiter (10 AI-eligible submissions per IP per 60s). If exceeded, returns `429` immediately. No AI call is made. The client may retry later.
+
+**IP resolution:** X-Forwarded-For is trusted only when the socket connection originates from a loopback or RFC 1918 address. The rightmost XFF entry is used to prevent client bucket-spoofing.
+
 **Request to AI:**
 ```json
 {

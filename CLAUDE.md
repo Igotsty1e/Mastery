@@ -76,6 +76,15 @@ Require explicit user intent before any destructive action.
 
 Never use a heavier model when a lighter one is sufficient.
 
+## Token Economy Rules
+
+- Use `Opus` only for genuinely strategic forks, architecture gates, and high-stakes review
+- Use `Sonnet` for almost all `GSTACK /investigate` execution work
+- Do not run a full `/review` after every small commit
+- Run one `/review` per meaningful block of changes, not per commit
+- Prefer local git diff, targeted file reads, and tests before spending a new `Claude Code` run
+- Avoid repeated full-branch reviews when a narrower scoped check is enough
+
 ## Engineering Approach
 
 - Start with simplest working solution
