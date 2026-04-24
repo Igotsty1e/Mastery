@@ -1,0 +1,35 @@
+services:
+  # ── Node/Express API ──────────────────────────────────────────────────────
+  - type: web
+    name: mastery-backend
+    runtime: node
+    region: oregon
+    plan: free
+    rootDir: backend
+    buildCommand: npm ci && npm run build
+    startCommand: node dist/server.js
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 20.11.0
+      - key: NODE_ENV
+        value: production
+      - key: AI_PROVIDER
+        value: stub           # change to "openai" once you have a key
+      - key: OPENAI_API_KEY
+        sync: false           # set manually in Render dashboard
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini    # ignored when AI_PROVIDER=stub
+
+  # ── Flutter web (static) ──────────────────────────────────────────────────
+  - type: static
+    name: mastery-web
+    region: oregon
+    plan: free
+    rootDir: .
+    buildCommand: bash scripts/render-build-web.sh
+    staticPublishPath: app/build/web
+    pullRequestPreviewsEnabled: false
+    envVars:
+      - key: API_BASE_URL
+        value: https://mastery-backend.onrender.com

@@ -134,3 +134,95 @@ When a task matches a GSTACK workflow, use the matching skill first instead of a
 ### Available skills
 
 `/office-hours`, `/plan-ceo-review`, `/plan-eng-review`, `/plan-design-review`, `/design-consultation`, `/design-shotgun`, `/design-html`, `/review`, `/ship`, `/land-and-deploy`, `/canary`, `/benchmark`, `/browse`, `/connect-chrome`, `/qa`, `/qa-only`, `/design-review`, `/setup-browser-cookies`, `/setup-deploy`, `/retro`, `/investigate`, `/document-release`, `/codex`, `/cso`, `/autoplan`, `/plan-devex-review`, `/devex-review`, `/careful`, `/freeze`, `/guard`, `/unfreeze`, `/gstack-upgrade`, `/learn`
+
+## Skill routing
+
+When the user's request matches an available skill, invoke it via the Skill tool. The
+skill has multi-step workflows, checklists, and quality gates that produce better
+results than an ad-hoc answer. When in doubt, invoke the skill. A false positive is
+cheaper than a false negative.
+
+Key routing rules:
+- Product ideas, "is this worth building", brainstorming → invoke /office-hours
+- Strategy, scope, "think bigger", "what should we build" → invoke /plan-ceo-review
+- Architecture, "does this design make sense" → invoke /plan-eng-review
+- Design system, brand, "how should this look" → invoke /design-consultation
+- Design review of a plan → invoke /plan-design-review
+- Developer experience of a plan → invoke /plan-devex-review
+- "Review everything", full review pipeline → invoke /autoplan
+- Bugs, errors, "why is this broken", "wtf", "this doesn't work" → invoke /investigate
+- Test the site, find bugs, "does this work" → invoke /qa (or /qa-only for report only)
+- Code review, check the diff, "look at my changes" → invoke /review
+- Visual polish, design audit, "this looks off" → invoke /design-review
+- Developer experience audit, try onboarding → invoke /devex-review
+- Ship, deploy, create a PR, "send it" → invoke /ship
+- Merge + deploy + verify → invoke /land-and-deploy
+- Configure deployment → invoke /setup-deploy
+- Post-deploy monitoring → invoke /canary
+- Update docs after shipping → invoke /document-release
+- Weekly retro, "how'd we do" → invoke /retro
+- Second opinion, codex review → invoke /codex
+- Safety mode, careful mode, lock it down → invoke /careful or /guard
+- Restrict edits to a directory → invoke /freeze or /unfreeze
+- Upgrade gstack → invoke /gstack-upgrade
+- Save progress, "save my work" → invoke /context-save
+- Resume, restore, "where was I" → invoke /context-restore
+- Security audit, OWASP, "is this secure" → invoke /cso
+- Make a PDF, document, publication → invoke /make-pdf
+- Launch real browser for QA → invoke /open-gstack-browser
+- Import cookies for authenticated testing → invoke /setup-browser-cookies
+- Performance regression, page speed, benchmarks → invoke /benchmark
+- Review what gstack has learned → invoke /learn
+- Tune question sensitivity → invoke /plan-tune
+- Code quality dashboard → invoke /health
+
+## Deploy Configuration (configured by /setup-deploy)
+
+- Platform: Render
+- Production URL (backend): https://mastery-backend.onrender.com
+- Production URL (frontend): https://mastery-web.onrender.com
+- Deploy workflow: auto-deploy on push to `main` (Render Blueprint — `render.yaml`)
+- Deploy status command: HTTP health check at `/health`
+- Merge method: squash
+- Project type: web app (Flutter SPA + Node/Express API)
+- Post-deploy health check: https://mastery-backend.onrender.com/health
+
+### Services
+
+| Service | Type | Root | Build | Start |
+|---|---|---|---|---|
+| mastery-backend | Web Service (Node) | `backend/` | `npm ci && npm run build` | `node dist/server.js` |
+| mastery-web | Static Site | `.` (repo root) | `bash scripts/render-build-web.sh` | n/a (static) |
+
+### Environment variables
+
+**mastery-backend** — set in Render dashboard:
+- `NODE_ENV=production`
+- `AI_PROVIDER=stub` (change to `openai` when ready)
+- `OPENAI_API_KEY` — set manually, never commit
+- `OPENAI_MODEL=gpt-4o-mini`
+
+**mastery-web** — build-time env var used by `scripts/render-build-web.sh`:
+- `API_BASE_URL=https://mastery-backend.onrender.com` (baked into Flutter binary via `--dart-define`)
+
+### Custom deploy hooks
+
+- Pre-merge: `cd backend && npm test`
+- Deploy trigger: automatic on push to `main` (Render reads `render.yaml`)
+- Deploy status: poll `https://mastery-backend.onrender.com/health` until `{"status":"ok"}`
+- Health check: https://mastery-backend.onrender.com/health
+
+### First-time setup steps (one-off)
+
+1. Push this branch / merge to `main` so Render can read `render.yaml`
+2. Go to https://dashboard.render.com → New → Blueprint → connect this repo
+3. Render will provision both services from `render.yaml`
+4. In the `mastery-backend` service dashboard, add `OPENAI_API_KEY` as a secret env var if using AI
+5. Verify: `curl https://mastery-backend.onrender.com/health` → `{"status":"ok"}`
+6. Open https://mastery-web.onrender.com and run through a lesson
+
+### Known constraints
+
+- Flutter SDK (~400 MB) is downloaded into `$RENDER_CACHE_DIR` on first build; subsequent builds use the cache. Cold builds on Render Free take 5-10 min.
+- Render Free tier web services spin down after 15 min of inactivity (cold start ~30 s on next request). Upgrade to Starter ($7/mo) to eliminate cold starts.
+- Flutter `API_BASE_URL` is a compile-time constant baked into the wasm/JS bundle. Changing the backend URL requires a new frontend build and deploy.
