@@ -2,18 +2,24 @@
 
 ## Platform
 
-Flutter (Dart). Single codebase. Currently runnable local target: **Flutter web** (`flutter run -d chrome`). iOS and Android targets exist in the repo but require native toolchain setup (Xcode, Android SDK) not yet confirmed working.
+Flutter (Dart). Single codebase. Currently runnable local target: **Flutter web** (static build + local server — see Local QA below). iOS and Android targets exist in the repo but require native toolchain setup (Xcode, Android SDK) not yet confirmed working.
 
 ## Screens (4 total)
 
 ```
-LessonScreen
-  → ExerciseScreen (repeated per exercise)
-      → ResultScreen (inline, same screen or modal)
-  → LessonCompleteScreen
+HomeScreen
+  → LessonIntroScreen
+      → ExerciseScreen (repeated per exercise)
+  → SummaryScreen
 ```
 
-### LessonScreen
+### HomeScreen
+
+- Stateless. Single CTA: "Start Lesson" button.
+- Launches `LessonIntroScreen` with the hardcoded `AppConfig.defaultLessonId`.
+- No lesson list, no fetch, no error state.
+
+### LessonIntroScreen
 
 - Fetches `GET /lessons/{lesson_id}` on mount.
 - Shows loading state while fetching.
@@ -37,51 +43,44 @@ Renders one exercise at a time. Layout varies by type:
 
 ### Result display (inline, after submission)
 
-- Correct: green indicator + feedback (if present).
-- Incorrect: red indicator + canonical answer + feedback (if present).
-- "Next" button appears. Tapping Next advances to next exercise or to LessonCompleteScreen.
+- Correct: green indicator + explanation (if present) + practical tip (if present).
+- Incorrect: red indicator + canonical answer + explanation (if present) + practical tip (if present).
+- `explanation` and `practical_tip` come from the exercise's `feedback` block in the lesson fixture (deterministic path) or from the AI response string (AI fallback path).
+- "Next" button appears. Tapping Next advances to next exercise or to SummaryScreen.
 - No back navigation. Submit button replaced by Next button after result shown.
 
-### LessonCompleteScreen
+### SummaryScreen
 
-- Fetches `GET /lessons/{lesson_id}/result`.
+- Receives score from session state; optionally fetches `GET /lessons/{lesson_id}/result` for enriched data.
 - Displays: "X / N correct".
-- Single "Done" button → exits lesson (pop to root or close).
+- If `conclusion` is present: shows a one-line summary verdict below the score.
+- If any answers were incorrect: shows a "Mistakes to review" section with one card per mistake. Each card shows the exercise prompt, canonical answer, explanation, and practical tip.
+- Single "Done" button → exits lesson (pop to root).
 
 ## State model
 
 All state is in-memory for the current lesson session. No local storage.
 
-```dart
-class LessonSession {
-  final String lessonId;
-  final List<Exercise> exercises;
-  int currentIndex;
-  final List<AttemptResult> results;
-}
+Key data classes (see `app/lib/models/`):
 
-class AttemptResult {
-  final String exerciseId;
-  final bool correct;
-  final String? feedback;
-  final String canonicalAnswer;
-}
-```
+- `EvaluateResponse` — result of one answer submission: `{correct, evaluationSource, explanation?, practicalTip?, canonicalAnswer}`
+- `LessonResultAnswer` — per-exercise entry in the summary: `{exerciseId, correct, prompt?, canonicalAnswer?, explanation?, practicalTip?}`
+- `LessonResultResponse` — full lesson result from the result endpoint: `{lessonId, totalExercises, correctCount, answers, conclusion?}`
 
-- `LessonSession` created when lesson loads. Discarded on exit.
-- `currentIndex` increments on Next tap.
-- Client never stores `accepted_answers`, `accepted_corrections`, or `correct_option_id`.
+Session state is managed by `SessionController` / `SessionState` (see `app/lib/session/`). Discarded on exit. Client never stores `accepted_answers`, `accepted_corrections`, or `correct_option_id`.
 
 ## Navigation
 
 Linear push-based navigation. No tabs. No drawer. No back stack access after exercise submission.
 
 ```
-/ (root)           → lesson selection or direct lesson launch
-/lesson/{id}       → LessonScreen → ExerciseScreen → LessonCompleteScreen
+/ (root)           → HomeScreen
+                     → LessonIntroScreen (AppConfig.defaultLessonId)
+                       → ExerciseScreen (repeated)
+                         → SummaryScreen
 ```
 
-For MVP: single hardcoded lesson_id or passed via route parameter.
+Single hardcoded lesson ID from `AppConfig.defaultLessonId`.
 
 ## Networking
 
@@ -98,6 +97,25 @@ For MVP: single hardcoded lesson_id or passed via route parameter.
 | Lesson fetch fail | Error message + retry button |
 | Answer submit fail | Error message + retry button (same exercise, same input) |
 | AI timeout (backend handles) | Backend returns `correct=false`; client shows result normally |
+
+## Local QA (static build + server)
+
+Flutter web via `flutter run -d chrome` triggers CanvasKit renderer with WebGL. In headless/CI environments where WebGL is unavailable, use the static-build path instead:
+
+```sh
+# 1. Build
+flutter build web --release        # from app/
+
+# 2. Serve
+python -m http.server 8080 --directory app/build/web   # from project root
+
+# 3. QA URL
+http://localhost:8080
+```
+
+CanvasKit falls back to CPU-only rendering when WebGL is unavailable — this is non-fatal. The warning `Reason: webGLVersion is -1` is expected in headless Chromium and can be ignored.
+
+Playwright 1.58.2 + Chromium headless confirmed working against the static-build server.
 
 ## Rules
 

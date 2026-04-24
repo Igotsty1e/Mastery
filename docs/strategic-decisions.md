@@ -8,7 +8,7 @@
 ## Locked Decisions
 
 ### Client framework: Flutter (Dart)
-Single codebase targeting iOS and Android. No separate web app, no React Native. Flutter web target is used for local development only (`flutter run -d chrome`); it is not a production target. Not revisitable.
+Single codebase targeting iOS and Android. No separate web app, no React Native. Flutter web target is used for local QA only (static build served via `python -m http.server`); it is not a production target. Not revisitable.
 
 ### Backend authority: server is sole evaluator
 Client never computes correctness. Client never stores `accepted_answers`, `accepted_corrections`, or `correct_option_id`. Server responses are final.

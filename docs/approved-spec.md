@@ -57,18 +57,22 @@ No other exercise types will be added in this MVP.
 Fixed linear sequence. No branching. No skipping. No adaptive reordering.
 
 ```
-Lesson Start
-  → Exercise 1
-      → Submit answer
-      → Receive result (correct / incorrect + feedback)
-      → Next
-  → Exercise 2
-      ...
-  → Exercise N
-      → Submit answer
-      → Receive result
-Lesson Complete screen
+HomeScreen
+  → "Start Lesson" (single CTA)
+      → Lesson Intro / loading
+          → Exercise 1
+              → Submit answer
+              → Receive result (correct / incorrect + explanation + practical tip)
+              → Next
+          → Exercise 2
+              ...
+          → Exercise N
+              → Submit answer
+              → Receive result
+SummaryScreen
   → Show score (X / N correct)
+  → Show conclusion (one-line verdict, score-dependent)
+  → Show mistake review cards (incorrect answers only): prompt, canonical answer, explanation, practical tip
   → Done button → exit
 ```
 
@@ -180,7 +184,7 @@ All gates must pass before implementation begins on each component.
 - [ ] Timeout and fallback behavior confirmed (5s, default incorrect)
 
 ### Gate 3 — Flutter Client Scope
-- [ ] Screen list finalized: Lesson screen, Exercise screen, Result screen, Lesson Complete screen
+- [ ] Screen list finalized: HomeScreen, LessonIntroScreen, ExerciseScreen (inline result), SummaryScreen
 - [ ] No local state beyond current exercise render confirmed
 - [ ] No client-side evaluation logic confirmed
 

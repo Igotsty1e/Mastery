@@ -20,7 +20,7 @@
 ┌────────────────▼────────────────────────┐
 │  AI Layer (OpenAI Responses API)        │
 │  sentence_correction borderline eval    │
-│  Returns: { correct, feedback }         │
+│  Returns: { correct, feedback: string } │
 └─────────────────────────────────────────┘
 ```
 
@@ -53,7 +53,9 @@ Client                    Backend                   AI
   │                          │ validate AI response   │
   │                          │ timeout/error → incorrect
   │◄─────────────────────────│                       │
-  │  {correct, feedback,     │                       │
+  │  {correct,               │                       │
+  │   explanation?,          │                       │
+  │   practical_tip?,        │                       │
   │   canonical_answer,      │                       │
   │   evaluation_source}     │                       │
 ```
@@ -62,8 +64,8 @@ Client                    Backend                   AI
 
 ```
 GET  /lessons/{lesson_id}                          → lesson definition (ordered exercises)
-POST /lessons/{lesson_id}/answers                  → submit one answer, receive result
-GET  /lessons/{lesson_id}/result?session_id={uuid} → final lesson score
+POST /lessons/{lesson_id}/answers                  → submit one answer; response: {correct, explanation?, practical_tip?, canonical_answer, evaluation_source}
+GET  /lessons/{lesson_id}/result?session_id={uuid} → lesson score + conclusion + per-mistake cards (prompt, canonical_answer, explanation?, practical_tip?)
 ```
 
 No other endpoints in MVP.

@@ -26,10 +26,10 @@
 ### Phase 3 — Flutter client
 
 1. Implement HTTP client layer (lesson fetch, answer submit, result fetch).
-2. Implement LessonScreen (fetch + loading + error states).
+2. Implement HomeScreen (single CTA) and LessonIntroScreen (fetch + loading + error states).
 3. Implement ExerciseScreen for each type (`fill_blank`, `multiple_choice`, `sentence_correction`).
 4. Implement inline result display (correct/incorrect + feedback + canonical answer).
-5. Implement LessonCompleteScreen (score display).
+5. Implement SummaryScreen (score display, conclusion, mistake review cards).
 6. Wire navigation (linear, no back access after submit).
 
 ### Phase 4 — Integration and QA
@@ -37,7 +37,7 @@
 1. Run all golden cases from `docs/qa-golden-cases.md` end-to-end against real backend.
 2. Verify AI fallback path manually (borderline cases §5).
 3. Verify AI timeout fallback (§6).
-4. Test on Flutter web (`flutter run -d chrome`). iOS/Android require native toolchain — blocked until confirmed available.
+4. Test on Flutter web via static build: `flutter build web --release` → `python -m http.server 8080 --directory app/build/web` → open `http://localhost:8080`. iOS/Android require native toolchain — blocked until confirmed available.
 
 ---
 
@@ -56,7 +56,7 @@
 - [ ] Timeout + fallback behavior confirmed (5s, default incorrect)
 
 ### Gate 3 — Flutter client scope
-- [ ] Screen list confirmed: LessonScreen, ExerciseScreen, ResultScreen (inline), LessonCompleteScreen
+- [ ] Screen list confirmed: HomeScreen, LessonIntroScreen, ExerciseScreen (inline result), SummaryScreen
 - [ ] No local state beyond current session confirmed
 - [ ] No client-side evaluation logic confirmed
 

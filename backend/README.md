@@ -20,6 +20,43 @@ REST API for Mastery English practice. Node.js + TypeScript + Express.
 
 AI fallback on timeout (5s) or error defaults to `correct=false, evaluation_source=deterministic`.
 
+### Answer response fields
+
+`POST /lessons/:lessonId/answers` returns:
+
+```json
+{
+  "attempt_id": "...",
+  "exercise_id": "...",
+  "correct": true,
+  "evaluation_source": "deterministic | ai_fallback",
+  "canonical_answer": "...",
+  "explanation": "...",    // optional — from exercise feedback.explanation (deterministic) or AI feedback string (ai_fallback)
+  "practical_tip": "..."   // optional — from exercise feedback.practical_tip (deterministic path only)
+}
+```
+
+`GET /lessons/:lessonId/result` returns:
+
+```json
+{
+  "lesson_id": "...",
+  "total_exercises": 10,
+  "correct_count": 7,
+  "conclusion": "Strong performance. Review the mistakes below to close the gaps.",
+  "answers": [
+    {
+      "exercise_id": "...",
+      "correct": false,
+      "prompt": "...",
+      "canonical_answer": "...",
+      "explanation": "...",
+      "practical_tip": "..."
+    }
+  ]
+}
+```
+
 ## Runtime constraints
 
 - **AI result cache:** in-memory, keyed by `(session_id, exercise_id, normalizedAnswer)`. TTL 4h, LRU cap 10K entries. Repeat submissions with the same answer return cached result — no AI call, no rate-limit consumption.
