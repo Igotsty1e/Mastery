@@ -42,23 +42,6 @@ Map<String, dynamic> _lessonJson() => {
       ],
     };
 
-Map<String, dynamic> _lessonSummaryJson({
-  String lessonId = _lessonId,
-  String title = 'Present Perfect',
-  String? description,
-}) =>
-    {
-      'lesson_id': lessonId,
-      'title': title,
-      if (description != null) 'description': description,
-    };
-
-Map<String, dynamic> _lessonsJson() => {
-      'lessons': [
-        _lessonSummaryJson(),
-      ],
-    };
-
 Map<String, dynamic> _evaluateJson({bool correct = true}) => {
       'attempt_id': '00000000-0000-4000-8000-000000000002',
       'exercise_id': _exId,
@@ -119,12 +102,6 @@ Widget _withApi(Widget child, http.Client httpClient) => Provider<ApiClient>(
       child: MaterialApp(home: child),
     );
 
-Widget _withApiClient(Widget child, ApiClient apiClient) =>
-    Provider<ApiClient>.value(
-      value: apiClient,
-      child: MaterialApp(home: child),
-    );
-
 Widget _withController(Widget child, SessionController ctrl) =>
     ChangeNotifierProvider<SessionController>.value(
       value: ctrl,
@@ -138,125 +115,29 @@ Future<SessionController> _loadedCtrl(http.Client client) async {
   return ctrl;
 }
 
-class _MockApiClient extends ApiClient {
-  final Future<List<LessonSummary>> Function()? fetchLessonsHandler;
-  final Future<Lesson> Function(String lessonId)? getLessonHandler;
-
-  _MockApiClient({
-    this.fetchLessonsHandler,
-    this.getLessonHandler,
-  }) : super(
-          baseUrl: 'http://test',
-          client: MockClient((_) async => throw UnimplementedError()),
-        );
-
-  @override
-  Future<List<LessonSummary>> fetchLessons() {
-    final handler = fetchLessonsHandler;
-    if (handler == null) return super.fetchLessons();
-    return handler();
-  }
-
-  @override
-  Future<Lesson> getLesson(String lessonId) {
-    final handler = getLessonHandler;
-    if (handler == null) return super.getLesson(lessonId);
-    return handler(lessonId);
-  }
-}
-
 // ── HomeScreen ────────────────────────────────────────────────────────────────
 
 void main() {
   group('HomeScreen', () {
-    testWidgets('shows loading spinner while fetching lessons', (tester) async {
-      final completer = Completer<List<LessonSummary>>();
-      final apiClient = _MockApiClient(
-        fetchLessonsHandler: () => completer.future,
-      );
-
-      await tester.pumpWidget(_withApiClient(const HomeScreen(), apiClient));
-
-      expect(find.byType(CircularProgressIndicator), findsOneWidget);
-
-      completer.complete([LessonSummary.fromJson(_lessonSummaryJson())]);
-      await tester.pumpAndSettle();
-    });
-
-    testWidgets('shows error message and Retry when lessons fail to load',
+    testWidgets('shows title, subtitle, and Start Lesson button',
         (tester) async {
-      final apiClient = _MockApiClient(
-        fetchLessonsHandler: () async => throw const ApiException(500, 'boom'),
-      );
-
-      await tester.pumpWidget(_withApiClient(const HomeScreen(), apiClient));
-      await tester.pumpAndSettle();
-
-      expect(find.textContaining('Failed to load lessons'), findsOneWidget);
-      expect(find.widgetWithText(FilledButton, 'Retry'), findsOneWidget);
-    });
-
-    testWidgets('shows lesson cards on successful fetch', (tester) async {
-      final apiClient = _MockApiClient(
-        fetchLessonsHandler: () async => [
-          LessonSummary.fromJson(_lessonSummaryJson()),
-          LessonSummary.fromJson(
-            _lessonSummaryJson(
-              lessonId: 'a1b2c3d4-0001-4000-8000-000000000099',
-              title: 'Past Perfect',
-              description: 'Actions completed before another past moment.',
-            ),
-          ),
-        ],
-      );
-
-      await tester.pumpWidget(_withApiClient(const HomeScreen(), apiClient));
-      await tester.pumpAndSettle();
+      await tester.pumpWidget(_withApi(const HomeScreen(), MockClient((_) async => throw UnimplementedError())));
 
       expect(find.text('Mastery'), findsOneWidget);
-      expect(
-        find.text('English practice, one lesson at a time.'),
-        findsOneWidget,
-      );
-      expect(find.byType(Card), findsNWidgets(2));
-      expect(find.text('Present Perfect'), findsOneWidget);
-      expect(find.text('Past Perfect'), findsOneWidget);
-      expect(
-        find.text('Actions completed before another past moment.'),
-        findsOneWidget,
-      );
-      expect(find.byType(ListView), findsOneWidget);
+      expect(find.text('English practice, one lesson at a time.'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Start Lesson'), findsOneWidget);
     });
 
-    testWidgets('tapping a lesson card navigates to lesson intro',
+    testWidgets('tapping Start Lesson navigates to LessonIntroScreen',
         (tester) async {
-      const selectedLessonId = 'a1b2c3d4-0001-4000-8000-000000000099';
-      String? requestedLessonId;
-      final apiClient = _MockApiClient(
-        fetchLessonsHandler: () async => [
-          LessonSummary.fromJson(
-            _lessonSummaryJson(
-              lessonId: selectedLessonId,
-              title: 'Past Perfect',
-            ),
-          ),
-        ],
-        getLessonHandler: (lessonId) async {
-          requestedLessonId = lessonId;
-          return Lesson.fromJson(_lessonJson());
-        },
-      );
+      final client = MockClient((_) async => _jsonOk(_lessonJson()));
 
-      await tester.pumpWidget(_withApiClient(const HomeScreen(), apiClient));
+      await tester.pumpWidget(_withApi(const HomeScreen(), client));
       await tester.pumpAndSettle();
 
-      expect(find.text('Past Perfect'), findsOneWidget);
-
-      await tester.tap(find.text('Past Perfect'));
-      await tester.pump();
+      await tester.tap(find.widgetWithText(FilledButton, 'Start Lesson'));
       await tester.pumpAndSettle();
 
-      expect(requestedLessonId, selectedLessonId);
       expect(find.text('Present Perfect'), findsOneWidget);
       expect(find.widgetWithText(FilledButton, 'Start'), findsOneWidget);
     });
@@ -771,12 +652,9 @@ void main() {
       final client = MockClient((_) async {
         call++;
         if (call == 1) {
-          return _jsonOk(_lessonsJson()); // GET /lessons
-        }
-        if (call == 2) {
           return _jsonOk(_lessonJson()); // GET /lessons/:id
         }
-        if (call == 3) {
+        if (call == 2) {
           return _jsonOk(
               _evaluateJson(correct: true)); // POST /lessons/:id/answers
         }
@@ -791,10 +669,10 @@ void main() {
         ),
       );
 
-      // Phase 1: HomeScreen — lessons loaded from mocked API, tap lesson
+      // Phase 1: HomeScreen — single CTA, tap Start Lesson
       await tester.pumpAndSettle();
-      expect(find.text('Present Perfect'), findsOneWidget);
-      await tester.tap(find.text('Present Perfect'));
+      expect(find.widgetWithText(FilledButton, 'Start Lesson'), findsOneWidget);
+      await tester.tap(find.widgetWithText(FilledButton, 'Start Lesson'));
       await tester.pumpAndSettle(); // navigate + fetch lesson
 
       // Phase 2: LessonIntroScreen — lesson loaded from mocked API
@@ -819,7 +697,7 @@ void main() {
       // Phase 5: SummaryScreen
       expect(find.text('Lesson Complete'), findsOneWidget);
       expect(find.text('1 / 1'), findsOneWidget);
-      expect(call, equals(4));
+      expect(call, equals(3));
     });
   });
 }
