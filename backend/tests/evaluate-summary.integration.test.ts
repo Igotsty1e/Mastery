@@ -53,7 +53,7 @@ describe('integration: POST /lessons/:id/answers → GET /lessons/:id/result', (
     expect((res.json as any).lesson_id).toBe(LESSON_ID);
     expect((res.json as any).total_exercises).toBe(10);
     expect((res.json as any).correct_count).toBe(1);
-    expect((res.json as any).answers).toContainEqual({ exercise_id: FB_EX_ID, correct: true });
+    expect((res.json as any).answers).toContainEqual(expect.objectContaining({ exercise_id: FB_EX_ID, correct: true }));
   });
 
   it('AI-fallback sentence_correction affects result count', async () => {
@@ -80,7 +80,7 @@ describe('integration: POST /lessons/:id/answers → GET /lessons/:id/result', (
     const res = await inject(aiApp, { method: 'GET', path: `/lessons/${LESSON_ID}/result?session_id=${SESSION_ID}` });
     expect(res.status).toBe(200);
     expect((res.json as any).correct_count).toBe(1);
-    expect((res.json as any).answers).toContainEqual({ exercise_id: SC_EX_ID, correct: true });
+    expect((res.json as any).answers).toContainEqual(expect.objectContaining({ exercise_id: SC_EX_ID, correct: true }));
   });
 
   it('re-submit same exercise_id: last attempt wins', async () => {
@@ -110,6 +110,6 @@ describe('integration: POST /lessons/:id/answers → GET /lessons/:id/result', (
     expect(res.status).toBe(200);
     expect((res.json as any).answers).toHaveLength(1);
     expect((res.json as any).correct_count).toBe(1);
-    expect((res.json as any).answers[0]).toEqual({ exercise_id: FB_EX_ID, correct: true });
+    expect((res.json as any).answers[0]).toMatchObject({ exercise_id: FB_EX_ID, correct: true });
   });
 });

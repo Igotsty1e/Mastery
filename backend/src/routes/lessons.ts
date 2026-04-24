@@ -165,11 +165,48 @@ export function makeLessonsRouter(ai: AiProvider): Router {
     const attempts = record ? Array.from(record.attempts.values()) : [];
     const correct_count = attempts.filter(a => a.correct).length;
 
+    const pct = total_exercises > 0 ? correct_count / total_exercises : 0;
+    let conclusion: string;
+    if (correct_count === total_exercises) {
+      conclusion = 'Perfect score — every item correct. Well done.';
+    } else if (pct >= 0.8) {
+      conclusion = 'Strong performance. Review the mistakes below to close the gaps.';
+    } else if (pct >= 0.6) {
+      conclusion = 'Good progress. The patterns below are worth drilling.';
+    } else {
+      conclusion = 'Keep practicing — these grammar patterns need more attention.';
+    }
+
+    const answers = attempts.map(attempt => {
+      const exercise = lesson.exercises.find(e => e.exercise_id === attempt.exercise_id);
+      let explanation: string | null = null;
+      let practical_tip: string | null = null;
+
+      if (!attempt.correct) {
+        if (attempt.evaluation_source === 'deterministic') {
+          explanation = exercise?.feedback?.explanation ?? null;
+          practical_tip = exercise?.feedback?.practical_tip ?? null;
+        } else if (attempt.evaluation_source === 'ai_fallback') {
+          explanation = attempt.feedback;
+        }
+      }
+
+      return {
+        exercise_id: attempt.exercise_id,
+        correct: attempt.correct,
+        prompt: exercise?.prompt ?? null,
+        canonical_answer: attempt.canonical_answer,
+        explanation,
+        practical_tip,
+      };
+    });
+
     return res.json({
       lesson_id: lessonId,
       total_exercises,
       correct_count,
-      answers: attempts.map(a => ({ exercise_id: a.exercise_id, correct: a.correct })),
+      conclusion,
+      answers,
     });
   });
 

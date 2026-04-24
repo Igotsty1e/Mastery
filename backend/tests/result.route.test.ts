@@ -82,8 +82,8 @@ describe('GET /lessons/:lessonId/result', () => {
     expect((res.json as any).correct_count).toBe(1);
     expect((res.json as any).total_exercises).toBe(10);
     expect((res.json as any).answers).toHaveLength(2);
-    expect((res.json as any).answers).toContainEqual({ exercise_id: EX_11, correct: true });
-    expect((res.json as any).answers).toContainEqual({ exercise_id: EX_15, correct: false });
+    expect((res.json as any).answers).toContainEqual(expect.objectContaining({ exercise_id: EX_11, correct: true }));
+    expect((res.json as any).answers).toContainEqual(expect.objectContaining({ exercise_id: EX_15, correct: false }));
   });
 
   it('re-submit same exercise_id: last attempt wins', async () => {
@@ -113,7 +113,68 @@ describe('GET /lessons/:lessonId/result', () => {
     expect(res.status).toBe(200);
     expect((res.json as any).answers).toHaveLength(1);
     expect((res.json as any).correct_count).toBe(1);
-    expect((res.json as any).answers[0]).toEqual({ exercise_id: EX_11, correct: true });
+    expect((res.json as any).answers[0]).toMatchObject({ exercise_id: EX_11, correct: true });
+  });
+
+  it('enriches answers with prompt, canonical_answer, explanation, practical_tip', async () => {
+    // Correct answer — explanation and practical_tip should be null
+    await inject(app, {
+      method: 'POST',
+      path: `/lessons/${LESSON_ID}/answers`,
+      json: makeBody({
+        attempt_id: 'cccccccc-0001-4000-8000-000000000007',
+        exercise_id: EX_11,
+        exercise_type: 'fill_blank',
+        user_answer: 'had',
+      }),
+    });
+    // Wrong answer — explanation and practical_tip should be populated
+    await inject(app, {
+      method: 'POST',
+      path: `/lessons/${LESSON_ID}/answers`,
+      json: makeBody({
+        attempt_id: 'cccccccc-0001-4000-8000-000000000008',
+        exercise_id: EX_15,
+        exercise_type: 'multiple_choice',
+        user_answer: 'b',
+      }),
+    });
+
+    const res = await inject(app, { method: 'GET', path: `/lessons/${LESSON_ID}/result?session_id=${SESSION_A}` });
+    expect(res.status).toBe(200);
+    const answers = (res.json as any).answers;
+
+    const correctAnswer = answers.find((a: any) => a.exercise_id === EX_11);
+    expect(correctAnswer.correct).toBe(true);
+    expect(correctAnswer.prompt).toBeTruthy();
+    expect(correctAnswer.canonical_answer).toBe('had');
+    expect(correctAnswer.explanation).toBeNull();
+    expect(correctAnswer.practical_tip).toBeNull();
+
+    const wrongAnswer = answers.find((a: any) => a.exercise_id === EX_15);
+    expect(wrongAnswer.correct).toBe(false);
+    expect(wrongAnswer.prompt).toBeTruthy();
+    expect(wrongAnswer.canonical_answer).toBeTruthy();
+    expect(wrongAnswer.explanation).toBeTruthy();
+    expect(wrongAnswer.practical_tip).toBeTruthy();
+  });
+
+  it('returns conclusion string', async () => {
+    // Perfect score
+    await inject(app, {
+      method: 'POST',
+      path: `/lessons/${LESSON_ID}/answers`,
+      json: makeBody({
+        attempt_id: 'cccccccc-0001-4000-8000-000000000009',
+        exercise_id: EX_11,
+        exercise_type: 'fill_blank',
+        user_answer: 'had',
+      }),
+    });
+    const res = await inject(app, { method: 'GET', path: `/lessons/${LESSON_ID}/result?session_id=${SESSION_A}` });
+    expect(res.status).toBe(200);
+    expect(typeof (res.json as any).conclusion).toBe('string');
+    expect((res.json as any).conclusion.length).toBeGreaterThan(0);
   });
 
   it('session isolation: session B cannot see session A attempts', async () => {

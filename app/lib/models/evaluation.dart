@@ -58,13 +58,28 @@ class EvaluateResponse {
 class LessonResultAnswer {
   final String exerciseId;
   final bool correct;
+  final String? prompt;
+  final String? canonicalAnswer;
+  final String? explanation;
+  final String? practicalTip;
 
-  const LessonResultAnswer({required this.exerciseId, required this.correct});
+  const LessonResultAnswer({
+    required this.exerciseId,
+    required this.correct,
+    this.prompt,
+    this.canonicalAnswer,
+    this.explanation,
+    this.practicalTip,
+  });
 
   factory LessonResultAnswer.fromJson(Map<String, dynamic> j) =>
       LessonResultAnswer(
         exerciseId: j['exercise_id'] as String,
         correct: j['correct'] as bool,
+        prompt: j['prompt'] as String?,
+        canonicalAnswer: j['canonical_answer'] as String?,
+        explanation: j['explanation'] as String?,
+        practicalTip: j['practical_tip'] as String?,
       );
 }
 
@@ -73,12 +88,14 @@ class LessonResultResponse {
   final int totalExercises;
   final int correctCount;
   final List<LessonResultAnswer> answers;
+  final String? conclusion;
 
   const LessonResultResponse({
     required this.lessonId,
     required this.totalExercises,
     required this.correctCount,
     required this.answers,
+    this.conclusion,
   });
 
   factory LessonResultResponse.fromJson(Map<String, dynamic> j) =>
@@ -91,5 +108,6 @@ class LessonResultResponse {
                     a as Map<String, dynamic>))
                 .toList() ??
             const [],
+        conclusion: j['conclusion'] as String?,
       );
 }
