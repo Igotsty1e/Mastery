@@ -4,6 +4,15 @@
 
 Flutter (Dart). Single codebase. Currently runnable local target: **Flutter web** (static build + local server — see Local QA below). iOS and Android targets exist in the repo but require native toolchain setup (Xcode, Android SDK) not yet confirmed working.
 
+## Visual system implementation
+
+- Canonical visual spec: `DESIGN.md`
+- Canonical composition reference: `docs/design-mockups/`
+- Flutter theme implementation: `app/lib/theme/mastery_theme.dart`
+- Reusable branded UI primitives: `app/lib/widgets/mastery_widgets.dart`
+
+The app no longer relies on generic `ThemeData(colorSchemeSeed: ...)` styling. The current UI is being migrated onto the custom `MasteryTheme` token layer and shared `Mastery*` widgets so implementation stays aligned with the approved design system.
+
 ## Screens (4 total)
 
 ```

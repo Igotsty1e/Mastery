@@ -75,15 +75,16 @@ Require explicit user intent before any destructive action.
 
 ## Content Source Of Truth
 
-- `/Users/ivankhanaev/Mastery/ROUNDUP_AI_CONTENT_SYSTEM.md` is the canonical source of truth for curriculum, lesson authoring, pedagogical progression, content validation, and exercise-authoring rules.
-- `/Users/ivankhanaev/Mastery/docs/content-unit-u01-blueprint.md` is the active unit-level authoring plan that turns the canonical content system into the next shippable lesson sequence.
+- `/Users/ivankhanaev/Mastery/GRAM_STRATEGY.md` is the top-level source of truth for how Mastery teaches English grammar and usage.
+- `/Users/ivankhanaev/Mastery/exercise_structure.md` is the canonical source of truth for exercise types, sequencing, authoring standards, runtime mapping, and examples. It is subordinate to `GRAM_STRATEGY.md`.
+- `/Users/ivankhanaev/Mastery/docs/content-unit-u01-blueprint.md` is the active unit-level authoring plan that turns that pedagogy into the next shippable lesson sequence.
 - Use it as the primary reference whenever generating, revising, reviewing, or expanding educational content for the app.
 - Treat it as authoritative for the **content layer**, not for unsupported runtime features.
 - If content guidance conflicts with the shipped app architecture or current MVP constraints, keep the content intent but adapt it to the technical source of truth in:
-  - `docs/approved-spec.md`
-  - `docs/backend-contract.md`
-  - `docs/mobile-architecture.md`
-- Do not let the content document silently introduce unsupported runtime features such as persistence, unlock logic, adaptive difficulty, or new exercise widgets unless those are explicitly added to the technical specs first.
+- `docs/approved-spec.md`
+- `docs/backend-contract.md`
+- `docs/mobile-architecture.md`
+- Do not let the content documents silently introduce unsupported runtime features such as persistence, unlock logic, adaptive difficulty, or new exercise widgets unless those are explicitly added to the technical specs first.
 - Grammar rules, examples, and canonical explanations should be based on open educational/textbook sources and then curated into the app's JSON-compatible lesson schema.
 - AI may assist offline authoring, but shipped lesson content must remain curated, source-backed, and schema-valid.
 - For any new lesson authoring or exercise creation task, always invoke the local `english-grammar-methodologist` skill first.

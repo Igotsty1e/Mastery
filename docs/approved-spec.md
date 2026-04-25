@@ -8,7 +8,7 @@
 
 ## 1. Product Definition
 
-Roundups AI Assistant is a Flutter mobile app for English language practice. Users complete structured lessons composed of deterministic exercises. AI is used narrowly: evaluating free-text answers and generating short corrective feedback. The server is the single source of truth for all lesson content and correctness decisions.
+Roundups AI Assistant is a Flutter mobile app for English language practice. Users complete structured lessons composed of deterministic exercises. AI is used narrowly: evaluating borderline sentence corrections server-side. Learner-facing feedback remains curated lesson content. The server is the single source of truth for all lesson content and correctness decisions.
 
 **One-sentence pitch:** A fixed-flow English practice app where each lesson teaches one rule, the backend decides correctness, and AI is used only to judge borderline sentence corrections.
 
@@ -20,7 +20,7 @@ Roundups AI Assistant is a Flutter mobile app for English language practice. Use
 |---|---|---|
 | Client | Flutter (Dart) | Render exercises, collect input, display results |
 | Backend | REST API (deterministic) | Serve lessons, evaluate answers, enforce authority |
-| AI Layer | LLM (server-side only) | Evaluate borderline `sentence_correction`; generate short feedback strings |
+| AI Layer | LLM (server-side only) | Evaluate borderline `sentence_correction`; return internal structured verdict only |
 
 **Hard rules:**
 - AI never runs on the client.

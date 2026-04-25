@@ -4,15 +4,19 @@
 
 ### Phase 1 — Content and contracts (no code)
 
-1. ~~Resolve open questions from `docs/approved-spec.md` §10~~ — **resolved:**
+1. Lock the pedagogical authority chain:
+   - `GRAM_STRATEGY.md`
+   - `exercise_structure.md`
+
+2. ~~Resolve open questions from `docs/approved-spec.md` §10~~ — **resolved:**
    - Lesson content source: JSON fixtures in `backend/data/` (manifest + per-lesson files)
    - Session model: stateless per-visit; `attempt_id` is client-generated UUID per submission
    - LLM provider: OpenAI Responses API (`AI_PROVIDER=openai`); stub default for local dev
    - Empty input handling: treat as incorrect immediately — confirmed in backend implementation
 
-2. Author at least one complete lesson fixture covering all 3 exercise types. Validate fixture against `docs/content-contract.md` schemas.
+3. Author at least one complete lesson fixture covering all 3 exercise types. Validate fixture against `docs/content-contract.md` schemas.
 
-3. Finalize AI prompt template (see `docs/backend-contract.md`). Run 5+ manual test cases against it before integration.
+4. Finalize AI prompt template (see `docs/backend-contract.md`). Run 5+ manual test cases against it before integration.
 
 ### Phase 2 — Backend
 
@@ -57,7 +61,7 @@
 
 ### Gate 3 — Flutter client scope
 - [ ] Screen list confirmed: HomeScreen, LessonIntroScreen, ExerciseScreen (inline result), SummaryScreen
-- [ ] No local state beyond current session confirmed
+- [ ] Only lightweight dashboard progress persistence is present locally; no resumable lesson state
 - [ ] No client-side evaluation logic confirmed
 
 ### Gate 4 — Test cases

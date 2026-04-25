@@ -20,6 +20,10 @@ Users complete lessons composed of exercises. The backend decides correctness. A
 | Document | Purpose |
 |---|---|
 | `DESIGN.md` | Canonical design system: visual language, colors, typography, components |
+| `docs/design-mockups/` | Canonical visual composition reference for the shipped screen layouts |
+| `GRAM_STRATEGY.md` | Top-level pedagogy: how Mastery teaches grammar and usage |
+| `exercise_structure.md` | Canonical rules for exercise design, sequencing, runtime mapping, and examples |
+| `docs/content-unit-u01-blueprint.md` | Active lesson-authoring plan for the next shippable grammar unit |
 | `docs/approved-spec.md` | Canonical product spec (source of truth) |
 | `docs/content-contract.md` | Exercise schemas, normalization rules, AI contract |
 | `docs/qa-golden-cases.md` | Acceptance test cases for all exercise types |
@@ -39,6 +43,7 @@ Users complete lessons composed of exercises. The backend decides correctness. A
 | `docs/ai-evaluation-rubric.md` | Shared labeling rubric for borderline AI/content decisions |
 | `docs/content-qa-b2-lesson-001.md` | QA review of the current lesson content and scoring fairness risks |
 | `docs/manual-ai-smoke-pack.md` | Manual local smoke pack for future live AI verification |
+| `docs/implementation-scope.md` | Next-step scope for audio, exercise expansion, screens, and tooling |
 | `design-english-mvp.md` | Product rationale and scope summary |
 
 ## Stack

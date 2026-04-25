@@ -17,7 +17,8 @@
 ## Document Map
 - `DESIGN.md` owns visual language, interaction tone, layout, motion, and component behavior.
 - `docs/design-mockups/` owns screen-level composition reference.
-- `ROUNDUP_AI_CONTENT_SYSTEM.md` owns curriculum logic, exercise-authoring rules, and validation.
+- `GRAM_STRATEGY.md` owns the top-level pedagogy for how Mastery teaches language.
+- `exercise_structure.md` owns the exercise system and authoring rules derived from that pedagogy.
 - `docs/content-unit-u01-blueprint.md` owns the current lesson-authoring plan.
 - All instructional content for Mastery must be created or explicitly reviewed using the `english-grammar-methodologist` skill; `DESIGN.md` does not replace that content-authoring workflow.
 
@@ -264,6 +265,21 @@ Method note: this list uses public Android install bands from Google Play as the
 - Tone is calm and competent: “We couldn’t load this lesson. Try again.”
 - Never use scary system-red full-screen alarms.
 
+### 14. Audio Player (Listening Exercises)
+- Used inside the exercise card when the exercise is `listening_discrimination`.
+- Replaces the prompt text — the audio is the prompt.
+- Anchor control: a single circular Play button, **64px**, dusty-rose fill, ivory play glyph. Centered above the options list.
+- After first playback the same control morphs to a Replay state: same fill, circular-arrow glyph, identical size and position. No layout shift.
+- Active playback state: a soft 4px halo at `bg.primary-soft` opacity ~0.3 pulses around the button at `d-long` cadence. Stops on completion.
+- Below the Play control: a quiet `Show transcript` text button.
+  - Default style: tertiary text, `label-md`, `text.secondary`, no border.
+  - On tap, reveals a `bg.primary-soft` card with `r-md` radius, **16px** padding, `body-md` text containing the transcript verbatim. Once revealed, stays visible for the rest of the exercise.
+  - Reveal animation: `d-short` slide-up `8px` plus fade-in. No collapse-back affordance.
+- No volume control, no playback speed, no waveform, no scrubber. Listening is a one-decision interaction, not a media player.
+- No autoplay. The first play is always learner-initiated (also a hard requirement for iOS Safari).
+- Replays are unlimited and do not affect scoring.
+- Disabled state (audio failed to load): button shows muted glyph, tertiary color, with one-line tertiary text below: `Audio unavailable. Try again.`
+
 ## Screen-Level Direction
 
 ### Home / Onboarding
@@ -285,6 +301,14 @@ Method note: this list uses public Android install bands from Google Play as the
 - The exercise surface should occupy emotional focus.
 - Submission and “Next” controls should stay visually consistent to reduce friction.
 
+#### Listening exercise variant (`listening_discrimination`)
+- The exercise card shows the instruction band, then the Audio Player (component §14) where the prompt would normally sit.
+- No prompt text. The audio is the prompt.
+- The `Show transcript` toggle stays under the Play control. Hidden by default; revealing it never displaces the options below — the transcript card pushes content down softly, never scrolls the options off-screen on a 390-wide viewport.
+- Options render as the standard Multiple Choice Rows (component §10) directly below the audio block.
+- The single primary CTA at the bottom remains `Check answer`, identical to other exercise types. After submit, the audio block stays visible (so the learner can replay while reading the result panel).
+- Result panel includes the canonical text in the `Answer:` line so the learner sees what they were supposed to hear.
+
 ### Summary Screen
 - This is a reflection screen, not a reward casino.
 - Score hero should be large and proud.
@@ -302,7 +326,7 @@ Method note: this list uses public Android install bands from Google Play as the
 - Use Material 3 foundations only as infrastructure, not as the final visual language.
 - Override the default `ThemeData` color scheme, shape scheme, and text theme completely.
 - Add a `ThemeExtension` for custom tokens: surfaces, semantic colors, progress fills, and illustration backgrounds.
-- Create reusable widgets for `MasteryButton`, `MasteryCard`, `MasteryChip`, `ResultPanel`, and `SectionEyebrow`.
+- Create reusable widgets for `MasteryButton`, `MasteryCard`, `MasteryChip`, `ResultPanel`, `SectionEyebrow`, and `MasteryAudioPlayer` (single-clip, replay-only, transcript-on-demand — see Component System §14).
 - Use `AnimatedSwitcher`, `AnimatedOpacity`, `AnimatedSlide`, and `TweenAnimationBuilder` for most motion.
 - Avoid default `FilledButton` and `OutlinedButton` styling without token overrides.
 - Do not ship with `colorSchemeSeed` defaults; they are too generic for this product.

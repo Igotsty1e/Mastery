@@ -34,8 +34,8 @@ AI timeout = 5s. On timeout or error: `correct=false`, no feedback.
 ### Lesson flow: linear, no branching
 No back. No skip. No adaptive reordering. No retry. No timers.
 
-### No persistence beyond current session
-No auth. No accounts. No resume. No local storage (SharedPreferences, SQLite, etc.). `LessonSession` discarded on exit.
+### No persistence beyond current session, except lightweight dashboard progress
+No auth. No accounts. No resume. `LessonSession` is discarded on exit. The only local persistence allowed in the current product is lightweight completed-exercise progress per lesson for the dashboard progress card via SharedPreferences.
 
 ### No gamification of any kind
 No streaks, badges, points, levels, leaderboards.

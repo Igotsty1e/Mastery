@@ -71,6 +71,46 @@
 - `borderline_ai_fallback`: always `true` for this type.
 - `instruction` should clearly tell the learner to rewrite the sentence correctly.
 
+### 2.4 listening_discrimination
+
+```json
+{
+  "exercise_id": "string (uuid)",
+  "type": "listening_discrimination",
+  "instruction": "string",
+  "audio": {
+    "url": "string (path under /audio, e.g. /audio/u02-l01/q5.mp3)",
+    "voice": "nova | onyx",
+    "transcript": "string (exact spoken text)"
+  },
+  "options": [
+    { "id": "string (a|b|c|d)", "text": "string (full plausible sentence)" }
+  ],
+  "correct_option_id": "string (a|b|c|d)",
+  "feedback": { "explanation": "string" }
+}
+```
+
+- `audio.url`: relative path served by the backend static-audio mount; the
+  client resolves it against `API_BASE_URL`. Files must exist before the
+  fixture ships (no broken URLs allowed in shipped lessons).
+- `audio.voice`: enum, exactly `nova` (default warm female) or `onyx` (low
+  calm male). One US accent. No other voices are supported in shipped
+  lessons. See `exercise_structure.md §5.6` for voice-role guidance.
+- `audio.transcript`: full and exact spoken text, character-for-character.
+  Required even though it is hidden in the UI by default — used for the
+  `Show transcript` reveal, accessibility, and QA review.
+- `options`: 3-4 entries, each a complete sentence the learner could
+  plausibly have heard. No fragments, no labelled forms.
+- `correct_option_id` must match exactly one entry in `options` and must
+  match the `transcript` semantically.
+- there is no `prompt` field on this type; the audio is the prompt. The text
+  shown on screen before listening is only the `instruction`.
+- this type does **not** use AI evaluation. Scoring is exact id match against
+  `correct_option_id`, identical to `multiple_choice`.
+
+Authoring rules and distractor strategy: see `exercise_structure.md §5.6`.
+
 ## 3. Attempt Payload Shape
 
 Client → Backend:
@@ -79,7 +119,7 @@ Client → Backend:
 {
   "attempt_id": "string (uuid, client-generated)",
   "exercise_id": "string (uuid)",
-  "exercise_type": "fill_blank|multiple_choice|sentence_correction",
+  "exercise_type": "fill_blank|multiple_choice|sentence_correction|listening_discrimination",
   "user_answer": "string",
   "submitted_at": "string (ISO 8601 UTC)"
 }
@@ -139,6 +179,9 @@ Example:
 ## 6. Accepted Corrections Policy
 
 - Content authors must provide at least one accepted correction per `sentence_correction` exercise.
+- Default authoring mode is a narrow teacher-key answer set.
+- Up to `3` accepted corrections may be listed only when the prompt naturally allows closely equivalent repairs of the same target structure.
+- If more than `3` valid corrections are needed for fairness, the item is too open for the current runtime and must be rewritten or deferred.
 - Corrections must be fully grammatically correct in the target language.
 - Corrections differing only in punctuation or capitalization must be listed separately if both should be accepted (normalization handles case/boundary punctuation).
 - Paraphrases that change meaning are not accepted corrections.
