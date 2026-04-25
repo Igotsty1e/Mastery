@@ -10,16 +10,16 @@ import { resetMemoryStore } from '../src/store/memory';
 import { inject } from './helpers/inject';
 
 const LESSON_ID = 'a1b2c3d4-0001-4000-8000-000000000001';
-const FB_EX_ID  = 'a1b2c3d4-0001-4000-8000-000000000021'; // fill_blank, accepted: ['had']
-const MC_EX_ID  = 'a1b2c3d4-0001-4000-8000-000000000025'; // multiple_choice, correct: 'b'
-const SC_EX_ID  = 'a1b2c3d4-0001-4000-8000-000000000028'; // sentence_correction, accepted: ['If I had known you were coming, I would have cooked dinner.']
+const FB_EX_ID  = 'a1b2c3d4-0001-4000-8000-000000000031'; // fill_blank (...031), accepted: ['trying']
+const MC_EX_ID  = 'a1b2c3d4-0001-4000-8000-000000000035'; // multiple_choice (...035), correct: 'b' (complaining)
+const SC_EX_ID  = 'a1b2c3d4-0001-4000-8000-000000000038'; // sentence_correction (...038), accepted: ['She suggested taking a taxi because it was late.']
 const SESSION_ID = 'dddddddd-0001-4000-8000-000000000001';
 const ATTEMPT_1 = 'cccccccc-0001-4000-8000-000000000001';
 const ATTEMPT_2 = 'cccccccc-0001-4000-8000-000000000002';
 const ATTEMPT_3 = 'cccccccc-0001-4000-8000-000000000003';
 const SUBMITTED = '2026-01-01T00:00:00.000Z';
 // Borderline SC answer: 1-char edit from accepted after normalize (drops one 'n' in 'dinner')
-const SC_BORDERLINE = 'If I had known you were coming, I would have cooked diner.';
+const SC_BORDERLINE = 'She sugested taking a taxi because it was late.';
 
 function answerBody(overrides: Record<string, unknown> = {}) {
   return {
@@ -27,7 +27,7 @@ function answerBody(overrides: Record<string, unknown> = {}) {
     attempt_id: ATTEMPT_1,
     exercise_id: FB_EX_ID,
     exercise_type: 'fill_blank',
-    user_answer: 'had',
+    user_answer: 'trying',
     submitted_at: SUBMITTED,
     ...overrides,
   };
@@ -43,7 +43,7 @@ describe('integration: POST /lessons/:id/answers → GET /lessons/:id/result', (
     const evalRes = await inject(app, {
       method: 'POST',
       path: `/lessons/${LESSON_ID}/answers`,
-      json: answerBody({ attempt_id: ATTEMPT_1, user_answer: 'had' }),
+      json: answerBody({ attempt_id: ATTEMPT_1, user_answer: 'trying' }),
     });
     expect(evalRes.status).toBe(200);
     expect((evalRes.json as any).correct).toBe(true);
@@ -91,7 +91,7 @@ describe('integration: POST /lessons/:id/answers → GET /lessons/:id/result', (
         attempt_id: ATTEMPT_1,
         exercise_id: FB_EX_ID,
         exercise_type: 'fill_blank',
-        user_answer: 'has',
+        user_answer: 'tries',
       }),
     });
 
@@ -102,7 +102,7 @@ describe('integration: POST /lessons/:id/answers → GET /lessons/:id/result', (
         attempt_id: ATTEMPT_2,
         exercise_id: FB_EX_ID,
         exercise_type: 'fill_blank',
-        user_answer: 'had',
+        user_answer: 'trying',
       }),
     });
 

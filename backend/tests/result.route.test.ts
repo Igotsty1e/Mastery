@@ -5,9 +5,9 @@ import { resetMemoryStore } from '../src/store/memory';
 import { inject } from './helpers/inject';
 
 const LESSON_ID = 'a1b2c3d4-0001-4000-8000-000000000001';
-const EX_11 = 'a1b2c3d4-0001-4000-8000-000000000021'; // fill_blank
-const EX_15 = 'a1b2c3d4-0001-4000-8000-000000000025'; // multiple_choice
-const EX_18 = 'a1b2c3d4-0001-4000-8000-000000000028'; // sentence_correction
+const EX_11 = 'a1b2c3d4-0001-4000-8000-000000000031'; // fill_blank
+const EX_15 = 'a1b2c3d4-0001-4000-8000-000000000035'; // multiple_choice
+const EX_18 = 'a1b2c3d4-0001-4000-8000-000000000038'; // sentence_correction
 
 const SESSION_A = 'aaaaaaaa-0001-4000-8000-000000000001';
 const SESSION_B = 'bbbbbbbb-0001-4000-8000-000000000001';
@@ -23,7 +23,7 @@ function makeBody(overrides: Record<string, unknown> = {}) {
     attempt_id: 'cccccccc-0001-4000-8000-000000000001',
     exercise_id: EX_11,
     exercise_type: 'fill_blank',
-    user_answer: 'had',
+    user_answer: 'trying',
     submitted_at: SUBMITTED,
     ...overrides,
   };
@@ -58,7 +58,7 @@ describe('GET /lessons/:lessonId/result', () => {
         attempt_id: 'cccccccc-0001-4000-8000-000000000002',
         exercise_id: EX_11,
         exercise_type: 'fill_blank',
-        user_answer: 'had',
+        user_answer: 'trying',
       }),
     });
     expect(eval1.status).toBe(200);
@@ -94,7 +94,7 @@ describe('GET /lessons/:lessonId/result', () => {
         attempt_id: 'cccccccc-0001-4000-8000-000000000004',
         exercise_id: EX_11,
         exercise_type: 'fill_blank',
-        user_answer: 'has',
+        user_answer: 'tries',
       }),
     });
 
@@ -105,7 +105,7 @@ describe('GET /lessons/:lessonId/result', () => {
         attempt_id: 'cccccccc-0001-4000-8000-000000000005',
         exercise_id: EX_11,
         exercise_type: 'fill_blank',
-        user_answer: 'had',
+        user_answer: 'trying',
       }),
     });
 
@@ -125,7 +125,7 @@ describe('GET /lessons/:lessonId/result', () => {
         attempt_id: 'cccccccc-0001-4000-8000-000000000007',
         exercise_id: EX_11,
         exercise_type: 'fill_blank',
-        user_answer: 'had',
+        user_answer: 'trying',
       }),
     });
     // Wrong answer — explanation should be populated
@@ -147,7 +147,7 @@ describe('GET /lessons/:lessonId/result', () => {
     const correctAnswer = answers.find((a: any) => a.exercise_id === EX_11);
     expect(correctAnswer.correct).toBe(true);
     expect(correctAnswer.prompt).toBeTruthy();
-    expect(correctAnswer.canonical_answer).toBe('had');
+    expect(correctAnswer.canonical_answer).toBe('trying');
     expect(correctAnswer.explanation).toBeNull();
 
     const wrongAnswer = answers.find((a: any) => a.exercise_id === EX_15);
@@ -166,7 +166,7 @@ describe('GET /lessons/:lessonId/result', () => {
         attempt_id: 'cccccccc-0001-4000-8000-000000000009',
         exercise_id: EX_11,
         exercise_type: 'fill_blank',
-        user_answer: 'had',
+        user_answer: 'trying',
       }),
     });
     const res = await inject(app, { method: 'GET', path: `/lessons/${LESSON_ID}/result?session_id=${SESSION_A}` });

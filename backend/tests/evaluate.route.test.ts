@@ -6,9 +6,9 @@ import { resetAiRateLimitStore } from '../src/middleware/aiRateLimit';
 import { inject } from './helpers/inject';
 
 const LESSON_ID = 'a1b2c3d4-0001-4000-8000-000000000001';
-const FB_EX_ID  = 'a1b2c3d4-0001-4000-8000-000000000021'; // fill_blank, accepted: ['had']
-const MC_EX_ID  = 'a1b2c3d4-0001-4000-8000-000000000025'; // multiple_choice, correct: 'b'
-const SC_EX_ID  = 'a1b2c3d4-0001-4000-8000-000000000028'; // sentence_correction
+const FB_EX_ID  = 'a1b2c3d4-0001-4000-8000-000000000031'; // fill_blank (...031), accepted: ['trying']
+const MC_EX_ID  = 'a1b2c3d4-0001-4000-8000-000000000035'; // multiple_choice (...035), correct: 'b' (complaining)
+const SC_EX_ID  = 'a1b2c3d4-0001-4000-8000-000000000038'; // sentence_correction
 
 const ATTEMPT_ID  = '00000000-0000-4000-8000-000000000002';
 const SUBMITTED   = '2026-01-01T00:00:00.000Z';
@@ -21,7 +21,7 @@ function makeBody(overrides: Record<string, unknown> = {}) {
     attempt_id: ATTEMPT_ID,
     exercise_id: FB_EX_ID,
     exercise_type: 'fill_blank',
-    user_answer: 'had',
+    user_answer: 'trying',
     submitted_at: SUBMITTED,
     ...overrides,
   };
@@ -101,7 +101,7 @@ describe('POST /lessons/:lessonId/answers — fill_blank', () => {
     const res = await inject(app, {
       method: 'POST',
       path: `/lessons/${LESSON_ID}/answers`,
-      json: makeBody({ user_answer: 'had' }),
+      json: makeBody({ user_answer: 'trying' }),
     });
     expect(res.status).toBe(200);
     expect((res.json as any).correct).toBe(true);
@@ -113,7 +113,7 @@ describe('POST /lessons/:lessonId/answers — fill_blank', () => {
     const res = await inject(app, {
       method: 'POST',
       path: `/lessons/${LESSON_ID}/answers`,
-      json: makeBody({ user_answer: 'has' }),
+      json: makeBody({ user_answer: 'tries' }),
     });
     expect(res.status).toBe(200);
     expect((res.json as any).correct).toBe(false);
@@ -160,7 +160,7 @@ describe('POST /lessons/:lessonId/answers — sentence_correction via route', ()
       json: makeBody({
         exercise_id: SC_EX_ID,
         exercise_type: 'sentence_correction',
-        user_answer: 'If I had known you were coming, I would have cooked dinner.',
+        user_answer: 'She suggested taking a taxi because it was late.',
       }),
     });
     expect(res.status).toBe(200);
@@ -182,7 +182,7 @@ describe('POST /lessons/:lessonId/answers — sentence_correction via route', ()
       json: makeBody({
         exercise_id: SC_EX_ID,
         exercise_type: 'sentence_correction',
-        user_answer: 'If I had known you were coming, I would have cooked diner.',
+        user_answer: 'She sugested taking a taxi because it was late.',
       }),
     });
     expect(res.status).toBe(200);
@@ -216,7 +216,7 @@ describe('POST /lessons/:lessonId/answers — sentence_correction via route', ()
 describe('POST /lessons/:lessonId/answers — AI rate limit', () => {
   // Each request with a borderline SC answer triggers one AI call.
   // Near-miss: one-letter typo from the accepted answer ('dinner' → 'diner').
-  const BORDERLINE_ANSWER = 'If I had known you were coming, I would have cooked diner.';
+  const BORDERLINE_ANSWER = 'She sugested taking a taxi because it was late.';
   const borderlineBody = makeBody({
     exercise_id: SC_EX_ID,
     exercise_type: 'sentence_correction',
@@ -274,7 +274,7 @@ describe('POST /lessons/:lessonId/answers — AI rate limit', () => {
       json: makeBody({
         exercise_id: SC_EX_ID,
         exercise_type: 'sentence_correction',
-        user_answer: 'If I had known you were coming, I would have cooked dinner.',
+        user_answer: 'She suggested taking a taxi because it was late.',
       }),
     });
 
@@ -320,7 +320,7 @@ describe('POST /lessons/:lessonId/answers — AI rate limit', () => {
     }
 
     // fill_blank must still work
-    const fbRes = await inject(app, { method: 'POST', path: `/lessons/${LESSON_ID}/answers`, json: makeBody({ user_answer: 'had' }) });
+    const fbRes = await inject(app, { method: 'POST', path: `/lessons/${LESSON_ID}/answers`, json: makeBody({ user_answer: 'trying' }) });
     expect(fbRes.status).toBe(200);
 
     // multiple_choice must still work
@@ -334,7 +334,7 @@ describe('POST /lessons/:lessonId/answers — AI rate limit', () => {
 });
 
 describe('POST /lessons/:lessonId/answers — AI result cache (identical resubmit)', () => {
-  const borderlineAnswer = 'If I had known you were coming, I would have cooked diner.';
+  const borderlineAnswer = 'She sugested taking a taxi because it was late.';
   const borderlineBody = makeBody({
     exercise_id: SC_EX_ID,
     exercise_type: 'sentence_correction',
@@ -391,7 +391,7 @@ describe('POST /lessons/:lessonId/answers — AI result cache (identical resubmi
 
     await inject(app, { method: 'POST', path: `/lessons/${LESSON_ID}/answers`, json: borderlineBody });
     // Slightly different borderline answer: drop 'n' from 'known' rather than from 'dinner'
-    const differentBody = { ...borderlineBody, user_answer: 'If I had know you were coming, I would have cooked dinner.' };
+    const differentBody = { ...borderlineBody, user_answer: 'She suggsted taking a taxi because it was late.' };
     await inject(app, { method: 'POST', path: `/lessons/${LESSON_ID}/answers`, json: differentBody });
 
     expect(ai.evaluateSentenceCorrection).toHaveBeenCalledTimes(2);
