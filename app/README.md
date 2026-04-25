@@ -14,14 +14,14 @@ iOS and Android targets are present in the project but require native toolchain 
 
 | Screen | Route | Description |
 |--------|-------|-------------|
-| HomeScreen | `/` | Minimal onboarding, then lesson CTA |
+| HomeScreen | `/` | Minimal onboarding, then dashboard with level selector and progress card |
 | LessonIntroScreen | `/lesson/{id}` | Fetches lesson, shows loading/error states, then rule + examples |
 | ExerciseScreen | (within lesson) | Renders one exercise; submits answer; shows inline result |
 | SummaryScreen | (within lesson) | Shows final score, conclusion, and mistake review |
 
 ## State model
 
-All state is in-memory for the current lesson session. No local storage.
+Session state (exercises, results, score) is in-memory and discarded on exit. Exercise progress (completed count per lesson) is persisted locally via `LocalProgressStore` (`lib/progress/local_progress_store.dart`) using `SharedPreferences`, so the dashboard progress card survives app restarts.
 
 - `session_id`: UUID generated at lesson start, passed with every answer submission.
 - `LessonSession`: holds lesson data, current exercise index, and results. Discarded on exit.

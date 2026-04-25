@@ -32,6 +32,8 @@ Roundups AI Assistant is a Flutter mobile app for English language practice. Use
 
 ## 3. Exercise Types (Exactly 3)
 
+Every exercise has a required `instruction` field shown to the learner in a prominent band at the top of the exercise card before the prompt. It must be a short, action-oriented sentence (e.g. "Fill in the blank with the correct verb form.").
+
 ### 3.1 `fill_blank`
 User types a word or short phrase into a blank.  
 Evaluation: deterministic exact match + normalized match (lowercase, trim, collapse whitespace).  
@@ -59,7 +61,7 @@ Fixed linear sequence. No branching. No skipping. No adaptive reordering.
 ```
 HomeScreen
   → Minimal onboarding
-      → "Start Lesson"
+      → Dashboard (level selector, progress card, "Start Lesson" CTA)
           → Lesson Intro / loading
           → Exercise 1
               → Submit answer
@@ -152,8 +154,8 @@ No other endpoints required for MVP.
 The following will NOT be built in this MVP. Any request to add them is a scope change requiring spec revision.
 
 - User authentication or accounts
-- Progress persistence across sessions
-- Resume / save state
+- Server-side progress persistence or accounts (local on-device exercise progress via SharedPreferences is in scope as of current implementation)
+- Resume / save state (lesson session cannot be resumed mid-flow)
 - Adaptive learning or difficulty adjustment
 - Branching lesson paths
 - Chat UI or conversational interface
@@ -188,9 +190,9 @@ All gates must pass before implementation begins on each component.
 - [ ] Timeout and fallback behavior confirmed (5s, default incorrect)
 
 ### Gate 3 — Flutter Client Scope
-- [ ] Screen list finalized: HomeScreen, LessonIntroScreen, ExerciseScreen (inline result), SummaryScreen
-- [ ] No local state beyond current exercise render confirmed
-- [ ] No client-side evaluation logic confirmed
+- [x] Screen list finalized: HomeScreen (onboarding + dashboard), LessonIntroScreen, ExerciseScreen (inline result), SummaryScreen
+- [x] Session state is in-memory only; `LocalProgressStore` (SharedPreferences) persists completed-exercise count per lesson for the dashboard progress card
+- [x] No client-side evaluation logic confirmed
 
 ### Gate 4 — Test Cases
 - [ ] At least 3 test cases per exercise type covering: exact match, normalized match, no match

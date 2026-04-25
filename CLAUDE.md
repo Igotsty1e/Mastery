@@ -63,6 +63,12 @@ Require explicit user intent before any destructive action.
 
 - Never commit `.mcp.json`. It may contain MCP auth headers or API keys such as the Render token.
 
+## Design Source Of Truth
+
+- `/Users/ivankhanaev/Mastery/DESIGN.md` is the canonical source of truth for all visual design decisions: color system, typography, spacing, component specs, motion, and screen-level direction.
+- Use it as the primary reference whenever evaluating, implementing, or reviewing any UI or design work.
+- Do not introduce visual styles, color values, font choices, or component patterns that contradict DESIGN.md without explicit user instruction.
+
 ## Content Source Of Truth
 
 - `/Users/ivankhanaev/Mastery/ROUNDUP_AI_CONTENT_SYSTEM.md` is the canonical source of truth for curriculum, lesson authoring, pedagogical progression, content validation, and exercise-authoring rules.

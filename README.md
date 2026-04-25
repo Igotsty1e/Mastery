@@ -4,7 +4,7 @@ Flutter app for structured English practice (web runnable locally; iOS/Android p
 
 ## What it is
 
-Users complete lessons composed of exercises. The backend decides correctness. AI is used only for borderline `sentence_correction` cases. No accounts, no persistence, no gamification.
+Users complete lessons composed of exercises. The backend decides correctness. AI is used only for borderline `sentence_correction` cases. No accounts, no server-side persistence, no gamification. Exercise progress (completed count) is stored locally on-device via SharedPreferences.
 
 ## Key constraints
 
@@ -19,6 +19,7 @@ Users complete lessons composed of exercises. The backend decides correctness. A
 
 | Document | Purpose |
 |---|---|
+| `DESIGN.md` | Canonical design system: visual language, colors, typography, components |
 | `docs/approved-spec.md` | Canonical product spec (source of truth) |
 | `docs/content-contract.md` | Exercise schemas, normalization rules, AI contract |
 | `docs/qa-golden-cases.md` | Acceptance test cases for all exercise types |

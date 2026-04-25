@@ -16,22 +16,24 @@ HomeScreen
 ### HomeScreen
 
 - Shows a minimal onboarding first: short product framing plus three bullet points about the learning model.
-- CTA 1: `Get started` dismisses onboarding into the normal home state.
-- Home state shows the lesson CTA: `Start Lesson`.
-- Launches `LessonIntroScreen` with the hardcoded `AppConfig.defaultLessonId`.
-- No lesson list, no fetch, no error state.
+- CTA: `Get started` dismisses onboarding into the dashboard state.
+- Dashboard shows a read-only level selector (A2/B1/B2/C1 chips; only B2 is active in the current MVP), a progress card with completed/total exercises, and a `Start Lesson` CTA.
+- On entering the dashboard, fetches the lesson via `GET /lessons/{lesson_id}` to populate level and total exercise count; reads locally stored completed-exercise count from `LocalProgressStore` (SharedPreferences).
+- On return from a completed lesson, re-fetches progress to refresh the card.
+- Single hardcoded lesson ID from `AppConfig.defaultLessonId`. No lesson list, no dynamic level switching.
 
 ### LessonIntroScreen
 
 - Fetches `GET /lessons/{lesson_id}` on mount.
 - Shows loading state while fetching.
 - On error: show error message + retry button.
-- On success: render lesson title, curated rule explanation, and examples. CTA: `Start Practice`.
+- On success: renders lesson title, curated rule explanation, and examples. CTA: `Start Practice`.
+- The rule explanation (`intro_rule`) is rendered as a series of `_RuleSectionCard` blocks. Paragraphs whose first line is a short header (`Important`, `Form`, `Use`, etc.) receive distinct background tints, border colors, and icons to create visual hierarchy. Plain paragraphs render as neutral cards.
 - Tapping `Start Practice` navigates to the first `ExerciseScreen`.
 
 ### ExerciseScreen
 
-Renders one exercise at a time. Layout varies by type:
+Renders one exercise at a time. Each exercise card shows an instruction band at the top (the `instruction` field from the exercise definition) that tells the learner exactly what to do before presenting the prompt. Layout varies by type:
 
 | Type | Input widget |
 |---|---|
@@ -39,6 +41,7 @@ Renders one exercise at a time. Layout varies by type:
 | `multiple_choice` | Tappable option list (radio-style); no text input |
 | `sentence_correction` | Multi-line text field; original sentence shown above |
 
+- Instruction is always shown, required, and sourced from the exercise `instruction` field.
 - Submit button disabled until non-empty input provided.
 - On submit: POST to `/lessons/{lesson_id}/answers`.
 - Show loading indicator during POST.
@@ -63,7 +66,7 @@ Renders one exercise at a time. Layout varies by type:
 
 ## State model
 
-All state is in-memory for the current lesson session. No local storage.
+Session state (current exercise, results, score) is in-memory and discarded when the lesson exits. Exercise progress (completed count per lesson) is persisted locally via `LocalProgressStore` (`app/lib/progress/local_progress_store.dart`) using `SharedPreferences`. This allows the dashboard progress card to survive app restarts.
 
 Key data classes (see `app/lib/models/`):
 
@@ -125,6 +128,6 @@ Playwright 1.58.2 + Chromium headless confirmed working against the static-build
 
 - No client-side evaluation of any kind.
 - No caching of lesson definitions across sessions.
-- No local persistence (SharedPreferences, SQLite, etc.).
+- No local persistence of lesson content, answers, or session history. The only local write is `LocalProgressStore`, which stores the completed-exercise count per lesson via SharedPreferences for the dashboard progress card.
 - No feature flags, no A/B logic.
 - No analytics calls.
