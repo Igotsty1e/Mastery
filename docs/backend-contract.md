@@ -83,14 +83,31 @@ Returns final score after all exercises submitted.
   "lesson_id": "uuid",
   "total_exercises": 10,
   "correct_count": 7,
+  "conclusion": "string",
   "answers": [
     {
       "exercise_id": "uuid",
-      "correct": true|false
+      "correct": true|false,
+      "prompt": "string|null",
+      "canonical_answer": "string|null",
+      "explanation": "string|null"
     }
-  ]
+  ],
+  "debrief": {
+    "debrief_type": "strong|mixed|needs_work",
+    "headline": "string (≤ 80 chars, teacher voice)",
+    "body": "string (2–4 sentences, ≤ 75 words target, ≤ 600 chars hard cap)",
+    "watch_out": "string|null (≤ 140 chars micro-rule)",
+    "next_step": "string|null (≤ 140 chars concrete action)",
+    "source": "ai|fallback|deterministic_perfect"
+  }
 }
 ```
+
+- `debrief` is `null` when no attempts have been recorded for this `session_id`.
+- `debrief.debrief_type` is deterministic from the score: `strong` only at full score (correct_count == total_exercises), `mixed` at ≥ 60%, `needs_work` below 60%.
+- `debrief.source` indicates the origin of the copy: `deterministic_perfect` (zero-error short-circuit, never calls AI), `ai` (provider returned a valid debrief), or `fallback` (AI was disabled, timed out, errored, or returned malformed/empty fields — deterministic copy was used instead).
+- See **Debrief Generation** below for the full contract.
 
 ---
 
@@ -176,6 +193,76 @@ Do not explain more than one thing. Do not encourage.
 ```
 
 Token budget: max 200 output tokens.
+
+---
+
+## Debrief Generation
+
+A short, teacher-voice debrief is generated on `GET /lessons/{lesson_id}/result`
+when the session has at least one attempt. It synthesizes ONE diagnostic
+pattern from the missed items rather than enumerating every mistake.
+
+### Decision flow
+
+1. **Aggregate.** The route reads all attempts for `(session_id, lesson_id)`,
+   computes `correct_count / total_exercises`, derives `debrief_type` from
+   the score bucket, and builds `missed_items` — a list of
+   `{ canonical_answer, explanation }` for incorrect attempts whose
+   exercise has a curated `feedback.explanation`.
+
+2. **Zero-error short-circuit.** If `debrief_type == "strong"`, the route
+   returns deterministic celebration copy referencing the lesson title
+   (`source = "deterministic_perfect"`) and **does not call AI**.
+
+3. **AI generation.** Otherwise, the route calls
+   `AiProvider.generateDebrief({ lessonTitle, level, targetRule,
+   correctCount, totalExercises, debriefType, missedItems })` with a
+   6-second timeout (configurable). The provider is required to return
+   structured JSON matching the `lesson_debrief` schema (strict mode).
+
+4. **Fallback.** If the AI call times out, throws, the response is empty
+   (refusal), the JSON is malformed, or the headline/body fields are
+   blank after sanitisation, the route returns a deterministic fallback
+   debrief (`source = "fallback"`) bucketed to the same `debrief_type`.
+
+5. **Cache.** Successful debriefs (any source) are cached per
+   `(session_id, lesson_id, fingerprint)` with a 4h TTL. The fingerprint
+   is the sorted list of `(exercise_id:correct)` pairs, so subsequent
+   GETs of the same session+lesson return instantly without an AI call.
+   New attempts invalidate the cache automatically.
+
+### Groundedness
+
+The AI sees only:
+- `lessonTitle`, `level`, `targetRule` (first sentence of `intro_rule`)
+- score ratio + bucket label
+- `missedItems[]` — canonical answer + curated rule explanation only
+
+The student's free-text answers are **never** sent. Authoring-supplied
+strings are JSON-quoted in the user message and the system prompt
+explicitly labels them as untrusted, so any instruction-like phrases
+inside lesson content are treated as literal text, not directives.
+
+### Constraints in the prompt
+
+- 5–9 word headline; 2–4 sentence body, ≤ 75 word target.
+- One diagnostic pattern, not item-by-item enumeration.
+- No emojis, no exclamation marks, no generic praise, no hedging.
+- `watch_out` and `next_step` are optional (≤ 14 words each, or null).
+- The model is instructed not to invent grammar facts beyond what is
+  implied by `targetRule` or `missedItems[]`.
+
+### AI provider responsibilities
+
+`OpenAiProvider.generateDebrief` posts to `/v1/responses` with
+`text.format = json_schema` (strict mode) and the `lesson_debrief`
+schema. Refusal, non-OK status, empty body, JSON parse error, or schema
+mismatch all surface as thrown errors so the route can apply the
+fallback path.
+
+The stub provider returns empty fields on purpose; the route's
+sanitiser detects this and falls back. Production debrief copy ships
+only when `AI_PROVIDER=openai` is configured.
 
 ---
 

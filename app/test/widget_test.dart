@@ -333,6 +333,73 @@ void main() {
 
       expect(find.text('4 / 5'), findsOneWidget);
     });
+
+    testWidgets('renders debrief headline, body, watch_out and next_step',
+        (tester) async {
+      await _useMobileViewport(tester);
+      const summary = LessonResultResponse(
+        lessonId: _lessonId,
+        totalExercises: 5,
+        correctCount: 3,
+        answers: [],
+        conclusion: 'Should be hidden because debrief is present.',
+        debrief: LessonDebrief(
+          debriefType: LessonDebriefType.mixed,
+          headline: 'Cue words tripped you up',
+          body:
+              'You picked the simple form when the cue pointed to duration. Reread the rule, then redo the missed items.',
+          watchOut: 'Cue word first, form second.',
+          nextStep: 'Redo the missed items below.',
+          source: 'ai',
+        ),
+      );
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: SummaryScreen(
+            correctCount: 0,
+            totalCount: 0,
+            summary: summary,
+          ),
+        ),
+      );
+      await tester.pump();
+
+      expect(find.text('Cue words tripped you up'), findsOneWidget);
+      expect(find.textContaining('You picked the simple form'), findsOneWidget);
+      expect(find.text('WATCH OUT'), findsOneWidget);
+      expect(find.text('Cue word first, form second.'), findsOneWidget);
+      expect(find.text('NEXT STEP'), findsOneWidget);
+      expect(find.text('Redo the missed items below.'), findsOneWidget);
+      // Conclusion text is suppressed when debrief is present.
+      expect(find.text('Should be hidden because debrief is present.'),
+          findsNothing);
+    });
+
+    testWidgets('falls back to conclusion when debrief is null', (tester) async {
+      await _useMobileViewport(tester);
+      const summary = LessonResultResponse(
+        lessonId: _lessonId,
+        totalExercises: 5,
+        correctCount: 3,
+        answers: [],
+        conclusion: 'Good progress. The patterns below are worth drilling.',
+      );
+
+      await tester.pumpWidget(
+        const MaterialApp(
+          home: SummaryScreen(
+            correctCount: 0,
+            totalCount: 0,
+            summary: summary,
+          ),
+        ),
+      );
+
+      expect(find.text('Good progress. The patterns below are worth drilling.'),
+          findsOneWidget);
+      expect(find.text('WATCH OUT'), findsNothing);
+    });
   });
 
   // ── ExerciseScreen → SummaryScreen navigation ─────────────────────────────

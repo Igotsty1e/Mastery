@@ -12,7 +12,15 @@ const EX_18 = 'a1b2c3d4-0001-4000-8000-000000000038'; // sentence_correction
 const SESSION_A = 'aaaaaaaa-0001-4000-8000-000000000001';
 const SESSION_B = 'bbbbbbbb-0001-4000-8000-000000000001';
 
-const stubAi: AiProvider = { evaluateSentenceCorrection: vi.fn().mockResolvedValue({ correct: false, feedback: '' }) };
+const stubAi: AiProvider = {
+  evaluateSentenceCorrection: vi.fn().mockResolvedValue({ correct: false, feedback: '' }),
+  generateDebrief: vi.fn().mockResolvedValue({
+    headline: 'Watch the contrast cues.',
+    body: 'You picked the wrong form on a few items because the cue word pointed the other way. Reread the rule and redo the missed items.',
+    watch_out: 'Cue word first, form second.',
+    next_step: 'Redo the missed items below.',
+  }),
+};
 const app = createApp(stubAi);
 
 const SUBMITTED = '2026-01-01T00:00:00.000Z';
@@ -173,6 +181,33 @@ describe('GET /lessons/:lessonId/result', () => {
     expect(res.status).toBe(200);
     expect(typeof (res.json as any).conclusion).toBe('string');
     expect((res.json as any).conclusion.length).toBeGreaterThan(0);
+  });
+
+  it('returns debrief object on the result payload when attempts exist', async () => {
+    await inject(app, {
+      method: 'POST',
+      path: `/lessons/${LESSON_ID}/answers`,
+      json: makeBody({
+        attempt_id: 'cccccccc-0001-4000-8000-0000000000a1',
+        exercise_id: EX_15,
+        exercise_type: 'multiple_choice',
+        user_answer: 'a', // wrong
+      }),
+    });
+    const res = await inject(app, { method: 'GET', path: `/lessons/${LESSON_ID}/result?session_id=${SESSION_A}` });
+    expect(res.status).toBe(200);
+    const debrief = (res.json as any).debrief;
+    expect(debrief).toBeTruthy();
+    expect(typeof debrief.debrief_type).toBe('string');
+    expect(typeof debrief.headline).toBe('string');
+    expect(typeof debrief.body).toBe('string');
+    expect(['ai', 'fallback', 'deterministic_perfect']).toContain(debrief.source);
+  });
+
+  it('debrief is null when no attempts have been recorded', async () => {
+    const res = await inject(app, { method: 'GET', path: `/lessons/${LESSON_ID}/result?session_id=${SESSION_A}` });
+    expect(res.status).toBe(200);
+    expect((res.json as any).debrief).toBeNull();
   });
 
   it('session isolation: session B cannot see session A attempts', async () => {

@@ -20,13 +20,14 @@ Roundups AI Assistant is a Flutter mobile app for English language practice. Use
 |---|---|---|
 | Client | Flutter (Dart) | Render exercises, collect input, display results |
 | Backend | REST API (deterministic) | Serve lessons, evaluate answers, enforce authority |
-| AI Layer | LLM (server-side only) | Evaluate borderline `sentence_correction`; return internal structured verdict only |
+| AI Layer | LLM (server-side only) | (1) Evaluate borderline `sentence_correction`; return internal structured verdict only. (2) Generate the post-lesson **debrief** on `GET /result` from aggregated attempt facts (canonical answer + curated explanation), grounded by deterministic bucket. Never sees student free-text answers. |
 
 **Hard rules:**
 - AI never runs on the client.
 - Client never makes its own correctness decisions.
 - AI is never called for `fill_blank` or `multiple_choice` — those are fully deterministic.
 - AI output is always validated server-side before being returned to client.
+- Debrief AI is **never** called on a perfect score (zero-error short-circuit). Failure modes (timeout, malformed JSON, refusal) fall back to deterministic copy keyed off the score bucket. The score-bucket → `debrief_type` mapping is deterministic; AI generates copy only.
 
 ---
 
@@ -74,7 +75,8 @@ HomeScreen
               → Receive result
 SummaryScreen
   → Show score (X / N correct)
-  → Show conclusion (one-line verdict, score-dependent)
+  → Show coach's-note **debrief** (AI-generated diagnostic synthesis) when present;
+    deterministic fallback copy otherwise. Hides the legacy one-line conclusion.
   → Show mistake review cards (incorrect answers only): prompt, canonical answer, explanation
   → Done button → exit
 ```

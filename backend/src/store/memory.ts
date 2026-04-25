@@ -129,9 +129,68 @@ export function recordAttempt(sessionId: string, lessonId: string, attempt: Atte
   record.attempts.set(attempt.exercise_id, attempt);
 }
 
+// Cache the AI debrief per `${sessionId}:${lessonId}`. Same TTL as the
+// session store, so it expires alongside the underlying attempts. Only the
+// AI-sourced debrief is cached — deterministic perfect-score and fallback
+// copies are cheap to recompute and depend on lesson title only.
+interface DebriefCacheEntry {
+  result: unknown;
+  fingerprint: string;
+  lastAccessMs: number;
+}
+
+const debriefCache = new Map<string, DebriefCacheEntry>();
+const MAX_DEBRIEF_CACHE = 10_000;
+const DEBRIEF_CACHE_TTL_MS = SESSION_TTL_MS;
+
+function debriefCacheKey(sessionId: string, lessonId: string): string {
+  return `${sessionId}:${lessonId}`;
+}
+
+export function getDebriefResult<T = unknown>(
+  sessionId: string,
+  lessonId: string,
+  fingerprint: string
+): T | undefined {
+  const key = debriefCacheKey(sessionId, lessonId);
+  const entry = debriefCache.get(key);
+  if (!entry) return undefined;
+  const now = Date.now();
+  if (now - entry.lastAccessMs > DEBRIEF_CACHE_TTL_MS) {
+    debriefCache.delete(key);
+    return undefined;
+  }
+  if (entry.fingerprint !== fingerprint) {
+    // Attempts changed since the cached debrief was built — invalidate so
+    // the next request rebuilds against the current outcome.
+    debriefCache.delete(key);
+    return undefined;
+  }
+  entry.lastAccessMs = now;
+  debriefCache.delete(key);
+  debriefCache.set(key, entry);
+  return entry.result as T;
+}
+
+export function setDebriefResult(
+  sessionId: string,
+  lessonId: string,
+  fingerprint: string,
+  result: unknown
+): void {
+  const key = debriefCacheKey(sessionId, lessonId);
+  const now = Date.now();
+  if (!debriefCache.has(key) && debriefCache.size >= MAX_DEBRIEF_CACHE) {
+    const oldest = (debriefCache.keys().next().value) as string | undefined;
+    if (oldest !== undefined) debriefCache.delete(oldest);
+  }
+  debriefCache.set(key, { result, fingerprint, lastAccessMs: now });
+}
+
 export function resetMemoryStore(): void {
   store.clear();
   aiCache.clear();
+  debriefCache.clear();
 }
 
 // Exposed for testing only.

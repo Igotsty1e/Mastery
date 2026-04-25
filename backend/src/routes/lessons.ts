@@ -7,10 +7,18 @@ import { evaluateMultipleChoice } from '../evaluators/multipleChoice';
 import { evaluateListeningDiscrimination } from '../evaluators/listeningDiscrimination';
 import { evaluateSentenceCorrection, evaluateSentenceCorrectionDeterministic } from '../evaluators/sentenceCorrection';
 import type { SentenceCorrectionResult } from '../evaluators/sentenceCorrection';
-import { getLessonAttempts, recordAttempt, getAiResult, setAiResult } from '../store/memory';
+import {
+  getLessonAttempts,
+  recordAttempt,
+  getAiResult,
+  setAiResult,
+  getDebriefResult,
+  setDebriefResult,
+} from '../store/memory';
 import { normalize } from '../evaluators/normalize';
 import { checkAiRateLimit, resolveRateLimitIp } from '../middleware/aiRateLimit';
 import type { AiProvider } from '../ai/interface';
+import { buildDebrief, type DebriefDto } from '../debrief/debrief';
 
 type EvaluationResult = SentenceCorrectionResult;
 
@@ -168,7 +176,7 @@ export function makeLessonsRouter(ai: AiProvider): Router {
     });
   });
 
-  router.get('/lessons/:lessonId/result', (req, res) => {
+  router.get('/lessons/:lessonId/result', async (req, res) => {
     const lessonId = req.params.lessonId;
     const session_id = req.query.session_id as string | undefined;
     const lesson = getLessonById(lessonId);
@@ -216,12 +224,36 @@ export function makeLessonsRouter(ai: AiProvider): Router {
       };
     });
 
+    let debrief: DebriefDto | null = null;
+    if (attempts.length > 0) {
+      // Fingerprint sorts attempts by exercise_id so re-submission ordering
+      // doesn't invalidate a still-valid cached debrief.
+      const fp = attempts
+        .slice()
+        .sort((a, b) => a.exercise_id.localeCompare(b.exercise_id))
+        .map(a => `${a.exercise_id}:${a.correct ? 1 : 0}`)
+        .join('|');
+
+      const cached = session_id
+        ? getDebriefResult<DebriefDto>(session_id, lessonId, fp)
+        : undefined;
+      if (cached) {
+        debrief = cached;
+      } else {
+        debrief = await buildDebrief(ai, lesson, attempts, correct_count, total_exercises);
+        if (session_id) {
+          setDebriefResult(session_id, lessonId, fp, debrief);
+        }
+      }
+    }
+
     return res.json({
       lesson_id: lessonId,
       total_exercises,
       correct_count,
       conclusion,
       answers,
+      debrief,
     });
   });
 

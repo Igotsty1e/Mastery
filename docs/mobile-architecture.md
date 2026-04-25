@@ -67,9 +67,11 @@ Renders one exercise at a time. Each exercise card shows an instruction band at 
 
 ### SummaryScreen
 
-- Receives score from session state; optionally fetches `GET /lessons/{lesson_id}/result` for enriched data.
+- Receives score from session state; optionally fetches `GET /lessons/{lesson_id}/result` for enriched data (mistake review + AI debrief).
 - Displays: "X / N correct".
-- If `conclusion` is present: shows a one-line summary verdict below the score.
+- If `debrief` is present: shows a "Coach's note" card below the score with the AI-generated `headline`, `body`, and optional `WATCH OUT` / `NEXT STEP` tail rows. The legacy one-line `conclusion` is suppressed in this case (the debrief replaces it).
+- If `debrief` is null but `conclusion` is present: falls back to the one-line conclusion in a soft card.
+- Debrief renders as a `MasteryCard` per `DESIGN.md` — paper background, soft border, no flashy AI framing. Eyebrow uses gold/primary/secondary tone keyed off `debrief_type` (strong / mixed / needs_work).
 - If any answers were incorrect: shows a "Review your mistakes" section with one card per mistake. Each card shows the exercise prompt, canonical answer, and explanation.
 - Single "Done" button → exits lesson (pop to root).
 
@@ -81,7 +83,8 @@ Key data classes (see `app/lib/models/`):
 
 - `EvaluateResponse` — result of one answer submission: `{correct, evaluationSource, explanation?, canonicalAnswer}`
 - `LessonResultAnswer` — per-exercise entry in the summary: `{exerciseId, correct, prompt?, canonicalAnswer?, explanation?}`
-- `LessonResultResponse` — full lesson result from the result endpoint: `{lessonId, totalExercises, correctCount, answers, conclusion?}`
+- `LessonDebrief` — AI-generated post-lesson note: `{debriefType, headline, body, watchOut?, nextStep?, source}` (`source` ∈ `ai | fallback | deterministic_perfect`).
+- `LessonResultResponse` — full lesson result from the result endpoint: `{lessonId, totalExercises, correctCount, answers, conclusion?, debrief?}`
 
 Session state is managed by `SessionController` / `SessionState` (see `app/lib/session/`). Discarded on exit. Client never stores `accepted_answers`, `accepted_corrections`, or `correct_option_id`.
 

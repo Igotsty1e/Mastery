@@ -30,6 +30,7 @@ class SummaryScreen extends StatelessWidget {
         : pct >= 0.6
             ? MasteryColors.actionPrimary
             : MasteryColors.error;
+    final debrief = summary?.debrief;
 
     return Scaffold(
       backgroundColor: tokens.bgApp,
@@ -54,7 +55,10 @@ class SummaryScreen extends StatelessWidget {
                 total: displayTotal,
                 scoreColor: scoreColor,
               ),
-              if (conclusion != null && conclusion.isNotEmpty) ...[
+              if (debrief != null) ...[
+                const SizedBox(height: 18),
+                _DebriefCard(debrief: debrief),
+              ] else if (conclusion != null && conclusion.isNotEmpty) ...[
                 const SizedBox(height: 18),
                 MasterySoftCard(
                   padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
@@ -205,6 +209,115 @@ class _GoldHairline extends StatelessWidget {
       width: 36,
       height: 1,
       color: color.withAlpha(180),
+    );
+  }
+}
+
+class _DebriefCard extends StatelessWidget {
+  final LessonDebrief debrief;
+  const _DebriefCard({required this.debrief});
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.masteryTokens;
+    final eyebrowVariant = switch (debrief.debriefType) {
+      LessonDebriefType.strong => SectionEyebrowVariant.gold,
+      LessonDebriefType.mixed => SectionEyebrowVariant.primary,
+      LessonDebriefType.needsWork => SectionEyebrowVariant.secondary,
+    };
+    final eyebrowLabel = switch (debrief.debriefType) {
+      LessonDebriefType.strong => 'Coach\u2019s note',
+      LessonDebriefType.mixed => 'Coach\u2019s note',
+      LessonDebriefType.needsWork => 'Coach\u2019s note',
+    };
+
+    return MasteryCard(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionEyebrow(label: eyebrowLabel, variant: eyebrowVariant),
+          const SizedBox(height: 10),
+          if (debrief.headline.isNotEmpty)
+            Text(
+              debrief.headline,
+              style: MasteryTextStyles.titleMd.copyWith(
+                color: MasteryColors.textPrimary,
+                height: 1.3,
+              ),
+            ),
+          if (debrief.body.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              debrief.body,
+              style: MasteryTextStyles.bodyMd.copyWith(
+                color: MasteryColors.textPrimary,
+                height: 1.6,
+              ),
+            ),
+          ],
+          if (debrief.watchOut != null && debrief.watchOut!.isNotEmpty) ...[
+            const SizedBox(height: 14),
+            _DebriefTail(
+              label: 'WATCH OUT',
+              text: debrief.watchOut!,
+              color: tokens.accentGoldDeep,
+            ),
+          ],
+          if (debrief.nextStep != null && debrief.nextStep!.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            _DebriefTail(
+              label: 'NEXT STEP',
+              text: debrief.nextStep!,
+              color: MasteryColors.actionPrimaryPressed,
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _DebriefTail extends StatelessWidget {
+  final String label;
+  final String text;
+  final Color color;
+
+  const _DebriefTail({
+    required this.label,
+    required this.text,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 84,
+          child: Text(
+            label,
+            style: MasteryTextStyles.mono(
+              size: 11,
+              lineHeight: 14,
+              weight: FontWeight.w600,
+              color: color,
+              letterSpacing: 1.4,
+            ),
+          ),
+        ),
+        const SizedBox(width: 4),
+        Expanded(
+          child: Text(
+            text,
+            style: MasteryTextStyles.bodySm.copyWith(
+              color: MasteryColors.textPrimary,
+              height: 1.5,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
