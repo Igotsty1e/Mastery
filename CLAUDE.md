@@ -63,6 +63,19 @@ Require explicit user intent before any destructive action.
 
 - Never commit `.mcp.json`. It may contain MCP auth headers or API keys such as the Render token.
 
+## Content Source Of Truth
+
+- `/Users/ivankhanaev/Mastery/ROUNDUP_AI_CONTENT_SYSTEM.md` is the canonical source of truth for curriculum, lesson authoring, pedagogical progression, content validation, and exercise-authoring rules.
+- Use it as the primary reference whenever generating, revising, reviewing, or expanding educational content for the app.
+- Treat it as authoritative for the **content layer**, not for unsupported runtime features.
+- If content guidance conflicts with the shipped app architecture or current MVP constraints, keep the content intent but adapt it to the technical source of truth in:
+  - `docs/approved-spec.md`
+  - `docs/backend-contract.md`
+  - `docs/mobile-architecture.md`
+- Do not let the content document silently introduce unsupported runtime features such as persistence, unlock logic, adaptive difficulty, or new exercise widgets unless those are explicitly added to the technical specs first.
+- Grammar rules, examples, and canonical explanations should be based on open educational/textbook sources and then curated into the app's JSON-compatible lesson schema.
+- AI may assist offline authoring, but shipped lesson content must remain curated, source-backed, and schema-valid.
+
 ## Orchestration Mode
 
 - Primary execution path is `Claude Code` using `GSTACK` agents and skills
