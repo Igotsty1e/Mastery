@@ -252,6 +252,23 @@ Not good for:
 - prompt must contain enough context to justify the answer
 - accepted answers must enumerate all teacher-approved valid completions
 - if the valid answer space is too wide, do not use `fill_blank`
+- every `fill_blank` prompt must include the **base form** of the target
+  verb in parentheses immediately after the blank, e.g.
+  `"She _____ (live) here since 2019."`. This is the canonical EFL gap-fill
+  convention (Cambridge / Murphy / Swan): it removes lexical ambiguity (the
+  learner does not have to guess *which* verb is being tested) while
+  preserving the grammatical decision (the learner still has to choose
+  tense, aspect, or form). Validated by the
+  `english-grammar-methodologist` skill canon, `references/exercise-types.md
+  §C1 Gap-fill recipe step 2`.
+- the verb hint must be the **base form** (`work`, not `worked`); supplying
+  an inflected form would defeat the test of grammatical retrieval.
+- the verb hint may be replaced by an image with role `disambiguation`
+  (image carries the lexical content, the learner derives the verb from the
+  picture and applies the grammar). This is the only allowed substitute,
+  and only when the image cannot also reveal tense, aspect, completion, or
+  any other dimension under test (`§2.9 acceptance criteria`,
+  `§6.6.1 image+audio edge case`).
 
 ### Preferred difficulty profile
 

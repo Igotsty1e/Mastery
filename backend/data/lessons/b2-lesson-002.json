@@ -13,21 +13,21 @@
     {
       "exercise_id": "a1b2c3d4-0002-4000-8000-000000000031",
       "type": "fill_blank",
-      "instruction": "Complete the gap with the correct verb form (one or two words).",
-      "prompt": "I ___ working here for five years.",
-      "accepted_answers": ["have been", "'ve been"],
+      "instruction": "Complete the gap with the correct form of the verb in brackets.",
+      "prompt": "I ___ (work) here for five years.",
+      "accepted_answers": ["have been working", "'ve been working"],
       "feedback": {
-        "explanation": "You may write only one verb, but the correct answer is 'have been' because the action is ongoing and the duration matters. If you see 'for + a period of time' with an action that continues now → usually use 'have / has been + verb-ing'."
+        "explanation": "You wrote a simpler form, but the correct answer is 'have been working' because the action started five years ago and continues now. If you see 'for + a period of time' with an ongoing action → usually use 'have / has been + verb-ing'."
       }
     },
     {
       "exercise_id": "a1b2c3d4-0002-4000-8000-000000000032",
       "type": "fill_blank",
-      "instruction": "Complete the gap with the correct verb form (one or two words).",
-      "prompt": "She ___ studying English since 2020.",
-      "accepted_answers": ["has been", "'s been"],
+      "instruction": "Complete the gap with the correct form of the verb in brackets.",
+      "prompt": "She ___ (study) English since 2020.",
+      "accepted_answers": ["has been studying", "'s been studying"],
       "feedback": {
-        "explanation": "You may pick a simple form, but the correct answer is 'has been' because the action started in 2020 and is still ongoing. If you see 'since + a starting point' with a continuing action → usually use 'have / has been + verb-ing'."
+        "explanation": "You wrote 'studied' or a simpler form, but the correct answer is 'has been studying' because the action started in 2020 and is still ongoing now. If you see 'since + a starting point' with a continuing action → usually use 'have / has been + verb-ing'."
       }
     },
     {
@@ -49,11 +49,11 @@
     {
       "exercise_id": "a1b2c3d4-0002-4000-8000-000000000034",
       "type": "fill_blank",
-      "instruction": "Complete the gap with the correct verb form (one or two words).",
-      "prompt": "We ___ all the windows. They sparkle now.",
+      "instruction": "Complete the gap with the correct form of the verb in brackets.",
+      "prompt": "We ___ (clean) all the windows. They sparkle now.",
       "accepted_answers": ["have cleaned", "'ve cleaned"],
       "feedback": {
-        "explanation": "You may pick a continuous form, but the correct answer is 'have cleaned' because the result is what matters — they sparkle now. If the sentence highlights the completed outcome → usually use 'have / has + past participle'."
+        "explanation": "You wrote 'have been cleaning' or a simpler form, but the correct answer is 'have cleaned' because the result is what matters — they sparkle now. If the sentence highlights the completed outcome → usually use 'have / has + past participle'."
       }
     },
     {
