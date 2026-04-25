@@ -390,8 +390,8 @@ describe('POST /lessons/:lessonId/answers — AI result cache (identical resubmi
     const app = createApp(ai);
 
     await inject(app, { method: 'POST', path: `/lessons/${LESSON_ID}/answers`, json: borderlineBody });
-    // Slightly different borderline answer (still borderline, different normalized form)
-    const differentBody = { ...borderlineBody, user_answer: 'If I had known you were coming, I would have cooked dinne.' };
+    // Slightly different borderline answer: drop 'n' from 'known' rather than from 'dinner'
+    const differentBody = { ...borderlineBody, user_answer: 'If I had know you were coming, I would have cooked dinner.' };
     await inject(app, { method: 'POST', path: `/lessons/${LESSON_ID}/answers`, json: differentBody });
 
     expect(ai.evaluateSentenceCorrection).toHaveBeenCalledTimes(2);
