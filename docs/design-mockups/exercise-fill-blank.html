@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=390, initial-scale=1" />
+  <title>Mastery — Fill the blank</title>
+  <link rel="stylesheet" href="tokens.css" />
+  <style>
+    .ex-top {
+      background: var(--bg-app);
+      border-bottom: 1px solid var(--border-soft);
+      padding: 8px 16px 0 8px;
+    }
+    .ex-top__row { display: flex; align-items: center; justify-content: space-between; }
+    .ex-top__counter { font-family: var(--ff-mono); font-size: 14px; letter-spacing: 0.04em; color: var(--text-secondary); }
+    .ex-top__counter strong { color: var(--text-primary); font-weight: 600; }
+    .ex-top__progress { margin-top: 12px; height: 4px; background: var(--bg-surface-alt); border-radius: 0; }
+    .ex-top__progress .progress__fill { border-radius: 0; background: var(--action-primary); }
+
+    .ex {
+      flex: 1;
+      display: flex; flex-direction: column;
+      gap: 16px;
+      padding: 18px 24px 12px;
+      background: var(--bg-app);
+    }
+
+    .instruction {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 12px 14px;
+      background: var(--bg-primary-soft);
+      border: 1px solid rgba(176, 122, 132, 0.22);
+      border-radius: var(--r-md);
+    }
+    .instruction__icon { flex: 0 0 22px; width: 22px; height: 22px; color: var(--action-primary-pressed); margin-top: 1px; }
+    .instruction__text {
+      font: var(--t-body-md);
+      font-weight: 600;
+      color: var(--action-primary-pressed);
+      line-height: 1.45;
+      margin: 0;
+    }
+
+    .exercise-card {
+      padding: 22px;
+      background: var(--bg-raised);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--r-lg);
+      box-shadow: var(--shadow-card);
+    }
+    .prompt-text {
+      font: var(--t-body-lg);
+      font-weight: 500;
+      line-height: 1.55;
+      color: var(--text-primary);
+      margin: 0 0 18px;
+    }
+    .prompt-text .blank {
+      display: inline-block;
+      min-width: 64px;
+      padding: 0 6px;
+      margin: 0 2px;
+      border-bottom: 2px dashed var(--border-strong);
+      color: var(--text-tertiary);
+      letter-spacing: 0.06em;
+      font-size: 14px;
+      vertical-align: 2px;
+    }
+
+    .answer-input {
+      position: relative;
+      height: 56px;
+      padding: 0 18px;
+      background: var(--bg-surface);
+      border: 1.5px solid var(--action-primary);
+      border-radius: var(--r-md);
+      box-shadow: 0 0 0 4px rgba(176, 122, 132, 0.12);
+      display: flex; align-items: center;
+      transition: box-shadow var(--d-short) var(--ease-move);
+    }
+    .answer-input__value {
+      font: var(--t-title-sm);
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: -0.005em;
+    }
+    .caret {
+      display: inline-block;
+      width: 2px;
+      height: 22px;
+      margin-left: 1px;
+      background: var(--action-primary);
+      vertical-align: -4px;
+      animation: blink 1.05s steps(2, start) infinite;
+    }
+    @keyframes blink { to { visibility: hidden; } }
+    .answer-input__hint {
+      margin-left: auto;
+      font: var(--t-label-sm);
+      font-weight: 600;
+      color: var(--text-tertiary);
+      letter-spacing: 0.04em;
+    }
+
+    .helper {
+      margin: 8px 4px 0;
+      font: var(--t-label-sm);
+      font-weight: 500;
+      color: var(--text-tertiary);
+    }
+
+    .ex__cta { margin-top: 6px; }
+
+    /* ---------- iOS keyboard mock ---------- */
+    .keyboard {
+      flex: 0 0 auto;
+      background: #D1D4D9;
+      padding: 6px 4px 8px;
+      display: flex; flex-direction: column;
+      gap: 10px;
+      position: relative;
+    }
+    .kb-suggest {
+      display: flex; align-items: center;
+      height: 38px;
+      background: #D1D4D9;
+      padding: 0 6px;
+      gap: 1px;
+    }
+    .kb-suggest__chip {
+      flex: 1;
+      text-align: center;
+      font: var(--t-body-md);
+      color: #1d1d1f;
+      padding: 6px 8px;
+    }
+    .kb-suggest__chip + .kb-suggest__chip { border-left: 0.5px solid rgba(60, 60, 67, 0.29); }
+    .kb-suggest__chip--strong { font-weight: 700; background: rgba(255, 255, 255, 0.6); border-radius: 5px; }
+    .kb-row {
+      display: flex; gap: 6px;
+      justify-content: center;
+      padding: 0 4px;
+    }
+    .kb-row:nth-child(3) { padding: 0 22px; } /* a-row */
+    .kb-key {
+      flex: 1;
+      height: 42px;
+      background: #FBFBFD;
+      border-radius: 5px;
+      display: flex; align-items: center; justify-content: center;
+      font: var(--t-title-md);
+      font-weight: 400;
+      color: #1d1d1f;
+      box-shadow: 0 1px 0 rgba(0, 0, 0, 0.35);
+      max-width: 36px;
+    }
+    .kb-key--mod {
+      background: #ABB2BB;
+      color: #1d1d1f;
+      max-width: 44px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .kb-row--bottom {
+      padding: 0 4px;
+      gap: 6px;
+    }
+    .kb-row--bottom .kb-key {
+      max-width: none;
+    }
+    .kb-key--space {
+      flex: 4;
+      max-width: none;
+      font-size: 14px;
+      color: #1d1d1f;
+    }
+    .kb-key--special {
+      flex: 1.4;
+      max-width: none;
+      background: #ABB2BB;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .kb-key--return {
+      flex: 1.6;
+      max-width: none;
+      background: var(--action-primary);
+      color: #FFFDFC;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    .kb-bar {
+      height: 5px;
+      width: 134px;
+      margin: 4px auto 0;
+      border-radius: var(--r-pill);
+      background: #1d1d1f;
+      opacity: 0.85;
+    }
+  </style>
+</head>
+<body>
+  <div class="screen">
+    <div class="screen__safe-top">
+      <span>9:41</span>
+      <span class="battery"><span class="signal-dot"></span><span class="signal-dot"></span><span class="signal-dot"></span> 􀙇 100%</span>
+    </div>
+
+    <div class="ex-top">
+      <div class="ex-top__row">
+        <button class="icon-btn" aria-label="Back" style="background:transparent;border:0;width:40px;height:40px;display:flex;align-items:center;justify-content:center;color:var(--text-primary);">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+        </button>
+        <span class="ex-top__counter"><strong>1</strong> / 10</span>
+        <button class="icon-btn" aria-label="Quit" style="background:transparent;border:0;width:40px;height:40px;display:flex;align-items:center;justify-content:center;color:var(--text-tertiary);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="6" y1="6" x2="18" y2="18"/>
+            <line x1="6" y1="18" x2="18" y2="6"/>
+          </svg>
+        </button>
+      </div>
+      <div class="ex-top__progress" aria-label="Lesson progress">
+        <div class="progress__fill" style="width:10%"></div>
+      </div>
+    </div>
+
+    <div class="ex">
+      <div class="instruction">
+        <span class="instruction__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M9 12l2 2 4-4"/>
+          </svg>
+        </span>
+        <p class="instruction__text">Complete the gap with the correct verb form.</p>
+      </div>
+
+      <div class="exercise-card">
+        <p class="prompt-text">I really <strong style="color:var(--action-primary-pressed);font-weight:700">enjoy</strong> <span class="blank">_____</span> new restaurants when I travel.</p>
+
+        <div class="answer-input" role="textbox" aria-label="Type your answer">
+          <span class="answer-input__value">tryi<span class="caret"></span></span>
+          <span class="answer-input__hint">en · US</span>
+        </div>
+        <p class="helper">Tip: think about which form follows <strong style="color:var(--text-secondary)">enjoy</strong>.</p>
+      </div>
+
+      <div class="ex__cta">
+        <button class="btn btn--primary btn--block">Submit</button>
+      </div>
+    </div>
+
+    <div class="keyboard" aria-hidden="true">
+      <div class="kb-suggest">
+        <span class="kb-suggest__chip kb-suggest__chip--strong">tryi</span>
+        <span class="kb-suggest__chip">trying</span>
+        <span class="kb-suggest__chip">try</span>
+      </div>
+      <div class="kb-row">
+        <span class="kb-key">q</span><span class="kb-key">w</span><span class="kb-key">e</span>
+        <span class="kb-key">r</span><span class="kb-key">t</span><span class="kb-key">y</span>
+        <span class="kb-key">u</span><span class="kb-key">i</span><span class="kb-key">o</span><span class="kb-key">p</span>
+      </div>
+      <div class="kb-row">
+        <span class="kb-key">a</span><span class="kb-key">s</span><span class="kb-key">d</span>
+        <span class="kb-key">f</span><span class="kb-key">g</span><span class="kb-key">h</span>
+        <span class="kb-key">j</span><span class="kb-key">k</span><span class="kb-key">l</span>
+      </div>
+      <div class="kb-row">
+        <span class="kb-key kb-key--mod">⇧</span>
+        <span class="kb-key">z</span><span class="kb-key">x</span><span class="kb-key">c</span>
+        <span class="kb-key">v</span><span class="kb-key">b</span><span class="kb-key">n</span><span class="kb-key">m</span>
+        <span class="kb-key kb-key--mod">⌫</span>
+      </div>
+      <div class="kb-row kb-row--bottom">
+        <span class="kb-key kb-key--special">123</span>
+        <span class="kb-key kb-key--mod" style="flex:0.8">🌐</span>
+        <span class="kb-key kb-key--space">space</span>
+        <span class="kb-key kb-key--return">return</span>
+      </div>
+      <div class="kb-bar"></div>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
 
+import '../theme/mastery_theme.dart';
+
 class FillBlankWidget extends StatefulWidget {
   final String prompt;
   final bool enabled;
-  final void Function(String answer) onSubmit;
+  final ValueChanged<String> onChanged;
+  final VoidCallback? onSubmitField;
 
   const FillBlankWidget({
     super.key,
     required this.prompt,
-    required this.onSubmit,
+    required this.onChanged,
     this.enabled = true,
+    this.onSubmitField,
   });
 
   @override
@@ -17,7 +21,14 @@ class FillBlankWidget extends StatefulWidget {
 }
 
 class _FillBlankWidgetState extends State<FillBlankWidget> {
-  final _controller = TextEditingController();
+  late final TextEditingController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController();
+    _controller.addListener(() => widget.onChanged(_controller.text.trim()));
+  }
 
   @override
   void dispose() {
@@ -25,54 +36,78 @@ class _FillBlankWidgetState extends State<FillBlankWidget> {
     super.dispose();
   }
 
-  void _submit() {
-    final answer = _controller.text.trim();
-    if (answer.isNotEmpty) widget.onSubmit(answer);
-  }
-
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          widget.prompt,
-          style: theme.textTheme.bodyLarge?.copyWith(height: 1.5),
-        ),
-        const SizedBox(height: 20),
+        _PromptWithBlank(prompt: widget.prompt),
+        const SizedBox(height: 18),
         TextField(
           controller: _controller,
           enabled: widget.enabled,
           autofocus: true,
           textInputAction: TextInputAction.done,
-          onSubmitted: (_) => _submit(),
-          decoration: InputDecoration(
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-            ),
-            hintText: 'Type your answer',
-            contentPadding: const EdgeInsets.symmetric(
-              horizontal: 16,
-              vertical: 14,
-            ),
+          onSubmitted: (_) => widget.onSubmitField?.call(),
+          style: MasteryTextStyles.titleSm.copyWith(
+            color: MasteryColors.textPrimary,
+            fontWeight: FontWeight.w600,
           ),
-        ),
-        const SizedBox(height: 20),
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton(
-            onPressed: widget.enabled ? _submit : null,
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
+          decoration: InputDecoration(
+            hintText: 'Type your answer',
+            hintStyle: MasteryTextStyles.bodyMd.copyWith(
+              color: MasteryColors.textTertiary,
             ),
-            child: const Text('Submit', style: TextStyle(fontSize: 16)),
+            contentPadding: const EdgeInsets.symmetric(
+                horizontal: 18, vertical: 16),
           ),
         ),
       ],
     );
+  }
+}
+
+/// Renders the prompt with the literal "___" sequence replaced by a styled
+/// inline blank, so it reads naturally with the surrounding sentence.
+class _PromptWithBlank extends StatelessWidget {
+  final String prompt;
+  const _PromptWithBlank({required this.prompt});
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.masteryTokens;
+    final base = MasteryTextStyles.bodyLg.copyWith(
+      height: 1.55,
+      color: MasteryColors.textPrimary,
+    );
+
+    // Render the prompt as a single Text.rich. The literal `___` stays in the
+    // plain-text layer so widget-test finders that match prompt strings still
+    // succeed; visually the blank gets a muted color and tighter spacing.
+    final pattern = RegExp(r'_{2,}');
+    final matches = pattern.allMatches(prompt).toList();
+    if (matches.isEmpty) {
+      return Text(prompt, style: base);
+    }
+    final spans = <InlineSpan>[];
+    var cursor = 0;
+    for (final m in matches) {
+      if (m.start > cursor) {
+        spans.add(TextSpan(text: prompt.substring(cursor, m.start)));
+      }
+      spans.add(TextSpan(
+        text: prompt.substring(m.start, m.end),
+        style: TextStyle(
+          color: tokens.textTertiary,
+          letterSpacing: 2,
+          fontFeatures: const [FontFeature.tabularFigures()],
+        ),
+      ));
+      cursor = m.end;
+    }
+    if (cursor < prompt.length) {
+      spans.add(TextSpan(text: prompt.substring(cursor)));
+    }
+    return Text.rich(TextSpan(style: base, children: spans));
   }
 }

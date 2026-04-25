@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 
+import '../theme/mastery_theme.dart';
+
 class SentenceCorrectionWidget extends StatefulWidget {
   final String prompt;
   final bool enabled;
-  final void Function(String corrected) onSubmit;
+  final ValueChanged<String> onChanged;
 
   const SentenceCorrectionWidget({
     super.key,
     required this.prompt,
-    required this.onSubmit,
+    required this.onChanged,
     this.enabled = true,
   });
 
@@ -23,8 +25,12 @@ class _SentenceCorrectionWidgetState extends State<SentenceCorrectionWidget> {
   @override
   void initState() {
     super.initState();
-    // Pre-fill with the original sentence so the user edits in place.
     _controller = TextEditingController(text: widget.prompt);
+    _controller.addListener(() => widget.onChanged(_controller.text.trim()));
+    // Emit initial value so the screen can enable Submit immediately.
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => widget.onChanged(_controller.text.trim()),
+    );
   }
 
   @override
@@ -33,30 +39,68 @@ class _SentenceCorrectionWidgetState extends State<SentenceCorrectionWidget> {
     super.dispose();
   }
 
-  void _submit() {
-    final answer = _controller.text.trim();
-    if (answer.isNotEmpty) widget.onSubmit(answer);
-  }
-
   @override
   Widget build(BuildContext context) {
+    final tokens = context.masteryTokens;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        Container(
+          padding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: tokens.bgSurfaceAlt,
+            borderRadius: BorderRadius.circular(MasteryRadii.sm),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 3),
+                child: Text(
+                  'ORIGINAL',
+                  style: MasteryTextStyles.labelSm.copyWith(
+                    color: tokens.textTertiary,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  widget.prompt,
+                  style: MasteryTextStyles.bodySm.copyWith(
+                    color: MasteryColors.textSecondary,
+                    fontStyle: FontStyle.italic,
+                    height: 1.5,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 14),
         TextField(
           controller: _controller,
           enabled: widget.enabled,
           autofocus: true,
           maxLines: 3,
-          textInputAction: TextInputAction.done,
-          decoration: const InputDecoration(border: OutlineInputBorder()),
-        ),
-        const SizedBox(height: 20),
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton(
-            onPressed: widget.enabled ? _submit : null,
-            child: const Text('Submit'),
+          style: MasteryTextStyles.bodyMd.copyWith(
+            color: MasteryColors.textPrimary,
+            height: 1.55,
+          ),
+          decoration: InputDecoration(
+            labelText: 'Your correction',
+            labelStyle: MasteryTextStyles.labelSm.copyWith(
+              color: MasteryColors.actionPrimary,
+              letterSpacing: 0.6,
+            ),
+            floatingLabelStyle: MasteryTextStyles.labelSm.copyWith(
+              color: MasteryColors.actionPrimary,
+              letterSpacing: 0.6,
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16, vertical: 14),
           ),
         ),
       ],

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'api/api_client.dart';
 import 'config.dart';
 import 'screens/home_screen.dart';
+import 'theme/mastery_theme.dart';
 
 class MasteryApp extends StatelessWidget {
   const MasteryApp({super.key});
@@ -14,10 +15,8 @@ class MasteryApp extends StatelessWidget {
       dispose: (_, client) => client.dispose(),
       child: MaterialApp(
         title: 'Mastery',
-        theme: ThemeData(
-          colorSchemeSeed: const Color(0xFF2563EB),
-          useMaterial3: true,
-        ),
+        debugShowCheckedModeBanner: false,
+        theme: MasteryTheme.light(),
         home: const HomeScreen(),
       ),
     );

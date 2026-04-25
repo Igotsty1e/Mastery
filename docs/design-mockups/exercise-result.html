@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=390, initial-scale=1" />
+  <title>Mastery — Exercise (result)</title>
+  <link rel="stylesheet" href="tokens.css" />
+  <style>
+    .ex-top {
+      background: var(--bg-app);
+      border-bottom: 1px solid var(--border-soft);
+      padding: 8px 16px 0 8px;
+    }
+    .ex-top__row {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .ex-top__counter {
+      font-family: var(--ff-mono);
+      font-size: 14px;
+      letter-spacing: 0.04em;
+      color: var(--text-secondary);
+    }
+    .ex-top__counter strong { color: var(--text-primary); font-weight: 600; }
+    .ex-top__progress {
+      margin-top: 12px;
+      height: 4px;
+      background: var(--bg-surface-alt);
+      border-radius: 0;
+    }
+    .ex-top__progress .progress__fill {
+      border-radius: 0;
+      background: var(--action-primary);
+    }
+
+    .ex {
+      flex: 1;
+      display: flex; flex-direction: column;
+      gap: 18px;
+      padding: 22px 24px 28px;
+      background: var(--bg-app);
+    }
+
+    .instruction {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 14px 16px;
+      background: var(--bg-primary-soft);
+      border: 1px solid rgba(176, 122, 132, 0.22);
+      border-radius: var(--r-md);
+    }
+    .instruction__icon {
+      flex: 0 0 22px;
+      width: 22px; height: 22px;
+      color: var(--action-primary-pressed);
+      margin-top: 1px;
+    }
+    .instruction__text {
+      font: var(--t-body-md);
+      font-weight: 600;
+      color: var(--action-primary-pressed);
+      line-height: 1.45;
+      margin: 0;
+    }
+
+    .exercise-card {
+      padding: 24px;
+      background: var(--bg-raised);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--r-lg);
+      box-shadow: var(--shadow-card);
+    }
+    .prompt {
+      font: var(--t-title-md);
+      font-weight: 600;
+      line-height: 1.4;
+      color: var(--text-primary);
+      margin: 0 0 18px;
+    }
+    .prompt em.fill {
+      color: var(--success);
+      font-style: italic;
+      font-weight: 700;
+      padding: 0 4px;
+      border-bottom: 2px solid var(--success);
+      background: var(--success-soft);
+      border-radius: 2px;
+    }
+
+    .options { display: flex; flex-direction: column; gap: 10px; }
+    .option {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 16px;
+      background: var(--bg-surface);
+      border: 1.5px solid var(--border-soft);
+      border-radius: var(--r-md);
+      opacity: 0.55;
+    }
+    .option__radio {
+      flex: 0 0 22px;
+      width: 22px; height: 22px;
+      border: 1.5px solid var(--border-strong);
+      border-radius: var(--r-pill);
+      display: flex; align-items: center; justify-content: center;
+      background: var(--bg-app);
+    }
+    .option__letter {
+      font-family: var(--ff-mono);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    .option__text {
+      font: var(--t-body-md);
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+    .option--correct {
+      background: var(--success-soft);
+      border-color: var(--success);
+      opacity: 1;
+    }
+    .option--correct .option__radio {
+      background: var(--success);
+      border-color: var(--success);
+    }
+    .option--correct .option__letter { color: var(--success-soft); }
+    .option--correct .option__text { color: var(--success); font-weight: 700; }
+    .option--correct .option__check {
+      margin-left: auto;
+      color: var(--success);
+    }
+
+    .result {
+      padding: 20px 22px;
+      border-radius: var(--r-md);
+      background: var(--success-soft);
+      border: 1px solid rgba(78, 124, 104, 0.30);
+    }
+    .result__head {
+      display: flex; align-items: center; gap: 10px;
+      margin-bottom: 10px;
+    }
+    .result__icon {
+      width: 28px; height: 28px;
+      border-radius: var(--r-pill);
+      background: var(--success);
+      color: var(--success-soft);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .result__label {
+      font: var(--t-title-sm);
+      font-weight: 700;
+      color: var(--success);
+      letter-spacing: -0.005em;
+    }
+    .result__why {
+      font: var(--t-body-md);
+      color: var(--text-primary);
+      line-height: 1.6;
+      margin: 0;
+    }
+    .result__why strong {
+      color: var(--success);
+      font-weight: 700;
+    }
+
+    .ex__cta { margin-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="screen">
+    <div class="screen__safe-top">
+      <span>9:41</span>
+      <span class="battery"><span class="signal-dot"></span><span class="signal-dot"></span><span class="signal-dot"></span> 􀙇 100%</span>
+    </div>
+
+    <div class="ex-top">
+      <div class="ex-top__row">
+        <button class="icon-btn" aria-label="Back" style="background:transparent;border:0;width:40px;height:40px;display:flex;align-items:center;justify-content:center;color:var(--text-primary);">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+        </button>
+        <span class="ex-top__counter"><strong>5</strong> / 10</span>
+        <button class="icon-btn" aria-label="Quit" style="background:transparent;border:0;width:40px;height:40px;display:flex;align-items:center;justify-content:center;color:var(--text-tertiary);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="6" y1="6" x2="18" y2="18"/>
+            <line x1="6" y1="18" x2="18" y2="6"/>
+          </svg>
+        </button>
+      </div>
+      <div class="ex-top__progress" aria-label="Lesson progress">
+        <div class="progress__fill" style="width:50%"></div>
+      </div>
+    </div>
+
+    <div class="ex">
+      <div class="instruction">
+        <span class="instruction__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M9 12l2 2 4-4"/>
+          </svg>
+        </span>
+        <p class="instruction__text">Choose the correct option.</p>
+      </div>
+
+      <div class="exercise-card">
+        <h2 class="prompt">He keeps <em class="fill">complaining</em> about the same problem.</h2>
+
+        <div class="options">
+          <label class="option">
+            <span class="option__radio"><span class="option__letter">A</span></span>
+            <span class="option__text">complain</span>
+          </label>
+          <label class="option option--correct">
+            <span class="option__radio"><span class="option__letter">B</span></span>
+            <span class="option__text">complaining</span>
+            <span class="option__check" aria-hidden="true">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 12l5 5 9-11"/>
+              </svg>
+            </span>
+          </label>
+          <label class="option">
+            <span class="option__radio"><span class="option__letter">C</span></span>
+            <span class="option__text">to complain</span>
+          </label>
+          <label class="option">
+            <span class="option__radio"><span class="option__letter">D</span></span>
+            <span class="option__text">complained</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="result">
+        <div class="result__head">
+          <span class="result__icon" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M5 12l5 5 9-11"/>
+            </svg>
+          </span>
+          <span class="result__label">Correct</span>
+        </div>
+        <p class="result__why">After <strong>keep</strong>, we normally use the <strong>-ing form</strong> to show continuation. The pattern is <strong>keep&nbsp;+&nbsp;verb-ing</strong>, so <strong>complaining</strong> is correct.</p>
+      </div>
+
+      <div class="ex__cta">
+        <button class="btn btn--primary btn--block">
+          Next
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:4px">
+            <polyline points="9 6 15 12 9 18"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="screen__home-indicator"></div>
+  </div>
+</body>
+</html>

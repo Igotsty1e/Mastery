@@ -1,0 +1,222 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=390, initial-scale=1" />
+  <title>Mastery — Summary</title>
+  <link rel="stylesheet" href="tokens.css" />
+  <style>
+    .summary {
+      flex: 1;
+      display: flex; flex-direction: column;
+      padding: 24px 24px 32px;
+      gap: 18px;
+      background: var(--bg-app);
+    }
+
+    .summary__head {
+      text-align: center;
+      margin-top: 4px;
+    }
+    .summary__title {
+      font: var(--t-headline-md);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+      letter-spacing: -0.01em;
+    }
+    .summary__lesson {
+      margin: 6px 0 0;
+      font: var(--t-body-sm);
+      color: var(--text-secondary);
+    }
+
+    .score-hero {
+      margin: 14px 0 6px;
+      padding: 36px 24px 28px;
+      border-radius: var(--r-xl);
+      background:
+        radial-gradient(80% 80% at 50% 0%, rgba(244, 231, 206, 0.45), transparent 60%),
+        var(--bg-raised);
+      border: 1px solid var(--border-soft);
+      box-shadow: var(--shadow-card);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .score-hero::before {
+      content: '';
+      position: absolute;
+      top: 18px; left: 50%;
+      transform: translateX(-50%);
+      width: 36px; height: 1px;
+      background: var(--accent-gold);
+      opacity: 0.7;
+    }
+    .score-hero::after {
+      content: '';
+      position: absolute;
+      bottom: 64px; left: 50%;
+      transform: translateX(-50%);
+      width: 36px; height: 1px;
+      background: var(--accent-gold);
+      opacity: 0.7;
+    }
+
+    .score-hero__num {
+      font-family: var(--ff-display);
+      font-weight: 600;
+      font-size: 88px;
+      line-height: 1.0;
+      letter-spacing: -0.04em;
+      color: var(--action-primary);
+      font-variation-settings: "opsz" 144;
+    }
+    .score-hero__num small {
+      font-size: 44px;
+      color: var(--text-tertiary);
+      font-weight: 500;
+      margin: 0 6px;
+    }
+    .score-hero__label {
+      margin-top: 6px;
+      font-family: var(--ff-mono);
+      font-size: 13px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+    }
+
+    .conclusion {
+      padding: 18px 22px;
+      background: var(--bg-primary-soft);
+      border-radius: var(--r-md);
+      border: 1px solid rgba(176, 122, 132, 0.22);
+      font: var(--t-body-md);
+      line-height: 1.6;
+      color: var(--text-primary);
+    }
+    .conclusion strong { color: var(--action-primary-pressed); font-weight: 700; }
+
+    .review {
+      margin-top: 6px;
+    }
+    .review__head {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-bottom: 12px;
+    }
+    .review__title {
+      font: var(--t-title-md);
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .review__count {
+      font-family: var(--ff-mono);
+      font-size: 13px;
+      color: var(--text-tertiary);
+    }
+
+    .mistake {
+      padding: 18px 20px;
+      background: var(--bg-raised);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--r-md);
+      box-shadow: 0 1px 0 rgba(43, 35, 38, 0.02);
+    }
+    .mistake + .mistake { margin-top: 10px; }
+    .mistake__prompt {
+      font: var(--t-body-md);
+      color: var(--text-secondary);
+      font-style: italic;
+      line-height: 1.5;
+      margin: 0 0 12px;
+    }
+    .mistake__row {
+      display: flex; align-items: baseline; gap: 8px;
+      margin-bottom: 8px;
+    }
+    .mistake__label {
+      font: var(--t-label-sm);
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      flex: 0 0 auto;
+    }
+    .mistake__answer {
+      font: var(--t-body-md);
+      font-weight: 600;
+      color: var(--action-primary-pressed);
+    }
+    .mistake__answer em {
+      background: rgba(176, 122, 132, 0.15);
+      font-style: normal;
+      padding: 0 4px;
+      border-radius: 4px;
+    }
+    .mistake__why {
+      margin: 8px 0 0;
+      font: var(--t-body-sm);
+      color: var(--text-secondary);
+      line-height: 1.55;
+    }
+
+    .summary__cta { margin-top: auto; padding-top: 12px; }
+  </style>
+</head>
+<body>
+  <div class="screen">
+    <div class="screen__safe-top">
+      <span>9:41</span>
+      <span class="battery"><span class="signal-dot"></span><span class="signal-dot"></span><span class="signal-dot"></span> 􀙇 100%</span>
+    </div>
+
+    <div class="summary">
+      <div class="summary__head">
+        <h1 class="summary__title">Lesson Complete</h1>
+        <p class="summary__lesson">Verbs Followed by -ing · B2</p>
+      </div>
+
+      <div class="score-hero">
+        <div class="score-hero__num">8<small>/</small>10</div>
+        <div class="score-hero__label">correct</div>
+      </div>
+
+      <div class="conclusion">
+        <strong>Strong work on -ing patterns.</strong> Watch out for sentences using <em>mind</em> and <em>suggest</em> — both want the -ing form, never <em>to + infinitive</em>.
+      </div>
+
+      <div class="review">
+        <div class="review__head">
+          <h2 class="review__title">Review your mistakes</h2>
+          <span class="review__count">2</span>
+        </div>
+
+        <div class="mistake">
+          <p class="mistake__prompt">"She suggested to take a taxi because it was late."</p>
+          <div class="mistake__row">
+            <span class="mistake__label">Answer</span>
+            <span class="mistake__answer">She <em>suggested taking</em> a taxi because it was late.</span>
+          </div>
+          <p class="mistake__why">After <strong>suggest</strong>, do not use <em>to + infinitive</em> when another verb follows directly. Use the -ing form: <strong>suggest taking</strong>.</p>
+        </div>
+
+        <div class="mistake">
+          <p class="mistake__prompt">"I don't mind to wait for a few minutes."</p>
+          <div class="mistake__row">
+            <span class="mistake__label">Answer</span>
+            <span class="mistake__answer">I don't <em>mind waiting</em> for a few minutes.</span>
+          </div>
+          <p class="mistake__why"><strong>Mind</strong> is followed by the -ing form, not <em>to + infinitive</em>. The correct pattern is <strong>mind waiting</strong>.</p>
+        </div>
+      </div>
+
+      <div class="summary__cta">
+        <button class="btn btn--primary btn--block">Done</button>
+      </div>
+    </div>
+
+    <div class="screen__home-indicator"></div>
+  </div>
+</body>
+</html>

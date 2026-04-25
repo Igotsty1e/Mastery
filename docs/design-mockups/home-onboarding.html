@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=390, initial-scale=1" />
+  <title>Mastery — Onboarding</title>
+  <link rel="stylesheet" href="tokens.css" />
+  <style>
+    .onboarding {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 28px 24px 36px;
+      background:
+        radial-gradient(120% 70% at 50% -10%, var(--bg-onboard-panel) 0%, transparent 60%),
+        var(--bg-app);
+      position: relative;
+    }
+    .brand {
+      margin-top: 16px;
+    }
+    .brand__eyebrow {
+      font-family: var(--ff-mono);
+      font-size: 12px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .brand__eyebrow::before {
+      content: '';
+      width: 24px;
+      height: 1px;
+      background: var(--text-tertiary);
+    }
+    .brand__wordmark {
+      margin: 16px 0 12px;
+      font-family: var(--ff-display);
+      font-weight: 600;
+      font-size: 64px;
+      line-height: 1.0;
+      letter-spacing: -0.025em;
+      color: var(--action-primary-pressed);
+      font-style: italic;
+      font-variation-settings: "opsz" 144, "SOFT" 100;
+    }
+    .brand__sub {
+      margin: 0;
+      max-width: 320px;
+      font: var(--t-body-md);
+      font-weight: 500;
+      line-height: 1.55;
+      color: var(--text-secondary);
+    }
+
+    .points {
+      margin-top: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    .point {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+    .point__icon {
+      flex: 0 0 48px;
+      width: 48px; height: 48px;
+      border-radius: var(--r-md);
+      background: var(--bg-primary-soft);
+      color: var(--action-primary-pressed);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .point__title {
+      font: var(--t-title-sm);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0 0 4px;
+    }
+    .point__body {
+      font: var(--t-body-md);
+      font-weight: 500;
+      color: var(--text-secondary);
+      line-height: 1.55;
+      margin: 0;
+    }
+
+    .footer {
+      margin-top: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      padding-top: 32px;
+    }
+    .footer__hint {
+      text-align: center;
+      font: var(--t-label-sm);
+      font-weight: 600;
+      color: var(--text-tertiary);
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+<body>
+  <div class="screen">
+    <div class="screen__safe-top">
+      <span>9:41</span>
+      <span class="battery"><span class="signal-dot"></span><span class="signal-dot"></span><span class="signal-dot"></span> 􀙇 100%</span>
+    </div>
+
+    <div class="onboarding">
+      <div class="brand">
+        <span class="brand__eyebrow">Welcome</span>
+        <h1 class="brand__wordmark">Mastery</h1>
+        <p class="brand__sub">Focused English grammar practice, one rule at a time.</p>
+      </div>
+
+      <div class="points">
+        <div class="point">
+          <div class="point__icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v15H6.5A2.5 2.5 0 0 0 4 19.5z"/>
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20v5H6.5A2.5 2.5 0 0 1 4 19.5z"/>
+              <line x1="8" y1="7" x2="16" y2="7"/>
+              <line x1="8" y1="11" x2="14" y2="11"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="point__title">One rule per lesson</h3>
+            <p class="point__body">Each lesson focuses on a single grammar point. No mixing, no distraction.</p>
+          </div>
+        </div>
+
+        <div class="point">
+          <div class="point__icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14.5 4.5l5 5L9 20H4v-5z"/>
+              <path d="M13 6l5 5"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="point__title">10 targeted exercises</h3>
+            <p class="point__body">Fill in the blank, choose the correct form, and correct sentences.</p>
+          </div>
+        </div>
+
+        <div class="point">
+          <div class="point__icon" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9"/>
+              <path d="M8.5 12.5l2.5 2.5 4.5-5"/>
+            </svg>
+          </div>
+          <div>
+            <h3 class="point__title">Instant, calm feedback</h3>
+            <p class="point__body">After each answer you see whether you were right and why, grounded in the rule.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <button class="btn btn--primary btn--block">Get started</button>
+        <span class="footer__hint">Takes about 5 minutes per lesson</span>
+      </div>
+    </div>
+
+    <div class="screen__home-indicator"></div>
+  </div>
+</body>
+</html>

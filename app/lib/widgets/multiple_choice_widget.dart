@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
+
 import '../models/lesson.dart';
+import '../theme/mastery_theme.dart';
 
 class MultipleChoiceWidget extends StatefulWidget {
   final String prompt;
   final List<McOption> options;
   final bool enabled;
-  final void Function(String optionId) onSubmit;
+  final ValueChanged<String> onChanged;
 
   const MultipleChoiceWidget({
     super.key,
     required this.prompt,
     required this.options,
-    required this.onSubmit,
+    required this.onChanged,
     this.enabled = true,
   });
 
@@ -22,102 +24,126 @@ class MultipleChoiceWidget extends StatefulWidget {
 class _MultipleChoiceWidgetState extends State<MultipleChoiceWidget> {
   String? _selected;
 
+  void _select(String id) {
+    setState(() => _selected = id);
+    widget.onChanged(id);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           widget.prompt,
-          style: theme.textTheme.bodyLarge?.copyWith(height: 1.5),
-        ),
-        const SizedBox(height: 20),
-        Column(
-          children: widget.options.map((opt) {
-            final isSelected = _selected == opt.id;
-            return GestureDetector(
-              onTap: widget.enabled
-                  ? () => setState(() => _selected = opt.id)
-                  : null,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                margin: const EdgeInsets.only(bottom: 10),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? theme.colorScheme.primaryContainer
-                      : theme.colorScheme.surface,
-                  border: Border.all(
-                    color: isSelected
-                        ? theme.colorScheme.primary
-                        : theme.colorScheme.outlineVariant,
-                    width: isSelected ? 2 : 1,
-                  ),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 22,
-                      height: 22,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: isSelected
-                              ? theme.colorScheme.primary
-                              : theme.colorScheme.outline,
-                          width: 2,
-                        ),
-                        color: isSelected
-                            ? theme.colorScheme.primary
-                            : Colors.transparent,
-                      ),
-                      child: isSelected
-                          ? const Icon(Icons.check,
-                              size: 14, color: Colors.white)
-                          : null,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        opt.text,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: isSelected
-                              ? theme.colorScheme.onPrimaryContainer
-                              : theme.colorScheme.onSurface,
-                          fontWeight: isSelected
-                              ? FontWeight.w500
-                              : FontWeight.normal,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            );
-          }).toList(),
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton(
-            onPressed: widget.enabled && _selected != null
-                ? () => widget.onSubmit(_selected!)
-                : null,
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: const Text('Submit', style: TextStyle(fontSize: 16)),
+          style: MasteryTextStyles.titleMd.copyWith(
+            fontSize: 20,
+            height: 28 / 20,
+            fontWeight: FontWeight.w600,
+            color: MasteryColors.textPrimary,
+            letterSpacing: -0.1,
           ),
         ),
+        const SizedBox(height: 18),
+        ...List.generate(widget.options.length, (i) {
+          final opt = widget.options[i];
+          final letter = String.fromCharCode('A'.codeUnitAt(0) + i);
+          return Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: _OptionRow(
+              letter: letter,
+              text: opt.text,
+              selected: _selected == opt.id,
+              enabled: widget.enabled,
+              onTap: () => _select(opt.id),
+            ),
+          );
+        }),
       ],
+    );
+  }
+}
+
+class _OptionRow extends StatelessWidget {
+  final String letter;
+  final String text;
+  final bool selected;
+  final bool enabled;
+  final VoidCallback onTap;
+
+  const _OptionRow({
+    required this.letter,
+    required this.text,
+    required this.selected,
+    required this.enabled,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.masteryTokens;
+    final bg = selected ? tokens.bgPrimarySoft : MasteryColors.bgSurface;
+    final border = selected
+        ? MasteryColors.actionPrimary
+        : tokens.borderSoft;
+    final radioBg = selected ? MasteryColors.actionPrimary : tokens.bgApp;
+    final letterColor = selected
+        ? MasteryColors.bgSurface
+        : MasteryColors.textSecondary;
+    final textColor = selected
+        ? MasteryColors.actionPrimaryPressed
+        : MasteryColors.textPrimary;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        borderRadius: BorderRadius.circular(MasteryRadii.md),
+        child: AnimatedContainer(
+          duration: MasteryDurations.short,
+          curve: MasteryEasing.move,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          decoration: BoxDecoration(
+            color: bg,
+            border: Border.all(
+                color: border, width: selected ? 1.5 : 1.5),
+            borderRadius: BorderRadius.circular(MasteryRadii.md),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 22,
+                height: 22,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: radioBg,
+                  border: Border.all(color: border, width: 1.5),
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  letter,
+                  style: MasteryTextStyles.mono(
+                    size: 12,
+                    lineHeight: 14,
+                    weight: FontWeight.w600,
+                    color: letterColor,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  text,
+                  style: MasteryTextStyles.bodyMd.copyWith(
+                    color: textColor,
+                    fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

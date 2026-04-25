@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../api/api_client.dart';
 import '../session/session_controller.dart';
 import '../session/session_state.dart';
+import '../theme/mastery_theme.dart';
+import '../widgets/mastery_widgets.dart';
 import 'exercise_screen.dart';
 
 class LessonIntroScreen extends StatefulWidget {
@@ -21,9 +24,7 @@ class _LessonIntroScreenState extends State<LessonIntroScreen> {
   @override
   void initState() {
     super.initState();
-    _controller = SessionController(
-      context.read<ApiClient>(),
-    );
+    _controller = SessionController(context.read<ApiClient>());
     _controller.loadLesson(widget.lessonId);
   }
 
@@ -31,42 +32,6 @@ class _LessonIntroScreenState extends State<LessonIntroScreen> {
   void dispose() {
     if (!_controllerHandedOff) _controller.dispose();
     super.dispose();
-  }
-
-  List<_RuleSection> _parseRuleSections(String text) {
-    final paragraphs = text.split('\n\n');
-    final sections = <_RuleSection>[];
-    for (final para in paragraphs) {
-      final lines = para.split('\n');
-      final firstLine = lines[0].trim();
-      final isSectionHeader = lines.length > 1 && firstLine.length <= 20;
-      if (isSectionHeader) {
-        sections.add(
-          _RuleSection(
-            title: firstLine,
-            bodyLines: lines.skip(1).toList(),
-          ),
-        );
-      } else {
-        sections.add(
-          _RuleSection(
-            title: '',
-            bodyLines: [para],
-          ),
-        );
-      }
-    }
-    return sections;
-  }
-
-  List<Widget> _buildRuleContent(String text, ThemeData theme) {
-    final sections = _parseRuleSections(text);
-    return sections
-        .map((section) => Padding(
-              padding: const EdgeInsets.only(bottom: 14),
-              child: _RuleSectionCard(section: section),
-            ))
-        .toList();
   }
 
   void _start() {
@@ -87,23 +52,41 @@ class _LessonIntroScreenState extends State<LessonIntroScreen> {
       animation: _controller,
       builder: (context, _) {
         final state = _controller.state;
+        final tokens = context.masteryTokens;
 
         if (state.phase == SessionPhase.loading) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+          return Scaffold(
+            backgroundColor: tokens.bgApp,
+            body: const Center(child: CircularProgressIndicator()),
           );
         }
 
         if (state.phase == SessionPhase.error) {
           return Scaffold(
-            body: Center(
+            backgroundColor: tokens.bgApp,
+            body: SafeArea(
               child: Padding(
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(MasterySpacing.lg),
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('Failed to load lesson:\n${state.errorMessage}'),
+                    Icon(Icons.error_outline,
+                        size: 40, color: MasteryColors.error),
                     const SizedBox(height: 16),
+                    Text(
+                      "Couldn't load this lesson",
+                      style: MasteryTextStyles.titleMd,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      state.errorMessage ?? 'Try again in a moment.',
+                      style: MasteryTextStyles.bodyMd.copyWith(
+                        color: MasteryColors.textSecondary,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
                     FilledButton(
                       onPressed: _controller.retry,
                       child: const Text('Retry'),
@@ -116,129 +99,88 @@ class _LessonIntroScreenState extends State<LessonIntroScreen> {
         }
 
         final lesson = state.lesson!;
-        final theme = Theme.of(context);
+        final sections = _parseRuleSections(lesson.introRule);
 
         return Scaffold(
-          backgroundColor: theme.colorScheme.surfaceContainerLowest,
+          backgroundColor: tokens.bgApp,
+          appBar: AppBar(
+            backgroundColor: tokens.bgApp,
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.chevron_left_rounded, size: 26),
+              onPressed: () => Navigator.of(context).maybePop(),
+            ),
+            centerTitle: true,
+            title: Text(
+              'LESSON 1 OF 12',
+              style: MasteryTextStyles.mono(
+                size: 12,
+                lineHeight: 16,
+                weight: FontWeight.w500,
+                color: tokens.textTertiary,
+                letterSpacing: 1.4,
+              ),
+            ),
+            actions: [
+              IconButton(
+                icon: Icon(Icons.more_horiz_rounded,
+                    color: tokens.textTertiary),
+                onPressed: null,
+              ),
+            ],
+          ),
           body: SafeArea(
+            top: false,
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+              padding: const EdgeInsets.fromLTRB(
+                  MasterySpacing.lg, 8, MasterySpacing.lg, MasterySpacing.xl),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primaryContainer,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      lesson.level,
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: theme.colorScheme.onPrimaryContainer,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
+                  TagPill(label: lesson.level),
+                  const SizedBox(height: MasterySpacing.md),
                   Text(
                     lesson.title,
-                    style: theme.textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
+                    style: MasteryTextStyles.headlineLg.copyWith(
+                      fontSize: 36,
+                      height: 40 / 36,
+                      letterSpacing: -0.8,
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
+                  const SizedBox(height: 6),
+                  _MetaRow(items: [
                     '${lesson.exercises.length} exercises',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  if (lesson.introRule.isNotEmpty) ...[
-                    const SizedBox(height: 28),
-                    SizedBox(
-                      width: double.infinity,
-                      child: Column(
-                        children: _buildRuleContent(lesson.introRule, theme),
-                      ),
-                    ),
-                  ],
+                    '~5 minutes',
+                    'Grammar',
+                  ]),
+                  const SizedBox(height: MasterySpacing.lg),
+                  ...sections.map((s) => Padding(
+                        padding:
+                            const EdgeInsets.only(bottom: MasterySpacing.md),
+                        child: _RuleCard(section: s),
+                      )),
                   if (lesson.introExamples.isNotEmpty) ...[
-                    const SizedBox(height: 20),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primaryContainer
-                            .withValues(alpha: 0.25),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: theme.colorScheme.primaryContainer,
-                        ),
-                      ),
+                    MasterySoftCard(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            'Examples',
-                            style: theme.textTheme.labelLarge?.copyWith(
-                              color: theme.colorScheme.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
+                          const SectionEyebrow(label: 'Examples'),
+                          const SizedBox(height: 14),
                           ...lesson.introExamples.map(
                             (ex) => Padding(
                               padding: const EdgeInsets.only(bottom: 10),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Container(
-                                    margin: const EdgeInsets.only(top: 7),
-                                    width: 6,
-                                    height: 6,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: theme.colorScheme.primary,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Text(
-                                      ex,
-                                      style:
-                                          theme.textTheme.bodyMedium?.copyWith(
-                                        height: 1.5,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
+                              child: _ExampleLine(text: ex),
                             ),
                           ),
                         ],
                       ),
                     ),
                   ],
-                  const SizedBox(height: 32),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: _start,
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                      ),
-                      child: const Text(
-                        'Start Practice',
-                        style: TextStyle(fontSize: 16),
-                      ),
-                    ),
+                  const SizedBox(height: MasterySpacing.xl),
+                  FilledButton(
+                    onPressed: _start,
+                    child: const Text('Start Practice'),
                   ),
-                  const SizedBox(height: 16),
                 ],
               ),
             ),
@@ -249,140 +191,297 @@ class _LessonIntroScreenState extends State<LessonIntroScreen> {
   }
 }
 
+// ---------- Rule parsing ----------
+
 class _RuleSection {
   final String title;
-  final List<String> bodyLines;
+  final List<String> body; // raw paragraphs preserving \n inside
 
-  const _RuleSection({
-    required this.title,
-    required this.bodyLines,
-  });
+  const _RuleSection({required this.title, required this.body});
 }
 
-class _RuleSectionCard extends StatelessWidget {
+const _knownHeaders = <String>{'use', 'form', 'important', 'watch for'};
+
+List<_RuleSection> _parseRuleSections(String text) {
+  final sections = <_RuleSection>[];
+  _RuleSection? current;
+  void start(String title) {
+    current = _RuleSection(title: title, body: []);
+    sections.add(current!);
+  }
+
+  final paragraphs = text.split(RegExp(r'\n\s*\n'));
+  for (final raw in paragraphs) {
+    final trimmed = raw.trim();
+    if (trimmed.isEmpty) continue;
+    final firstLine = trimmed.split('\n').first.trim();
+    final isHeader = trimmed.length == firstLine.length &&
+        _knownHeaders.contains(firstLine.toLowerCase());
+    if (isHeader) {
+      start(firstLine);
+    } else {
+      current ??= _RuleSection(title: '', body: []);
+      if (sections.isEmpty) sections.add(current!);
+      current!.body.add(trimmed);
+    }
+  }
+  return sections;
+}
+
+// ---------- Rule card ----------
+
+class _RuleCard extends StatelessWidget {
   final _RuleSection section;
 
-  const _RuleSectionCard({required this.section});
+  const _RuleCard({required this.section});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final tokens = context.masteryTokens;
     final normalized = section.title.trim().toLowerCase();
-    final isImportant = normalized == 'important';
     final isForm = normalized == 'form';
-    final isUse = normalized == 'use';
+    final isImportant = normalized == 'important';
 
-    final bgColor = isImportant
-        ? const Color(0xFFFFF7ED)
+    final bg = isImportant
+        ? tokens.warningSoft
         : isForm
-            ? const Color(0xFFEEF2FF)
-            : theme.colorScheme.surface;
-    final borderColor = isImportant
-        ? const Color(0xFFF59E0B)
+            ? Color.lerp(tokens.accentGoldSoft, MasteryColors.bgRaised, 0.6)!
+            : MasteryColors.bgRaised;
+    final border = isImportant
+        ? tokens.warning.withAlpha(70)
         : isForm
-            ? const Color(0xFF818CF8)
-            : theme.colorScheme.outlineVariant;
-    final accentColor = isImportant
-        ? const Color(0xFFB45309)
+            ? tokens.accentGold.withAlpha(70)
+            : tokens.borderSoft;
+    final accent = isImportant
+        ? tokens.warning
         : isForm
-            ? const Color(0xFF4338CA)
-            : theme.colorScheme.primary;
+            ? tokens.accentGoldDeep
+            : MasteryColors.actionPrimaryPressed;
+    final iconBg = isImportant
+        ? tokens.warning.withAlpha(45)
+        : isForm
+            ? tokens.accentGoldSoft
+            : tokens.bgPrimarySoft;
     final icon = isImportant
         ? Icons.priority_high_rounded
         : isForm
-            ? Icons.rule_folder_outlined
-            : isUse
-                ? Icons.lightbulb_outline_rounded
-                : Icons.menu_book_outlined;
+            ? Icons.text_fields_rounded
+            : Icons.menu_book_outlined;
 
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: borderColor),
-      ),
+    return MasteryCard(
+      color: bg,
+      borderColor: border,
+      shadow: isImportant || isForm ? const [] : null,
+      padding: const EdgeInsets.all(22),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (section.title.isNotEmpty) ...[
             Row(
               children: [
-                Icon(icon, size: 18, color: accentColor),
-                const SizedBox(width: 8),
-                Text(
-                  section.title,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: accentColor,
+                Container(
+                  width: 28,
+                  height: 28,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: iconBg,
+                    borderRadius: BorderRadius.circular(MasteryRadii.sm),
                   ),
+                  child: Icon(icon, size: 16, color: accent),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  section.title.toUpperCase(),
+                  style: MasteryTextStyles.eyebrow(color: accent),
                 ),
               ],
             ),
             const SizedBox(height: 12),
           ],
-          ...section.bodyLines.map(
-            (line) => Padding(
-              padding: const EdgeInsets.only(bottom: 8),
-              child: _RuleLineText(
-                line: line,
-                accentColor: accentColor,
-              ),
-            ),
-          ),
+          ..._buildBody(context, isForm, accent),
         ],
+      ),
+    );
+  }
+
+  List<Widget> _buildBody(BuildContext context, bool isForm, Color accent) {
+    final widgets = <Widget>[];
+    for (final paragraph in section.body) {
+      final lines = paragraph.split('\n').map((l) => l.trim()).toList();
+
+      if (isForm && lines.length == 1 && _looksLikeFormula(lines.first)) {
+        widgets.add(_FormulaBox(text: lines.first));
+        widgets.add(const SizedBox(height: 14));
+      } else if (isForm && lines.length > 1) {
+        widgets.add(_VerbGrid(items: lines));
+      } else {
+        widgets.add(_RuleParagraph(text: paragraph, accent: accent));
+        widgets.add(const SizedBox(height: 8));
+      }
+    }
+    if (widgets.isNotEmpty &&
+        widgets.last is SizedBox &&
+        (widgets.last as SizedBox).height == 8) {
+      widgets.removeLast();
+    }
+    return widgets;
+  }
+}
+
+bool _looksLikeFormula(String s) {
+  return s.contains('+') || s.contains('→') || s.length <= 24;
+}
+
+class _FormulaBox extends StatelessWidget {
+  final String text;
+  const _FormulaBox({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.masteryTokens;
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: tokens.bgApp,
+          border: Border.all(
+            color: tokens.borderStrong,
+            style: BorderStyle.solid,
+          ),
+          borderRadius: BorderRadius.circular(MasteryRadii.sm),
+        ),
+        child: Text(
+          text,
+          style: MasteryTextStyles.mono(
+            size: 18,
+            lineHeight: 22,
+            weight: FontWeight.w500,
+            color: MasteryColors.textPrimary,
+            letterSpacing: 0.2,
+          ),
+        ),
       ),
     );
   }
 }
 
-class _RuleLineText extends StatelessWidget {
-  final String line;
-  final Color accentColor;
-
-  const _RuleLineText({
-    required this.line,
-    required this.accentColor,
-  });
+class _VerbGrid extends StatelessWidget {
+  final List<String> items;
+  const _VerbGrid({required this.items});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final trimmed = line.trim();
-    final colonIndex = trimmed.indexOf(':');
+    return GridView.count(
+      crossAxisCount: 2,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      mainAxisSpacing: 10,
+      crossAxisSpacing: 14,
+      childAspectRatio: 5.5,
+      children: items.map((it) => _VerbItem(text: it)).toList(),
+    );
+  }
+}
 
-    if (colonIndex > 0 && colonIndex < trimmed.length - 1) {
-      final label = trimmed.substring(0, colonIndex + 1);
-      final body = trimmed.substring(colonIndex + 1).trimLeft();
-      return RichText(
-        text: TextSpan(
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurface,
-            height: 1.55,
+class _VerbItem extends StatelessWidget {
+  final String text;
+  const _VerbItem({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Container(
+          width: 5,
+          height: 5,
+          decoration: const BoxDecoration(
+            color: MasteryColors.actionPrimary,
+            shape: BoxShape.circle,
           ),
-          children: [
-            TextSpan(
-              text: '$label ',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: accentColor,
-              ),
-            ),
-            TextSpan(text: body),
-          ],
         ),
-      );
-    }
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            text,
+            style: MasteryTextStyles.bodyMd.copyWith(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              letterSpacing: -0.05,
+            ),
+            overflow: TextOverflow.ellipsis,
+            maxLines: 1,
+          ),
+        ),
+      ],
+    );
+  }
+}
 
-    final isFormula = trimmed.contains('+') || trimmed.contains('...');
+class _RuleParagraph extends StatelessWidget {
+  final String text;
+  final Color accent;
+
+  const _RuleParagraph({required this.text, required this.accent});
+
+  @override
+  Widget build(BuildContext context) {
     return Text(
-      trimmed,
-      style: theme.textTheme.bodyMedium?.copyWith(
-        height: 1.55,
-        fontWeight: isFormula ? FontWeight.w600 : FontWeight.normal,
-        color: isFormula ? accentColor : theme.colorScheme.onSurface,
+      text,
+      style: MasteryTextStyles.bodyMd.copyWith(
+        color: MasteryColors.textPrimary,
+        height: 1.65,
       ),
+    );
+  }
+}
+
+class _MetaRow extends StatelessWidget {
+  final List<String> items;
+  const _MetaRow({required this.items});
+
+  @override
+  Widget build(BuildContext context) {
+    // Single Text run with bullet separators wraps naturally on narrow phones
+    // and avoids horizontal RenderFlex overflow that a Row of fixed children
+    // would produce.
+    final joined = items.join('  ·  ');
+    return Text(
+      joined,
+      style: MasteryTextStyles.bodySm.copyWith(
+        color: MasteryColors.textSecondary,
+      ),
+    );
+  }
+}
+
+class _ExampleLine extends StatelessWidget {
+  final String text;
+  const _ExampleLine({required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          margin: const EdgeInsets.only(top: 10),
+          width: 6,
+          height: 6,
+          decoration: const BoxDecoration(
+            color: MasteryColors.actionPrimary,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            text,
+            style: MasteryTextStyles.bodyMd.copyWith(height: 1.55),
+          ),
+        ),
+      ],
     );
   }
 }

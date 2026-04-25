@@ -1,11 +1,25 @@
 # Design System — Mastery
 
+## Visual Reference
+
+- Hand-built HTML mockups for all eight core screens live in `docs/design-mockups/`. Open `docs/design-mockups/index.html` (or run `cd docs/design-mockups && python3 -m http.server 8765` and visit `http://127.0.0.1:8765/`) for the comparison gallery.
+- Coverage: home onboarding, home dashboard, lesson intro, exercise (multiple choice — active and result revealed), exercise (fill-the-blank with keyboard up), exercise (sentence correction with keyboard up), summary.
+- Mockups use the lesson content from `backend/data/lessons/b2-lesson-001.json` and the tokens from this document. They are the canonical composition reference.
+- Relationship: this document = tokens (the specification). `docs/design-mockups/` = composition (the reference). When the two disagree, this document wins. Update both when visual decisions change.
+
 ## Product Context
 - **What this is:** `Mastery` is a structured English grammar practice app with a fixed lesson flow. Each lesson teaches one rule, gives a short explanation, then moves the learner through focused exercises with immediate evaluation and a clean summary.
 - **Who it's for:** adult and late-teen learners who want serious, calm, high-trust English practice without cartoonish gamification, clutter, or chat-based noise.
 - **Space/industry:** mobile-first EdTech, specifically English learning and grammar training.
 - **Project type:** Flutter mobile app with four core screens: onboarding/home, lesson intro, exercise, summary.
 - **Product constraints that shape the design:** no streaks, no badges, no points, no social feed, no chat UI, no adaptive branching, no tiny text, no visual noise. The product must feel premium, warm, and disciplined.
+
+## Document Map
+- `DESIGN.md` owns visual language, interaction tone, layout, motion, and component behavior.
+- `docs/design-mockups/` owns screen-level composition reference.
+- `ROUNDUP_AI_CONTENT_SYSTEM.md` owns curriculum logic, exercise-authoring rules, and validation.
+- `docs/content-unit-u01-blueprint.md` owns the current lesson-authoring plan.
+- All instructional content for Mastery must be created or explicitly reviewed using the `english-grammar-methodologist` skill; `DESIGN.md` does not replace that content-authoring workflow.
 
 ## Market Reference Audit
 

@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=390, initial-scale=1" />
+  <title>Mastery — Exercise (active)</title>
+  <link rel="stylesheet" href="tokens.css" />
+  <style>
+    .ex-top {
+      background: var(--bg-app);
+      border-bottom: 1px solid var(--border-soft);
+      padding: 8px 16px 0 8px;
+    }
+    .ex-top__row {
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .ex-top__counter {
+      font-family: var(--ff-mono);
+      font-size: 14px;
+      letter-spacing: 0.04em;
+      color: var(--text-secondary);
+    }
+    .ex-top__counter strong { color: var(--text-primary); font-weight: 600; }
+    .ex-top__progress {
+      margin-top: 12px;
+      height: 4px;
+      background: var(--bg-surface-alt);
+      border-radius: 0;
+    }
+    .ex-top__progress .progress__fill {
+      border-radius: 0;
+      background: var(--action-primary);
+    }
+
+    .ex {
+      flex: 1;
+      display: flex; flex-direction: column;
+      gap: 18px;
+      padding: 22px 24px 28px;
+      background: var(--bg-app);
+    }
+
+    .instruction {
+      display: flex; gap: 12px; align-items: flex-start;
+      padding: 14px 16px;
+      background: var(--bg-primary-soft);
+      border: 1px solid rgba(176, 122, 132, 0.22);
+      border-radius: var(--r-md);
+    }
+    .instruction__icon {
+      flex: 0 0 22px;
+      width: 22px; height: 22px;
+      color: var(--action-primary-pressed);
+      margin-top: 1px;
+    }
+    .instruction__text {
+      font: var(--t-body-md);
+      font-weight: 600;
+      color: var(--action-primary-pressed);
+      line-height: 1.45;
+      margin: 0;
+    }
+
+    .exercise-card {
+      padding: 24px;
+      background: var(--bg-raised);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--r-lg);
+      box-shadow: var(--shadow-card);
+    }
+    .prompt {
+      font: var(--t-title-md);
+      font-weight: 600;
+      line-height: 1.4;
+      color: var(--text-primary);
+      margin: 0 0 18px;
+      letter-spacing: -0.005em;
+    }
+    .prompt em {
+      color: var(--text-tertiary);
+      font-style: normal;
+      letter-spacing: 0.06em;
+      padding: 0 4px;
+      border-bottom: 2px solid var(--border-strong);
+    }
+
+    .options { display: flex; flex-direction: column; gap: 10px; }
+    .option {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 16px;
+      background: var(--bg-surface);
+      border: 1.5px solid var(--border-soft);
+      border-radius: var(--r-md);
+      transition: border-color var(--d-short) var(--ease-move), background var(--d-short) var(--ease-move);
+      cursor: pointer;
+    }
+    .option:hover { border-color: var(--border-strong); }
+    .option__radio {
+      flex: 0 0 22px;
+      width: 22px; height: 22px;
+      border: 1.5px solid var(--border-strong);
+      border-radius: var(--r-pill);
+      display: flex; align-items: center; justify-content: center;
+      background: var(--bg-app);
+    }
+    .option__letter {
+      font-family: var(--ff-mono);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    .option__text {
+      font: var(--t-body-md);
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+    .option--selected {
+      background: var(--bg-primary-soft);
+      border-color: var(--action-primary);
+    }
+    .option--selected .option__radio {
+      background: var(--action-primary);
+      border-color: var(--action-primary);
+    }
+    .option--selected .option__letter { color: #FFFDFC; }
+    .option--selected .option__text { color: var(--action-primary-pressed); font-weight: 600; }
+
+    .ex__cta { margin-top: 8px; }
+    .ex__hint {
+      text-align: center;
+      font: var(--t-label-sm);
+      color: var(--text-tertiary);
+      letter-spacing: 0.04em;
+      margin-top: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="screen">
+    <div class="screen__safe-top">
+      <span>9:41</span>
+      <span class="battery"><span class="signal-dot"></span><span class="signal-dot"></span><span class="signal-dot"></span> 􀙇 100%</span>
+    </div>
+
+    <div class="ex-top">
+      <div class="ex-top__row">
+        <button class="icon-btn" aria-label="Back" style="background:transparent;border:0;width:40px;height:40px;display:flex;align-items:center;justify-content:center;color:var(--text-primary);">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+        </button>
+        <span class="ex-top__counter"><strong>5</strong> / 10</span>
+        <button class="icon-btn" aria-label="Quit" style="background:transparent;border:0;width:40px;height:40px;display:flex;align-items:center;justify-content:center;color:var(--text-tertiary);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="6" y1="6" x2="18" y2="18"/>
+            <line x1="6" y1="18" x2="18" y2="6"/>
+          </svg>
+        </button>
+      </div>
+      <div class="ex-top__progress" aria-label="Lesson progress">
+        <div class="progress__fill" style="width:50%"></div>
+      </div>
+    </div>
+
+    <div class="ex">
+      <div class="instruction">
+        <span class="instruction__icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M9 12l2 2 4-4"/>
+          </svg>
+        </span>
+        <p class="instruction__text">Choose the correct option.</p>
+      </div>
+
+      <div class="exercise-card">
+        <h2 class="prompt">He keeps <em>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</em> about the same problem.</h2>
+
+        <div class="options">
+          <label class="option">
+            <span class="option__radio"><span class="option__letter">A</span></span>
+            <span class="option__text">complain</span>
+          </label>
+          <label class="option option--selected">
+            <span class="option__radio"><span class="option__letter">B</span></span>
+            <span class="option__text">complaining</span>
+          </label>
+          <label class="option">
+            <span class="option__radio"><span class="option__letter">C</span></span>
+            <span class="option__text">to complain</span>
+          </label>
+          <label class="option">
+            <span class="option__radio"><span class="option__letter">D</span></span>
+            <span class="option__text">complained</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="ex__cta">
+        <button class="btn btn--primary btn--block">Check answer</button>
+        <p class="ex__hint">Choose one option, then check.</p>
+      </div>
+    </div>
+
+    <div class="screen__home-indicator"></div>
+  </div>
+</body>
+</html>

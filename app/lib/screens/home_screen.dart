@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import '../api/api_client.dart';
 import '../config.dart';
 import '../progress/local_progress_store.dart';
+import '../theme/mastery_theme.dart';
+import '../widgets/mastery_widgets.dart';
 import 'lesson_intro_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -18,6 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoadingDashboard = false;
   int _completedExercises = 0;
   int _totalExercises = 10;
+  String _lessonTitle = 'Verbs Followed by -ing';
   String _selectedLevel = 'B2';
 
   Future<void> _loadDashboard() async {
@@ -32,6 +35,7 @@ class _HomeScreenState extends State<HomeScreen> {
       if (!mounted) return;
       setState(() {
         _selectedLevel = lesson.level;
+        _lessonTitle = lesson.title;
         _totalExercises = lesson.exercises.length;
         _completedExercises = completed.clamp(0, lesson.exercises.length);
         _isLoadingDashboard = false;
@@ -64,193 +68,255 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    return _showOnboarding ? _buildOnboarding() : _buildDashboard();
+  }
 
-    if (_showOnboarding) {
-      return Scaffold(
-        backgroundColor: theme.colorScheme.surfaceContainerLowest,
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Spacer(),
-                Text(
-                  'Mastery',
-                  style: theme.textTheme.displaySmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.primary,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Focused English grammar practice.',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(height: 40),
-                _OnboardingPoint(
-                  icon: Icons.menu_book_outlined,
-                  title: 'One rule per lesson',
-                  body:
-                      'Each lesson focuses on a single grammar point — no mixing, no distraction.',
-                  theme: theme,
-                ),
-                const SizedBox(height: 20),
-                _OnboardingPoint(
-                  icon: Icons.edit_outlined,
-                  title: '10 targeted exercises',
-                  body:
-                      'Fill in the blank, choose the correct form, and correct sentences.',
-                  theme: theme,
-                ),
-                const SizedBox(height: 20),
-                _OnboardingPoint(
-                  icon: Icons.check_circle_outline,
-                  title: 'Instant feedback',
-                  body:
-                      'After each answer you see whether you were right and why, based on the grammar rule.',
-                  theme: theme,
-                ),
-                const Spacer(),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: () {
-                      setState(() => _showOnboarding = false);
-                      _loadDashboard();
-                    },
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                    child: const Text(
-                      'Get started',
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  ),
-                ),
+  // ---------- Onboarding ----------
+  Widget _buildOnboarding() {
+    final tokens = context.masteryTokens;
+    return Scaffold(
+      backgroundColor: tokens.bgApp,
+      body: SafeArea(
+        child: Container(
+          decoration: BoxDecoration(
+            gradient: RadialGradient(
+              center: const Alignment(0, -1.0),
+              radius: 0.9,
+              colors: [
+                tokens.bgOnboardPanel.withAlpha(180),
+                tokens.bgApp,
               ],
+              stops: const [0.0, 0.7],
+            ),
+          ),
+          child: LayoutBuilder(
+            builder: (context, constraints) => SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(
+                  MasterySpacing.lg, 28, MasterySpacing.lg, 36),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: constraints.maxHeight - 64, // padding allowance
+                ),
+                child: IntrinsicHeight(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _OnboardEyebrow(),
+                          const SizedBox(height: MasterySpacing.sm),
+                          Text(
+                            'Mastery',
+                            style: MasteryTextStyles.displayItalic(
+                              size: 56,
+                              lineHeight: 60,
+                            ),
+                          ),
+                          const SizedBox(height: MasterySpacing.sm),
+                          ConstrainedBox(
+                            constraints:
+                                const BoxConstraints(maxWidth: 320),
+                            child: Text(
+                              'Focused English grammar practice, one rule at a time.',
+                              style: MasteryTextStyles.bodyMd.copyWith(
+                                color: MasteryColors.textSecondary,
+                                height: 1.55,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: MasterySpacing.xl),
+                          _OnboardingPoint(
+                            icon: Icons.menu_book_outlined,
+                            title: 'One rule per lesson',
+                            body:
+                                'Each lesson focuses on a single grammar point. No mixing, no distraction.',
+                          ),
+                          const SizedBox(height: MasterySpacing.lg),
+                          _OnboardingPoint(
+                            icon: Icons.edit_outlined,
+                            title: '10 targeted exercises',
+                            body:
+                                'Fill in the blank, choose the correct form, and correct sentences.',
+                          ),
+                          const SizedBox(height: MasterySpacing.lg),
+                          _OnboardingPoint(
+                            icon: Icons.check_circle_outline,
+                            title: 'Instant, calm feedback',
+                            body:
+                                'After each answer you see whether you were right and why, grounded in the rule.',
+                          ),
+                        ],
+                      ),
+                      Padding(
+                        padding:
+                            const EdgeInsets.only(top: MasterySpacing.xl),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            FilledButton(
+                              onPressed: () {
+                                setState(() => _showOnboarding = false);
+                                _loadDashboard();
+                              },
+                              child: const Text('Get started'),
+                            ),
+                            const SizedBox(height: MasterySpacing.sm),
+                            Center(
+                              child: Text(
+                                'Takes about 5 minutes per lesson',
+                                style: MasteryTextStyles.labelSm.copyWith(
+                                  color: tokens.textTertiary,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ),
         ),
-      );
-    }
+      ),
+    );
+  }
+
+  // ---------- Dashboard ----------
+  Widget _buildDashboard() {
+    final tokens = context.masteryTokens;
+    final progress = _totalExercises == 0
+        ? 0.0
+        : _completedExercises / _totalExercises;
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.surfaceContainerLowest,
+      backgroundColor: tokens.bgApp,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 40),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(
+              MasterySpacing.lg, 28, MasterySpacing.lg, MasterySpacing.xl),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Mastery',
-                style: theme.textTheme.displaySmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary,
+                style: MasteryTextStyles.displayItalic(
+                  size: 32,
+                  lineHeight: 34,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(
                 'English practice, one lesson at a time.',
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
+                style: MasteryTextStyles.bodyMd.copyWith(
+                  color: MasteryColors.textSecondary,
                 ),
               ),
               const SizedBox(height: 28),
               Text(
-                'Level',
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  fontWeight: FontWeight.bold,
+                'LEVEL',
+                style: MasteryTextStyles.labelMd.copyWith(
+                  color: MasteryColors.textSecondary,
+                  letterSpacing: 1.2,
                 ),
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: MasterySpacing.sm),
               Wrap(
                 spacing: 10,
                 runSpacing: 10,
                 children: [
-                  _LevelChip(label: 'A2', active: _selectedLevel == 'A2'),
-                  _LevelChip(label: 'B1', active: _selectedLevel == 'B1'),
-                  _LevelChip(label: 'B2', active: _selectedLevel == 'B2'),
-                  _LevelChip(label: 'C1', active: _selectedLevel == 'C1'),
+                  LevelChip(
+                      label: 'A2',
+                      active: _selectedLevel == 'A2',
+                      locked: _selectedLevel != 'A2'),
+                  LevelChip(
+                      label: 'B1',
+                      active: _selectedLevel == 'B1',
+                      locked: _selectedLevel != 'B1'),
+                  LevelChip(
+                      label: 'B2',
+                      active: _selectedLevel == 'B2',
+                      locked: _selectedLevel != 'B2'),
+                  LevelChip(
+                      label: 'C1',
+                      active: _selectedLevel == 'C1',
+                      locked: _selectedLevel != 'C1'),
                 ],
               ),
-              const SizedBox(height: 24),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: theme.colorScheme.outlineVariant),
-                ),
+              const SizedBox(height: 28),
+              MasteryCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        Icon(
-                          Icons.insights_outlined,
-                          size: 18,
-                          color: theme.colorScheme.primary,
+                        const Expanded(
+                          child: SectionEyebrow(label: "Today's lesson"),
                         ),
-                        const SizedBox(width: 8),
+                        TagPill(label: _selectedLevel),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      _lessonTitle,
+                      style: MasteryTextStyles.headlineMd.copyWith(
+                        fontFamily: 'Fraunces',
+                        fontSize: 26,
+                        height: 30 / 26,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: -0.3,
+                        fontVariations: const [
+                          FontVariation('opsz', 144),
+                          FontVariation('wght', 600),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      '$_totalExercises exercises  ·  ~5 minutes',
+                      style: MasteryTextStyles.bodySm.copyWith(
+                        color: MasteryColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    Row(
+                      children: [
+                        Expanded(
+                            child:
+                                MasteryProgressTrack(value: progress)),
+                        const SizedBox(width: 14),
                         Text(
-                          '$_selectedLevel progress',
-                          style: theme.textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
+                          _isLoadingDashboard
+                              ? '— / $_totalExercises'
+                              : '$_completedExercises / $_totalExercises',
+                          style: MasteryTextStyles.mono(
+                            size: 14,
+                            lineHeight: 18,
+                            weight: FontWeight.w600,
+                            color: MasteryColors.textPrimary,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      _isLoadingDashboard
-                          ? 'Loading progress...'
-                          : '$_completedExercises / $_totalExercises exercises completed',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(999),
-                      child: LinearProgressIndicator(
-                        minHeight: 8,
-                        value: _totalExercises == 0
-                            ? 0
-                            : _completedExercises / _totalExercises,
-                        backgroundColor:
-                            theme.colorScheme.surfaceContainerHighest,
+                    const SizedBox(height: 22),
+                    FilledButton(
+                      onPressed: _isLoadingDashboard ? null : _startLesson,
+                      child: Text(
+                        _completedExercises > 0
+                            ? 'Continue lesson'
+                            : 'Start lesson',
                       ),
                     ),
                   ],
                 ),
               ),
-              const Spacer(),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  onPressed: _startLesson,
-                  style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  child: const Text(
-                    'Start Lesson',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                ),
-              ),
+              const SizedBox(height: MasterySpacing.lg),
+              const _ComingNext(),
             ],
           ),
         ),
@@ -259,53 +325,81 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
+class _OnboardEyebrow extends StatelessWidget {
+  const _OnboardEyebrow();
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.masteryTokens;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 24,
+          height: 1,
+          color: tokens.textTertiary,
+        ),
+        const SizedBox(width: 10),
+        Text(
+          'WELCOME',
+          style: MasteryTextStyles.mono(
+            size: 12,
+            lineHeight: 16,
+            weight: FontWeight.w500,
+            color: tokens.textTertiary,
+            letterSpacing: 1.8,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _OnboardingPoint extends StatelessWidget {
   final IconData icon;
   final String title;
   final String body;
-  final ThemeData theme;
 
   const _OnboardingPoint({
     required this.icon,
     required this.title,
     required this.body,
-    required this.theme,
   });
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.masteryTokens;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          padding: const EdgeInsets.all(10),
+          width: 48,
+          height: 48,
           decoration: BoxDecoration(
-            color: theme.colorScheme.primaryContainer,
-            borderRadius: BorderRadius.circular(10),
+            color: tokens.bgPrimarySoft,
+            borderRadius: BorderRadius.circular(MasteryRadii.md),
           ),
-          child: Icon(
-            icon,
-            size: 22,
-            color: theme.colorScheme.onPrimaryContainer,
-          ),
+          alignment: Alignment.center,
+          child: Icon(icon,
+              size: 22, color: MasteryColors.actionPrimaryPressed),
         ),
-        const SizedBox(width: 16),
+        const SizedBox(width: MasterySpacing.md),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 title,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
+                style: MasteryTextStyles.titleSm.copyWith(
+                  color: MasteryColors.textPrimary,
                 ),
               ),
-              const SizedBox(height: 3),
+              const SizedBox(height: 4),
               Text(
                 body,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  height: 1.4,
+                style: MasteryTextStyles.bodyMd.copyWith(
+                  color: MasteryColors.textSecondary,
+                  height: 1.55,
                 ),
               ),
             ],
@@ -316,51 +410,116 @@ class _OnboardingPoint extends StatelessWidget {
   }
 }
 
-class _LevelChip extends StatelessWidget {
-  final String label;
-  final bool active;
+class _ComingNext extends StatelessWidget {
+  const _ComingNext();
 
-  const _LevelChip({
-    required this.label,
-    required this.active,
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              'COMING NEXT',
+              style: MasteryTextStyles.labelMd.copyWith(
+                color: MasteryColors.textSecondary,
+                letterSpacing: 1.2,
+              ),
+            ),
+            const Spacer(),
+            Text(
+              'See all',
+              style: MasteryTextStyles.labelSm.copyWith(
+                color: MasteryColors.actionPrimary,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _NextRow(
+          number: '02',
+          title: 'Verbs Followed by to-Infinitive',
+          subtitle: 'B2  ·  10 exercises',
+        ),
+        const SizedBox(height: 8),
+        _NextRow(
+          number: '03',
+          title: 'Reported Speech: Statements',
+          subtitle: 'B2  ·  10 exercises',
+        ),
+      ],
+    );
+  }
+}
+
+class _NextRow extends StatelessWidget {
+  final String number;
+  final String title;
+  final String subtitle;
+
+  const _NextRow({
+    required this.number,
+    required this.title,
+    required this.subtitle,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final tokens = context.masteryTokens;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: active
-            ? theme.colorScheme.primary
-            : theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(
-          color: active
-              ? theme.colorScheme.primary
-              : theme.colorScheme.outlineVariant,
-        ),
+        color: tokens.bgSurfaceAlt,
+        border: Border.all(color: tokens.borderSoft),
+        borderRadius: BorderRadius.circular(MasteryRadii.md),
       ),
       child: Row(
-        mainAxisSize: MainAxisSize.min,
         children: [
-          if (!active) ...[
-            Icon(
-              Icons.lock_outline,
-              size: 14,
-              color: theme.colorScheme.onSurfaceVariant,
+          Container(
+            width: 28,
+            height: 28,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: MasteryColors.bgRaised,
+              border: Border.all(color: tokens.borderSoft),
+              borderRadius: BorderRadius.circular(MasteryRadii.pill),
             ),
-            const SizedBox(width: 6),
-          ],
-          Text(
-            label,
-            style: theme.textTheme.labelLarge?.copyWith(
-              color: active
-                  ? theme.colorScheme.onPrimary
-                  : theme.colorScheme.onSurfaceVariant,
-              fontWeight: FontWeight.bold,
+            child: Text(
+              number,
+              style: MasteryTextStyles.mono(
+                size: 12,
+                lineHeight: 12,
+                weight: FontWeight.w500,
+                color: MasteryColors.textSecondary,
+              ),
             ),
           ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: MasteryTextStyles.bodyMd.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: MasteryColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  style: MasteryTextStyles.bodySm.copyWith(
+                    color: tokens.textTertiary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(Icons.lock_outline,
+              size: 16, color: tokens.textTertiary),
         ],
       ),
     );

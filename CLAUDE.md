@@ -66,12 +66,17 @@ Require explicit user intent before any destructive action.
 ## Design Source Of Truth
 
 - `/Users/ivankhanaev/Mastery/DESIGN.md` is the canonical source of truth for all visual design decisions: color system, typography, spacing, component specs, motion, and screen-level direction.
-- Use it as the primary reference whenever evaluating, implementing, or reviewing any UI or design work.
-- Do not introduce visual styles, color values, font choices, or component patterns that contradict DESIGN.md without explicit user instruction.
+- `/Users/ivankhanaev/Mastery/docs/design-mockups/` is the canonical **visual reference** for screen-level composition. Eight mobile mockups (390×844): home onboarding/dashboard, lesson intro, three exercise types (multiple choice, fill-the-blank, sentence correction), result, summary. Built directly against DESIGN.md tokens with real lesson content from `backend/data/lessons/b2-lesson-001.json`.
+- Open the gallery: `cd docs/design-mockups && python3 -m http.server 8765` then `http://127.0.0.1:8765/`.
+- Use both together: DESIGN.md = tokens (color, typography, spacing, motion); design-mockups/ = composition (layout, hierarchy, copy). When implementing or reviewing UI, cross-reference both.
+- Use these as the primary reference whenever evaluating, implementing, or reviewing any UI or design work.
+- Do not introduce visual styles, color values, font choices, or component patterns that contradict DESIGN.md without explicit user instruction. When the mockups and DESIGN.md disagree, DESIGN.md wins (tokens are spec, mockups are reference).
+- Update both DESIGN.md and the mockups when changing visual decisions.
 
 ## Content Source Of Truth
 
 - `/Users/ivankhanaev/Mastery/ROUNDUP_AI_CONTENT_SYSTEM.md` is the canonical source of truth for curriculum, lesson authoring, pedagogical progression, content validation, and exercise-authoring rules.
+- `/Users/ivankhanaev/Mastery/docs/content-unit-u01-blueprint.md` is the active unit-level authoring plan that turns the canonical content system into the next shippable lesson sequence.
 - Use it as the primary reference whenever generating, revising, reviewing, or expanding educational content for the app.
 - Treat it as authoritative for the **content layer**, not for unsupported runtime features.
 - If content guidance conflicts with the shipped app architecture or current MVP constraints, keep the content intent but adapt it to the technical source of truth in:
@@ -81,6 +86,11 @@ Require explicit user intent before any destructive action.
 - Do not let the content document silently introduce unsupported runtime features such as persistence, unlock logic, adaptive difficulty, or new exercise widgets unless those are explicitly added to the technical specs first.
 - Grammar rules, examples, and canonical explanations should be based on open educational/textbook sources and then curated into the app's JSON-compatible lesson schema.
 - AI may assist offline authoring, but shipped lesson content must remain curated, source-backed, and schema-valid.
+- For any new lesson authoring or exercise creation task, always invoke the local `english-grammar-methodologist` skill first.
+- This applies to grammar rules, intro examples, exercises, distractors, accepted answers, accepted corrections, and rule-specific explanations.
+- Invoke `english-grammar-methodologist` only when the task actually requires English-language content authoring or content review.
+- Do not load or invoke it for app engineering, UI implementation, deployment, infra, or documentation tasks unless those tasks explicitly require creating or checking English-learning content.
+- If `english-grammar-methodologist` is unavailable in the current session, treat that as a blocker for new content authoring unless the user explicitly overrides it.
 
 ## Orchestration Mode
 
@@ -171,6 +181,7 @@ results than an ad-hoc answer. When in doubt, invoke the skill. A false positive
 cheaper than a false negative.
 
 Key routing rules:
+- Lesson authoring, exercise creation, distractor writing, answer-key creation, explanation writing, curriculum expansion → invoke `english-grammar-methodologist` first, then use the canonical content docs for validation and export
 - Product ideas, "is this worth building", brainstorming → invoke /office-hours
 - Strategy, scope, "think bigger", "what should we build" → invoke /plan-ceo-review
 - Architecture, "does this design make sense" → invoke /plan-eng-review

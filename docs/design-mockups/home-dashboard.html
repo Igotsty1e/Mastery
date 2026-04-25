@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=390, initial-scale=1" />
+  <title>Mastery — Dashboard</title>
+  <link rel="stylesheet" href="tokens.css" />
+  <style>
+    .dash {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 28px 24px 32px;
+      background: var(--bg-app);
+    }
+    .dash__head { margin-bottom: 28px; }
+    .dash__wordmark {
+      font-family: var(--ff-display);
+      font-weight: 600;
+      font-size: 32px;
+      line-height: 1.05;
+      letter-spacing: -0.018em;
+      color: var(--action-primary-pressed);
+      font-style: italic;
+      font-variation-settings: "opsz" 144;
+      margin: 0;
+    }
+    .dash__sub {
+      margin: 6px 0 0;
+      font: var(--t-body-md);
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .levels { margin-bottom: 28px; }
+    .levels__label {
+      display: block;
+      margin-bottom: 12px;
+      font: var(--t-label-md);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+    .levels__row {
+      display: flex; flex-wrap: wrap; gap: 10px;
+    }
+
+    .lesson-card {
+      position: relative;
+      padding: 24px;
+      background:
+        radial-gradient(120% 80% at 100% 0%, rgba(247, 220, 224, 0.55), transparent 60%),
+        var(--bg-raised);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--r-lg);
+      box-shadow: var(--shadow-card);
+    }
+    .lesson-card__row {
+      display: flex; justify-content: space-between; align-items: flex-start;
+    }
+    .lesson-card__title {
+      font: var(--t-headline-md);
+      font-family: var(--ff-display);
+      font-weight: 600;
+      font-size: 26px;
+      line-height: 1.15;
+      letter-spacing: -0.012em;
+      color: var(--text-primary);
+      margin: 14px 0 6px;
+    }
+    .lesson-card__meta {
+      font: var(--t-body-sm);
+      font-weight: 500;
+      color: var(--text-secondary);
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .lesson-card__meta .dot {
+      width: 3px; height: 3px; border-radius: var(--r-pill);
+      background: var(--text-tertiary);
+    }
+
+    .progress-row {
+      margin-top: 18px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .progress-row .progress { flex: 1; }
+    .progress-row__count {
+      font-family: var(--ff-mono);
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      letter-spacing: 0.02em;
+    }
+    .progress-row__count strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .lesson-card__cta {
+      margin-top: 22px;
+    }
+
+    .next-up {
+      margin-top: 24px;
+    }
+    .next-up__head {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-bottom: 12px;
+    }
+    .next-up__title {
+      font: var(--t-label-lg);
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+    .next-up__link {
+      font: var(--t-label-sm);
+      font-weight: 700;
+      color: var(--action-primary);
+      text-decoration: none;
+    }
+    .next-row {
+      display: flex; gap: 14px; align-items: center;
+      padding: 14px 16px;
+      background: var(--bg-surface-alt);
+      border-radius: var(--r-md);
+      border: 1px solid var(--border-soft);
+    }
+    .next-row + .next-row { margin-top: 8px; }
+    .next-row__num {
+      flex: 0 0 28px;
+      width: 28px; height: 28px;
+      border-radius: var(--r-pill);
+      background: var(--bg-raised);
+      color: var(--text-secondary);
+      font-family: var(--ff-mono);
+      font-size: 12px;
+      font-weight: 600;
+      display: flex; align-items: center; justify-content: center;
+      border: 1px solid var(--border-soft);
+    }
+    .next-row__title {
+      font: var(--t-body-md);
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 0;
+    }
+    .next-row__sub {
+      font: var(--t-body-sm);
+      color: var(--text-tertiary);
+      margin: 2px 0 0;
+    }
+    .next-row__lock {
+      color: var(--text-tertiary);
+    }
+
+    .lock-badge {
+      display: inline-flex;
+      width: 14px; height: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="screen">
+    <div class="screen__safe-top">
+      <span>9:41</span>
+      <span class="battery"><span class="signal-dot"></span><span class="signal-dot"></span><span class="signal-dot"></span> 􀙇 100%</span>
+    </div>
+
+    <div class="dash">
+      <div class="dash__head">
+        <h1 class="dash__wordmark">Mastery</h1>
+        <p class="dash__sub">English practice, one lesson at a time.</p>
+      </div>
+
+      <div class="levels">
+        <span class="levels__label">Level</span>
+        <div class="levels__row">
+          <span class="chip chip--locked">
+            <svg class="lock-badge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="5" y="11" width="14" height="9" rx="2"/>
+              <path d="M8 11V8a4 4 0 0 1 8 0v3"/>
+            </svg>
+            A2
+          </span>
+          <span class="chip chip--locked">
+            <svg class="lock-badge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="5" y="11" width="14" height="9" rx="2"/>
+              <path d="M8 11V8a4 4 0 0 1 8 0v3"/>
+            </svg>
+            B1
+          </span>
+          <span class="chip chip--active">B2</span>
+          <span class="chip chip--locked">
+            <svg class="lock-badge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="5" y="11" width="14" height="9" rx="2"/>
+              <path d="M8 11V8a4 4 0 0 1 8 0v3"/>
+            </svg>
+            C1
+          </span>
+        </div>
+      </div>
+
+      <div class="lesson-card">
+        <div class="lesson-card__row">
+          <span class="eyebrow"><span class="eyebrow__dot"></span>Today's lesson</span>
+          <span class="chip" style="height:28px;padding:0 10px;font-size:12px;background:var(--bg-primary-soft);border-color:transparent;color:var(--action-primary-pressed);">B2</span>
+        </div>
+        <h2 class="lesson-card__title">Verbs Followed by -ing</h2>
+        <span class="lesson-card__meta">
+          <span>10 exercises</span>
+          <span class="dot"></span>
+          <span>~5 minutes</span>
+        </span>
+
+        <div class="progress-row">
+          <div class="progress" aria-label="Lesson progress">
+            <div class="progress__fill" style="width:30%"></div>
+          </div>
+          <span class="progress-row__count"><strong>3</strong> / 10</span>
+        </div>
+
+        <div class="lesson-card__cta">
+          <button class="btn btn--primary btn--block">Continue lesson</button>
+        </div>
+      </div>
+
+      <div class="next-up">
+        <div class="next-up__head">
+          <span class="next-up__title">Coming next</span>
+          <a class="next-up__link" href="#">See all</a>
+        </div>
+        <div class="next-row">
+          <span class="next-row__num">02</span>
+          <div class="flex-grow">
+            <p class="next-row__title">Verbs Followed by to-Infinitive</p>
+            <p class="next-row__sub">B2 · 10 exercises</p>
+          </div>
+          <span class="next-row__lock" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="5" y="11" width="14" height="9" rx="2"/>
+              <path d="M8 11V8a4 4 0 0 1 8 0v3"/>
+            </svg>
+          </span>
+        </div>
+        <div class="next-row">
+          <span class="next-row__num">03</span>
+          <div class="flex-grow">
+            <p class="next-row__title">Reported Speech: Statements</p>
+            <p class="next-row__sub">B2 · 10 exercises</p>
+          </div>
+          <span class="next-row__lock" aria-hidden="true">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="5" y="11" width="14" height="9" rx="2"/>
+              <path d="M8 11V8a4 4 0 0 1 8 0v3"/>
+            </svg>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <div class="screen__home-indicator"></div>
+  </div>
+</body>
+</html>

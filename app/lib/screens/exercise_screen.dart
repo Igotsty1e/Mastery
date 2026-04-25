@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../models/lesson.dart';
 import '../session/session_controller.dart';
 import '../session/session_state.dart';
+import '../theme/mastery_theme.dart';
 import '../widgets/fill_blank_widget.dart';
+import '../widgets/mastery_widgets.dart';
 import '../widgets/multiple_choice_widget.dart';
 import '../widgets/sentence_correction_widget.dart';
 import 'summary_screen.dart';
@@ -16,48 +19,67 @@ class ExerciseScreen extends StatefulWidget {
 }
 
 class _ExerciseScreenState extends State<ExerciseScreen> {
+  String _currentAnswer = '';
+  String? _lastExerciseId;
+
   @override
   void initState() {
     super.initState();
-    // Navigate when session reaches summary phase
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final controller = context.read<SessionController>();
-      void _onStateChange() {
-        if (controller.state.phase == SessionPhase.summary) {
-          controller.removeListener(_onStateChange);
+      void onChange() {
+        final state = controller.state;
+        // Reset answer when exercise advances.
+        if (state.currentExercise != null &&
+            state.currentExercise!.exerciseId != _lastExerciseId) {
+          _lastExerciseId = state.currentExercise!.exerciseId;
+          if (mounted) setState(() => _currentAnswer = '');
+        }
+        if (state.phase == SessionPhase.summary) {
+          controller.removeListener(onChange);
           if (!mounted) return;
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
               builder: (_) => SummaryScreen(
-                correctCount: controller.state.correctCount,
-                totalCount: controller.state.totalCount,
-                summary: controller.state.summary,
+                correctCount: state.correctCount,
+                totalCount: state.totalCount,
+                summary: state.summary,
               ),
             ),
           );
         }
       }
-      controller.addListener(_onStateChange);
+      controller.addListener(onChange);
+      _lastExerciseId = controller.state.currentExercise?.exerciseId;
     });
+  }
+
+  void _onAnswerChanged(String answer) {
+    if (answer == _currentAnswer) return;
+    setState(() => _currentAnswer = answer);
   }
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.masteryTokens;
     final controller = context.read<SessionController>();
     final state = context.watch<SessionController>().state;
 
     if (state.phase == SessionPhase.error) {
       return Scaffold(
-        body: Center(
+        backgroundColor: tokens.bgApp,
+        body: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(MasterySpacing.lg),
             child: Column(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.error_outline, size: 48, color: Colors.red),
+                const Icon(Icons.error_outline,
+                    size: 40, color: MasteryColors.error),
                 const SizedBox(height: 16),
                 Text(
                   state.errorMessage ?? 'Something went wrong.',
+                  style: MasteryTextStyles.bodyMd,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 24),
@@ -73,251 +95,212 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     }
 
     final exercise = state.currentExercise;
-    if (exercise == null) return const Scaffold(body: SizedBox.shrink());
+    if (exercise == null) {
+      return Scaffold(backgroundColor: tokens.bgApp, body: const SizedBox());
+    }
 
     final isSubmitted = state.phase == SessionPhase.result;
     final isLoading = state.phase == SessionPhase.evaluating;
+    final progress = (state.currentIndex + 1) / state.totalCount;
 
-    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: theme.colorScheme.surfaceContainerLowest,
-      appBar: AppBar(
-        automaticallyImplyLeading: false,
-        backgroundColor: theme.colorScheme.surface,
-        elevation: 0,
-        title: Text(
-          '${state.currentIndex + 1} / ${state.totalCount}',
-          style: theme.textTheme.labelLarge?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-        bottom: PreferredSize(
-          preferredSize: const Size.fromHeight(4),
-          child: LinearProgressIndicator(
-            value: (state.currentIndex + 1) / state.totalCount,
-            backgroundColor: theme.colorScheme.surfaceContainerHighest,
-          ),
-        ),
-      ),
+      backgroundColor: tokens.bgApp,
       body: Stack(
         children: [
           SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Card(
-                    elevation: 0,
-                    color: theme.colorScheme.surface,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      side: BorderSide(
-                          color: theme.colorScheme.outlineVariant),
+            child: Column(
+              children: [
+                _ExerciseTopBar(
+                  index: state.currentIndex,
+                  total: state.totalCount,
+                  progress: progress,
+                ),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.fromLTRB(
+                      MasterySpacing.lg,
+                      18,
+                      MasterySpacing.lg,
+                      MasterySpacing.md,
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: _ExerciseWidget(
-                        key: ValueKey(exercise.exerciseId),
-                        exercise: exercise,
-                        enabled: !isSubmitted && !isLoading,
-                        onSubmit: controller.submitAnswer,
-                      ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        InstructionBand(
+                          text: exercise.instruction,
+                          icon: switch (exercise.type) {
+                            ExerciseType.sentenceCorrection =>
+                              Icons.edit_outlined,
+                            _ => Icons.task_alt_rounded,
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        MasteryCard(
+                          padding: const EdgeInsets.all(22),
+                          child: _ExerciseBody(
+                            key: ValueKey(exercise.exerciseId),
+                            exercise: exercise,
+                            enabled: !isSubmitted && !isLoading,
+                            onAnswerChanged: _onAnswerChanged,
+                            onTextSubmit: () => _submitIfReady(controller),
+                          ),
+                        ),
+                        if (isSubmitted && state.lastResult != null) ...[
+                          const SizedBox(height: 16),
+                          ResultPanel(
+                            correct: state.lastResult!.correct,
+                            canonicalAnswer: state.lastResult!.canonicalAnswer,
+                            explanation: state.lastResult!.explanation,
+                          ),
+                        ],
+                      ],
                     ),
                   ),
-                  if (isSubmitted && state.lastResult != null) ...[
-                    const SizedBox(height: 16),
-                    _ResultPanel(
-                      correct: state.lastResult!.correct,
-                      explanation: state.lastResult!.explanation,
-                      canonicalAnswer: state.lastResult!.canonicalAnswer,
-                      isLast: state.isLastExercise,
-                      onNext: controller.advance,
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                      MasterySpacing.lg, 0, MasterySpacing.lg, MasterySpacing.md),
+                  child: FilledButton(
+                    onPressed: isLoading
+                        ? null
+                        : isSubmitted
+                            ? controller.advance
+                            : (_currentAnswer.isEmpty
+                                ? null
+                                : () => _submitIfReady(controller)),
+                    child: Text(
+                      isSubmitted
+                          ? (state.isLastExercise ? 'Finish' : 'Next')
+                          : 'Check answer',
                     ),
-                  ],
-                ],
-              ),
+                  ),
+                ),
+              ],
             ),
           ),
           if (isLoading)
             const ColoredBox(
-              color: Color(0x55000000),
+              color: Color(0x402B2326),
               child: Center(child: CircularProgressIndicator()),
             ),
         ],
       ),
     );
   }
+
+  void _submitIfReady(SessionController controller) {
+    if (_currentAnswer.isEmpty) return;
+    controller.submitAnswer(_currentAnswer);
+  }
 }
 
-class _ExerciseWidget extends StatelessWidget {
-  final Exercise exercise;
-  final bool enabled;
-  final void Function(String) onSubmit;
+class _ExerciseTopBar extends StatelessWidget {
+  final int index;
+  final int total;
+  final double progress;
 
-  const _ExerciseWidget({
-    super.key,
-    required this.exercise,
-    required this.enabled,
-    required this.onSubmit,
+  const _ExerciseTopBar({
+    required this.index,
+    required this.total,
+    required this.progress,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final tokens = context.masteryTokens;
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.primaryContainer.withValues(alpha: 0.35),
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: theme.colorScheme.primaryContainer),
-          ),
+        SizedBox(
+          height: 48,
           child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(
-                Icons.task_alt_rounded,
-                size: 18,
-                color: theme.colorScheme.primary,
+              IconButton(
+                icon: const Icon(Icons.chevron_left_rounded, size: 26),
+                onPressed: () => Navigator.of(context).maybePop(),
               ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Text(
-                  exercise.instruction,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.w600,
-                    height: 1.4,
-                  ),
+              const Spacer(),
+              Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: '${index + 1}',
+                      style: MasteryTextStyles.mono(
+                        size: 14,
+                        lineHeight: 16,
+                        weight: FontWeight.w600,
+                        color: MasteryColors.textPrimary,
+                      ),
+                    ),
+                    TextSpan(
+                      text: ' / $total',
+                      style: MasteryTextStyles.mono(
+                        size: 14,
+                        lineHeight: 16,
+                        weight: FontWeight.w400,
+                        color: MasteryColors.textSecondary,
+                      ),
+                    ),
+                  ],
                 ),
+              ),
+              const Spacer(),
+              IconButton(
+                icon: Icon(Icons.close_rounded,
+                    size: 22, color: tokens.textTertiary),
+                onPressed: () => Navigator.of(context).maybePop(),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 18),
-        switch (exercise.type) {
-          ExerciseType.fillBlank => FillBlankWidget(
-              prompt: exercise.prompt,
-              enabled: enabled,
-              onSubmit: onSubmit,
-            ),
-          ExerciseType.multipleChoice => MultipleChoiceWidget(
-              prompt: exercise.prompt,
-              options: exercise.options!,
-              enabled: enabled,
-              onSubmit: onSubmit,
-            ),
-          ExerciseType.sentenceCorrection => SentenceCorrectionWidget(
-              prompt: exercise.prompt,
-              enabled: enabled,
-              onSubmit: onSubmit,
-            ),
-        },
+        SizedBox(
+          height: 4,
+          child: LinearProgressIndicator(
+            value: progress.clamp(0.0, 1.0),
+            backgroundColor: tokens.bgSurfaceAlt,
+            valueColor: const AlwaysStoppedAnimation(
+                MasteryColors.actionPrimary),
+            minHeight: 4,
+          ),
+        ),
       ],
     );
   }
 }
 
-class _ResultPanel extends StatelessWidget {
-  final bool correct;
-  final String? explanation;
-  final String canonicalAnswer;
-  final bool isLast;
-  final VoidCallback onNext;
+class _ExerciseBody extends StatelessWidget {
+  final Exercise exercise;
+  final bool enabled;
+  final ValueChanged<String> onAnswerChanged;
+  final VoidCallback onTextSubmit;
 
-  const _ResultPanel({
-    required this.correct,
-    required this.explanation,
-    required this.canonicalAnswer,
-    required this.isLast,
-    required this.onNext,
+  const _ExerciseBody({
+    super.key,
+    required this.exercise,
+    required this.enabled,
+    required this.onAnswerChanged,
+    required this.onTextSubmit,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final bgColor =
-        correct ? const Color(0xFFECFDF5) : const Color(0xFFFFF1F2);
-    final borderColor =
-        correct ? const Color(0xFF6EE7B7) : const Color(0xFFFDA4AF);
-    final labelColor =
-        correct ? const Color(0xFF047857) : const Color(0xFFBE123C);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: bgColor,
-            border: Border.all(color: borderColor),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Icon(
-                    correct ? Icons.check_circle : Icons.cancel,
-                    size: 20,
-                    color: labelColor,
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    correct ? 'Correct' : 'Incorrect',
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: labelColor,
-                    ),
-                  ),
-                ],
-              ),
-              if (!correct) ...[
-                const SizedBox(height: 10),
-                Text(
-                  'Answer: $canonicalAnswer',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-              if (explanation != null) ...[
-                const SizedBox(height: 10),
-                Text(
-                  explanation!,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    height: 1.5,
-                  ),
-                ),
-              ],
-            ],
-          ),
+    return switch (exercise.type) {
+      ExerciseType.fillBlank => FillBlankWidget(
+          prompt: exercise.prompt,
+          enabled: enabled,
+          onChanged: onAnswerChanged,
+          onSubmitField: onTextSubmit,
         ),
-        const SizedBox(height: 16),
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton(
-            onPressed: onNext,
-            style: FilledButton.styleFrom(
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
-            ),
-            child: Text(
-              isLast ? 'Finish' : 'Next',
-              style: const TextStyle(fontSize: 16),
-            ),
-          ),
+      ExerciseType.multipleChoice => MultipleChoiceWidget(
+          prompt: exercise.prompt,
+          options: exercise.options!,
+          enabled: enabled,
+          onChanged: onAnswerChanged,
         ),
-      ],
-    );
+      ExerciseType.sentenceCorrection => SentenceCorrectionWidget(
+          prompt: exercise.prompt,
+          enabled: enabled,
+          onChanged: onAnswerChanged,
+        ),
+    };
   }
 }

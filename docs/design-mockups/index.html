@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mastery — Design Mockups</title>
+  <link rel="stylesheet" href="tokens.css" />
+  <style>
+    body {
+      background: var(--bg-app);
+      min-height: 100vh;
+      padding: 56px 32px 96px;
+    }
+
+    .container {
+      max-width: 1480px;
+      margin: 0 auto;
+    }
+
+    .hero {
+      max-width: 880px;
+      margin-bottom: 48px;
+    }
+    .hero__eyebrow {
+      font-family: var(--ff-mono);
+      font-size: 12px;
+      letter-spacing: 0.20em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      display: inline-flex; align-items: center; gap: 12px;
+    }
+    .hero__eyebrow::before {
+      content: ''; width: 32px; height: 1px; background: var(--text-tertiary);
+    }
+    .hero__title {
+      margin: 18px 0 12px;
+      font-family: var(--ff-display);
+      font-weight: 600;
+      font-size: 56px;
+      line-height: 1.05;
+      letter-spacing: -0.025em;
+      color: var(--text-primary);
+      font-style: italic;
+      font-variation-settings: "opsz" 144;
+    }
+    .hero__title em {
+      color: var(--action-primary-pressed);
+      font-style: italic;
+    }
+    .hero__sub {
+      font: var(--t-body-lg);
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin: 0 0 24px;
+      max-width: 640px;
+    }
+
+    .meta {
+      display: flex; flex-wrap: wrap; gap: 12px;
+      margin-bottom: 8px;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      border-radius: var(--r-pill);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-soft);
+      font: var(--t-label-sm);
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    .pill .swatch {
+      width: 12px; height: 12px;
+      border-radius: var(--r-pill);
+    }
+
+    .palette {
+      margin: 36px 0 0;
+      padding: 24px;
+      border-radius: var(--r-lg);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-soft);
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+    }
+    .swatch-block {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .swatch-block__chip {
+      width: 36px; height: 36px;
+      border-radius: var(--r-md);
+      border: 1px solid rgba(43, 35, 38, 0.06);
+      flex: 0 0 36px;
+    }
+    .swatch-block__name {
+      font: var(--t-label-md);
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0;
+    }
+    .swatch-block__hex {
+      font-family: var(--ff-mono);
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin: 2px 0 0;
+    }
+
+    .section-title {
+      margin: 56px 0 4px;
+      font-family: var(--ff-display);
+      font-weight: 600;
+      font-size: 28px;
+      letter-spacing: -0.018em;
+      color: var(--text-primary);
+    }
+    .section-sub {
+      margin: 0 0 32px;
+      font: var(--t-body-md);
+      color: var(--text-secondary);
+      max-width: 640px;
+    }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+      gap: 40px 32px;
+      align-items: start;
+    }
+
+    .frame {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+    }
+    .frame__phone {
+      width: 410px;
+      height: 864px;
+      padding: 10px;
+      border-radius: 56px;
+      background: linear-gradient(165deg, #1d1517, #2B2326);
+      box-shadow: var(--shadow-frame);
+      position: relative;
+    }
+    .frame__phone iframe {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      border-radius: 46px;
+      display: block;
+      background: var(--bg-app);
+    }
+    .frame__phone::before {
+      /* notch */
+      content: '';
+      position: absolute;
+      top: 18px; left: 50%; transform: translateX(-50%);
+      width: 110px; height: 28px;
+      background: #0d0a0b;
+      border-radius: var(--r-pill);
+      z-index: 2;
+    }
+    .frame__caption {
+      text-align: center;
+      max-width: 360px;
+    }
+    .frame__caption h3 {
+      margin: 0 0 4px;
+      font: var(--t-title-sm);
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .frame__caption p {
+      margin: 0;
+      font: var(--t-body-sm);
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    .frame__index {
+      font-family: var(--ff-mono);
+      font-size: 12px;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: 4px;
+      display: block;
+    }
+
+    .footer {
+      margin-top: 80px;
+      padding: 32px;
+      border-radius: var(--r-lg);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-soft);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 32px;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    .footer__col h4 {
+      margin: 0 0 10px;
+      font: var(--t-label-md);
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+    .footer__col p, .footer__col li {
+      margin: 0;
+      font: var(--t-body-md);
+      color: var(--text-primary);
+      line-height: 1.6;
+    }
+    .footer__col ul {
+      list-style: none;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .footer__col li::before {
+      content: '— ';
+      color: var(--action-primary);
+      font-weight: 700;
+    }
+
+    @media (max-width: 880px) {
+      body { padding: 32px 16px 80px; }
+      .hero__title { font-size: 36px; }
+      .gallery { grid-template-columns: 1fr; }
+      .frame__phone { width: 100%; max-width: 410px; height: auto; aspect-ratio: 410 / 864; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="hero">
+      <span class="hero__eyebrow">Mastery · Design exploration</span>
+      <h1 class="hero__title">Quiet Premium <em>Coach</em></h1>
+      <p class="hero__sub">
+        Six core screens redesigned in the tokens from <strong>DESIGN.md</strong>: dusty-rose anchor, ivory surfaces, espresso text, Fraunces for display, Manrope for body. No streaks, no badges, no gamification — a calm, adult tutor that makes rule-based learning feel desirable.
+      </p>
+      <div class="meta">
+        <span class="pill"><span class="swatch" style="background:#B07A84"></span> Dusty rose anchor</span>
+        <span class="pill"><span class="swatch" style="background:#FCF8F6;border:1px solid #D2C0BD"></span> Ivory surfaces</span>
+        <span class="pill">Fraunces · Manrope · IBM Plex Mono</span>
+        <span class="pill">390 × 844 · iPhone 14</span>
+      </div>
+
+      <div class="palette" aria-label="Color palette">
+        <div class="swatch-block"><span class="swatch-block__chip" style="background:#B07A84"></span><div><p class="swatch-block__name">Action primary</p><p class="swatch-block__hex">#B07A84</p></div></div>
+        <div class="swatch-block"><span class="swatch-block__chip" style="background:#8F5C68"></span><div><p class="swatch-block__name">Primary pressed</p><p class="swatch-block__hex">#8F5C68</p></div></div>
+        <div class="swatch-block"><span class="swatch-block__chip" style="background:#F3E6E9"></span><div><p class="swatch-block__name">Primary soft</p><p class="swatch-block__hex">#F3E6E9</p></div></div>
+        <div class="swatch-block"><span class="swatch-block__chip" style="background:#FCF8F6;border:1px solid #E4D7D4"></span><div><p class="swatch-block__name">App bg ivory</p><p class="swatch-block__hex">#FCF8F6</p></div></div>
+        <div class="swatch-block"><span class="swatch-block__chip" style="background:#2B2326"></span><div><p class="swatch-block__name">Text primary</p><p class="swatch-block__hex">#2B2326</p></div></div>
+        <div class="swatch-block"><span class="swatch-block__chip" style="background:#C89A52"></span><div><p class="swatch-block__name">Accent gold</p><p class="swatch-block__hex">#C89A52</p></div></div>
+        <div class="swatch-block"><span class="swatch-block__chip" style="background:#4E7C68"></span><div><p class="swatch-block__name">Success</p><p class="swatch-block__hex">#4E7C68</p></div></div>
+        <div class="swatch-block"><span class="swatch-block__chip" style="background:#B14C64"></span><div><p class="swatch-block__name">Error</p><p class="swatch-block__hex">#B14C64</p></div></div>
+      </div>
+    </header>
+
+    <h2 class="section-title">Eight core screens</h2>
+    <p class="section-sub">Two home states, lesson intro, three exercise types (multiple choice + fill-the-blank + sentence correction), result, and summary. Tokens, layout, components and copy all map 1:1 to the Flutter `ThemeData`, `MasteryButton`, `MasteryCard`, `ResultPanel`, `SectionEyebrow` widgets called for in DESIGN.md.</p>
+
+    <div class="gallery">
+      <div class="frame">
+        <div class="frame__phone">
+          <iframe src="home-onboarding.html" title="Home — Onboarding" loading="lazy"></iframe>
+        </div>
+        <div class="frame__caption">
+          <span class="frame__index">01 · Home</span>
+          <h3>Onboarding</h3>
+          <p>Editorial wordmark sells the philosophy. Three calm proof points. One CTA. Replaces the current default Material 3 onboarding.</p>
+        </div>
+      </div>
+
+      <div class="frame">
+        <div class="frame__phone">
+          <iframe src="home-dashboard.html" title="Home — Dashboard" loading="lazy"></iframe>
+        </div>
+        <div class="frame__caption">
+          <span class="frame__index">02 · Home</span>
+          <h3>Dashboard</h3>
+          <p>Level chips with locked states. Single hero progress card with the live lesson, fraction in IBM Plex Mono. "Coming next" stays quiet.</p>
+        </div>
+      </div>
+
+      <div class="frame">
+        <div class="frame__phone">
+          <iframe src="lesson-intro.html" title="Lesson intro" loading="lazy"></iframe>
+        </div>
+        <div class="frame__caption">
+          <span class="frame__index">03 · Lesson</span>
+          <h3>Lesson Intro</h3>
+          <p>B2 pill, Fraunces title, three rule cards (Use / Form / Important) with distinct tints. Examples block in primary-soft. Ends with one CTA.</p>
+        </div>
+      </div>
+
+      <div class="frame">
+        <div class="frame__phone">
+          <iframe src="exercise-active.html" title="Exercise — active" loading="lazy"></iframe>
+        </div>
+        <div class="frame__caption">
+          <span class="frame__index">04 · Exercise</span>
+          <h3>Active state</h3>
+          <p>Sticky 4px progress + counter. Instruction band in primary-soft. One exercise card with multiple choice rows. Single Check CTA.</p>
+        </div>
+      </div>
+
+      <div class="frame">
+        <div class="frame__phone">
+          <iframe src="exercise-result.html" title="Exercise — result" loading="lazy"></iframe>
+        </div>
+        <div class="frame__caption">
+          <span class="frame__index">05 · Exercise</span>
+          <h3>Result revealed</h3>
+          <p>Selected option turns sage. Answer is highlighted inline. Result panel uses muted success surface — never bright system green. Next continues.</p>
+        </div>
+      </div>
+
+      <div class="frame">
+        <div class="frame__phone">
+          <iframe src="exercise-fill-blank.html" title="Exercise — fill the blank" loading="lazy"></iframe>
+        </div>
+        <div class="frame__caption">
+          <span class="frame__index">06 · Exercise</span>
+          <h3>Fill the blank · typing</h3>
+          <p>Inline blank highlights the gap. Single input with focus glow + caret. iOS keyboard up with predictive suggestions. Tip line teaches without giving the answer.</p>
+        </div>
+      </div>
+
+      <div class="frame">
+        <div class="frame__phone">
+          <iframe src="exercise-correction.html" title="Exercise — sentence correction" loading="lazy"></iframe>
+        </div>
+        <div class="frame__caption">
+          <span class="frame__index">07 · Exercise</span>
+          <h3>Sentence correction · typing</h3>
+          <p>Original sentence shown above with the wrong fragment struck through. Editor below holds the user's edited version with the new fragment highlighted in success-soft.</p>
+        </div>
+      </div>
+
+      <div class="frame">
+        <div class="frame__phone">
+          <iframe src="summary.html" title="Summary" loading="lazy"></iframe>
+        </div>
+        <div class="frame__caption">
+          <span class="frame__index">08 · Summary</span>
+          <h3>Lesson Complete</h3>
+          <p>Score hero in Fraunces 88px, gold hairlines for completion. Conclusion in primary-soft. Mistakes are review, not punishment.</p>
+        </div>
+      </div>
+    </div>
+
+    <footer class="footer">
+      <div class="footer__col" style="max-width:360px">
+        <h4>What this is</h4>
+        <p>Six HTML mockups, hand-rendered against DESIGN.md tokens with the real lesson content from <code>backend/data/lessons/b2-lesson-001.json</code>. Not AI-generated — every value is auditable.</p>
+      </div>
+      <div class="footer__col" style="max-width:360px">
+        <h4>Maps directly to Flutter</h4>
+        <ul>
+          <li>CSS custom properties → <code>ThemeExtension</code> tokens</li>
+          <li>HTML components → <code>MasteryButton</code>, <code>MasteryCard</code>, <code>ResultPanel</code></li>
+          <li>Google Fonts → self-hosted assets in <code>app/assets/fonts</code></li>
+          <li>SVG icons → Material outlined or custom</li>
+        </ul>
+      </div>
+      <div class="footer__col" style="max-width:360px">
+        <h4>Next decisions</h4>
+        <ul>
+          <li>Approve direction or request iteration on a specific screen</li>
+          <li>Verify OpenAI org → run AI variants for visual exploration</li>
+          <li>Hand off to <code>/design-html</code> for production HTML/Flutter</li>
+        </ul>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>

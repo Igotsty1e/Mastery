@@ -23,6 +23,21 @@ dev_dependencies:
 flutter:
   uses-material-design: true
 
+  fonts:
+    - family: Fraunces
+      fonts:
+        - asset: assets/fonts/Fraunces-Variable.ttf
+        - asset: assets/fonts/Fraunces-Italic-Variable.ttf
+          style: italic
+    - family: Manrope
+      fonts:
+        - asset: assets/fonts/Manrope-Variable.ttf
+    - family: IBMPlexMono
+      fonts:
+        - asset: assets/fonts/IBMPlexMono-Regular.ttf
+        - asset: assets/fonts/IBMPlexMono-Medium.ttf
+          weight: 500
+
 # Render uses Flutter 3.22.2 / Dart 3.4.3. These transitive packages jumped to
 # sdk ^3.5.0+ in later releases, so we cap them at the last Dart-3.4-compatible
 # versions until the Render build image is upgraded.
