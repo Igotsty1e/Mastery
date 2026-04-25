@@ -2,6 +2,12 @@
 
 REST API for Mastery English practice. Node.js + TypeScript + Express.
 
+The backend is the pedagogical authority for:
+- lesson rule/explanation content
+- canonical answers
+- correctness decisions
+- rule-specific explanations returned after each attempt
+
 ## Endpoints
 
 | Method | Path | Description |
@@ -31,8 +37,7 @@ AI fallback on timeout (5s) or error defaults to `correct=false, evaluation_sour
   "correct": true,
   "evaluation_source": "deterministic | ai_fallback",
   "canonical_answer": "...",
-  "explanation": "...",    // optional — from exercise feedback.explanation (deterministic) or AI feedback string (ai_fallback)
-  "practical_tip": "..."   // optional — from exercise feedback.practical_tip (deterministic path only)
+  "explanation": "..."     // optional — always from exercise feedback.explanation
 }
 ```
 
@@ -50,8 +55,7 @@ AI fallback on timeout (5s) or error defaults to `correct=false, evaluation_sour
       "correct": false,
       "prompt": "...",
       "canonical_answer": "...",
-      "explanation": "...",
-      "practical_tip": "..."
+      "explanation": "..."
     }
   ]
 }

@@ -26,9 +26,9 @@
 ### Phase 3 — Flutter client
 
 1. Implement HTTP client layer (lesson fetch, answer submit, result fetch).
-2. Implement HomeScreen (single CTA) and LessonIntroScreen (fetch + loading + error states).
+2. Implement HomeScreen (minimal onboarding + lesson CTA) and LessonIntroScreen (fetch + loading + error states + rule/examples screen).
 3. Implement ExerciseScreen for each type (`fill_blank`, `multiple_choice`, `sentence_correction`).
-4. Implement inline result display (correct/incorrect + feedback + canonical answer).
+4. Implement inline result display (correct/incorrect + explanation + canonical answer; no hints or practical tips).
 5. Implement SummaryScreen (score display, conclusion, mistake review cards).
 6. Wire navigation (linear, no back access after submit).
 

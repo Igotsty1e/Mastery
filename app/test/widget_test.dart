@@ -26,18 +26,17 @@ const _exId2 = 'a1b2c3d4-0001-4000-8000-000000000012';
 
 Map<String, dynamic> _lessonJson() => {
       'lesson_id': _lessonId,
-      'title': 'Present Perfect',
+      'title': 'The Third Conditional',
       'language': 'en',
       'level': 'B2',
       'intro_rule':
-          'Use present perfect for past actions with present relevance.',
-      'intro_examples': ['She has lived here for years.'],
+          'Use the third conditional to talk about unreal past situations and their imagined results.',
+      'intro_examples': ['If she had left earlier, she would have caught the train.'],
       'exercises': [
         {
           'exercise_id': _exId,
           'type': 'fill_blank',
-          'prompt': 'She ___ working.',
-          'hint': null,
+          'prompt': 'If she had studied more, she ___ the exam.',
         }
       ],
     };
@@ -47,8 +46,8 @@ Map<String, dynamic> _evaluateJson({bool correct = true}) => {
       'exercise_id': _exId,
       'correct': correct,
       'evaluation_source': 'deterministic',
-      'feedback': 'Good job!',
-      'canonical_answer': 'is',
+      'explanation': 'Use would have + past participle in the result clause of the third conditional.',
+      'canonical_answer': 'would have passed',
     };
 
 Map<String, dynamic> _resultJson() => {
@@ -62,24 +61,22 @@ Map<String, dynamic> _resultJson() => {
 
 Map<String, dynamic> _lesson2Json() => {
       'lesson_id': _lessonId,
-      'title': 'Present Perfect',
+      'title': 'The Third Conditional',
       'language': 'en',
       'level': 'B2',
       'intro_rule':
-          'Use present perfect for past actions with present relevance.',
-      'intro_examples': ['She has lived here for years.'],
+          'Use the third conditional to talk about unreal past situations and their imagined results.',
+      'intro_examples': ['If she had left earlier, she would have caught the train.'],
       'exercises': [
         {
           'exercise_id': _exId,
           'type': 'fill_blank',
-          'prompt': 'She ___ working.',
-          'hint': null,
+          'prompt': 'If she had studied more, she ___ the exam.',
         },
         {
           'exercise_id': _exId2,
           'type': 'fill_blank',
-          'prompt': 'They ___ students.',
-          'hint': null,
+          'prompt': 'If they had booked sooner, they ___ cheaper tickets.',
         },
       ],
     };
@@ -119,27 +116,33 @@ Future<SessionController> _loadedCtrl(http.Client client) async {
 
 void main() {
   group('HomeScreen', () {
-    testWidgets('shows title, subtitle, and Start Lesson button',
+    testWidgets('shows onboarding first',
         (tester) async {
       await tester.pumpWidget(_withApi(const HomeScreen(), MockClient((_) async => throw UnimplementedError())));
 
       expect(find.text('Mastery'), findsOneWidget);
-      expect(find.text('English practice, one lesson at a time.'), findsOneWidget);
-      expect(find.widgetWithText(FilledButton, 'Start Lesson'), findsOneWidget);
+      expect(find.text('Focused English grammar practice.'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Get started'), findsOneWidget);
     });
 
-    testWidgets('tapping Start Lesson navigates to LessonIntroScreen',
+    testWidgets('onboarding continues to home and then navigates to LessonIntroScreen',
         (tester) async {
       final client = MockClient((_) async => _jsonOk(_lessonJson()));
 
       await tester.pumpWidget(_withApi(const HomeScreen(), client));
       await tester.pumpAndSettle();
 
+      await tester.tap(find.widgetWithText(FilledButton, 'Get started'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('English practice, one lesson at a time.'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Start Lesson'), findsOneWidget);
+
       await tester.tap(find.widgetWithText(FilledButton, 'Start Lesson'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Present Perfect'), findsOneWidget);
-      expect(find.widgetWithText(FilledButton, 'Start'), findsOneWidget);
+      expect(find.text('The Third Conditional'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Start Practice'), findsOneWidget);
     });
   });
 
@@ -192,7 +195,7 @@ void main() {
       await tester.tap(find.widgetWithText(FilledButton, 'Retry'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Present Perfect'), findsOneWidget);
+      expect(find.text('The Third Conditional'), findsOneWidget);
       expect(callCount, equals(2));
     });
   });
@@ -249,7 +252,7 @@ void main() {
       await tester.pump();
 
       expect(find.text('Incorrect'), findsOneWidget);
-      expect(find.textContaining('Answer: is'), findsOneWidget);
+      expect(find.textContaining('Answer: would have passed'), findsOneWidget);
     });
   });
 
@@ -392,7 +395,8 @@ void main() {
       await tester.pump();
 
       expect(find.text('2 / 2'), findsOneWidget);
-      expect(find.text('They ___ students.'), findsOneWidget);
+      expect(find.text('If they had booked sooner, they ___ cheaper tickets.'),
+          findsOneWidget);
     });
 
     testWidgets('text field is empty after advancing to next exercise',
@@ -669,21 +673,26 @@ void main() {
         ),
       );
 
-      // Phase 1: HomeScreen — single CTA, tap Start Lesson
+      // Phase 1: HomeScreen onboarding → main CTA
       await tester.pumpAndSettle();
+      expect(find.widgetWithText(FilledButton, 'Get started'), findsOneWidget);
+      await tester.tap(find.widgetWithText(FilledButton, 'Get started'));
+      await tester.pumpAndSettle();
+
       expect(find.widgetWithText(FilledButton, 'Start Lesson'), findsOneWidget);
       await tester.tap(find.widgetWithText(FilledButton, 'Start Lesson'));
       await tester.pumpAndSettle(); // navigate + fetch lesson
 
       // Phase 2: LessonIntroScreen — lesson loaded from mocked API
-      expect(find.text('Present Perfect'), findsOneWidget);
-      expect(find.widgetWithText(FilledButton, 'Start'), findsOneWidget);
-      await tester.tap(find.widgetWithText(FilledButton, 'Start'));
+      expect(find.text('The Third Conditional'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Start Practice'), findsOneWidget);
+      await tester.tap(find.widgetWithText(FilledButton, 'Start Practice'));
       await tester.pumpAndSettle(); // navigate to ExerciseScreen
 
       // Phase 3: ExerciseScreen — fill-blank exercise
-      expect(find.text('She ___ working.'), findsOneWidget);
-      await tester.enterText(find.byType(TextField), 'is');
+      expect(find.text('If she had studied more, she ___ the exam.'),
+          findsOneWidget);
+      await tester.enterText(find.byType(TextField), 'would have passed');
       await tester.pump();
       await tester.tap(find.widgetWithText(FilledButton, 'Submit'));
       await tester

@@ -52,20 +52,19 @@ Client                    Backend                   AI
   │                          │◄──────────────────────│
   │                          │ validate AI response   │
   │                          │ timeout/error → incorrect
-  │◄─────────────────────────│                       │
-  │  {correct,               │                       │
-  │   explanation?,          │                       │
-  │   practical_tip?,        │                       │
-  │   canonical_answer,      │                       │
-  │   evaluation_source}     │                       │
+│◄─────────────────────────│                       │
+│  {correct,               │                       │
+│   explanation?,          │                       │
+│   canonical_answer,      │                       │
+│   evaluation_source}     │                       │
 ```
 
 ## API surface (MVP — 3 endpoints)
 
 ```
 GET  /lessons/{lesson_id}                          → lesson definition (ordered exercises)
-POST /lessons/{lesson_id}/answers                  → submit one answer; response: {correct, explanation?, practical_tip?, canonical_answer, evaluation_source}
-GET  /lessons/{lesson_id}/result?session_id={uuid} → lesson score + conclusion + per-mistake cards (prompt, canonical_answer, explanation?, practical_tip?)
+POST /lessons/{lesson_id}/answers                  → submit one answer; response: {correct, explanation?, canonical_answer, evaluation_source}
+GET  /lessons/{lesson_id}/result?session_id={uuid} → lesson score + conclusion + per-mistake cards (prompt, canonical_answer, explanation?)
 ```
 
 No other endpoints in MVP.
@@ -86,3 +85,10 @@ No cross-session persistence. Store is in-memory only — resets on server resta
 - **AI result cache:** separate in-memory map, same TTL (4h) and cap (10K). Key = `sessionId:exerciseId:normalizedAnswer`. Deduplicates identical AI evaluations within a session — resubmitting the same answer skips the AI call and does not consume rate-limit budget.
 - **AI rate limit:** 10 AI-eligible submissions per IP per 60-second sliding window. The rate-limit check runs only after the deterministic gate and cache miss both fail, so cached hits and deterministic results never count against the limit.
 - **X-Forwarded-For trust boundary:** XFF is accepted only when the socket connection comes from a loopback or RFC 1918 address (trusted proxy). The rightmost XFF entry is used; client-prepended entries are ignored to prevent bucket spoofing.
+
+## Pedagogy boundary
+
+- Each lesson teaches exactly one grammar point.
+- The rule explanation and examples shown before the exercises are curated lesson content, not AI-generated.
+- Explanations shown after submission also come from curated lesson content, not from raw LLM text.
+- AI is used only as a correctness judge for borderline `sentence_correction` cases.

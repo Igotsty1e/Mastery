@@ -153,7 +153,7 @@ When AI call fails (timeout, HTTP 5xx, malformed response):
 |---------------------|------------------|
 | `correct`           | `false`          |
 | `evaluation_source` | `deterministic`  |
-| `feedback`          | `null`           |
+| `explanation`       | exercise feedback explanation |
 | `canonical_answer`  | first entry from `accepted_corrections` |
 
 ### Golden case
@@ -168,7 +168,7 @@ Expected response:
   "exercise_id": "00000000-0000-4000-8000-000000000301",
   "correct": false,
   "evaluation_source": "deterministic",
-  "feedback": null,
+  "explanation": "<exercise feedback explanation>",
   "canonical_answer": "She doesn't like coffee."
 }
 ```

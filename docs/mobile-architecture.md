@@ -15,7 +15,9 @@ HomeScreen
 
 ### HomeScreen
 
-- Stateless. Single CTA: "Start Lesson" button.
+- Shows a minimal onboarding first: short product framing plus three bullet points about the learning model.
+- CTA 1: `Get started` dismisses onboarding into the normal home state.
+- Home state shows the lesson CTA: `Start Lesson`.
 - Launches `LessonIntroScreen` with the hardcoded `AppConfig.defaultLessonId`.
 - No lesson list, no fetch, no error state.
 
@@ -24,7 +26,8 @@ HomeScreen
 - Fetches `GET /lessons/{lesson_id}` on mount.
 - Shows loading state while fetching.
 - On error: show error message + retry button.
-- On success: navigate to first ExerciseScreen.
+- On success: render lesson title, curated rule explanation, and examples. CTA: `Start Practice`.
+- Tapping `Start Practice` navigates to the first `ExerciseScreen`.
 
 ### ExerciseScreen
 
@@ -43,9 +46,10 @@ Renders one exercise at a time. Layout varies by type:
 
 ### Result display (inline, after submission)
 
-- Correct: green indicator + explanation (if present) + practical tip (if present).
-- Incorrect: red indicator + canonical answer + explanation (if present) + practical tip (if present).
-- `explanation` and `practical_tip` come from the exercise's `feedback` block in the lesson fixture (deterministic path) or from the AI response string (AI fallback path).
+- Correct: green indicator + explanation (if present).
+- Incorrect: red indicator + canonical answer + explanation (if present).
+- `explanation` always comes from the exercise's curated `feedback.explanation` block in the lesson fixture.
+- AI is used only to decide correctness on borderline `sentence_correction` cases; its raw feedback is not shown to the learner.
 - "Next" button appears. Tapping Next advances to next exercise or to SummaryScreen.
 - No back navigation. Submit button replaced by Next button after result shown.
 
@@ -54,7 +58,7 @@ Renders one exercise at a time. Layout varies by type:
 - Receives score from session state; optionally fetches `GET /lessons/{lesson_id}/result` for enriched data.
 - Displays: "X / N correct".
 - If `conclusion` is present: shows a one-line summary verdict below the score.
-- If any answers were incorrect: shows a "Mistakes to review" section with one card per mistake. Each card shows the exercise prompt, canonical answer, explanation, and practical tip.
+- If any answers were incorrect: shows a "Review your mistakes" section with one card per mistake. Each card shows the exercise prompt, canonical answer, and explanation.
 - Single "Done" button → exits lesson (pop to root).
 
 ## State model
@@ -63,8 +67,8 @@ All state is in-memory for the current lesson session. No local storage.
 
 Key data classes (see `app/lib/models/`):
 
-- `EvaluateResponse` — result of one answer submission: `{correct, evaluationSource, explanation?, practicalTip?, canonicalAnswer}`
-- `LessonResultAnswer` — per-exercise entry in the summary: `{exerciseId, correct, prompt?, canonicalAnswer?, explanation?, practicalTip?}`
+- `EvaluateResponse` — result of one answer submission: `{correct, evaluationSource, explanation?, canonicalAnswer}`
+- `LessonResultAnswer` — per-exercise entry in the summary: `{exerciseId, correct, prompt?, canonicalAnswer?, explanation?}`
 - `LessonResultResponse` — full lesson result from the result endpoint: `{lessonId, totalExercises, correctCount, answers, conclusion?}`
 
 Session state is managed by `SessionController` / `SessionState` (see `app/lib/session/`). Discarded on exit. Client never stores `accepted_answers`, `accepted_corrections`, or `correct_option_id`.

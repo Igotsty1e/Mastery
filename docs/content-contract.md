@@ -24,7 +24,7 @@
   "type": "fill_blank",
   "prompt": "string (contains exactly one `___` placeholder)",
   "accepted_answers": ["string"],
-  "hint": "string|null"
+  "feedback": { "explanation": "string" }
 }
 ```
 
@@ -41,7 +41,8 @@
   "options": [
     { "id": "string (a|b|c|d)", "text": "string" }
   ],
-  "correct_option_id": "string (a|b|c|d)"
+  "correct_option_id": "string (a|b|c|d)",
+  "feedback": { "explanation": "string" }
 }
 ```
 
@@ -56,7 +57,8 @@
   "type": "sentence_correction",
   "prompt": "string (grammatically incorrect sentence)",
   "accepted_corrections": ["string"],
-  "borderline_ai_fallback": true
+  "borderline_ai_fallback": true,
+  "feedback": { "explanation": "string" }
 }
 ```
 
@@ -85,12 +87,12 @@ Backend → Client:
   "exercise_id": "string",
   "correct": true,
   "evaluation_source": "deterministic|ai_fallback",
-  "feedback": "string|null",
+  "explanation": "string|null",
   "canonical_answer": "string"
 }
 ```
 
-- `feedback`: null when `correct=true` and no AI was used.
+- `explanation`: user-facing rule explanation from the exercise's curated `feedback.explanation`.
 - `canonical_answer`: always the first entry from `accepted_answers` or `accepted_corrections`.
 
 ## 4. Normalization Rules
@@ -142,7 +144,8 @@ Example:
 - AI receives: original prompt, user's answer, list of `accepted_corrections`.
 - AI returns: `{ "correct": bool, "feedback": string }`.
 - AI decision is final for borderline cases.
-- If AI call fails (timeout, error): default to `correct=false`, `evaluation_source=deterministic`, `feedback=null`.
+- AI feedback is internal and not shown to the user; the learner still sees the exercise's curated explanation.
+- If AI call fails (timeout, error): default to `correct=false`, `evaluation_source=deterministic`, `explanation` still comes from the exercise content.
 - AI is never called for `fill_blank` or `multiple_choice`.
 
 ## 8. Summary Contract
@@ -159,7 +162,8 @@ Example:
 - `fill_blank`: populate `accepted_answers` with all valid completions.
 - `multiple_choice`: ensure exactly one `correct_option_id`; distractors must be plausible.
 - `sentence_correction`: provide `prompt` with clear grammatical error; provide `accepted_corrections` covering most common valid corrections.
+- Provide a concise, rule-specific `feedback.explanation` for every exercise. This text must explain the exact grammar point being tested.
 - Do not include trick questions or ambiguous prompts.
 - Flag any exercise where AI fallback is expected to be frequently needed (for review).
 - Keep `prompt` strings under 300 characters.
-- Do not use HTML or markdown inside `prompt`, `hint`, or answer fields.
+- Do not use HTML or markdown inside `prompt`, `feedback.explanation`, or answer fields.

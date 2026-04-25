@@ -55,12 +55,12 @@ Submit one answer. Backend evaluates and returns result.
   "exercise_id": "uuid",
   "correct": true|false,
   "evaluation_source": "deterministic|ai_fallback",
-  "feedback": "string|null",
+  "explanation": "string|null",
   "canonical_answer": "string"
 }
 ```
 
-- `feedback`: null when `correct=true` and no AI used.
+- `explanation`: curated rule-specific explanation from the exercise's `feedback.explanation`.
 - `canonical_answer`: first entry from `accepted_answers` or `accepted_corrections`.
 - `evaluation_source`: always `deterministic` when AI not called; `ai_fallback` when AI decided outcome.
 
@@ -153,7 +153,7 @@ If all pass → AI fallback. If any fail → incorrect, skip AI.
 { "correct": bool, "feedback": "string (max 80 chars)" }
 ```
 
-**Timeout:** 5 seconds. On timeout or any error: `correct=false`, `evaluation_source=deterministic`, `feedback=null`.
+**Timeout:** 5 seconds. On timeout or any error: `correct=false`, `evaluation_source=deterministic`, while the response may still include the exercise's curated `explanation`.
 
 **Validation:** backend validates response schema before using it. Invalid schema treated same as timeout.
 

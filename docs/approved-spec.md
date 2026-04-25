@@ -10,7 +10,7 @@
 
 Roundups AI Assistant is a Flutter mobile app for English language practice. Users complete structured lessons composed of deterministic exercises. AI is used narrowly: evaluating free-text answers and generating short corrective feedback. The server is the single source of truth for all lesson content and correctness decisions.
 
-**One-sentence pitch:** A fixed-flow English practice app where the backend decides correctness and AI only explains why.
+**One-sentence pitch:** A fixed-flow English practice app where each lesson teaches one rule, the backend decides correctness, and AI is used only to judge borderline sentence corrections.
 
 ---
 
@@ -58,11 +58,12 @@ Fixed linear sequence. No branching. No skipping. No adaptive reordering.
 
 ```
 HomeScreen
-  → "Start Lesson" (single CTA)
-      → Lesson Intro / loading
+  → Minimal onboarding
+      → "Start Lesson"
+          → Lesson Intro / loading
           → Exercise 1
               → Submit answer
-              → Receive result (correct / incorrect + explanation + practical tip)
+              → Receive result (correct / incorrect + canonical answer + explanation)
               → Next
           → Exercise 2
               ...
@@ -72,13 +73,14 @@ HomeScreen
 SummaryScreen
   → Show score (X / N correct)
   → Show conclusion (one-line verdict, score-dependent)
-  → Show mistake review cards (incorrect answers only): prompt, canonical answer, explanation, practical tip
+  → Show mistake review cards (incorrect answers only): prompt, canonical answer, explanation
   → Done button → exit
 ```
 
 **Rules:**
 - User cannot go back to previous exercises.
 - User cannot skip an exercise.
+- HomeScreen may show a lightweight onboarding before the lesson CTA.
 - Each exercise shows result immediately after submission.
 - No timers. No streaks. No points. No badges.
 - Lesson Complete screen shows raw score only.
@@ -103,7 +105,8 @@ SummaryScreen
 - Response schema: `{ "correct": bool, "feedback": string }`
 - Feedback max length: 80 characters.
 - Server validates response schema before using it.
-- On invalid response or timeout (5s): treat as incorrect, return generic feedback.
+- AI feedback is internal. User-facing explanations come from the exercise's curated `feedback.explanation` field.
+- On invalid response or timeout (5s): treat as incorrect.
 
 ---
 
@@ -164,6 +167,7 @@ The following will NOT be built in this MVP. Any request to add them is a scope 
 - Analytics or telemetry
 - AI-generated lesson content
 - More than 3 exercise types
+- Hints or practical tips shown after an incorrect answer
 
 ---
 
