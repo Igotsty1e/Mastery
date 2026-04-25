@@ -5,7 +5,7 @@ import { AiResponseSchema } from '../schemas';
 
 export interface SentenceCorrectionResult {
   correct: boolean;
-  evaluation_source: 'deterministic' | 'ai_fallback';
+  evaluation_source: 'deterministic' | 'ai_fallback' | 'ai_timeout' | 'ai_error';
   feedback: string | null;
   canonical_answer: string;
 }
@@ -83,12 +83,12 @@ export async function evaluateSentenceCorrection(
     clearTimeout(timeoutId);
 
     if (!result) {
-      return { correct: false, evaluation_source: 'deterministic', feedback: null, canonical_answer: canonical };
+      return { correct: false, evaluation_source: 'ai_timeout', feedback: null, canonical_answer: canonical };
     }
 
     const parsed = AiResponseSchema.safeParse(result);
     if (!parsed.success) {
-      return { correct: false, evaluation_source: 'deterministic', feedback: null, canonical_answer: canonical };
+      return { correct: false, evaluation_source: 'ai_error', feedback: null, canonical_answer: canonical };
     }
 
     return {
@@ -98,6 +98,6 @@ export async function evaluateSentenceCorrection(
       canonical_answer: canonical,
     };
   } catch {
-    return { correct: false, evaluation_source: 'deterministic', feedback: null, canonical_answer: canonical };
+    return { correct: false, evaluation_source: 'ai_error', feedback: null, canonical_answer: canonical };
   }
 }

@@ -180,13 +180,13 @@ describe('evaluateSentenceCorrection AI fallback', () => {
     expect(r.evaluation_source).toBe('deterministic');
   });
 
-  it('AI timeout → deterministic false', async () => {
+  it('AI timeout → ai_timeout', async () => {
     const ai: AiProvider = {
       evaluateSentenceCorrection: () => new Promise(resolve => setTimeout(() => resolve({ correct: true, feedback: 'late' }), 200)),
     };
     const r = await evaluateSentenceCorrection("She does not like coffe.", accepted, prompt, ai, 50);
     expect(r.correct).toBe(false);
-    expect(r.evaluation_source).toBe('deterministic');
+    expect(r.evaluation_source).toBe('ai_timeout');
     expect(r.feedback).toBeNull();
   });
 
@@ -202,26 +202,26 @@ describe('evaluateSentenceCorrection AI fallback', () => {
     expect(capturedSignal?.aborted).toBe(true);
   });
 
-  it('AI error → deterministic false', async () => {
+  it('AI error → ai_error', async () => {
     const ai: AiProvider = { evaluateSentenceCorrection: vi.fn().mockRejectedValue(new Error('fail')) };
     const r = await evaluateSentenceCorrection("She does not like coffe.", accepted, prompt, ai);
     expect(r.correct).toBe(false);
-    expect(r.evaluation_source).toBe('deterministic');
+    expect(r.evaluation_source).toBe('ai_error');
   });
 
-  it('AI returns malformed response (missing correct field) → deterministic false', async () => {
+  it('AI returns malformed response (missing correct field) → ai_error', async () => {
     const ai: AiProvider = { evaluateSentenceCorrection: vi.fn().mockResolvedValue({ feedback: 'looks ok' }) };
     const r = await evaluateSentenceCorrection("She does not like coffe.", accepted, prompt, ai);
     expect(r.correct).toBe(false);
-    expect(r.evaluation_source).toBe('deterministic');
+    expect(r.evaluation_source).toBe('ai_error');
     expect(r.feedback).toBeNull();
   });
 
-  it('AI returns wrong types (correct as string) → deterministic false', async () => {
+  it('AI returns wrong types (correct as string) → ai_error', async () => {
     const ai: AiProvider = { evaluateSentenceCorrection: vi.fn().mockResolvedValue({ correct: 'yes', feedback: 'ok' }) };
     const r = await evaluateSentenceCorrection("She does not like coffe.", accepted, prompt, ai);
     expect(r.correct).toBe(false);
-    expect(r.evaluation_source).toBe('deterministic');
+    expect(r.evaluation_source).toBe('ai_error');
   });
 
   it('AI returns oversized feedback → verdict preserved, feedback truncated to 80 chars', async () => {

@@ -110,6 +110,17 @@ SummaryScreen
 - AI feedback is internal. User-facing explanations come from the exercise's curated `feedback.explanation` field.
 - On invalid response or timeout (5s): treat as incorrect.
 
+### evaluation_source Type Definition
+
+The `evaluation_source` field in response payloads may be one of:
+
+| Value | Meaning |
+|---|---|
+| `deterministic` | Answer evaluated by exact or normalized string match; AI not called |
+| `ai_fallback` | Borderline submission was sent to AI and AI successfully evaluated it |
+| `ai_timeout` | AI call exceeded 5-second timeout; submission marked incorrect as fallback |
+| `ai_error` | AI call failed (invalid response schema, network error); submission marked incorrect as fallback |
+
 ---
 
 ## 6. Borderline Definition (sentence_correction only)

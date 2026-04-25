@@ -179,6 +179,35 @@ Token budget: max 200 output tokens.
 
 ---
 
+## CORS Policy
+
+The backend enforces a strict origin allowlist for cross-origin requests. Wildcard `*` is not used.
+
+### Default Allowed Origins
+
+- `https://mastery-web-igotsty1e.onrender.com` (production frontend)
+- `http://localhost:3000` (local dev - typical Flutter web)
+- `http://localhost:8080` (alternate local dev port)
+- `http://localhost:57450` (Flutter web dev server)
+
+### Configuration
+
+Override the default allowlist by setting the `ALLOWED_ORIGINS` environment variable:
+```
+ALLOWED_ORIGINS=https://custom-domain.com,http://localhost:5000
+```
+
+Separate multiple origins with commas. Each will be trimmed of whitespace.
+
+### Behavior
+
+- **Request with allowed origin:** Response includes `Access-Control-Allow-Origin: <origin>` and `Vary: Origin` headers.
+- **Request with unknown origin:** No `Access-Control-Allow-Origin` header is set. The request proceeds but the browser will block any response per CORS policy.
+- **Request with no `Origin` header:** No CORS headers are set. The request proceeds normally (used by Flutter PWA, health checks, direct API calls).
+- **OPTIONS preflight:** Always returns 204. If the origin is allowed, `Access-Control-Allow-Origin` is set; otherwise, it is omitted.
+
+---
+
 ## Error Response Shape
 
 All errors return HTTP 4xx/5xx with body: `{ "error": "snake_case_error_code" }`.

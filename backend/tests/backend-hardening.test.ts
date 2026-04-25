@@ -317,3 +317,81 @@ describe('aiCache — MAX_AI_CACHE cap', () => {
     expect(_aiCacheSize()).toBe(N);
   });
 });
+
+// ──────────────────────────────────────────────────────────────────
+// CORS origin allowlist
+// ──────────────────────────────────────────────────────────────────
+describe('CORS origin allowlist', () => {
+  it('allowed origin receives Access-Control-Allow-Origin header and Vary header', async () => {
+    const app = createApp(stubAi);
+    const res = await inject(app, {
+      method: 'POST',
+      path: `/lessons/${LESSON_ID}/answers`,
+      json: borderlineBody(),
+      headers: { 'origin': 'https://mastery-web-igotsty1e.onrender.com' },
+    });
+    expect(res.headers['access-control-allow-origin']).toBe('https://mastery-web-igotsty1e.onrender.com');
+    expect(res.headers['vary']).toBe('Origin');
+  });
+
+  it('localhost dev origin receives allowed headers', async () => {
+    const app = createApp(stubAi);
+    const res = await inject(app, {
+      method: 'POST',
+      path: `/lessons/${LESSON_ID}/answers`,
+      json: borderlineBody(),
+      headers: { 'origin': 'http://localhost:3000' },
+    });
+    expect(res.headers['access-control-allow-origin']).toBe('http://localhost:3000');
+    expect(res.headers['vary']).toBe('Origin');
+  });
+
+  it('unknown origin receives no Access-Control-Allow-Origin header', async () => {
+    const app = createApp(stubAi);
+    const res = await inject(app, {
+      method: 'POST',
+      path: `/lessons/${LESSON_ID}/answers`,
+      json: borderlineBody(),
+      headers: { 'origin': 'https://evil.com' },
+    });
+    expect(res.headers['access-control-allow-origin']).toBeUndefined();
+  });
+
+  it('request with no origin header receives no CORS header', async () => {
+    const app = createApp(stubAi);
+    const res = await inject(app, {
+      method: 'POST',
+      path: `/lessons/${LESSON_ID}/answers`,
+      json: borderlineBody(),
+    });
+    expect(res.headers['access-control-allow-origin']).toBeUndefined();
+    // Request should still succeed
+    expect(res.status).toBeLessThan(500);
+  });
+
+  it('OPTIONS preflight from allowed origin returns 204 with correct headers', async () => {
+    const app = createApp(stubAi);
+    const res = await inject(app, {
+      method: 'OPTIONS',
+      path: `/lessons/${LESSON_ID}/answers`,
+      headers: { 'origin': 'https://mastery-web-igotsty1e.onrender.com' },
+    });
+    expect(res.status).toBe(204);
+    expect(res.headers['access-control-allow-origin']).toBe('https://mastery-web-igotsty1e.onrender.com');
+    expect(res.headers['access-control-allow-methods']).toBe('GET, POST, OPTIONS');
+    expect(res.headers['access-control-allow-headers']).toBe('Content-Type');
+  });
+
+  it('OPTIONS preflight from unknown origin returns 204 but no CORS allow header', async () => {
+    const app = createApp(stubAi);
+    const res = await inject(app, {
+      method: 'OPTIONS',
+      path: `/lessons/${LESSON_ID}/answers`,
+      headers: { 'origin': 'https://evil.com' },
+    });
+    expect(res.status).toBe(204);
+    expect(res.headers['access-control-allow-origin']).toBeUndefined();
+    // Other CORS headers should still be present
+    expect(res.headers['access-control-allow-methods']).toBe('GET, POST, OPTIONS');
+  });
+});

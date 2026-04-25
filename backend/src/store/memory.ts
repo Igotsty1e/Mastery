@@ -8,7 +8,7 @@ const MAX_AI_CACHE = 10_000;
 
 export interface AiEvalResult {
   correct: boolean;
-  evaluation_source: 'deterministic' | 'ai_fallback';
+  evaluation_source: 'deterministic' | 'ai_fallback' | 'ai_timeout' | 'ai_error';
   feedback: string | null;
   canonical_answer: string;
 }
@@ -55,7 +55,7 @@ export function setAiResult(sessionId: string, exerciseId: string, normAnswer: s
 export interface AttemptRecord {
   exercise_id: string;
   correct: boolean;
-  evaluation_source: 'deterministic' | 'ai_fallback';
+  evaluation_source: 'deterministic' | 'ai_fallback' | 'ai_timeout' | 'ai_error';
   feedback: string | null;
   canonical_answer: string;
 }

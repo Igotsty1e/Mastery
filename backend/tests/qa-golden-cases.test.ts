@@ -123,7 +123,7 @@ describe('QA golden cases', () => {
     beforeEach(() => vi.useFakeTimers());
     afterEach(() => vi.useRealTimers());
 
-    it('AI timeout defaults to deterministic false (no feedback)', async () => {
+    it('AI timeout returns ai_timeout (no feedback)', async () => {
       const ai: AiProvider = {
         evaluateSentenceCorrection: vi.fn(
           () => new Promise(() => {
@@ -137,11 +137,10 @@ describe('QA golden cases', () => {
       const r = await promise;
 
       expect(r.correct).toBe(false);
-      expect(r.evaluation_source).toBe('deterministic');
+      expect(r.evaluation_source).toBe('ai_timeout');
       expect(r.feedback).toBeNull();
       expect(r.canonical_answer).toBe(canonical_answer);
       expect(ai.evaluateSentenceCorrection).toHaveBeenCalledOnce();
     });
   });
 });
-

@@ -16,7 +16,30 @@ class ExerciseScreen extends StatefulWidget {
 }
 
 class _ExerciseScreenState extends State<ExerciseScreen> {
-  bool _navigating = false;
+  @override
+  void initState() {
+    super.initState();
+    // Navigate when session reaches summary phase
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final controller = context.read<SessionController>();
+      void _onStateChange() {
+        if (controller.state.phase == SessionPhase.summary) {
+          controller.removeListener(_onStateChange);
+          if (!mounted) return;
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(
+              builder: (_) => SummaryScreen(
+                correctCount: controller.state.correctCount,
+                totalCount: controller.state.totalCount,
+                summary: controller.state.summary,
+              ),
+            ),
+          );
+        }
+      }
+      controller.addListener(_onStateChange);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,23 +70,6 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
           ),
         ),
       );
-    }
-
-    if (state.phase == SessionPhase.summary && !_navigating) {
-      _navigating = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) return;
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (_) => SummaryScreen(
-              correctCount: state.correctCount,
-              totalCount: state.totalCount,
-              summary: state.summary,
-            ),
-          ),
-        );
-      });
-      return const Scaffold(body: SizedBox.shrink());
     }
 
     final exercise = state.currentExercise;
