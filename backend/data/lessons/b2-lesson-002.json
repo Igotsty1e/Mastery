@@ -1,0 +1,166 @@
+{
+  "lesson_id": "a1b2c3d4-0002-4000-8000-000000000001",
+  "title": "Present Perfect: Continuous vs Simple",
+  "language": "en",
+  "level": "B2",
+  "intro_rule": "Use\n\nUse the present perfect continuous (have/has been + verb-ing) when the focus is on the duration or the ongoing nature of an action that started in the past and continues now or stopped very recently.\n\nUse the present perfect simple (have/has + past participle) when the focus is on the result or the completion of an action.\n\nForm\n\nContinuous: have / has been + verb-ing\nSimple: have / has + past participle\n\nImportant\n\nDo not mix the two forms. If duration matters, use 'have been + verb-ing'. If the result matters, use 'have / has + past participle'.",
+  "intro_examples": [
+    "I have been working on this report for three hours.",
+    "I have finished the report.",
+    "She has been studying English since 2020."
+  ],
+  "exercises": [
+    {
+      "exercise_id": "a1b2c3d4-0002-4000-8000-000000000031",
+      "type": "fill_blank",
+      "instruction": "Complete the gap with the correct verb form (one or two words).",
+      "prompt": "I ___ working here for five years.",
+      "accepted_answers": ["have been", "'ve been"],
+      "feedback": {
+        "explanation": "You may write only one verb, but the correct answer is 'have been' because the action is ongoing and the duration matters. If you see 'for + a period of time' with an action that continues now → usually use 'have / has been + verb-ing'."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0002-4000-8000-000000000032",
+      "type": "fill_blank",
+      "instruction": "Complete the gap with the correct verb form (one or two words).",
+      "prompt": "She ___ studying English since 2020.",
+      "accepted_answers": ["has been", "'s been"],
+      "feedback": {
+        "explanation": "You may pick a simple form, but the correct answer is 'has been' because the action started in 2020 and is still ongoing. If you see 'since + a starting point' with a continuing action → usually use 'have / has been + verb-ing'."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0002-4000-8000-000000000033",
+      "type": "multiple_choice",
+      "instruction": "Choose the correct option.",
+      "prompt": "Look — I ___ all the dishes. The kitchen is clean now.",
+      "options": [
+        { "id": "a", "text": "have washed" },
+        { "id": "b", "text": "have been washing" },
+        { "id": "c", "text": "am washing" },
+        { "id": "d", "text": "wash" }
+      ],
+      "correct_option_id": "a",
+      "feedback": {
+        "explanation": "You chose 'have been washing', but the correct answer is 'have washed' because the focus is the result — the kitchen is clean now. If the sentence emphasizes a finished outcome → usually use 'have / has + past participle'."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0002-4000-8000-000000000034",
+      "type": "fill_blank",
+      "instruction": "Complete the gap with the correct verb form (one or two words).",
+      "prompt": "We ___ all the windows. They sparkle now.",
+      "accepted_answers": ["have cleaned", "'ve cleaned"],
+      "feedback": {
+        "explanation": "You may pick a continuous form, but the correct answer is 'have cleaned' because the result is what matters — they sparkle now. If the sentence highlights the completed outcome → usually use 'have / has + past participle'."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0002-4000-8000-000000000035",
+      "type": "multiple_choice",
+      "instruction": "Choose the correct option.",
+      "prompt": "I ___ this email three times — please read it carefully.",
+      "options": [
+        { "id": "a", "text": "have written" },
+        { "id": "b", "text": "have been writing" },
+        { "id": "c", "text": "am writing" },
+        { "id": "d", "text": "wrote" }
+      ],
+      "correct_option_id": "a",
+      "feedback": {
+        "explanation": "You chose 'have been writing', but the correct answer is 'have written' because 'three times' counts a finished number of attempts. If you can count the completed instances → usually use 'have / has + past participle', not the continuous form."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0002-4000-8000-000000000036",
+      "type": "multiple_choice",
+      "instruction": "Choose the correct option.",
+      "prompt": "He ___ to play the guitar for ten years.",
+      "options": [
+        { "id": "a", "text": "has been learning" },
+        { "id": "b", "text": "has learned" },
+        { "id": "c", "text": "is learning" },
+        { "id": "d", "text": "learned" }
+      ],
+      "correct_option_id": "a",
+      "feedback": {
+        "explanation": "You chose 'has learned', but the correct answer is 'has been learning' because the action started ten years ago and continues now. If 'for + a period of time' frames an action that is still ongoing → usually use 'have / has been + verb-ing'."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0002-4000-8000-000000000037",
+      "type": "multiple_choice",
+      "instruction": "Choose the correct option.",
+      "prompt": "Welcome back! I ___ for you for an hour.",
+      "options": [
+        { "id": "a", "text": "wait" },
+        { "id": "b", "text": "am waiting" },
+        { "id": "c", "text": "have waited" },
+        { "id": "d", "text": "have been waiting" }
+      ],
+      "correct_option_id": "d",
+      "image": {
+        "url": "/images/a1b2c3d4-0002-4000-8000-000000000001/a1b2c3d4-0002-4000-8000-000000000037.png",
+        "alt": "An empty coffee cup and a closed book on a wooden cafe table in warm light.",
+        "role": "scene_setting",
+        "policy": "recommended",
+        "brief": "An empty coffee cup and a closed book on a wooden cafe table in warm afternoon light",
+        "dont_show": "clocks, watches, calendars, signs with text",
+        "risk": "low"
+      },
+      "feedback": {
+        "explanation": "You chose 'have waited', but the correct answer is 'have been waiting' because the wait was ongoing right up to the moment of greeting. If an action started earlier and was still happening when something else interrupted it → usually use 'have / has been + verb-ing', not the simple form."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0002-4000-8000-000000000038",
+      "type": "listening_discrimination",
+      "instruction": "Listen and choose what you hear.",
+      "audio": {
+        "url": "/audio/a1b2c3d4-0002-4000-8000-000000000001/a1b2c3d4-0002-4000-8000-000000000038.mp3",
+        "voice": "nova",
+        "transcript": "She has been studying English for three years."
+      },
+      "options": [
+        { "id": "a", "text": "She has been studying English for three years." },
+        { "id": "b", "text": "She has studied English for three years." },
+        { "id": "c", "text": "She is studying English for three years." },
+        { "id": "d", "text": "She studied English for three years." }
+      ],
+      "correct_option_id": "a",
+      "feedback": {
+        "explanation": "You picked 'has studied', but the spoken sentence is 'has been studying' because the speaker emphasizes the ongoing duration of the study. If you hear 'has / have been + verb-ing' over a 'for + period' → usually present perfect continuous, not present perfect simple."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0002-4000-8000-000000000039",
+      "type": "sentence_correction",
+      "instruction": "Rewrite the sentence correctly.",
+      "prompt": "I have working in this company for ten years.",
+      "accepted_corrections": [
+        "I have been working in this company for ten years."
+      ],
+      "borderline_ai_fallback": true,
+      "feedback": {
+        "explanation": "You wrote 'have working', but the correct form is 'have been working' because the present perfect continuous needs the auxiliary 'been' before the verb-ing. If duration is expressed with 'for + a period of time' → usually 'have / has been + verb-ing', never 'have + verb-ing'."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0002-4000-8000-00000000003a",
+      "type": "multiple_choice",
+      "instruction": "Choose the correct option.",
+      "prompt": "Look how exhausted he is — he ___ all morning.",
+      "options": [
+        { "id": "a", "text": "has run" },
+        { "id": "b", "text": "has been running" },
+        { "id": "c", "text": "is running" },
+        { "id": "d", "text": "ran" }
+      ],
+      "correct_option_id": "b",
+      "feedback": {
+        "explanation": "You chose 'has run', but the correct answer is 'has been running' because the visible result (exhaustion) points to a recent ongoing process, not a single finished event. If the present state of someone is the trace of a recent ongoing action → usually use 'have / has been + verb-ing'."
+      }
+    }
+  ]
+}

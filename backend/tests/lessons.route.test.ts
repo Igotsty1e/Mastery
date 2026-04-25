@@ -4,6 +4,7 @@ import type { AiProvider } from '../src/ai/interface';
 import { inject } from './helpers/inject';
 
 const LESSON_ID = 'a1b2c3d4-0001-4000-8000-000000000001';
+const LESSON_ID_2 = 'a1b2c3d4-0002-4000-8000-000000000001';
 const UNKNOWN_ID = '00000000-0000-4000-8000-000000000099';
 
 const stubAi: AiProvider = { evaluateSentenceCorrection: () => Promise.resolve({ correct: false, feedback: '' }) };
@@ -21,6 +22,12 @@ describe('GET /lessons', () => {
         title: 'Verbs Followed by -ing',
         slug: 'verbs-followed-by-ing',
         order: 1,
+      },
+      {
+        id: LESSON_ID_2,
+        title: 'Present Perfect: Continuous vs Simple',
+        slug: 'present-perfect-continuous-vs-simple',
+        order: 2,
       },
     ]);
   });

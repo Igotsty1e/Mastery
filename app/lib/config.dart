@@ -5,7 +5,9 @@ abstract final class AppConfig {
     defaultValue: 'http://localhost:3000',
   );
 
-  // Hardcoded for MVP — single fixture lesson.
+  // Hardcoded for MVP. Points at U02_L01 so the dashboard CTA opens the
+  // lesson that exercises the audio + image runtime end-to-end. U01_L01
+  // remains in the manifest and is reachable by id.
   static const String defaultLessonId =
-      'a1b2c3d4-0001-4000-8000-000000000001';
+      'a1b2c3d4-0002-4000-8000-000000000001';
 }

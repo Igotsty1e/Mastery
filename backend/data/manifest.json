@@ -14,6 +14,20 @@
         "sentence_correction": 3
       },
       "file": "lessons/b2-lesson-001.json"
+    },
+    {
+      "lesson_id": "a1b2c3d4-0002-4000-8000-000000000001",
+      "title": "Present Perfect: Continuous vs Simple",
+      "level": "B2",
+      "language": "en",
+      "exercise_count": 10,
+      "exercise_types": {
+        "fill_blank": 3,
+        "multiple_choice": 5,
+        "sentence_correction": 1,
+        "listening_discrimination": 1
+      },
+      "file": "lessons/b2-lesson-002.json"
     }
   ]
 }
