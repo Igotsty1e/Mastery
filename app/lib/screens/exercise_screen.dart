@@ -72,17 +72,24 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
     final isSubmitted = state.phase == SessionPhase.result;
     final isLoading = state.phase == SessionPhase.evaluating;
 
+    final theme = Theme.of(context);
     return Scaffold(
+      backgroundColor: theme.colorScheme.surfaceContainerLowest,
       appBar: AppBar(
         automaticallyImplyLeading: false,
+        backgroundColor: theme.colorScheme.surface,
+        elevation: 0,
         title: Text(
           '${state.currentIndex + 1} / ${state.totalCount}',
-          style: Theme.of(context).textTheme.bodyMedium,
+          style: theme.textTheme.labelLarge?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(4),
           child: LinearProgressIndicator(
             value: (state.currentIndex + 1) / state.totalCount,
+            backgroundColor: theme.colorScheme.surfaceContainerHighest,
           ),
         ),
       ),
@@ -90,22 +97,33 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
         children: [
           SafeArea(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _ExerciseWidget(
-                    key: ValueKey(exercise.exerciseId),
-                    exercise: exercise,
-                    enabled: !isSubmitted && !isLoading,
-                    onSubmit: controller.submitAnswer,
+                  Card(
+                    elevation: 0,
+                    color: theme.colorScheme.surface,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      side: BorderSide(
+                          color: theme.colorScheme.outlineVariant),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: _ExerciseWidget(
+                        key: ValueKey(exercise.exerciseId),
+                        exercise: exercise,
+                        enabled: !isSubmitted && !isLoading,
+                        onSubmit: controller.submitAnswer,
+                      ),
+                    ),
                   ),
                   if (isSubmitted && state.lastResult != null) ...[
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 16),
                     _ResultPanel(
                       correct: state.lastResult!.correct,
                       explanation: state.lastResult!.explanation,
-                      practicalTip: state.lastResult!.practicalTip,
                       canonicalAnswer: state.lastResult!.canonicalAnswer,
                       isLast: state.isLastExercise,
                       onNext: controller.advance,
@@ -143,7 +161,6 @@ class _ExerciseWidget extends StatelessWidget {
     return switch (exercise.type) {
       ExerciseType.fillBlank => FillBlankWidget(
           prompt: exercise.prompt,
-          hint: exercise.hint,
           enabled: enabled,
           onSubmit: onSubmit,
         ),
@@ -165,7 +182,6 @@ class _ExerciseWidget extends StatelessWidget {
 class _ResultPanel extends StatelessWidget {
   final bool correct;
   final String? explanation;
-  final String? practicalTip;
   final String canonicalAnswer;
   final bool isLast;
   final VoidCallback onNext;
@@ -173,7 +189,6 @@ class _ResultPanel extends StatelessWidget {
   const _ResultPanel({
     required this.correct,
     required this.explanation,
-    required this.practicalTip,
     required this.canonicalAnswer,
     required this.isLast,
     required this.onNext,
@@ -181,56 +196,61 @@ class _ResultPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = correct ? Colors.green[700]! : Colors.red[700]!;
+    final theme = Theme.of(context);
+    final bgColor =
+        correct ? const Color(0xFFECFDF5) : const Color(0xFFFFF1F2);
+    final borderColor =
+        correct ? const Color(0xFF6EE7B7) : const Color(0xFFFDA4AF);
+    final labelColor =
+        correct ? const Color(0xFF047857) : const Color(0xFFBE123C);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.08),
-            border: Border.all(color: color.withOpacity(0.4)),
-            borderRadius: BorderRadius.circular(8),
+            color: bgColor,
+            border: Border.all(color: borderColor),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                correct ? 'Correct' : 'Incorrect',
-                style: TextStyle(
-                    fontWeight: FontWeight.bold, color: color, fontSize: 16),
+              Row(
+                children: [
+                  Icon(
+                    correct ? Icons.check_circle : Icons.cancel,
+                    size: 20,
+                    color: labelColor,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    correct ? 'Correct' : 'Incorrect',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: labelColor,
+                    ),
+                  ),
+                ],
               ),
               if (!correct) ...[
-                const SizedBox(height: 8),
-                Text('Answer: $canonicalAnswer'),
+                const SizedBox(height: 10),
+                Text(
+                  'Answer: $canonicalAnswer',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ],
               if (explanation != null) ...[
                 const SizedBox(height: 10),
-                Text(explanation!,
-                    style: TextStyle(color: Colors.grey[800], fontSize: 14)),
-              ],
-              if (practicalTip != null) ...[
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Colors.amber[50],
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: Colors.amber.shade200),
-                  ),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(Icons.lightbulb_outline,
-                          size: 16, color: Colors.amber[700]),
-                      const SizedBox(width: 6),
-                      Expanded(
-                        child: Text(practicalTip!,
-                            style: TextStyle(
-                                color: Colors.grey[800], fontSize: 13)),
-                      ),
-                    ],
+                Text(
+                  explanation!,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    height: 1.5,
                   ),
                 ),
               ],
@@ -242,7 +262,16 @@ class _ResultPanel extends StatelessWidget {
           width: double.infinity,
           child: FilledButton(
             onPressed: onNext,
-            child: Text(isLast ? 'Finish' : 'Next'),
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: Text(
+              isLast ? 'Finish' : 'Next',
+              style: const TextStyle(fontSize: 16),
+            ),
           ),
         ),
       ],

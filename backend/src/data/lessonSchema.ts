@@ -4,7 +4,6 @@ const LevelSchema = z.enum(['A1', 'A2', 'B1', 'B2', 'C1', 'C2']);
 
 const ExerciseFeedbackSchema = z.object({
   explanation: z.string(),
-  practical_tip: z.string(),
 });
 
 const FillBlankExerciseBaseSchema = z.object({
@@ -12,7 +11,6 @@ const FillBlankExerciseBaseSchema = z.object({
   type: z.literal('fill_blank'),
   prompt: z.string(),
   accepted_answers: z.array(z.string()).min(1),
-  hint: z.string().nullable(),
   feedback: ExerciseFeedbackSchema.optional(),
 });
 

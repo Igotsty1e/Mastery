@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 
 class FillBlankWidget extends StatefulWidget {
   final String prompt;
-  final String? hint;
   final bool enabled;
   final void Function(String answer) onSubmit;
 
@@ -10,7 +9,6 @@ class FillBlankWidget extends StatefulWidget {
     super.key,
     required this.prompt,
     required this.onSubmit,
-    this.hint,
     this.enabled = true,
   });
 
@@ -34,10 +32,14 @@ class _FillBlankWidgetState extends State<FillBlankWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(widget.prompt, style: Theme.of(context).textTheme.bodyLarge),
+        Text(
+          widget.prompt,
+          style: theme.textTheme.bodyLarge?.copyWith(height: 1.5),
+        ),
         const SizedBox(height: 20),
         TextField(
           controller: _controller,
@@ -45,27 +47,29 @@ class _FillBlankWidgetState extends State<FillBlankWidget> {
           autofocus: true,
           textInputAction: TextInputAction.done,
           onSubmitted: (_) => _submit(),
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
             hintText: 'Type your answer',
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
           ),
         ),
-        if (widget.hint != null) ...[
-          const SizedBox(height: 8),
-          Text(
-            'Hint: ${widget.hint}',
-            style: Theme.of(context)
-                .textTheme
-                .bodySmall
-                ?.copyWith(color: Colors.grey[600]),
-          ),
-        ],
         const SizedBox(height: 20),
         SizedBox(
           width: double.infinity,
           child: FilledButton(
             onPressed: widget.enabled ? _submit : null,
-            child: const Text('Submit'),
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text('Submit', style: TextStyle(fontSize: 16)),
           ),
         ),
       ],

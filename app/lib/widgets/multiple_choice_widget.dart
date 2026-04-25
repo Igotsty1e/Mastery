@@ -24,31 +24,97 @@ class _MultipleChoiceWidgetState extends State<MultipleChoiceWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(widget.prompt, style: Theme.of(context).textTheme.bodyLarge),
-        const SizedBox(height: 20),
-        Column(
-          children: widget.options
-              .map((opt) => RadioListTile<String>(
-                    title: Text(opt.text),
-                    value: opt.id,
-                    groupValue: _selected,
-                    onChanged: widget.enabled
-                        ? (v) => setState(() => _selected = v)
-                        : null,
-                  ))
-              .toList(),
+        Text(
+          widget.prompt,
+          style: theme.textTheme.bodyLarge?.copyWith(height: 1.5),
         ),
         const SizedBox(height: 20),
+        Column(
+          children: widget.options.map((opt) {
+            final isSelected = _selected == opt.id;
+            return GestureDetector(
+              onTap: widget.enabled
+                  ? () => setState(() => _selected = opt.id)
+                  : null,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 14,
+                ),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? theme.colorScheme.primaryContainer
+                      : theme.colorScheme.surface,
+                  border: Border.all(
+                    color: isSelected
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.outlineVariant,
+                    width: isSelected ? 2 : 1,
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 22,
+                      height: 22,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: isSelected
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.outline,
+                          width: 2,
+                        ),
+                        color: isSelected
+                            ? theme.colorScheme.primary
+                            : Colors.transparent,
+                      ),
+                      child: isSelected
+                          ? const Icon(Icons.check,
+                              size: 14, color: Colors.white)
+                          : null,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        opt.text,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: isSelected
+                              ? theme.colorScheme.onPrimaryContainer
+                              : theme.colorScheme.onSurface,
+                          fontWeight: isSelected
+                              ? FontWeight.w500
+                              : FontWeight.normal,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        ),
+        const SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
           child: FilledButton(
             onPressed: widget.enabled && _selected != null
                 ? () => widget.onSubmit(_selected!)
                 : null,
-            child: const Text('Submit'),
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            child: const Text('Submit', style: TextStyle(fontSize: 16)),
           ),
         ),
       ],

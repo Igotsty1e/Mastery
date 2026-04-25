@@ -28,9 +28,6 @@ class Exercise {
   final ExerciseType type;
   final String prompt;
 
-  // fill_blank only
-  final String? hint;
-
   // multiple_choice only
   final List<McOption>? options;
 
@@ -41,7 +38,6 @@ class Exercise {
     required this.exerciseId,
     required this.type,
     required this.prompt,
-    this.hint,
     this.options,
     this.borderlineAiFallback = false,
   });
@@ -52,7 +48,6 @@ class Exercise {
       exerciseId: j['exercise_id'] as String,
       type: type,
       prompt: j['prompt'] as String,
-      hint: j['hint'] as String?,
       options: type == ExerciseType.multipleChoice
           ? (j['options'] as List)
               .map((o) => McOption.fromJson(o as Map<String, dynamic>))

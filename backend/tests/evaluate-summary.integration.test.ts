@@ -10,16 +10,16 @@ import { resetMemoryStore } from '../src/store/memory';
 import { inject } from './helpers/inject';
 
 const LESSON_ID = 'a1b2c3d4-0001-4000-8000-000000000001';
-const FB_EX_ID  = 'a1b2c3d4-0001-4000-8000-000000000011'; // fill_blank, accepted: ['had']
-const MC_EX_ID  = 'a1b2c3d4-0001-4000-8000-000000000015'; // multiple_choice, correct: 'a'
-const SC_EX_ID  = 'a1b2c3d4-0001-4000-8000-000000000018'; // sentence_correction, accepted: ['She has been working at this company for ten years.']
+const FB_EX_ID  = 'a1b2c3d4-0001-4000-8000-000000000021'; // fill_blank, accepted: ['had']
+const MC_EX_ID  = 'a1b2c3d4-0001-4000-8000-000000000025'; // multiple_choice, correct: 'b'
+const SC_EX_ID  = 'a1b2c3d4-0001-4000-8000-000000000028'; // sentence_correction, accepted: ['If I had known you were coming, I would have cooked dinner.']
 const SESSION_ID = 'dddddddd-0001-4000-8000-000000000001';
 const ATTEMPT_1 = 'cccccccc-0001-4000-8000-000000000001';
 const ATTEMPT_2 = 'cccccccc-0001-4000-8000-000000000002';
 const ATTEMPT_3 = 'cccccccc-0001-4000-8000-000000000003';
 const SUBMITTED = '2026-01-01T00:00:00.000Z';
-// Borderline SC answer: 1-char edit from accepted after normalize (drops "r" in "for")
-const SC_BORDERLINE = 'She has been working at this company fo ten years.';
+// Borderline SC answer: 1-char edit from accepted after normalize (drops one 'n' in 'dinner')
+const SC_BORDERLINE = 'If I had known you were coming, I would have cooked diner.';
 
 function answerBody(overrides: Record<string, unknown> = {}) {
   return {

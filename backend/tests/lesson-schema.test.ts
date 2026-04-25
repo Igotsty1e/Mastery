@@ -25,7 +25,6 @@ describe('LessonSchema', () => {
           type: 'fill_blank',
           prompt: 'No placeholder here.',
           accepted_answers: ['x'],
-          hint: null,
         },
       ],
     };
@@ -122,14 +121,12 @@ describe('LessonSchema', () => {
           type: 'fill_blank',
           prompt: 'One ___ placeholder.',
           accepted_answers: ['x'],
-          hint: null,
         },
         {
           exercise_id: '00000000-0000-4000-8000-000000000011',
           type: 'fill_blank',
           prompt: 'One ___ placeholder.',
           accepted_answers: ['x'],
-          hint: null,
         },
       ],
     };

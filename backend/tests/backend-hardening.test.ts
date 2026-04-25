@@ -14,7 +14,7 @@ import { resetAiRateLimitStore, checkAiRateLimit } from '../src/middleware/aiRat
 import { inject } from './helpers/inject';
 
 const LESSON_ID = 'a1b2c3d4-0001-4000-8000-000000000001';
-const SC_EX_ID  = 'a1b2c3d4-0001-4000-8000-000000000018';
+const SC_EX_ID  = 'a1b2c3d4-0001-4000-8000-000000000028';
 const ATTEMPT_ID = '00000000-0000-4000-8000-000000000002';
 const SESSION_ID = '11111111-0001-4000-8000-000000000001';
 
@@ -24,7 +24,7 @@ function borderlineBody() {
     attempt_id: ATTEMPT_ID,
     exercise_id: SC_EX_ID,
     exercise_type: 'sentence_correction',
-    user_answer: 'She has been working at this company fo ten years.',
+    user_answer: 'If I had known you were coming, I would have cooked diner.',
     submitted_at: '2026-01-01T00:00:00.000Z',
   };
 }

@@ -18,8 +18,8 @@ describe('GET /lessons', () => {
     expect(res.json).toEqual([
       {
         id: LESSON_ID,
-        title: 'B2 Grammar: Mixed Practice',
-        slug: 'b2-grammar-mixed-practice',
+        title: 'The Third Conditional',
+        slug: 'the-third-conditional',
         order: 1,
       },
     ]);
@@ -57,7 +57,7 @@ describe('GET /lessons/:lessonId', () => {
     const res = await inject(app, { method: 'GET', path: `/lessons/${LESSON_ID}` });
     expect(res.status).toBe(200);
     expect((res.json as any).lesson_id).toBe(LESSON_ID);
-    expect((res.json as any).title).toBe('B2 Grammar: Mixed Practice');
+    expect((res.json as any).title).toBe('The Third Conditional');
     expect((res.json as any).language).toBe('en');
     expect((res.json as any).level).toBe('B2');
     expect(typeof (res.json as any).intro_rule).toBe('string');

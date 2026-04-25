@@ -1,155 +1,183 @@
 {
   "lesson_id": "a1b2c3d4-0001-4000-8000-000000000001",
-  "title": "B2 Grammar: Mixed Practice",
+  "title": "The Third Conditional",
   "language": "en",
   "level": "B2",
-  "intro_rule": "At B2 level, accuracy depends on mastering three areas: (1) perfect and conditional tenses for past events and hypotheticals, (2) correct prepositions in fixed collocations, and (3) uncountable nouns that have no plural form.",
+  "intro_rule": "Use\n\nWe use the third conditional to talk about imaginary situations in the past — things that did not happen and their hypothetical results. It is often used to express regret or to imagine a different outcome.\n\nForm\n\nIf + past perfect, ... would / could / might + have + past participle\n\nIf-clause: If + had + past participle (e.g. 'had studied', 'had left', 'had known')\nResult clause: would / could / might + have + past participle (e.g. 'would have passed', 'could have helped')\n\nImportant: Never use 'would have' in the if-clause. This is the most common third conditional error.",
   "intro_examples": [
-    "By the time she arrived, the meeting had already started. (past perfect for the earlier event)",
-    "If I had studied more, I would have passed. (third conditional — not 'If I would have...')",
-    "The advice was helpful. (not 'advices' — 'advice' is uncountable)"
+    "If I had studied harder, I would have passed the exam. (I didn't study hard, so I didn't pass.)",
+    "She would have got the job if she had been better prepared. (She wasn't prepared, so she didn't get it.)",
+    "If we had left earlier, we wouldn't have missed the train. (We left late, so we missed the train.)"
   ],
   "exercises": [
     {
-      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000011",
+      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000021",
       "type": "fill_blank",
-      "prompt": "By the time the ambulance arrived, the patient ___ already regained consciousness.",
-      "accepted_answers": ["had"],
-      "hint": "Past perfect: had + past participle. Use when one past action preceded another.",
-      "feedback": {
-        "explanation": "Past perfect ('had + past participle') marks the earlier of two past actions. Here, regaining consciousness happened before the ambulance arrived.",
-        "practical_tip": "When two past events are described together, the one that happened first needs 'had': 'By the time X happened, Y had already occurred.'"
-      }
-    },
-    {
-      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000012",
-      "type": "fill_blank",
-      "prompt": "The government is responsible ___ protecting its citizens from harm.",
-      "accepted_answers": ["for"],
-      "hint": "Responsible always collocates with 'for' when followed by a noun or gerund.",
-      "feedback": {
-        "explanation": "'Responsible' is always followed by 'for' — it is a fixed collocation. 'Responsible to protect' or 'responsible of protecting' are both incorrect.",
-        "practical_tip": "Memorise the trio: responsible for, accountable for, in charge of. All express obligation and all use 'for' or 'of', never 'to' or 'about'."
-      }
-    },
-    {
-      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000013",
-      "type": "fill_blank",
-      "prompt": "The doctor suggested ___ less caffeine to improve sleep quality.",
-      "accepted_answers": ["drinking", "consuming", "having"],
-      "hint": "After 'suggest', use a gerund (-ing form), not an infinitive.",
-      "feedback": {
-        "explanation": "After 'suggest', English requires a gerund (-ing form). 'Suggest to drink' is a common learner error but is not standard British or American English.",
-        "practical_tip": "After suggest, recommend, avoid, enjoy, and consider — always use -ing, never 'to + infinitive'. These verbs never take a to-infinitive directly."
-      }
-    },
-    {
-      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000014",
-      "type": "fill_blank",
-      "prompt": "He spoke ___ though he had never encountered the concept before.",
-      "accepted_answers": ["as"],
-      "hint": "'as though' and 'as if' introduce hypothetical comparisons. Supply the first word.",
-      "feedback": {
-        "explanation": "'As though' is a two-word conjunction meaning 'in a way that suggests'. The first word is 'as'. Using only 'though' changes the meaning entirely.",
-        "practical_tip": "'As though' and 'as if' are interchangeable and both introduce hypothetical comparisons. After them, use past tense for present situations: 'He speaks as if he knew everything.'"
-      }
-    },
-    {
-      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000015",
-      "type": "multiple_choice",
-      "prompt": "The contract ___ by both parties before the deadline next Friday.",
-      "options": [
-        { "id": "a", "text": "will have been signed" },
-        { "id": "b", "text": "will have signed" },
-        { "id": "c", "text": "has been signed" },
-        { "id": "d", "text": "would be signed" }
+      "prompt": "If she ___ prepared more carefully, she would not have failed the interview.",
+      "accepted_answers": [
+        "had"
       ],
-      "correct_option_id": "a",
       "feedback": {
-        "explanation": "Future perfect passive ('will have been + past participle') is needed: the signing will be completed before a future deadline, and 'the contract' cannot sign itself.",
-        "practical_tip": "Spot two clues: 'before next Friday' signals a future deadline (future perfect), and 'the contract' as subject signals passive voice. Both clues must be satisfied."
+        "explanation": "The if-clause of the third conditional uses past perfect: 'had + past participle'. Here, 'had prepared' is the past perfect of 'prepare'. Without 'had', the sentence is not a third conditional."
       }
     },
     {
-      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000016",
-      "type": "multiple_choice",
-      "prompt": "Which sentence correctly expresses regret about a past event?",
-      "options": [
-        { "id": "a", "text": "I wish I study harder for the exam." },
-        { "id": "b", "text": "I wish I studied harder for the exam." },
-        { "id": "c", "text": "I wish I had studied harder for the exam." },
-        { "id": "d", "text": "I wish I have studied harder for the exam." }
+      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000022",
+      "type": "fill_blank",
+      "prompt": "They would ___ won the match if the referee had not made that error.",
+      "accepted_answers": [
+        "have"
       ],
-      "correct_option_id": "c",
       "feedback": {
-        "explanation": "To express regret about the past, use 'wish + past perfect'. 'I wish I had studied' expresses regret about something that is finished and cannot be changed.",
-        "practical_tip": "Wish + past simple = present wish ('I wish I knew'). Wish + past perfect = past regret ('I wish I had known'). Never use 'would have' directly after 'wish'."
+        "explanation": "The result clause of the third conditional requires 'would have + past participle'. 'Would' alone is not enough — 'have' is essential to form the perfect infinitive ('would have won')."
       }
     },
     {
-      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000017",
+      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000023",
+      "type": "fill_blank",
+      "prompt": "If it ___ not rained that day, we would have had a picnic in the park.",
+      "accepted_answers": [
+        "had"
+      ],
+      "feedback": {
+        "explanation": "The if-clause uses past perfect. 'Had not rained' is the negative past perfect form: 'had + not + past participle'. The blank is 'had'. Without it, the sentence breaks the third conditional structure."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000024",
+      "type": "fill_blank",
+      "prompt": "We could ___ helped you if we had known what was wrong.",
+      "accepted_answers": [
+        "have"
+      ],
+      "feedback": {
+        "explanation": "The result clause uses 'could / would / might + have + past participle'. 'Have' is required between the modal ('could') and the past participle ('helped') to form the perfect infinitive. 'Could helped' is ungrammatical."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000025",
       "type": "multiple_choice",
-      "prompt": "Despite ___ for the role, she did not receive a callback.",
+      "prompt": "If he ___ the map, he wouldn't have got lost.",
       "options": [
-        { "id": "a", "text": "she qualified" },
-        { "id": "b", "text": "her qualifying" },
-        { "id": "c", "text": "to qualify" },
-        { "id": "d", "text": "qualified" }
+        {
+          "id": "a",
+          "text": "checked"
+        },
+        {
+          "id": "b",
+          "text": "had checked"
+        },
+        {
+          "id": "c",
+          "text": "would have checked"
+        },
+        {
+          "id": "d",
+          "text": "has checked"
+        }
       ],
       "correct_option_id": "b",
       "feedback": {
-        "explanation": "After 'despite', use a noun or gerund phrase, never a subject-verb clause. 'Her qualifying' is a possessive gerund — 'her' is the logical subject, 'qualifying' is the gerund.",
-        "practical_tip": "After 'despite' and 'in spite of': use noun or -ing form only. You cannot use a full clause ('she qualified') directly after these prepositions."
+        "explanation": "The if-clause of the third conditional uses past perfect: 'had + past participle'. Option B ('had checked') is correct. Option C is the most common error — 'would have' belongs only in the result clause, never in the if-clause."
       }
     },
     {
-      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000018",
-      "type": "sentence_correction",
-      "prompt": "She has been working at this company since ten years.",
-      "accepted_corrections": [
-        "She has been working at this company for ten years.",
-        "She's been working at this company for ten years.",
-        "She has been working at this company for 10 years.",
-        "She has worked at this company for ten years.",
-        "She has been working at the company for ten years."
+      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000026",
+      "type": "multiple_choice",
+      "prompt": "She ___ the first prize if she hadn't made that one mistake.",
+      "options": [
+        {
+          "id": "a",
+          "text": "would win"
+        },
+        {
+          "id": "b",
+          "text": "would have won"
+        },
+        {
+          "id": "c",
+          "text": "had won"
+        },
+        {
+          "id": "d",
+          "text": "will have won"
+        }
       ],
-      "borderline_ai_fallback": true,
+      "correct_option_id": "b",
       "feedback": {
-        "explanation": "'Since' introduces a specific point in time ('since 2015', 'since Monday'). 'Ten years' is a duration, so 'for' is correct: 'for ten years'.",
-        "practical_tip": "Quick test: if you can say 'a period of ten years', use 'for'. If it names a starting moment (a date, an event), use 'since'. Duration = for; Starting point = since."
+        "explanation": "The result clause of the third conditional uses 'would have + past participle' (option B). 'Would win' is second conditional. 'Had won' is past perfect, which belongs in the if-clause. 'Will have won' is future perfect."
       }
     },
     {
-      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000019",
-      "type": "sentence_correction",
-      "prompt": "If I would have studied more, I would have passed the exam.",
-      "accepted_corrections": [
-        "If I had studied more, I would have passed the exam.",
-        "If I'd studied more, I would have passed the exam.",
-        "If I had studied more, I would've passed the exam.",
-        "Had I studied more, I would have passed the exam.",
-        "If I had studied more I would have passed the exam."
+      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000027",
+      "type": "multiple_choice",
+      "prompt": "Which sentence correctly uses the third conditional?",
+      "options": [
+        {
+          "id": "a",
+          "text": "If I would have left earlier, I wouldn't have missed the train."
+        },
+        {
+          "id": "b",
+          "text": "If I had left earlier, I wouldn't have missed the train."
+        },
+        {
+          "id": "c",
+          "text": "If I have left earlier, I wouldn't have missed the train."
+        },
+        {
+          "id": "d",
+          "text": "If I left earlier, I wouldn't have missed the train."
+        }
       ],
-      "borderline_ai_fallback": true,
+      "correct_option_id": "b",
       "feedback": {
-        "explanation": "In a third conditional, the 'if' clause uses past perfect ('had studied'), never 'would have'. 'Would have' belongs only in the result clause.",
-        "practical_tip": "Pattern: 'If + had + past participle, ... would have + past participle.' A simple rule: 'would' never appears in the 'if' clause of any conditional."
+        "explanation": "Option B is correct: 'If + past perfect (had left), ... would have + past participle (missed)'. Option A is the most common third conditional error — 'would have' must never appear in the if-clause. Options C and D do not use the past perfect required for the if-clause."
       }
     },
     {
-      "exercise_id": "a1b2c3d4-0001-4000-8000-00000000001a",
+      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000028",
       "type": "sentence_correction",
-      "prompt": "The advices she gave me were very useful.",
+      "prompt": "If I would have known you were coming, I would have cooked dinner.",
       "accepted_corrections": [
-        "The advice she gave me was very useful.",
-        "The advice that she gave me was very useful.",
-        "The advice which she gave me was very useful.",
-        "The advice she gave me was very helpful."
+        "If I had known you were coming, I would have cooked dinner.",
+        "If I'd known you were coming, I would have cooked dinner.",
+        "If I had known you were coming, I would've cooked dinner.",
+        "If I'd known you were coming, I would've cooked dinner."
       ],
       "borderline_ai_fallback": true,
       "feedback": {
-        "explanation": "'Advice' is an uncountable noun in English and has no plural form. 'Advices' does not exist. The verb must also change: 'were' becomes 'was'.",
-        "practical_tip": "Memorise these common uncountable nouns: advice, information, knowledge, research, furniture, equipment, progress, luggage. None take 's', and all use singular verbs."
+        "explanation": "The if-clause of the third conditional never uses 'would have'. Replace 'would have known' with past perfect 'had known'. The result clause ('I would have cooked') is already correct. Rule: if-clause = had + past participle; result clause = would have + past participle."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000029",
+      "type": "sentence_correction",
+      "prompt": "She would have been promoted if she worked harder last year.",
+      "accepted_corrections": [
+        "She would have been promoted if she had worked harder last year.",
+        "She would've been promoted if she had worked harder last year.",
+        "She would have been promoted if she'd worked harder last year.",
+        "She would've been promoted if she'd worked harder last year."
+      ],
+      "borderline_ai_fallback": true,
+      "feedback": {
+        "explanation": "The if-clause needs past perfect ('had worked'), not simple past ('worked'). Simple past in an if-clause forms the second conditional (for present or future hypotheticals). For a past hypothetical, the if-clause must use 'had + past participle'."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0001-4000-8000-00000000002a",
+      "type": "sentence_correction",
+      "prompt": "If they had left earlier, they would caught the last bus.",
+      "accepted_corrections": [
+        "If they had left earlier, they would have caught the last bus.",
+        "If they'd left earlier, they would have caught the last bus.",
+        "If they had left earlier, they would've caught the last bus.",
+        "If they'd left earlier, they would've caught the last bus."
+      ],
+      "borderline_ai_fallback": true,
+      "feedback": {
+        "explanation": "The result clause requires 'would have + past participle'. 'Would caught' is missing 'have'. The modal 'would' must be followed by 'have + past participle' in the third conditional result clause. The correct form is 'would have caught'."
       }
     }
   ]

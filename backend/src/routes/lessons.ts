@@ -130,15 +130,9 @@ export function makeLessonsRouter(ai: AiProvider): Router {
     recordAttempt(session_id, lessonId, { exercise_id, ...result });
 
     let explanation: string | null = null;
-    let practical_tip: string | null = null;
 
-    if (!result.correct) {
-      if (result.evaluation_source === 'deterministic' && exercise.feedback) {
-        explanation = exercise.feedback.explanation;
-        practical_tip = exercise.feedback.practical_tip;
-      } else if (result.evaluation_source === 'ai_fallback' && result.feedback) {
-        explanation = result.feedback;
-      }
+    if (!result.correct && exercise.feedback) {
+      explanation = exercise.feedback.explanation;
     }
 
     return res.json({
@@ -147,7 +141,6 @@ export function makeLessonsRouter(ai: AiProvider): Router {
       correct: result.correct,
       evaluation_source: result.evaluation_source,
       explanation,
-      practical_tip,
       canonical_answer: result.canonical_answer,
     });
   });
@@ -180,15 +173,9 @@ export function makeLessonsRouter(ai: AiProvider): Router {
     const answers = attempts.map(attempt => {
       const exercise = lesson.exercises.find(e => e.exercise_id === attempt.exercise_id);
       let explanation: string | null = null;
-      let practical_tip: string | null = null;
 
       if (!attempt.correct) {
-        if (attempt.evaluation_source === 'deterministic') {
-          explanation = exercise?.feedback?.explanation ?? null;
-          practical_tip = exercise?.feedback?.practical_tip ?? null;
-        } else if (attempt.evaluation_source === 'ai_fallback') {
-          explanation = attempt.feedback;
-        }
+        explanation = exercise?.feedback?.explanation ?? null;
       }
 
       return {
@@ -197,7 +184,6 @@ export function makeLessonsRouter(ai: AiProvider): Router {
         prompt: exercise?.prompt ?? null,
         canonical_answer: attempt.canonical_answer,
         explanation,
-        practical_tip,
       };
     });
 

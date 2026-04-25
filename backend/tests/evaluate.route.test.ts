@@ -6,9 +6,9 @@ import { resetAiRateLimitStore } from '../src/middleware/aiRateLimit';
 import { inject } from './helpers/inject';
 
 const LESSON_ID = 'a1b2c3d4-0001-4000-8000-000000000001';
-const FB_EX_ID  = 'a1b2c3d4-0001-4000-8000-000000000011'; // fill_blank, accepted: ['had']
-const MC_EX_ID  = 'a1b2c3d4-0001-4000-8000-000000000015'; // multiple_choice, correct: 'a'
-const SC_EX_ID  = 'a1b2c3d4-0001-4000-8000-000000000018'; // sentence_correction
+const FB_EX_ID  = 'a1b2c3d4-0001-4000-8000-000000000021'; // fill_blank, accepted: ['had']
+const MC_EX_ID  = 'a1b2c3d4-0001-4000-8000-000000000025'; // multiple_choice, correct: 'b'
+const SC_EX_ID  = 'a1b2c3d4-0001-4000-8000-000000000028'; // sentence_correction
 
 const ATTEMPT_ID  = '00000000-0000-4000-8000-000000000002';
 const SUBMITTED   = '2026-01-01T00:00:00.000Z';
@@ -107,10 +107,9 @@ describe('POST /lessons/:lessonId/answers — fill_blank', () => {
     expect((res.json as any).correct).toBe(true);
     expect((res.json as any).evaluation_source).toBe('deterministic');
     expect((res.json as any).explanation).toBeNull();
-    expect((res.json as any).practical_tip).toBeNull();
   });
 
-  it('wrong answer → correct: false, explanation and practical_tip populated', async () => {
+  it('wrong answer → correct: false, explanation populated', async () => {
     const res = await inject(app, {
       method: 'POST',
       path: `/lessons/${LESSON_ID}/answers`,
@@ -121,8 +120,6 @@ describe('POST /lessons/:lessonId/answers — fill_blank', () => {
     expect((res.json as any).evaluation_source).toBe('deterministic');
     expect(typeof (res.json as any).explanation).toBe('string');
     expect((res.json as any).explanation!.length).toBeGreaterThan(0);
-    expect(typeof (res.json as any).practical_tip).toBe('string');
-    expect((res.json as any).practical_tip!.length).toBeGreaterThan(0);
   });
 });
 
@@ -134,23 +131,22 @@ describe('POST /lessons/:lessonId/answers — multiple_choice', () => {
     const res = await inject(app, {
       method: 'POST',
       path: `/lessons/${LESSON_ID}/answers`,
-      json: { ...body, user_answer: 'a' },
+      json: { ...body, user_answer: 'b' },
     });
     expect(res.status).toBe(200);
     expect((res.json as any).correct).toBe(true);
   });
 
-  it('wrong option → correct: false, explanation and practical_tip populated', async () => {
+  it('wrong option → correct: false, explanation populated', async () => {
     const res = await inject(app, {
       method: 'POST',
       path: `/lessons/${LESSON_ID}/answers`,
-      json: { ...body, user_answer: 'b' },
+      json: { ...body, user_answer: 'a' },
     });
     expect(res.status).toBe(200);
     expect((res.json as any).correct).toBe(false);
     expect(typeof (res.json as any).explanation).toBe('string');
     expect((res.json as any).explanation!.length).toBeGreaterThan(0);
-    expect(typeof (res.json as any).practical_tip).toBe('string');
   });
 });
 
@@ -164,19 +160,18 @@ describe('POST /lessons/:lessonId/answers — sentence_correction via route', ()
       json: makeBody({
         exercise_id: SC_EX_ID,
         exercise_type: 'sentence_correction',
-        user_answer: 'She has been working at this company for ten years.',
+        user_answer: 'If I had known you were coming, I would have cooked dinner.',
       }),
     });
     expect(res.status).toBe(200);
     expect((res.json as any).correct).toBe(true);
     expect((res.json as any).evaluation_source).toBe('deterministic');
     expect((res.json as any).explanation).toBeNull();
-    expect((res.json as any).practical_tip).toBeNull();
     expect(ai.evaluateSentenceCorrection).not.toHaveBeenCalled();
   });
 
-  it('borderline input → AI called via route, explanation = AI feedback, practical_tip null', async () => {
-    // One-letter typo from accepted answer: "for" → "fo"
+  it('borderline input → AI called via route, explanation from exercise data', async () => {
+    // One-letter typo from accepted answer: 'dinner' → 'diner'
     const ai: AiProvider = {
       evaluateSentenceCorrection: vi.fn().mockResolvedValue({ correct: false, feedback: 'Minor typo.' }),
     };
@@ -187,17 +182,17 @@ describe('POST /lessons/:lessonId/answers — sentence_correction via route', ()
       json: makeBody({
         exercise_id: SC_EX_ID,
         exercise_type: 'sentence_correction',
-        user_answer: 'She has been working at this company fo ten years.',
+        user_answer: 'If I had known you were coming, I would have cooked diner.',
       }),
     });
     expect(res.status).toBe(200);
     expect(ai.evaluateSentenceCorrection).toHaveBeenCalled();
     expect((res.json as any).evaluation_source).toBe('ai_fallback');
-    expect((res.json as any).explanation).toBe('Minor typo.');
-    expect((res.json as any).practical_tip).toBeNull();
+    // explanation comes from exercise.feedback.explanation, not AI feedback
+    expect(typeof (res.json as any).explanation).toBe('string');
   });
 
-  it('clearly wrong → deterministic false, AI not called, explanation and practical_tip from exercise', async () => {
+  it('clearly wrong → deterministic false, AI not called, explanation from exercise', async () => {
     const ai: AiProvider = { evaluateSentenceCorrection: vi.fn() };
     const app = createApp(ai);
     const res = await inject(app, {
@@ -215,14 +210,13 @@ describe('POST /lessons/:lessonId/answers — sentence_correction via route', ()
     expect(ai.evaluateSentenceCorrection).not.toHaveBeenCalled();
     expect(typeof (res.json as any).explanation).toBe('string');
     expect((res.json as any).explanation!.length).toBeGreaterThan(0);
-    expect(typeof (res.json as any).practical_tip).toBe('string');
   });
 });
 
 describe('POST /lessons/:lessonId/answers — AI rate limit', () => {
   // Each request with a borderline SC answer triggers one AI call.
-  // Near-miss: one-letter typo from the accepted answer.
-  const BORDERLINE_ANSWER = 'She has been working at this company fo ten years.';
+  // Near-miss: one-letter typo from the accepted answer ('dinner' → 'diner').
+  const BORDERLINE_ANSWER = 'If I had known you were coming, I would have cooked diner.';
   const borderlineBody = makeBody({
     exercise_id: SC_EX_ID,
     exercise_type: 'sentence_correction',
@@ -280,7 +274,7 @@ describe('POST /lessons/:lessonId/answers — AI rate limit', () => {
       json: makeBody({
         exercise_id: SC_EX_ID,
         exercise_type: 'sentence_correction',
-        user_answer: 'She has been working at this company for ten years.',
+        user_answer: 'If I had known you were coming, I would have cooked dinner.',
       }),
     });
 
@@ -340,7 +334,7 @@ describe('POST /lessons/:lessonId/answers — AI rate limit', () => {
 });
 
 describe('POST /lessons/:lessonId/answers — AI result cache (identical resubmit)', () => {
-  const borderlineAnswer = 'She has been working at this company fo ten years.';
+  const borderlineAnswer = 'If I had known you were coming, I would have cooked diner.';
   const borderlineBody = makeBody({
     exercise_id: SC_EX_ID,
     exercise_type: 'sentence_correction',
@@ -397,7 +391,7 @@ describe('POST /lessons/:lessonId/answers — AI result cache (identical resubmi
 
     await inject(app, { method: 'POST', path: `/lessons/${LESSON_ID}/answers`, json: borderlineBody });
     // Slightly different borderline answer (still borderline, different normalized form)
-    const differentBody = { ...borderlineBody, user_answer: 'She has been working at this company fo ten year.' };
+    const differentBody = { ...borderlineBody, user_answer: 'If I had known you were coming, I would have cooked dinne.' };
     await inject(app, { method: 'POST', path: `/lessons/${LESSON_ID}/answers`, json: differentBody });
 
     expect(ai.evaluateSentenceCorrection).toHaveBeenCalledTimes(2);

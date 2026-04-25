@@ -31,7 +31,6 @@ class EvaluateResponse {
   final bool correct;
   final String evaluationSource;
   final String? explanation;
-  final String? practicalTip;
   final String canonicalAnswer;
 
   const EvaluateResponse({
@@ -40,7 +39,6 @@ class EvaluateResponse {
     required this.correct,
     required this.evaluationSource,
     this.explanation,
-    this.practicalTip,
     required this.canonicalAnswer,
   });
 
@@ -50,7 +48,6 @@ class EvaluateResponse {
         correct: j['correct'] as bool,
         evaluationSource: j['evaluation_source'] as String,
         explanation: j['explanation'] as String?,
-        practicalTip: j['practical_tip'] as String?,
         canonicalAnswer: j['canonical_answer'] as String,
       );
 }
@@ -61,7 +58,6 @@ class LessonResultAnswer {
   final String? prompt;
   final String? canonicalAnswer;
   final String? explanation;
-  final String? practicalTip;
 
   const LessonResultAnswer({
     required this.exerciseId,
@@ -69,7 +65,6 @@ class LessonResultAnswer {
     this.prompt,
     this.canonicalAnswer,
     this.explanation,
-    this.practicalTip,
   });
 
   factory LessonResultAnswer.fromJson(Map<String, dynamic> j) =>
@@ -79,7 +74,6 @@ class LessonResultAnswer {
         prompt: j['prompt'] as String?,
         canonicalAnswer: j['canonical_answer'] as String?,
         explanation: j['explanation'] as String?,
-        practicalTip: j['practical_tip'] as String?,
       );
 }
 

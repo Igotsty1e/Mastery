@@ -21,36 +21,58 @@ class SummaryScreen extends StatelessWidget {
     final mistakes = summary?.answers.where((a) => !a.correct).toList() ?? [];
     final conclusion = summary?.conclusion;
 
+    final pct = displayTotal > 0 ? displayCorrect / displayTotal : 0.0;
+    final scoreColor = pct == 1.0
+        ? const Color(0xFF047857)
+        : pct >= 0.6
+            ? theme.colorScheme.primary
+            : const Color(0xFFBE123C);
+
     return Scaffold(
+      backgroundColor: theme.colorScheme.surfaceContainerLowest,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 24),
               Center(
                 child: Text(
                   'Lesson Complete',
-                  style: theme.textTheme.headlineMedium,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Center(
-                child: Text(
-                  '$displayCorrect / $displayTotal',
-                  style: theme.textTheme.displayLarge?.copyWith(
+                  style: theme.textTheme.headlineSmall?.copyWith(
                     fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.primary,
                   ),
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 28),
               Center(
-                child: Text(
-                  'correct',
-                  style: theme.textTheme.bodyLarge
-                      ?.copyWith(color: Colors.grey[600]),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 36, vertical: 24),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                        color: theme.colorScheme.outlineVariant),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        '$displayCorrect / $displayTotal',
+                        style: theme.textTheme.displayMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: scoreColor,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'correct',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
               if (conclusion != null) ...[
@@ -58,17 +80,20 @@ class SummaryScreen extends StatelessWidget {
                 Center(
                   child: Text(
                     conclusion,
-                    style: theme.textTheme.bodyLarge,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
                     textAlign: TextAlign.center,
                   ),
                 ),
               ],
               if (mistakes.isNotEmpty) ...[
-                const SizedBox(height: 32),
+                const SizedBox(height: 36),
                 Text(
-                  'Mistakes to review',
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.bold),
+                  'Review your mistakes',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 12),
                 ...mistakes.map((m) => _MistakeCard(answer: m)),
@@ -78,7 +103,16 @@ class SummaryScreen extends StatelessWidget {
                 width: double.infinity,
                 child: OutlinedButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('Done'),
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text(
+                    'Done',
+                    style: TextStyle(fontSize: 16),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -98,80 +132,58 @@ class _MistakeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (answer.prompt != null) ...[
-              Text(
-                answer.prompt!,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey[600],
-                  fontStyle: FontStyle.italic,
-                ),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (answer.prompt != null) ...[
+            Text(
+              answer.prompt!,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontStyle: FontStyle.italic,
+                height: 1.4,
               ),
-              const SizedBox(height: 8),
-            ],
-            if (answer.canonicalAnswer != null)
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
+            ),
+            const SizedBox(height: 10),
+          ],
+          if (answer.canonicalAnswer != null)
+            RichText(
+              text: TextSpan(
+                style: theme.textTheme.bodyMedium,
                 children: [
-                  Text(
-                    'Answer: ',
-                    style: theme.textTheme.bodyMedium
-                        ?.copyWith(fontWeight: FontWeight.bold),
+                  const TextSpan(
+                    text: 'Answer: ',
+                    style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  Expanded(
-                    child: Text(
-                      answer.canonicalAnswer!,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.primary,
-                      ),
+                  TextSpan(
+                    text: answer.canonicalAnswer!,
+                    style: TextStyle(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ],
               ),
-            if (answer.explanation != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                answer.explanation!,
-                style: theme.textTheme.bodySmall,
+            ),
+          if (answer.explanation != null) ...[
+            const SizedBox(height: 10),
+            Text(
+              answer.explanation!,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+                height: 1.5,
               ),
-            ],
-            if (answer.practicalTip != null) ...[
-              const SizedBox(height: 8),
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.secondaryContainer,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      Icons.lightbulb_outline,
-                      size: 14,
-                      color: theme.colorScheme.onSecondaryContainer,
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        answer.practicalTip!,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSecondaryContainer,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            ),
           ],
-        ),
+        ],
       ),
     );
   }

@@ -4,7 +4,6 @@ import { LessonSchema } from './lessonSchema';
 
 export interface ExerciseFeedback {
   explanation: string;
-  practical_tip: string;
 }
 
 export interface FillBlankExercise {
@@ -12,7 +11,6 @@ export interface FillBlankExercise {
   type: 'fill_blank';
   prompt: string;
   accepted_answers: string[];
-  hint: string | null;
   feedback?: ExerciseFeedback;
 }
 

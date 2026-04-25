@@ -5,9 +5,9 @@ import { resetMemoryStore } from '../src/store/memory';
 import { inject } from './helpers/inject';
 
 const LESSON_ID = 'a1b2c3d4-0001-4000-8000-000000000001';
-const EX_11 = 'a1b2c3d4-0001-4000-8000-000000000011'; // fill_blank
-const EX_15 = 'a1b2c3d4-0001-4000-8000-000000000015'; // multiple_choice
-const EX_18 = 'a1b2c3d4-0001-4000-8000-000000000018'; // sentence_correction
+const EX_11 = 'a1b2c3d4-0001-4000-8000-000000000021'; // fill_blank
+const EX_15 = 'a1b2c3d4-0001-4000-8000-000000000025'; // multiple_choice
+const EX_18 = 'a1b2c3d4-0001-4000-8000-000000000028'; // sentence_correction
 
 const SESSION_A = 'aaaaaaaa-0001-4000-8000-000000000001';
 const SESSION_B = 'bbbbbbbb-0001-4000-8000-000000000001';
@@ -71,7 +71,7 @@ describe('GET /lessons/:lessonId/result', () => {
         attempt_id: 'cccccccc-0001-4000-8000-000000000003',
         exercise_id: EX_15,
         exercise_type: 'multiple_choice',
-        user_answer: 'b',
+        user_answer: 'a',
       }),
     });
     expect(eval2.status).toBe(200);
@@ -116,8 +116,8 @@ describe('GET /lessons/:lessonId/result', () => {
     expect((res.json as any).answers[0]).toMatchObject({ exercise_id: EX_11, correct: true });
   });
 
-  it('enriches answers with prompt, canonical_answer, explanation, practical_tip', async () => {
-    // Correct answer — explanation and practical_tip should be null
+  it('enriches answers with prompt, canonical_answer, explanation', async () => {
+    // Correct answer — explanation should be null
     await inject(app, {
       method: 'POST',
       path: `/lessons/${LESSON_ID}/answers`,
@@ -128,7 +128,7 @@ describe('GET /lessons/:lessonId/result', () => {
         user_answer: 'had',
       }),
     });
-    // Wrong answer — explanation and practical_tip should be populated
+    // Wrong answer — explanation should be populated
     await inject(app, {
       method: 'POST',
       path: `/lessons/${LESSON_ID}/answers`,
@@ -136,7 +136,7 @@ describe('GET /lessons/:lessonId/result', () => {
         attempt_id: 'cccccccc-0001-4000-8000-000000000008',
         exercise_id: EX_15,
         exercise_type: 'multiple_choice',
-        user_answer: 'b',
+        user_answer: 'a',
       }),
     });
 
@@ -149,14 +149,12 @@ describe('GET /lessons/:lessonId/result', () => {
     expect(correctAnswer.prompt).toBeTruthy();
     expect(correctAnswer.canonical_answer).toBe('had');
     expect(correctAnswer.explanation).toBeNull();
-    expect(correctAnswer.practical_tip).toBeNull();
 
     const wrongAnswer = answers.find((a: any) => a.exercise_id === EX_15);
     expect(wrongAnswer.correct).toBe(false);
     expect(wrongAnswer.prompt).toBeTruthy();
     expect(wrongAnswer.canonical_answer).toBeTruthy();
     expect(wrongAnswer.explanation).toBeTruthy();
-    expect(wrongAnswer.practical_tip).toBeTruthy();
   });
 
   it('returns conclusion string', async () => {
