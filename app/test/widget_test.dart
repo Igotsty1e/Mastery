@@ -26,17 +26,17 @@ const _exId2 = 'a1b2c3d4-0001-4000-8000-000000000012';
 
 Map<String, dynamic> _lessonJson() => {
       'lesson_id': _lessonId,
-      'title': 'The Third Conditional',
+      'title': 'Verbs Followed by -ing',
       'language': 'en',
       'level': 'B2',
       'intro_rule':
-          'Use the third conditional to talk about unreal past situations and their imagined results.',
-      'intro_examples': ['If she had left earlier, she would have caught the train.'],
+          'Use the -ing form after certain verbs such as enjoy, avoid, suggest, mind, keep and finish.',
+      'intro_examples': ['She suggested taking a taxi because it was late.'],
       'exercises': [
         {
           'exercise_id': _exId,
           'type': 'fill_blank',
-          'prompt': 'If she had studied more, she ___ the exam.',
+          'prompt': 'I really enjoy ___ new restaurants when I travel.',
         }
       ],
     };
@@ -46,8 +46,8 @@ Map<String, dynamic> _evaluateJson({bool correct = true}) => {
       'exercise_id': _exId,
       'correct': correct,
       'evaluation_source': 'deterministic',
-      'explanation': 'Use would have + past participle in the result clause of the third conditional.',
-      'canonical_answer': 'would have passed',
+      'explanation': 'After enjoy, we use the -ing form.',
+      'canonical_answer': 'trying',
     };
 
 Map<String, dynamic> _resultJson() => {
@@ -61,22 +61,22 @@ Map<String, dynamic> _resultJson() => {
 
 Map<String, dynamic> _lesson2Json() => {
       'lesson_id': _lessonId,
-      'title': 'The Third Conditional',
+      'title': 'Verbs Followed by -ing',
       'language': 'en',
       'level': 'B2',
       'intro_rule':
-          'Use the third conditional to talk about unreal past situations and their imagined results.',
-      'intro_examples': ['If she had left earlier, she would have caught the train.'],
+          'Use the -ing form after certain verbs such as enjoy, avoid, suggest, mind, keep and finish.',
+      'intro_examples': ['She suggested taking a taxi because it was late.'],
       'exercises': [
         {
           'exercise_id': _exId,
           'type': 'fill_blank',
-          'prompt': 'If she had studied more, she ___ the exam.',
+          'prompt': 'I really enjoy ___ new restaurants when I travel.',
         },
         {
           'exercise_id': _exId2,
           'type': 'fill_blank',
-          'prompt': 'If they had booked sooner, they ___ cheaper tickets.',
+          'prompt': 'We should avoid ___ important decisions when we\'re tired.',
         },
       ],
     };
@@ -141,7 +141,7 @@ void main() {
       await tester.tap(find.widgetWithText(FilledButton, 'Start Lesson'));
       await tester.pumpAndSettle();
 
-      expect(find.text('The Third Conditional'), findsOneWidget);
+      expect(find.text('Verbs Followed by -ing'), findsOneWidget);
       expect(find.widgetWithText(FilledButton, 'Start Practice'), findsOneWidget);
     });
   });
@@ -195,7 +195,7 @@ void main() {
       await tester.tap(find.widgetWithText(FilledButton, 'Retry'));
       await tester.pumpAndSettle();
 
-      expect(find.text('The Third Conditional'), findsOneWidget);
+      expect(find.text('Verbs Followed by -ing'), findsOneWidget);
       expect(callCount, equals(2));
     });
   });
@@ -252,7 +252,7 @@ void main() {
       await tester.pump();
 
       expect(find.text('Incorrect'), findsOneWidget);
-      expect(find.textContaining('Answer: would have passed'), findsOneWidget);
+      expect(find.textContaining('Answer: trying'), findsOneWidget);
     });
   });
 
@@ -395,7 +395,7 @@ void main() {
       await tester.pump();
 
       expect(find.text('2 / 2'), findsOneWidget);
-      expect(find.text('If they had booked sooner, they ___ cheaper tickets.'),
+      expect(find.text('We should avoid ___ important decisions when we\'re tired.'),
           findsOneWidget);
     });
 
@@ -684,15 +684,15 @@ void main() {
       await tester.pumpAndSettle(); // navigate + fetch lesson
 
       // Phase 2: LessonIntroScreen — lesson loaded from mocked API
-      expect(find.text('The Third Conditional'), findsOneWidget);
+      expect(find.text('Verbs Followed by -ing'), findsOneWidget);
       expect(find.widgetWithText(FilledButton, 'Start Practice'), findsOneWidget);
       await tester.tap(find.widgetWithText(FilledButton, 'Start Practice'));
       await tester.pumpAndSettle(); // navigate to ExerciseScreen
 
       // Phase 3: ExerciseScreen — fill-blank exercise
-      expect(find.text('If she had studied more, she ___ the exam.'),
+      expect(find.text('I really enjoy ___ new restaurants when I travel.'),
           findsOneWidget);
-      await tester.enterText(find.byType(TextField), 'would have passed');
+      await tester.enterText(find.byType(TextField), 'trying');
       await tester.pump();
       await tester.tap(find.widgetWithText(FilledButton, 'Submit'));
       await tester

@@ -1,183 +1,174 @@
 {
   "lesson_id": "a1b2c3d4-0001-4000-8000-000000000001",
-  "title": "The Third Conditional",
+  "title": "Verbs Followed by -ing",
   "language": "en",
   "level": "B2",
-  "intro_rule": "Use\n\nWe use the third conditional to talk about imaginary situations in the past — things that did not happen and their hypothetical results. It is often used to express regret or to imagine a different outcome.\n\nForm\n\nIf + past perfect, ... would / could / might + have + past participle\n\nIf-clause: If + had + past participle (e.g. 'had studied', 'had left', 'had known')\nResult clause: would / could / might + have + past participle (e.g. 'would have passed', 'could have helped')\n\nImportant: Never use 'would have' in the if-clause. This is the most common third conditional error.",
+  "intro_rule": "Use\n\nSome verbs are followed directly by the -ing form, not by to + infinitive. In this lesson, focus on common verbs such as enjoy, avoid, consider, mind, suggest, keep and finish.\n\nForm\n\nverb + -ing\n\nenjoy working\navoid making\nsuggest taking\nmind waiting\nkeep complaining\nfinish writing\n\nImportant\n\nAfter these verbs, do not use to + infinitive. For example, say 'I enjoy reading', not 'I enjoy to read'.",
   "intro_examples": [
-    "If I had studied harder, I would have passed the exam. (I didn't study hard, so I didn't pass.)",
-    "She would have got the job if she had been better prepared. (She wasn't prepared, so she didn't get it.)",
-    "If we had left earlier, we wouldn't have missed the train. (We left late, so we missed the train.)"
+    "I enjoy working with international clients.",
+    "She suggested taking a taxi because it was late.",
+    "Do you mind waiting a few minutes?"
   ],
   "exercises": [
     {
-      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000021",
+      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000031",
       "type": "fill_blank",
-      "prompt": "If she ___ prepared more carefully, she would not have failed the interview.",
+      "prompt": "I really enjoy ___ new restaurants when I travel.",
       "accepted_answers": [
-        "had"
+        "trying"
       ],
       "feedback": {
-        "explanation": "The if-clause of the third conditional uses past perfect: 'had + past participle'. Here, 'had prepared' is the past perfect of 'prepare'. Without 'had', the sentence is not a third conditional."
+        "explanation": "After enjoy, we use the -ing form. The correct pattern is 'enjoy + verb-ing', so the sentence needs 'trying'."
       }
     },
     {
-      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000022",
+      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000032",
       "type": "fill_blank",
-      "prompt": "They would ___ won the match if the referee had not made that error.",
+      "prompt": "We should avoid ___ important decisions when we're tired.",
       "accepted_answers": [
-        "have"
+        "making"
       ],
       "feedback": {
-        "explanation": "The result clause of the third conditional requires 'would have + past participle'. 'Would' alone is not enough — 'have' is essential to form the perfect infinitive ('would have won')."
+        "explanation": "After avoid, we use the -ing form. The correct pattern is 'avoid + verb-ing', so we say 'avoid making'."
       }
     },
     {
-      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000023",
+      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000033",
       "type": "fill_blank",
-      "prompt": "If it ___ not rained that day, we would have had a picnic in the park.",
+      "prompt": "She suggested ___ the meeting until Friday.",
       "accepted_answers": [
-        "had"
+        "postponing"
       ],
       "feedback": {
-        "explanation": "The if-clause uses past perfect. 'Had not rained' is the negative past perfect form: 'had + not + past participle'. The blank is 'had'. Without it, the sentence breaks the third conditional structure."
+        "explanation": "When suggest is followed directly by another verb, we use the -ing form. That is why the sentence needs 'postponing'."
       }
     },
     {
-      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000024",
+      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000034",
       "type": "fill_blank",
-      "prompt": "We could ___ helped you if we had known what was wrong.",
+      "prompt": "Do you mind ___ the window before we start?",
       "accepted_answers": [
-        "have"
+        "closing"
       ],
       "feedback": {
-        "explanation": "The result clause uses 'could / would / might + have + past participle'. 'Have' is required between the modal ('could') and the past participle ('helped') to form the perfect infinitive. 'Could helped' is ungrammatical."
+        "explanation": "After mind, we use the -ing form. The correct pattern is 'mind + verb-ing', so the blank is 'closing'."
       }
     },
     {
-      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000025",
+      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000035",
       "type": "multiple_choice",
-      "prompt": "If he ___ the map, he wouldn't have got lost.",
+      "prompt": "He keeps ___ about the same problem.",
       "options": [
         {
           "id": "a",
-          "text": "checked"
+          "text": "complain"
         },
         {
           "id": "b",
-          "text": "had checked"
+          "text": "complaining"
         },
         {
           "id": "c",
-          "text": "would have checked"
+          "text": "to complain"
         },
         {
           "id": "d",
-          "text": "has checked"
+          "text": "complained"
         }
       ],
       "correct_option_id": "b",
       "feedback": {
-        "explanation": "The if-clause of the third conditional uses past perfect: 'had + past participle'. Option B ('had checked') is correct. Option C is the most common error — 'would have' belongs only in the result clause, never in the if-clause."
+        "explanation": "After keep, we normally use the -ing form to show continuation. The correct pattern is 'keep + verb-ing', so 'complaining' is correct."
       }
     },
     {
-      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000026",
+      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000036",
       "type": "multiple_choice",
-      "prompt": "She ___ the first prize if she hadn't made that one mistake.",
+      "prompt": "I finished ___ the report before lunch.",
       "options": [
         {
           "id": "a",
-          "text": "would win"
+          "text": "write"
         },
         {
           "id": "b",
-          "text": "would have won"
+          "text": "writing"
         },
         {
           "id": "c",
-          "text": "had won"
+          "text": "to write"
         },
         {
           "id": "d",
-          "text": "will have won"
+          "text": "wrote"
         }
       ],
       "correct_option_id": "b",
       "feedback": {
-        "explanation": "The result clause of the third conditional uses 'would have + past participle' (option B). 'Would win' is second conditional. 'Had won' is past perfect, which belongs in the if-clause. 'Will have won' is future perfect."
+        "explanation": "After finish, we use the -ing form. The correct pattern is 'finish + verb-ing', so the answer is 'writing'."
       }
     },
     {
-      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000027",
+      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000037",
       "type": "multiple_choice",
-      "prompt": "Which sentence correctly uses the third conditional?",
+      "prompt": "Which sentence is correct?",
       "options": [
         {
           "id": "a",
-          "text": "If I would have left earlier, I wouldn't have missed the train."
+          "text": "I enjoy to read before bed."
         },
         {
           "id": "b",
-          "text": "If I had left earlier, I wouldn't have missed the train."
+          "text": "I enjoy reading before bed."
         },
         {
           "id": "c",
-          "text": "If I have left earlier, I wouldn't have missed the train."
+          "text": "I enjoy read before bed."
         },
         {
           "id": "d",
-          "text": "If I left earlier, I wouldn't have missed the train."
+          "text": "I enjoying reading before bed."
         }
       ],
       "correct_option_id": "b",
       "feedback": {
-        "explanation": "Option B is correct: 'If + past perfect (had left), ... would have + past participle (missed)'. Option A is the most common third conditional error — 'would have' must never appear in the if-clause. Options C and D do not use the past perfect required for the if-clause."
+        "explanation": "Enjoy is followed by the -ing form. Only 'I enjoy reading before bed' follows the correct pattern."
       }
     },
     {
-      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000028",
+      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000038",
       "type": "sentence_correction",
-      "prompt": "If I would have known you were coming, I would have cooked dinner.",
+      "prompt": "She suggested to take a taxi because it was late.",
       "accepted_corrections": [
-        "If I had known you were coming, I would have cooked dinner.",
-        "If I'd known you were coming, I would have cooked dinner.",
-        "If I had known you were coming, I would've cooked dinner.",
-        "If I'd known you were coming, I would've cooked dinner."
+        "She suggested taking a taxi because it was late."
       ],
       "borderline_ai_fallback": true,
       "feedback": {
-        "explanation": "The if-clause of the third conditional never uses 'would have'. Replace 'would have known' with past perfect 'had known'. The result clause ('I would have cooked') is already correct. Rule: if-clause = had + past participle; result clause = would have + past participle."
+        "explanation": "After suggest, do not use to + infinitive when another verb follows directly. Use the -ing form: 'suggest taking'."
       }
     },
     {
-      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000029",
+      "exercise_id": "a1b2c3d4-0001-4000-8000-000000000039",
       "type": "sentence_correction",
-      "prompt": "She would have been promoted if she worked harder last year.",
+      "prompt": "I don't mind to wait for a few minutes.",
       "accepted_corrections": [
-        "She would have been promoted if she had worked harder last year.",
-        "She would've been promoted if she had worked harder last year.",
-        "She would have been promoted if she'd worked harder last year.",
-        "She would've been promoted if she'd worked harder last year."
+        "I don't mind waiting for a few minutes."
       ],
       "borderline_ai_fallback": true,
       "feedback": {
-        "explanation": "The if-clause needs past perfect ('had worked'), not simple past ('worked'). Simple past in an if-clause forms the second conditional (for present or future hypotheticals). For a past hypothetical, the if-clause must use 'had + past participle'."
+        "explanation": "Mind is followed by the -ing form, not to + infinitive. The correct pattern is 'mind waiting'."
       }
     },
     {
-      "exercise_id": "a1b2c3d4-0001-4000-8000-00000000002a",
+      "exercise_id": "a1b2c3d4-0001-4000-8000-00000000003a",
       "type": "sentence_correction",
-      "prompt": "If they had left earlier, they would caught the last bus.",
+      "prompt": "We avoided to discuss the budget until everyone arrived.",
       "accepted_corrections": [
-        "If they had left earlier, they would have caught the last bus.",
-        "If they'd left earlier, they would have caught the last bus.",
-        "If they had left earlier, they would've caught the last bus.",
-        "If they'd left earlier, they would've caught the last bus."
+        "We avoided discussing the budget until everyone arrived."
       ],
       "borderline_ai_fallback": true,
       "feedback": {
-        "explanation": "The result clause requires 'would have + past participle'. 'Would caught' is missing 'have'. The modal 'would' must be followed by 'have + past participle' in the third conditional result clause. The correct form is 'would have caught'."
+        "explanation": "After avoid, we use the -ing form. The correct structure is 'avoid discussing', not 'avoid to discuss'."
       }
     }
   ]
