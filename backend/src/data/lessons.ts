@@ -12,6 +12,7 @@ export interface FillBlankExercise {
   instruction: string;
   prompt: string;
   accepted_answers: string[];
+  image?: ExerciseImage;
   feedback?: ExerciseFeedback;
 }
 
@@ -27,6 +28,7 @@ export interface MultipleChoiceExercise {
   prompt: string;
   options: MultipleChoiceOption[];
   correct_option_id: string;
+  image?: ExerciseImage;
   feedback?: ExerciseFeedback;
 }
 
@@ -37,6 +39,7 @@ export interface SentenceCorrectionExercise {
   prompt: string;
   accepted_corrections: string[];
   borderline_ai_fallback: true;
+  image?: ExerciseImage;
   feedback?: ExerciseFeedback;
 }
 
@@ -46,6 +49,27 @@ export interface ExerciseAudio {
   transcript: string;
 }
 
+export type ExerciseImageRole =
+  | 'scene_setting'
+  | 'context_support'
+  | 'disambiguation'
+  | 'listening_support';
+
+export type ExerciseImagePolicy = 'optional' | 'recommended' | 'required';
+
+export interface ExerciseImage {
+  url: string;
+  alt: string;
+  role: ExerciseImageRole;
+  policy: ExerciseImagePolicy;
+  /** Authoring brief; stripped before client response. */
+  brief?: string;
+  /** Authoring constraint; stripped before client response. */
+  dont_show?: string;
+  /** Authoring risk class; stripped before client response. */
+  risk?: 'low' | 'medium' | 'high';
+}
+
 export interface ListeningDiscriminationExercise {
   exercise_id: string;
   type: 'listening_discrimination';
@@ -53,6 +77,7 @@ export interface ListeningDiscriminationExercise {
   audio: ExerciseAudio;
   options: MultipleChoiceOption[];
   correct_option_id: string;
+  image?: ExerciseImage;
   feedback?: ExerciseFeedback;
 }
 

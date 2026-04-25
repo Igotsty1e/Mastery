@@ -7,6 +7,7 @@ import '../session/session_state.dart';
 import '../theme/mastery_theme.dart';
 import '../widgets/fill_blank_widget.dart';
 import '../widgets/listening_discrimination_widget.dart';
+import '../widgets/mastery_exercise_image.dart';
 import '../widgets/mastery_widgets.dart';
 import '../widgets/multiple_choice_widget.dart';
 import '../widgets/sentence_correction_widget.dart';
@@ -138,12 +139,22 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                         const SizedBox(height: 16),
                         MasteryCard(
                           padding: const EdgeInsets.all(22),
-                          child: _ExerciseBody(
-                            key: ValueKey(exercise.exerciseId),
-                            exercise: exercise,
-                            enabled: !isSubmitted && !isLoading,
-                            onAnswerChanged: _onAnswerChanged,
-                            onTextSubmit: () => _submitIfReady(controller),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              if (exercise.image != null) ...[
+                                MasteryExerciseImage(image: exercise.image!),
+                                const SizedBox(height: MasterySpacing.lg),
+                              ],
+                              _ExerciseBody(
+                                key: ValueKey(exercise.exerciseId),
+                                exercise: exercise,
+                                enabled: !isSubmitted && !isLoading,
+                                onAnswerChanged: _onAnswerChanged,
+                                onTextSubmit: () =>
+                                    _submitIfReady(controller),
+                              ),
+                            ],
                           ),
                         ),
                         if (isSubmitted && state.lastResult != null) ...[

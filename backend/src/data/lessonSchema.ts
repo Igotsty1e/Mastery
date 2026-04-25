@@ -6,12 +6,31 @@ const ExerciseFeedbackSchema = z.object({
   explanation: z.string(),
 });
 
+// Visual Context Layer per exercise_structure.md §2.9. Authoring metadata
+// (brief / dont_show / risk) lives inline so authors edit one file; the route
+// layer strips authoring-only fields before sending the public payload.
+export const ExerciseImageSchema = z.object({
+  url: z.string().min(1),
+  alt: z.string().min(1),
+  role: z.enum([
+    'scene_setting',
+    'context_support',
+    'disambiguation',
+    'listening_support',
+  ]),
+  policy: z.enum(['optional', 'recommended', 'required']),
+  brief: z.string().min(1).optional(),
+  dont_show: z.string().optional(),
+  risk: z.enum(['low', 'medium', 'high']).optional(),
+});
+
 const FillBlankExerciseBaseSchema = z.object({
   exercise_id: z.string().uuid(),
   type: z.literal('fill_blank'),
   instruction: z.string().min(1),
   prompt: z.string(),
   accepted_answers: z.array(z.string()).min(1),
+  image: ExerciseImageSchema.optional(),
   feedback: ExerciseFeedbackSchema.optional(),
 });
 
@@ -27,6 +46,7 @@ const MultipleChoiceExerciseBaseSchema = z.object({
   prompt: z.string(),
   options: z.array(MultipleChoiceOptionSchema).min(2).max(4),
   correct_option_id: z.enum(['a', 'b', 'c', 'd']),
+  image: ExerciseImageSchema.optional(),
   feedback: ExerciseFeedbackSchema.optional(),
 });
 
@@ -37,6 +57,7 @@ const SentenceCorrectionExerciseBaseSchema = z.object({
   prompt: z.string(),
   accepted_corrections: z.array(z.string()).min(1),
   borderline_ai_fallback: z.literal(true),
+  image: ExerciseImageSchema.optional(),
   feedback: ExerciseFeedbackSchema.optional(),
 });
 
@@ -55,6 +76,7 @@ const ListeningDiscriminationExerciseBaseSchema = z.object({
   audio: ExerciseAudioSchema,
   options: z.array(MultipleChoiceOptionSchema).min(2).max(4),
   correct_option_id: z.enum(['a', 'b', 'c', 'd']),
+  image: ExerciseImageSchema.optional(),
   feedback: ExerciseFeedbackSchema.optional(),
 });
 

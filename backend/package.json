@@ -7,7 +7,9 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "test": "vitest run",
-    "gen:audio": "tsx scripts/gen-audio.ts"
+    "gen:audio": "tsx scripts/gen-audio.ts",
+    "gen:image": "tsx scripts/gen-image.ts",
+    "gen:assets": "npm run gen:audio && npm run gen:image"
   },
   "dependencies": {
     "express": "^4.18.2",

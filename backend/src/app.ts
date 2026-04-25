@@ -48,6 +48,22 @@ export function createApp(ai: AiProvider): express.Express {
     })
   );
 
+  // Static images for the Visual Context Layer (exercise_structure §2.9).
+  // Generated offline by `npm run gen:image` and content-addressed by the
+  // brief + dont_show + role hash, so the same one-year immutable cache
+  // header is safe.
+  app.use(
+    '/images',
+    express.static(path.resolve(process.cwd(), 'public', 'images'), {
+      fallthrough: false,
+      maxAge: '365d',
+      immutable: true,
+      setHeaders: res => {
+        res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+      },
+    })
+  );
+
   app.use(healthRouter);
   app.use(makeLessonsRouter(ai));
 

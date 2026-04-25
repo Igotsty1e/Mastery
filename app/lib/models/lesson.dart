@@ -58,6 +58,53 @@ class ExerciseAudio {
       );
 }
 
+enum ExerciseImageRole {
+  sceneSetting,
+  contextSupport,
+  disambiguation,
+  listeningSupport,
+}
+
+ExerciseImageRole _parseImageRole(String s) => switch (s) {
+      'scene_setting' => ExerciseImageRole.sceneSetting,
+      'context_support' => ExerciseImageRole.contextSupport,
+      'disambiguation' => ExerciseImageRole.disambiguation,
+      'listening_support' => ExerciseImageRole.listeningSupport,
+      _ => throw ArgumentError('Unknown image role: $s'),
+    };
+
+enum ExerciseImagePolicy { optional, recommended, required }
+
+ExerciseImagePolicy _parseImagePolicy(String s) => switch (s) {
+      'optional' => ExerciseImagePolicy.optional,
+      'recommended' => ExerciseImagePolicy.recommended,
+      'required' => ExerciseImagePolicy.required,
+      _ => throw ArgumentError('Unknown image policy: $s'),
+    };
+
+class ExerciseImage {
+  /// Server path under `/images` (e.g. `/images/{lesson_id}/{exercise_id}.png`).
+  /// Resolved against the API base URL by the client when needed.
+  final String url;
+  final String alt;
+  final ExerciseImageRole role;
+  final ExerciseImagePolicy policy;
+
+  const ExerciseImage({
+    required this.url,
+    required this.alt,
+    required this.role,
+    required this.policy,
+  });
+
+  factory ExerciseImage.fromJson(Map<String, dynamic> j) => ExerciseImage(
+        url: j['url'] as String,
+        alt: j['alt'] as String,
+        role: _parseImageRole(j['role'] as String),
+        policy: _parseImagePolicy(j['policy'] as String),
+      );
+}
+
 class Exercise {
   final String exerciseId;
   final ExerciseType type;
@@ -76,6 +123,10 @@ class Exercise {
   // listening_discrimination only
   final ExerciseAudio? audio;
 
+  /// Optional Visual Context Layer image, available on any exercise type per
+  /// `exercise_structure.md §2.9`.
+  final ExerciseImage? image;
+
   const Exercise({
     required this.exerciseId,
     required this.type,
@@ -84,6 +135,7 @@ class Exercise {
     this.options,
     this.borderlineAiFallback = false,
     this.audio,
+    this.image,
   });
 
   factory Exercise.fromJson(Map<String, dynamic> j) {
@@ -103,6 +155,9 @@ class Exercise {
       borderlineAiFallback: j['borderline_ai_fallback'] as bool? ?? false,
       audio: type == ExerciseType.listeningDiscrimination
           ? ExerciseAudio.fromJson(j['audio'] as Map<String, dynamic>)
+          : null,
+      image: j['image'] != null
+          ? ExerciseImage.fromJson(j['image'] as Map<String, dynamic>)
           : null,
     );
   }
