@@ -19,6 +19,7 @@
 - `docs/design-mockups/` owns screen-level composition reference.
 - `GRAM_STRATEGY.md` owns the top-level pedagogy for how Mastery teaches language.
 - `exercise_structure.md` owns the exercise system and authoring rules derived from that pedagogy.
+- `exercise_structure.md §2.9 Visual Context Layer` decides whether a given exercise should remain text-only or may use an image.
 - `docs/content-unit-u01-blueprint.md` owns the current lesson-authoring plan.
 - All instructional content for Mastery must be created or explicitly reviewed using the `english-grammar-methodologist` skill; `DESIGN.md` does not replace that content-authoring workflow.
 
@@ -185,12 +186,14 @@ Method note: this list uses public Android install bands from Google Play as the
 - **Do not use images:** inside the main exercise interaction zone unless they directly support the task.
 - **Human representation:** adults or older teens, modern, international, calm, competent.
 - **Art palette:** dusty rose, oat, muted clay, parchment, sage accents.
+- **Decision authority:** whether an exercise is allowed to use imagery is governed by `exercise_structure.md §2.9 Visual Context Layer`. `DESIGN.md` governs only style, surface treatment, and placement once that gate is passed.
 
 ### Image Rules
 - No childish mascots.
 - No stock-photo smiles on pure white backgrounds.
 - No techy holograms, robots, or glowing AI brains.
 - When using illustrations, keep line weights soft and rounded, not corporate-outline icon packs.
+- If an exercise image risks revealing the answer directly, do not render it at all.
 
 ## Component System
 
@@ -280,6 +283,17 @@ Method note: this list uses public Android install bands from Google Play as the
 - Replays are unlimited and do not affect scoring.
 - Disabled state (audio failed to load): button shows muted glyph, tertiary color, with one-line tertiary text below: `Audio unavailable. Try again.`
 
+### 15. Exercise Image
+- Used inside the exercise card on any exercise type that carries the optional `image` block (Visual Context Layer per `exercise_structure.md §2.9`).
+- Sits at the **top** of the exercise card content, above the prompt / audio player / option list. Renders full card width inside the card's normal padding.
+- Aspect ratio: **4:3** (matches the upstream pipeline output). Fit `cover`, never letter-boxed.
+- Border radius: `r-lg` (22px). No outer shadow — the card already provides elevation.
+- Loading state: warm `bg.primary-soft` fill with a small dusty-rose spinner centered. No text label, no skeleton shimmer (would compete with the calm tone).
+- Failure state (image fetch fails): replace the image area with a quiet `bg.surface-alt` block displaying the `alt` text in `body-sm`, italic, `text.tertiary`. The exercise stays usable — image support is never a hard requirement.
+- The image must obey the role from the schema (`scene_setting | context_support | disambiguation | listening_support`); roles do not change the visual rendering, only the authoring permission.
+- The on-wire `alt` field is the accessibility label and the failure-state caption. Authors must always write a meaningful `alt` even when the image is decorative-feeling, because screen readers will speak it.
+- Generated images are pre-rendered offline by the kie.ai-driven pipeline (see `docs/implementation-scope.md` Workstream I) and served from the backend at `/images/{lesson_id}/{exercise_id}.png` with a one-year immutable cache header.
+
 ## Screen-Level Direction
 
 ### Home / Onboarding
@@ -326,7 +340,7 @@ Method note: this list uses public Android install bands from Google Play as the
 - Use Material 3 foundations only as infrastructure, not as the final visual language.
 - Override the default `ThemeData` color scheme, shape scheme, and text theme completely.
 - Add a `ThemeExtension` for custom tokens: surfaces, semantic colors, progress fills, and illustration backgrounds.
-- Create reusable widgets for `MasteryButton`, `MasteryCard`, `MasteryChip`, `ResultPanel`, `SectionEyebrow`, and `MasteryAudioPlayer` (single-clip, replay-only, transcript-on-demand — see Component System §14).
+- Create reusable widgets for `MasteryButton`, `MasteryCard`, `MasteryChip`, `ResultPanel`, `SectionEyebrow`, `MasteryAudioPlayer` (single-clip, replay-only, transcript-on-demand — see Component System §14), and `MasteryExerciseImage` (4:3 aspect, soft loading skeleton, quiet failure state — see Component System §15).
 - Use `AnimatedSwitcher`, `AnimatedOpacity`, `AnimatedSlide`, and `TweenAnimationBuilder` for most motion.
 - Avoid default `FilledButton` and `OutlinedButton` styling without token overrides.
 - Do not ship with `colorSchemeSeed` defaults; they are too generic for this product.

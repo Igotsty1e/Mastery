@@ -116,6 +116,82 @@ Before authoring an exercise set, define:
 
 If these are not fixed, the set is not ready for generation or review.
 
+### 2.9 Visual Context Layer
+
+Some exercises may benefit from an image, illustration, or scene-setting visual.
+This is a separate authoring layer, not decoration.
+
+The visual context layer answers one question only:
+- does this exercise become clearer and pedagogically stronger with an image?
+
+It does **not** decide:
+- visual style
+- palette
+- illustration rendering technique
+- UI placement details beyond the pedagogical role
+
+Those are governed by `DESIGN.md`.
+
+Authoring rule:
+- first decide whether the exercise should be text-only or image-supported
+- only after that decision may a design/image workflow generate the actual asset
+
+Every exercise that is considered for imagery must define:
+- `image_policy`
+  - `none`
+  - `optional`
+  - `recommended`
+  - `required`
+- `image_role`
+  - `scene_setting`
+  - `context_support`
+  - `disambiguation`
+  - `listening_support`
+- `image_brief`
+  - one short description of what the image must show
+- `image_dont_show`
+  - what the image must not reveal or imply
+- `image_risk`
+  - `low`
+  - `medium`
+  - `high`
+
+Default:
+- every exercise starts as `image_policy = none`
+- the burden of proof is on adding the image, not on omitting it
+
+An image is allowed only if all of the following are true:
+1. it establishes context faster than text alone
+2. it does not make the correct answer obvious
+3. it does not introduce a second plausible interpretation of the task
+4. it fits the calm, adult, high-trust product language in `DESIGN.md`
+
+Reject imagery if:
+- it exists only to make the exercise look richer
+- it turns the item into a picture-guessing task
+- it gives away the right option directly
+- it adds emotional noise, humor, or childish tone
+- the scene is too ambiguous to support deterministic scoring
+
+Strong candidates for imagery:
+- scenario-based `multiple_choice`
+- `listening_discrimination`
+- selected lesson-intro examples
+- contrast items where a scene clarifies who is speaking, what happened, or what timeline is being referenced
+
+Weak candidates for imagery:
+- most `fill_blank`
+- most `sentence_correction`
+- any item where the sentence already carries the full decision cleanly
+
+Operational rule:
+- exercise authoring decides `if`
+- design decides `how`
+
+See:
+- `DESIGN.md §Illustration and Imagery`
+- `DESIGN.md §Component System`
+
 ---
 
 ## 3. Exercise Taxonomy
@@ -742,6 +818,32 @@ Rules for authors:
 
 Listening items inherit all global authoring rules (§2) and the explanation
 contract (§10).
+
+### 6.6.1 Image + Audio Together — Edge Case
+
+A `listening_discrimination` item may carry an image with role
+`listening_support`, but only if that image does not pre-decide the auditory
+answer.
+
+The risk: a learner sees a scene that strongly implies one tense, aspect, or
+verb form before they listen. They no longer have to discriminate by ear —
+the image already told them. This collapses the pedagogical purpose of the
+listening item.
+
+Allowed when the image:
+- sets a neutral context that fits *all* options equally (e.g. a person at a
+  desk for a contrast between simple and continuous tenses)
+- shows a topic anchor (e.g. an office for a workplace listening item)
+  without indicating timeline, completion, or duration
+
+Reject when the image:
+- shows a clearly finished outcome that fits only the `simple`-tense option
+- shows mid-action visuals that fit only the `continuous`-tense option
+- displays anything that spells out the answer (a clock, a written word, a
+  posture clearly mapped to one option)
+
+Default for `listening_discrimination` items is `image_policy: none`. Only
+add an image when the scene gracefully accommodates *all* listed options.
 
 ---
 

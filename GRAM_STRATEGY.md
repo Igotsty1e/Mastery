@@ -186,6 +186,25 @@ This is the product hook that turns feedback into learning instead of just
 information. See `exercise_structure.md §6.5 Reinforcement After Error` for
 the operational contract.
 
+### 4.9 Visual Context Serves Meaning, Not Decoration
+
+When an image accompanies an exercise, it must do pedagogical work — most
+often clarifying meaning, anchoring a scenario, or supporting noticing for
+listening items. It must never serve as decoration, branding, or a
+substitute for clear language.
+
+Operational consequences:
+
+- Every exercise starts as text-only. The default `image_policy` is `none`.
+  The burden of proof is on adding the image, not on omitting it.
+- An image is allowed only when it carries one of four explicit roles:
+  scene-setting, context support, disambiguation, or listening support.
+- An image must not make the correct answer obvious. It clarifies the
+  context of the decision, never the decision itself.
+- The visual layer is governed by `exercise_structure.md §2.9` (the
+  authoring rules) and `DESIGN.md §15` (the rendering rules); pedagogy
+  decides *whether* to add an image, design decides *how* it looks.
+
 ---
 
 ## 5. Lesson Model

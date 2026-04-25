@@ -21,6 +21,7 @@ Major expansion areas:
 5. authoring and QA tooling
 6. frontend screen expansion
 7. backend/API expansion
+8. visual context layer (imagery)
 
 Speaking / microphone input is **not** in scope. See `GRAM_STRATEGY.md §15.1`
 and `exercise_structure.md §5.7`.
@@ -304,6 +305,72 @@ Support richer content and scoring while keeping backend authority.
 
 (There is no Phase 5. Speaking capture is excluded — see
 `GRAM_STRATEGY.md §15.1`.)
+
+---
+
+## 11.5 Workstream I — Visual Context Layer (Imagery)
+
+### Goal
+
+Add deliberate scene-setting / context-supporting imagery — only on items
+whose author explicitly opts in via `image_policy != none` — without turning
+the app into a generic image-bank product.
+
+### Scope decisions (locked)
+
+- Imagery is allowed on every exercise type (`fill_blank`,
+  `multiple_choice`, `sentence_correction`, `listening_discrimination`).
+- Default policy is `none`; the burden of proof is on adding an image.
+- An image must never reveal the correct answer (per
+  `exercise_structure.md §2.9`).
+- For `listening_discrimination` items the bar is even higher — see
+  `exercise_structure.md §6.6.1` for the image+audio edge case rule.
+- Generation provider: **kie.ai Flux Kontext** (`flux-kontext-pro`).
+  Flux is open-weights with a permissive `safetyTolerance`, which avoids
+  the false-positive content-moderation flags that gpt4o-image was
+  triggering on calm editorial scenes.
+- Aspect ratio: **4:3** for every clip — single ratio simplifies layout
+  and matches the chosen Flux Kontext aspect.
+- Output format: **png**.
+- Storage: `backend/public/images/{lesson_id}/{exercise_id}.png`, served
+  by Express with `Cache-Control: public, max-age=31536000, immutable`.
+- Style consistency: short brand-anchored prefix (DESIGN.md art palette),
+  no negation chains in the upstream prompt — `dont_show` lives in the
+  lesson JSON for human QA only.
+- Pipeline failure mode: the fixture is allowed to ship without an image
+  if generation fails repeatedly; the runtime renders a quiet caption
+  fallback (DESIGN.md §15) so the exercise still works.
+
+Authoritative references:
+- pedagogy: `GRAM_STRATEGY.md §4.9` (visual context serves meaning)
+- authoring: `exercise_structure.md §2.9` (per-item image fields,
+  acceptance rules) and `§6.6.1` (image+audio edge case)
+- schema: `docs/content-contract.md §2.5 ExerciseImage`
+- UI: `DESIGN.md §15 Exercise Image`
+
+### Tasks
+
+- add `ExerciseImageSchema` to `backend/src/data/lessonSchema.ts` and
+  TypeScript mirror in `backend/src/data/lessons.ts`
+- strip authoring-only fields (`brief`, `dont_show`, `risk`) before the
+  lesson endpoint responds
+- expose `backend/public/images/` as Express static with the standard
+  immutable-asset cache headers
+- write `backend/scripts/gen-image.ts` (kie.ai Flux Kontext, hash-based
+  skip on `role + brief + dont_show`, sidecar metadata, retry-tolerant)
+- add `npm run gen:image` and an `npm run gen:assets` aggregator that
+  runs audio + image together
+- add `MasteryExerciseImage` Flutter widget per `DESIGN.md §15`,
+  rendered above the type-specific exercise body inside `MasteryCard`
+- extend the Flutter `Exercise` model with the optional `image` field
+  and the role / policy enums
+
+### Cost note
+
+`flux-kontext-pro` on kie.ai sits in the same low-single-cents-per-clip
+range as the audio TTS. A full B2 unit (`~5 lessons × ~3 imaged items`)
+runs at well under one US dollar, so cost is not the bottleneck —
+authorial discipline is.
 
 ---
 

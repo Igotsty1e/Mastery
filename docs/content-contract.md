@@ -87,6 +87,7 @@
     { "id": "string (a|b|c|d)", "text": "string (full plausible sentence)" }
   ],
   "correct_option_id": "string (a|b|c|d)",
+  "image": "ExerciseImage (optional, see §2.5)",
   "feedback": { "explanation": "string" }
 }
 ```
@@ -110,6 +111,58 @@
   `correct_option_id`, identical to `multiple_choice`.
 
 Authoring rules and distractor strategy: see `exercise_structure.md §5.6`.
+
+### 2.5 ExerciseImage (optional, all exercise types)
+
+Any exercise type may carry an optional `image` block per the Visual Context
+Layer in `exercise_structure.md §2.9`. The shipped runtime fields are:
+
+```json
+{
+  "image": {
+    "url": "string (path under /images, e.g. /images/{lesson_id}/{exercise_id}.png)",
+    "alt": "string (accessibility label, also used as failure-state caption)",
+    "role": "scene_setting | context_support | disambiguation | listening_support",
+    "policy": "optional | recommended | required"
+  }
+}
+```
+
+Authoring-only fields live inline alongside the runtime ones and are
+stripped before the lesson endpoint responds:
+
+```json
+{
+  "image": {
+    "url": "...",
+    "alt": "...",
+    "role": "...",
+    "policy": "...",
+    "brief": "string (prompt for the gen-image pipeline)",
+    "dont_show": "string (QA guard for the human reviewer; not sent to the model)",
+    "risk": "low | medium | high"
+  }
+}
+```
+
+Rules:
+
+- `image` is always optional. Omit it entirely when the exercise is
+  text-only — the default `image_policy` is `none`, which is represented in
+  JSON by the absence of the field.
+- `url`: relative path served by the backend static-image mount. Files must
+  exist before the fixture ships.
+- `alt`: required and meaningful. Screen readers read this; the failure
+  state surfaces it as the visible fallback.
+- `role`: enum, exactly one. The role is authoring-only — the runtime does
+  not change rendering based on role; the field exists so reviewers can
+  judge whether the image fits the slot.
+- `policy`: enum (`optional | recommended | required`). When `required`,
+  shipping the lesson without the asset breaks the lesson, so the
+  pre-merge QA must catch it.
+- `brief` / `dont_show` / `risk` are pipeline metadata — see
+  `docs/implementation-scope.md` Workstream I and the gen-image script.
+  Stripped before client response.
 
 ## 3. Attempt Payload Shape
 
