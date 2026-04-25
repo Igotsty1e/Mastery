@@ -116,6 +116,42 @@ Before authoring an exercise set, define:
 
 If these are not fixed, the set is not ready for generation or review.
 
+### 2.8.1 Intro Contrast Presentation Contract
+
+When a lesson includes a rule-introduction screen with FORM, IMPORTANT, and
+EXAMPLES blocks, the author must specify how the contrast will be made visible.
+
+This is not optional decoration.
+It is part of the teaching contract.
+
+For every contrasted pattern, define:
+- `common_part`
+  - the words that stay visually neutral
+- `variable_part`
+  - the exact slot that must be highlighted
+- `contrast_pair`
+  - the opposing pattern shown alongside it
+- `example_pair`
+  - the examples that mirror the same highlighted slot
+
+Hard rules:
+- highlight only the minimum slot needed to show the contrast
+- never highlight the entire formula if only one local slot carries the decision
+- the same slot must receive the same visual treatment in FORM and EXAMPLES
+- paired forms should be authored so they can be stacked vertically with aligned changing parts
+- IMPORTANT should restate the contrast in a short paired structure, not a long paragraph
+
+Bad:
+- highlighting the full sentence
+- highlighting auxiliaries, subjects, and punctuation for visual richness
+- placing examples in one long list where the learner must infer which form each example belongs to
+
+Good:
+- neutral `have / has`, highlighted `been + verb-ing`
+- neutral `have / has`, highlighted `past participle`
+- neutral sentence frame, highlighted `for`
+- neutral sentence frame, highlighted `since`
+
 ### 2.9 Visual Context Layer
 
 Some exercises may benefit from an image, illustration, or scene-setting visual.

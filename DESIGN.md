@@ -229,11 +229,18 @@ Method note: this list uses public Android install bands from Google Play as the
 - Background `bg.raised`, radius `22px`, padding `24px`.
 - Optional eyebrow label like `Rule`, `Pattern`, `Watch for`.
 - Headline large enough to scan from arm’s length.
+- When a rule contains a contrast pair, the layout must surface the changing slot first and the prose explanation second.
+- Shared grammar material stays visually quiet; only the variable slot gets the strong accent.
+- Contrasted formulas should stack vertically with aligned changing parts, never drift apart into decorative left/right scatter.
+- Use one accent treatment per contrasted form and reuse it in the matching examples below.
 
 ### 7. Example Block
 - Slightly tinted `primary-soft` background.
 - Bullet markers use rose or gold dots, never default black bullets.
 - Example sentences should breathe; target `16/26`.
+- Do not present examples as one undifferentiated list when the lesson is teaching a contrast.
+- Group examples under the form they illustrate.
+- Highlight only the same grammar slot that was highlighted in the FORM block; never highlight the whole sentence.
 
 ### 8. Exercise Card
 - The main interaction object.
@@ -308,6 +315,10 @@ Method note: this list uses public Android install bands from Google Play as the
 - Level badge is compact and elegant.
 - Rule sections must feel teachable, not like API text dumps.
 - Examples live in a tinted support block beneath the rule content.
+- For contrast-based lessons, the intro should read like a guided diff:
+  common part first, changing slot emphasized, examples paired directly under each form.
+- IMPORTANT copy should compress the contrast into a short paired reminder rather than carry the teaching load alone.
+- Visual emphasis must support noticing: color + weight/underline/chip is acceptable; broad paragraph tinting without slot-level emphasis is not sufficient.
 
 ### Exercise Screen
 - Put the learner in a tunnel: progress up top, task in center, result below.

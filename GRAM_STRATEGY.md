@@ -246,6 +246,33 @@ Good intro teaching answers:
 - What shape does it take?
 - What common mistake should I watch for?
 
+### 5.3.1 How The Intro Must Show Contrast
+
+The intro screen is not a prose block.
+It is a noticing surface.
+
+When two forms are being contrasted, the learner must be able to see the
+changing slot immediately, before reading a long explanation.
+
+Operational rules:
+
+- highlight only the variable part of the pattern, not the whole formula
+- keep the shared part neutral and visually quieter
+- present paired forms vertically and align the changing slot like a diff
+- mirror the same highlight from the rule formula into the examples below it
+- use examples in pairs under each contrasted form, not as one undifferentiated list
+
+Examples of the changing slot:
+- `been + verb-ing` vs `past participle`
+- `for` vs `since`
+- `do` vs `make`
+- `say` vs `tell`
+
+Pedagogical reason:
+- the learner should notice the exact contrast first, then read the explanation
+- if the whole sentence or whole formula is highlighted, the signal is diluted
+- if the visual treatment changes between FORM and EXAMPLES, the learner loses the rule-to-example bridge
+
 ### 5.4 What The Exercise Sequence Must Then Do
 
 After the intro, exercises must gradually force the learner to:
