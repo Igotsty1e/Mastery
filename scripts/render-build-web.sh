@@ -34,12 +34,22 @@ BACKEND_URL="${API_BASE_URL:-https://mastery-backend-igotsty1e.onrender.com}"
 echo "[render-build] Building Flutter web → API_BASE_URL=$BACKEND_URL"
 
 cd app
+
+# Mirror backend's generated audio + image assets into the Flutter web bundle
+# so the frontend serves them from its own origin. Same-origin loads dodge
+# canvaskit's cross-origin canvas-tainting issue and the variable-font
+# breakage of the html renderer simultaneously. Mobile / desktop targets
+# still use the backend URL (see AppConfig.apiBaseUrl + the kIsWeb branch in
+# the widgets).
+mkdir -p web/audio web/images
+if [ -d ../backend/public/audio ]; then
+  cp -R ../backend/public/audio/. web/audio/
+fi
+if [ -d ../backend/public/images ]; then
+  cp -R ../backend/public/images/. web/images/
+fi
+
 flutter pub get
-# Keep the canvaskit renderer (default) — the html renderer breaks variable
-# font letter-spacing on Manrope, so word boundaries collapse. Cross-origin
-# images are handled separately via the cached_network_image package which
-# fetches PNGs through dart:html with proper CORS attributes so canvaskit
-# does not tag them as tainted.
 flutter build web \
   --dart-define=API_BASE_URL="$BACKEND_URL" \
   --release

@@ -7,6 +7,7 @@
 // image lives on a different origin than the SPA).
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import '../config.dart';
@@ -27,6 +28,12 @@ class MasteryExerciseImage extends StatelessWidget {
     final url = image.url;
     if (url.startsWith('http://') || url.startsWith('https://')) {
       return url;
+    }
+    if (kIsWeb) {
+      // Same-origin path; the build script mirrors backend/public/images/
+      // into app/web/images/ so the frontend serves the asset itself and
+      // avoids canvaskit's cross-origin canvas tainting.
+      return url.startsWith('/') ? url : '/$url';
     }
     final base = AppConfig.apiBaseUrl.replaceAll(RegExp(r'/+$'), '');
     final tail = url.startsWith('/') ? url : '/$url';

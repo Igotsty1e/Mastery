@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import '../config.dart';
@@ -37,6 +38,12 @@ class _ListeningDiscriminationWidgetState
     final url = widget.audio.url;
     if (url.startsWith('http://') || url.startsWith('https://')) {
       return url;
+    }
+    if (kIsWeb) {
+      // Same-origin path; the web build copies backend/public/audio/ into
+      // the frontend bundle so the browser fetches the clip from the same
+      // origin as the SPA.
+      return url.startsWith('/') ? url : '/$url';
     }
     final base = AppConfig.apiBaseUrl.replaceAll(RegExp(r'/+$'), '');
     final tail = url.startsWith('/') ? url : '/$url';

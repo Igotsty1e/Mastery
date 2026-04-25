@@ -43,3 +43,8 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Build-time mirrored assets from backend/public — see scripts/render-build-web.sh.
+# Source of truth lives in backend/public/audio/ and backend/public/images/.
+/web/audio/
+/web/images/
