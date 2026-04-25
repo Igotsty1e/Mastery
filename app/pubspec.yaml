@@ -13,7 +13,7 @@ dependencies:
   http: ^1.2.2
   uuid: ^4.4.2
   provider: ^6.1.2
-  shared_preferences: ^2.5.3
+  shared_preferences: 2.3.3
 
 dev_dependencies:
   flutter_test:
@@ -22,3 +22,11 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+# Render uses Flutter 3.22.2 / Dart 3.4.3. These transitive packages jumped to
+# sdk ^3.5.0+ in later releases, so we cap them at the last Dart-3.4-compatible
+# versions until the Render build image is upgraded.
+dependency_overrides:
+  shared_preferences_android: 2.3.2
+  shared_preferences_foundation: 2.5.4
+  shared_preferences_platform_interface: 2.4.1
