@@ -6,7 +6,8 @@
     "dev": "sh scripts/dev.sh",
     "build": "tsc",
     "start": "node dist/server.js",
-    "test": "vitest run"
+    "test": "vitest run",
+    "gen:audio": "tsx scripts/gen-audio.ts"
   },
   "dependencies": {
     "express": "^4.18.2",

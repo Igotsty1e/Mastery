@@ -40,10 +40,27 @@ export interface SentenceCorrectionExercise {
   feedback?: ExerciseFeedback;
 }
 
+export interface ExerciseAudio {
+  url: string;
+  voice: 'nova' | 'onyx';
+  transcript: string;
+}
+
+export interface ListeningDiscriminationExercise {
+  exercise_id: string;
+  type: 'listening_discrimination';
+  instruction: string;
+  audio: ExerciseAudio;
+  options: MultipleChoiceOption[];
+  correct_option_id: string;
+  feedback?: ExerciseFeedback;
+}
+
 export type Exercise =
   | FillBlankExercise
   | MultipleChoiceExercise
-  | SentenceCorrectionExercise;
+  | SentenceCorrectionExercise
+  | ListeningDiscriminationExercise;
 
 export interface Lesson {
   lesson_id: string;

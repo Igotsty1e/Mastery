@@ -14,6 +14,10 @@ dependencies:
   uuid: ^4.4.2
   provider: ^6.1.2
   shared_preferences: 2.3.3
+  # Audio playback for `listening_discrimination` exercises. Cross-platform
+  # (iOS / Android / macOS / web). Pinned at 5.x because 6.x bumps the Dart
+  # SDK requirement above what Render's Flutter 3.22.2 image supplies.
+  audioplayers: ^5.2.1
 
 dev_dependencies:
   flutter_test:

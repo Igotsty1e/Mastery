@@ -40,10 +40,29 @@ const SentenceCorrectionExerciseBaseSchema = z.object({
   feedback: ExerciseFeedbackSchema.optional(),
 });
 
+const VoiceSchema = z.enum(['nova', 'onyx']);
+
+const ExerciseAudioSchema = z.object({
+  url: z.string().min(1),
+  voice: VoiceSchema,
+  transcript: z.string().min(1),
+});
+
+const ListeningDiscriminationExerciseBaseSchema = z.object({
+  exercise_id: z.string().uuid(),
+  type: z.literal('listening_discrimination'),
+  instruction: z.string().min(1),
+  audio: ExerciseAudioSchema,
+  options: z.array(MultipleChoiceOptionSchema).min(2).max(4),
+  correct_option_id: z.enum(['a', 'b', 'c', 'd']),
+  feedback: ExerciseFeedbackSchema.optional(),
+});
+
 const ExerciseBaseSchema = z.discriminatedUnion('type', [
   FillBlankExerciseBaseSchema,
   MultipleChoiceExerciseBaseSchema,
   SentenceCorrectionExerciseBaseSchema,
+  ListeningDiscriminationExerciseBaseSchema,
 ]);
 
 export const ExerciseSchema = ExerciseBaseSchema.superRefine((value, ctx) => {
@@ -74,6 +93,36 @@ export const ExerciseSchema = ExerciseBaseSchema.superRefine((value, ctx) => {
         code: z.ZodIssueCode.custom,
         message: 'multiple_choice.correct_option_id must match an option id',
         path: ['correct_option_id'],
+      });
+    }
+  }
+
+  if (value.type === 'listening_discrimination') {
+    const ids = value.options.map((o) => o.id);
+    const uniqueIds = new Set(ids);
+    if (uniqueIds.size !== ids.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'listening_discrimination.options must not contain duplicate ids',
+        path: ['options'],
+      });
+    }
+
+    if (!uniqueIds.has(value.correct_option_id)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'listening_discrimination.correct_option_id must match an option id',
+        path: ['correct_option_id'],
+      });
+    }
+
+    const correctOption = value.options.find(o => o.id === value.correct_option_id);
+    if (correctOption && correctOption.text.trim() !== value.audio.transcript.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message:
+          'listening_discrimination.audio.transcript must match the correct option text',
+        path: ['audio', 'transcript'],
       });
     }
   }

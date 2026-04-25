@@ -4,6 +4,7 @@ import type { Exercise } from '../data/lessons';
 import { AnswerRequestSchema } from '../schemas';
 import { evaluateFillBlank } from '../evaluators/fillBlank';
 import { evaluateMultipleChoice } from '../evaluators/multipleChoice';
+import { evaluateListeningDiscrimination } from '../evaluators/listeningDiscrimination';
 import { evaluateSentenceCorrection, evaluateSentenceCorrectionDeterministic } from '../evaluators/sentenceCorrection';
 import type { SentenceCorrectionResult } from '../evaluators/sentenceCorrection';
 import { getLessonAttempts, recordAttempt, getAiResult, setAiResult } from '../store/memory';
@@ -26,6 +27,13 @@ function stripSecrets(exercise: Exercise): object {
     return pub;
   }
   if (exercise.type === 'multiple_choice') {
+    const { correct_option_id: _c, feedback: _f, ...pub } = exercise;
+    return pub;
+  }
+  if (exercise.type === 'listening_discrimination') {
+    // Keep audio.transcript on the wire — the client reveals it on demand
+    // for accessibility and the `Show transcript` toggle. Only strip the
+    // correctness signal and the post-submit feedback string.
     const { correct_option_id: _c, feedback: _f, ...pub } = exercise;
     return pub;
   }
@@ -93,6 +101,12 @@ export function makeLessonsRouter(ai: AiProvider): Router {
       result = evaluateFillBlank(user_answer, exercise.accepted_answers);
     } else if (exercise.type === 'multiple_choice') {
       result = evaluateMultipleChoice(user_answer, exercise.correct_option_id, exercise.options);
+    } else if (exercise.type === 'listening_discrimination') {
+      result = evaluateListeningDiscrimination(
+        user_answer,
+        exercise.correct_option_id,
+        exercise.options
+      );
     } else {
       const deterministicResult = evaluateSentenceCorrectionDeterministic(
         user_answer,
@@ -178,10 +192,16 @@ export function makeLessonsRouter(ai: AiProvider): Router {
         explanation = exercise?.feedback?.explanation ?? null;
       }
 
+      // Listening items have no `prompt`; surface the transcript so the
+      // summary's mistake review still has readable content.
+      const promptForReview = exercise?.type === 'listening_discrimination'
+        ? exercise.audio.transcript
+        : exercise && 'prompt' in exercise ? exercise.prompt : null;
+
       return {
         exercise_id: attempt.exercise_id,
         correct: attempt.correct,
-        prompt: exercise?.prompt ?? null,
+        prompt: promptForReview,
         canonical_answer: attempt.canonical_answer,
         explanation,
       };

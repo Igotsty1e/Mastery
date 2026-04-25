@@ -1,9 +1,15 @@
-enum ExerciseType { fillBlank, multipleChoice, sentenceCorrection }
+enum ExerciseType {
+  fillBlank,
+  multipleChoice,
+  sentenceCorrection,
+  listeningDiscrimination,
+}
 
 ExerciseType _parseType(String s) => switch (s) {
       'fill_blank' => ExerciseType.fillBlank,
       'multiple_choice' => ExerciseType.multipleChoice,
       'sentence_correction' => ExerciseType.sentenceCorrection,
+      'listening_discrimination' => ExerciseType.listeningDiscrimination,
       _ => throw ArgumentError('Unknown exercise type: $s'),
     };
 
@@ -11,6 +17,7 @@ String exerciseTypeToString(ExerciseType t) => switch (t) {
       ExerciseType.fillBlank => 'fill_blank',
       ExerciseType.multipleChoice => 'multiple_choice',
       ExerciseType.sentenceCorrection => 'sentence_correction',
+      ExerciseType.listeningDiscrimination => 'listening_discrimination',
     };
 
 class McOption {
@@ -23,40 +30,80 @@ class McOption {
       McOption(id: j['id'] as String, text: j['text'] as String);
 }
 
+enum ExerciseVoice { nova, onyx }
+
+ExerciseVoice _parseVoice(String s) => switch (s) {
+      'nova' => ExerciseVoice.nova,
+      'onyx' => ExerciseVoice.onyx,
+      _ => throw ArgumentError('Unknown voice: $s'),
+    };
+
+class ExerciseAudio {
+  /// Server path under `/audio` as returned by the lesson endpoint. The client
+  /// resolves this against the API base URL when it builds the playback URL.
+  final String url;
+  final ExerciseVoice voice;
+  final String transcript;
+
+  const ExerciseAudio({
+    required this.url,
+    required this.voice,
+    required this.transcript,
+  });
+
+  factory ExerciseAudio.fromJson(Map<String, dynamic> j) => ExerciseAudio(
+        url: j['url'] as String,
+        voice: _parseVoice(j['voice'] as String),
+        transcript: j['transcript'] as String,
+      );
+}
+
 class Exercise {
   final String exerciseId;
   final ExerciseType type;
   final String instruction;
-  final String prompt;
 
-  // multiple_choice only
+  /// Present on every type EXCEPT `listening_discrimination`, where the audio
+  /// clip carries the prompt instead.
+  final String? prompt;
+
+  // multiple_choice + listening_discrimination
   final List<McOption>? options;
 
   // sentence_correction only
   final bool borderlineAiFallback;
 
+  // listening_discrimination only
+  final ExerciseAudio? audio;
+
   const Exercise({
     required this.exerciseId,
     required this.type,
     required this.instruction,
-    required this.prompt,
+    this.prompt,
     this.options,
     this.borderlineAiFallback = false,
+    this.audio,
   });
 
   factory Exercise.fromJson(Map<String, dynamic> j) {
     final type = _parseType(j['type'] as String);
+    final hasOptions = type == ExerciseType.multipleChoice ||
+        type == ExerciseType.listeningDiscrimination;
     return Exercise(
       exerciseId: j['exercise_id'] as String,
       type: type,
       instruction: j['instruction'] as String? ?? '',
-      prompt: j['prompt'] as String,
-      options: type == ExerciseType.multipleChoice
+      prompt: j['prompt'] as String?,
+      options: hasOptions
           ? (j['options'] as List)
               .map((o) => McOption.fromJson(o as Map<String, dynamic>))
               .toList()
           : null,
       borderlineAiFallback: j['borderline_ai_fallback'] as bool? ?? false,
+      audio: type == ExerciseType.listeningDiscrimination
+          ? ExerciseAudio.fromJson(j['audio'] as Map<String, dynamic>)
+          : null,
     );
   }
 }

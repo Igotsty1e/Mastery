@@ -4,7 +4,12 @@ export const AnswerRequestSchema = z.object({
   session_id: z.string().uuid(),
   attempt_id: z.string().uuid(),
   exercise_id: z.string().uuid(),
-  exercise_type: z.enum(['fill_blank', 'multiple_choice', 'sentence_correction']),
+  exercise_type: z.enum([
+    'fill_blank',
+    'multiple_choice',
+    'sentence_correction',
+    'listening_discrimination',
+  ]),
   user_answer: z.string().max(500),
   submitted_at: z.string().datetime(),
 });

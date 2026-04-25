@@ -6,6 +6,7 @@ import '../session/session_controller.dart';
 import '../session/session_state.dart';
 import '../theme/mastery_theme.dart';
 import '../widgets/fill_blank_widget.dart';
+import '../widgets/listening_discrimination_widget.dart';
 import '../widgets/mastery_widgets.dart';
 import '../widgets/multiple_choice_widget.dart';
 import '../widgets/sentence_correction_widget.dart';
@@ -285,19 +286,25 @@ class _ExerciseBody extends StatelessWidget {
   Widget build(BuildContext context) {
     return switch (exercise.type) {
       ExerciseType.fillBlank => FillBlankWidget(
-          prompt: exercise.prompt,
+          prompt: exercise.prompt ?? '',
           enabled: enabled,
           onChanged: onAnswerChanged,
           onSubmitField: onTextSubmit,
         ),
       ExerciseType.multipleChoice => MultipleChoiceWidget(
-          prompt: exercise.prompt,
+          prompt: exercise.prompt ?? '',
           options: exercise.options!,
           enabled: enabled,
           onChanged: onAnswerChanged,
         ),
       ExerciseType.sentenceCorrection => SentenceCorrectionWidget(
-          prompt: exercise.prompt,
+          prompt: exercise.prompt ?? '',
+          enabled: enabled,
+          onChanged: onAnswerChanged,
+        ),
+      ExerciseType.listeningDiscrimination => ListeningDiscriminationWidget(
+          audio: exercise.audio!,
+          options: exercise.options!,
           enabled: enabled,
           onChanged: onAnswerChanged,
         ),
