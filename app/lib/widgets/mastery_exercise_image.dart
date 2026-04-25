@@ -1,9 +1,12 @@
 // MasteryExerciseImage — visual context layer panel for any exercise type
 // per DESIGN.md §15 (added when imagery support landed). Soft paper card
 // with rose-cream loading skeleton and a tertiary fail state that does not
-// block the exercise. Loads via Image.network with a loadingBuilder so we
-// don't add a third-party dependency just for one widget.
+// block the exercise. Uses cached_network_image so cross-origin PNGs from
+// the backend's /images mount load cleanly under Flutter web's canvaskit
+// renderer (Image.network alone hits the canvas-tainting trap when the
+// image lives on a different origin than the SPA).
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../config.dart';
@@ -42,16 +45,11 @@ class MasteryExerciseImage extends StatelessWidget {
             color: tokens.bgPrimarySoft,
             border: Border.all(color: tokens.borderSoft),
           ),
-          child: Image.network(
-            _resolveUrl(),
+          child: CachedNetworkImage(
+            imageUrl: _resolveUrl(),
             fit: BoxFit.cover,
-            semanticLabel: image.alt,
-            gaplessPlayback: true,
-            loadingBuilder: (context, child, progress) {
-              if (progress == null) return child;
-              return _ImageSkeleton(tokens: tokens);
-            },
-            errorBuilder: (context, _, __) => _ImageUnavailable(
+            placeholder: (_, __) => _ImageSkeleton(tokens: tokens),
+            errorWidget: (_, __, ___) => _ImageUnavailable(
               alt: image.alt,
               tokens: tokens,
             ),

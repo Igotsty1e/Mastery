@@ -35,13 +35,13 @@ echo "[render-build] Building Flutter web → API_BASE_URL=$BACKEND_URL"
 
 cd app
 flutter pub get
-# --web-renderer html keeps cross-origin images on <img> tags so the kie.ai-
-# generated PNGs render through the canvas pipeline without canvaskit's
-# CORS-tainted-image error. Self-hosted fonts make the html renderer's text
-# quality match canvaskit closely enough for our use case.
+# Keep the canvaskit renderer (default) — the html renderer breaks variable
+# font letter-spacing on Manrope, so word boundaries collapse. Cross-origin
+# images are handled separately via the cached_network_image package which
+# fetches PNGs through dart:html with proper CORS attributes so canvaskit
+# does not tag them as tainted.
 flutter build web \
   --dart-define=API_BASE_URL="$BACKEND_URL" \
-  --web-renderer html \
   --release
 
 echo "[render-build] Done. Output: app/build/web"

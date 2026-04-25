@@ -18,6 +18,10 @@ dependencies:
   # (iOS / Android / macOS / web). Pinned at 5.x because 6.x bumps the Dart
   # SDK requirement above what Render's Flutter 3.22.2 image supplies.
   audioplayers: ^5.2.1
+  # Network image with proper CORS handling on Flutter web canvaskit. Pinned
+  # at 3.3.x because 3.4.x bumps minimum Dart SDK above what Render's Flutter
+  # 3.22.2 image ships.
+  cached_network_image: ^3.3.1
 
 dev_dependencies:
   flutter_test:

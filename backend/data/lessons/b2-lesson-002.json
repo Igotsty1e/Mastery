@@ -102,11 +102,11 @@
       "correct_option_id": "d",
       "image": {
         "url": "/images/a1b2c3d4-0002-4000-8000-000000000001/a1b2c3d4-0002-4000-8000-000000000037.png",
-        "alt": "An empty coffee cup and a closed book on a wooden cafe table in warm light.",
+        "alt": "Two empty coffee cups, a saucer, and a closed book on a wooden cafe table in warm afternoon light, suggesting a long wait.",
         "role": "scene_setting",
         "policy": "recommended",
-        "brief": "An empty coffee cup and a closed book on a wooden cafe table in warm afternoon light",
-        "dont_show": "clocks, watches, calendars, signs with text",
+        "brief": "Two empty coffee cups side by side on a wooden cafe table with a saucer and a closed book, warm afternoon sunlight on the table, the second cup with a small smudge as if used. Quiet, unhurried scene that suggests time has passed.",
+        "dont_show": "clocks, watches, calendars, signs with text, people",
         "risk": "low"
       },
       "feedback": {
