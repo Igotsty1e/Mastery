@@ -495,16 +495,10 @@ class MasteryTheme {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         ),
       ),
-      cardTheme: CardThemeData(
-        color: MasteryColors.bgRaised,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          side: const BorderSide(color: MasteryColors.borderSoft),
-          borderRadius: BorderRadius.circular(MasteryRadii.lg),
-        ),
-        margin: EdgeInsets.zero,
-      ),
+      // We don't theme Material's Card widget directly — every screen uses
+      // MasteryCard (custom Container). Skipping the cardTheme override keeps
+      // the file portable across Flutter 3.22 (Render) and 3.41 (local), where
+      // the field type was renamed CardTheme → CardThemeData.
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: MasteryColors.bgSurface,
