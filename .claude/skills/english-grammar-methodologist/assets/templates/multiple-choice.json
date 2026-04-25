@@ -1,0 +1,37 @@
+{
+  "id": "modals-past-deduction-b2",
+  "title": "Modals of past deduction — multiple choice",
+  "level": "B2",
+  "target_form": "must/can't/might/could + have + past participle for past deduction",
+  "topic": "everyday situations, mild mystery",
+  "methodology_notes": "Distractors encode predictable confusions: present-time deduction, obligation, expectation. Following Cambridge MCQ writing conventions (4 options, single best answer).",
+  "sources": ["Murphy EGiU 5e — Unit 28", "Swan PEU §354"],
+  "schema_version": "1.0",
+  "exercises": [
+    {
+      "id": "mcq-1",
+      "type": "multiple-choice",
+      "tier": "controlled",
+      "rubric": "Choose the option that best completes each sentence.",
+      "items": [
+        {
+          "n": 1,
+          "stem": "I tried calling Sarah, but there was no answer. She ____ at work.",
+          "options": {
+            "A": "must be",
+            "B": "must have been",
+            "C": "had to be",
+            "D": "was supposed to be"
+          },
+          "answer": "B",
+          "distractor_diagnostics": {
+            "A": "Treats the deduction as present, ignoring 'tried calling' (past).",
+            "C": "Confuses obligation ('had to') with deduction.",
+            "D": "Confuses expectation/plan with deduction."
+          },
+          "explanation": "'Must have + past participle' = a confident deduction about the past."
+        }
+      ]
+    }
+  ]
+}

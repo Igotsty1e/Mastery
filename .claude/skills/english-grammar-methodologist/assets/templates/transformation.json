@@ -1,0 +1,30 @@
+{
+  "id": "passive-voice-transformation-b2",
+  "title": "Passive voice — key word transformation",
+  "level": "B2",
+  "target_form": "Passive voice across tenses, including modal and going-to passives",
+  "topic": "current events, infrastructure, decisions",
+  "methodology_notes": "Cambridge FCE Use of English Part 4 format: 2–5 word window, given key word unchanged, meaning preserved.",
+  "sources": ["Cambridge FCE Handbook (current)", "Murphy EGiU 5e — Units 42–46"],
+  "schema_version": "1.0",
+  "exercises": [
+    {
+      "id": "transform-1",
+      "type": "transformation",
+      "tier": "controlled",
+      "rubric": "Complete the second sentence using the word in capitals so that it has a similar meaning to the first. Use between 2 and 5 words.",
+      "items": [
+        {
+          "n": 1,
+          "source": "They are going to build a new bridge here.",
+          "key_word": "GOING",
+          "min_words": 2,
+          "max_words": 5,
+          "frame": "A new bridge ____ here.",
+          "answer": "is going to be built",
+          "explanation": "Active 'be going to' becomes passive: subject + 'is/are going to be' + past participle."
+        }
+      ]
+    }
+  ]
+}

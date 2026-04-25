@@ -1,0 +1,44 @@
+{
+  "id": "common-l1-russian-errors-a2",
+  "title": "Common errors — error correction (L1 Russian)",
+  "level": "A2",
+  "target_form": "Mixed: 3rd person -s, articles, do-support",
+  "topic": "everyday descriptions",
+  "methodology_notes": "Errors selected from the predictable L1-Russian catalogue (article omission, aspect transfer, do-support omission). Includes 1 'no error' item to prevent assumption that an error always exists.",
+  "sources": ["Swan PEU — entries on articles, do-support", "Murphy EGiU Essential 4e — Units 5, 70"],
+  "schema_version": "1.0",
+  "exercises": [
+    {
+      "id": "ec-1",
+      "type": "error-correction",
+      "tier": "controlled",
+      "rubric": "Each sentence may contain one mistake. Find and correct it. If the sentence is correct, write 'OK'.",
+      "items": [
+        {
+          "n": 1,
+          "sentence": "She don't like coffee.",
+          "has_error": true,
+          "error_span": "don't",
+          "correction": "doesn't",
+          "explanation": "Third-person singular present negative: 'doesn't', not 'don't'."
+        },
+        {
+          "n": 2,
+          "sentence": "I am working in IT.",
+          "has_error": false,
+          "error_span": null,
+          "correction": "I am working in IT.",
+          "explanation": "Correct (Present Continuous can express temporary current state)."
+        },
+        {
+          "n": 3,
+          "sentence": "He is teacher.",
+          "has_error": true,
+          "error_span": "is teacher",
+          "correction": "is a teacher",
+          "explanation": "Use the indefinite article 'a' before a singular profession."
+        }
+      ]
+    }
+  ]
+}

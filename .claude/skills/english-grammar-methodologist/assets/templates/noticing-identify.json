@@ -1,0 +1,34 @@
+{
+  "id": "noticing-present-perfect-b1",
+  "title": "Noticing Present Perfect in real text",
+  "level": "B1",
+  "target_form": "Present Perfect (recognition + reasoning)",
+  "topic": "informal correspondence — travel update",
+  "methodology_notes": "Tier-1 awareness item; should precede any controlled drilling. 4 instances per ~70 words is intentional density (Schmidt's noticing hypothesis).",
+  "sources": ["Thornbury — How to Teach Grammar (consciousness-raising)", "Schmidt 1990 — noticing hypothesis"],
+  "schema_version": "1.0",
+  "exercises": [
+    {
+      "id": "noticing-1",
+      "type": "noticing-identify",
+      "tier": "awareness",
+      "rubric": "Read the message. Underline every Present Perfect verb form. Then answer the question below.",
+      "context": "An informal email written just after arriving home from a trip.",
+      "items": [
+        {
+          "n": 1,
+          "text": "Hi Mark, I've just got home from the airport. I haven't unpacked yet, but I wanted to write before I forgot. The trip has been amazing — we've visited three cities and I've taken about a thousand photos. I'll send you some when I'm less tired!",
+          "target_to_underline": "Present Perfect verb forms",
+          "answer_spans": [
+            "I've just got",
+            "I haven't unpacked",
+            "has been",
+            "we've visited",
+            "I've taken"
+          ],
+          "follow_up": "Why does the writer use Present Perfect rather than Past Simple here? Look for clues in the time references."
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://anthropic.com/skills/english-grammar-methodologist/exercise.schema.json",
+  "title": "ExerciseSet",
+  "description": "Default fallback schema for grammar exercise sets produced by the english-grammar-methodologist skill.",
+  "type": "object",
+  "required": ["id", "title", "level", "target_form", "exercises"],
+  "additionalProperties": false,
+  "properties": {
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+    "title": { "type": "string", "minLength": 1 },
+    "level": { "enum": ["A1", "A2", "B1", "B2", "C1", "C2"] },
+    "target_form": { "type": "string", "minLength": 3 },
+    "topic": { "type": "string" },
+    "methodology_notes": { "type": "string" },
+    "sources": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "exercises": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/Exercise" }
+    },
+    "schema_version": { "type": "string", "default": "1.0" }
+  },
+  "$defs": {
+    "Exercise": {
+      "type": "object",
+      "required": ["id", "type", "tier", "rubric", "items"],
+      "properties": {
+        "id": { "type": "string" },
+        "type": {
+          "enum": [
+            "noticing-identify",
+            "noticing-sort",
+            "gap-fill",
+            "multiple-choice",
+            "transformation",
+            "sentence-completion",
+            "error-correction",
+            "word-order",
+            "matching",
+            "personalisation",
+            "dictogloss",
+            "task-based"
+          ]
+        },
+        "tier": { "enum": ["awareness", "controlled", "meaningful", "free"] },
+        "rubric": { "type": "string", "minLength": 5 },
+        "context": { "type": ["string", "null"] },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["n"],
+            "properties": {
+              "n": { "type": "integer", "minimum": 1 }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": true
+    }
+  }
+}

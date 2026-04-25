@@ -1,0 +1,99 @@
+{
+  "id": "present-perfect-vs-past-simple-b1-lesson",
+  "title": "Present Perfect vs Past Simple — full lesson set",
+  "level": "B1",
+  "target_form": "Present Perfect vs Past Simple — choosing between them based on time reference and present relevance",
+  "topic": "travel and recent experiences",
+  "methodology_notes": "Four-tier sequence (awareness → controlled → meaningful). Single context (travel) for episodic anchoring. Form description follows Murphy EGiU 5e Units 7–14; contrast rule from Swan PEU §455–456.",
+  "sources": [
+    "Murphy, English Grammar in Use 5e — Units 7–14",
+    "Swan, Practical English Usage 4e — §455–456",
+    "Ur, Grammar Practice Activities — Present Perfect chapter",
+    "English Grammar Profile — B1 Present Perfect descriptors"
+  ],
+  "schema_version": "1.0",
+  "exercises": [
+    {
+      "id": "ex-1-noticing",
+      "type": "noticing-identify",
+      "tier": "awareness",
+      "rubric": "Read the email. Underline Present Perfect verb forms in BLUE and Past Simple verb forms in RED. Then discuss: which tense does the writer use to describe the trip *as a whole*, and which to describe specific moments?",
+      "context": "Anna has just got back from a trip to Spain.",
+      "items": [
+        {
+          "n": 1,
+          "text": "Hi Sam! I've just got home from Spain — what a trip! We've been to Madrid, Seville and Granada. The food has been incredible. In Seville, we tried real paella for the first time, and in Granada we visited the Alhambra. I haven't unpacked yet, but I'll send photos soon.",
+          "answer_spans_pp": ["I've just got", "We've been", "has been", "I haven't unpacked"],
+          "answer_spans_ps": ["we tried", "we visited"],
+          "follow_up": "Past Simple is used for specific finished moments (where, when). Present Perfect frames the trip as a current experience whose effects persist (still excited, still unpacked)."
+        }
+      ]
+    },
+    {
+      "id": "ex-2-gap-fill",
+      "type": "gap-fill",
+      "tier": "controlled",
+      "rubric": "Complete each sentence with the verb in brackets in the Present Perfect or Past Simple.",
+      "context": "All sentences continue Anna's story.",
+      "items": [
+        {
+          "n": 1,
+          "stem": "Anna _____ (be) to Spain three times.",
+          "answer": "has been",
+          "explanation": "Present Perfect for life-experience count (no specific time)."
+        },
+        {
+          "n": 2,
+          "stem": "She _____ (visit) Granada last week.",
+          "answer": "visited",
+          "explanation": "Past Simple — 'last week' is finished time."
+        },
+        {
+          "n": 3,
+          "stem": "_____ you ever _____ (try) real paella?",
+          "answer": "Have / tried",
+          "explanation": "Present Perfect for life-experience question with 'ever'."
+        }
+      ]
+    },
+    {
+      "id": "ex-3-mcq",
+      "type": "multiple-choice",
+      "tier": "controlled",
+      "rubric": "Choose the option that best completes each sentence.",
+      "items": [
+        {
+          "n": 1,
+          "stem": "I ____ to Spain twice — once in 2018 and again last year.",
+          "options": {
+            "A": "have been",
+            "B": "went",
+            "C": "have gone",
+            "D": "was"
+          },
+          "answer": "A",
+          "distractor_diagnostics": {
+            "B": "Past Simple, but the sentence sums up life experience (twice).",
+            "C": "'Have gone' = is currently away.",
+            "D": "Wrong verb choice; doesn't capture 'visited'."
+          },
+          "explanation": "Present Perfect 'have been' for cumulative life experience."
+        }
+      ]
+    },
+    {
+      "id": "ex-4-personalisation",
+      "type": "personalisation",
+      "tier": "meaningful",
+      "rubric": "Complete the prompts truthfully about yourself. Use the tense that matches the time reference.",
+      "items": [
+        {
+          "n": 1,
+          "stem": "A country I have visited: ____. The last time I went there: ____.",
+          "criterion": "Present Perfect for the experience; Past Simple with finished time for the visit.",
+          "sample_answer": "A country I have visited: Italy. The last time I went there: in 2022."
+        }
+      ]
+    }
+  ]
+}

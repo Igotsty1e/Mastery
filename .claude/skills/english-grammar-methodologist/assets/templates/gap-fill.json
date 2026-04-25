@@ -1,0 +1,41 @@
+{
+  "id": "present-perfect-for-since-b1",
+  "title": "Present Perfect with for/since — gap-fill",
+  "level": "B1",
+  "target_form": "Present Perfect with for/since for ongoing states and actions",
+  "topic": "people, work, where they live",
+  "methodology_notes": "Single tier (controlled). For full lesson, pair with a noticing item and a personalisation prompt. Form description follows Murphy EGiU 5e Unit 8 and Swan PEU §455.",
+  "sources": ["Murphy, English Grammar in Use 5e — Unit 8", "Swan, Practical English Usage 4e — §455"],
+  "schema_version": "1.0",
+  "exercises": [
+    {
+      "id": "gap-fill-1",
+      "type": "gap-fill",
+      "tier": "controlled",
+      "rubric": "Complete the sentences with the Present Perfect form of the verb in brackets, using 'for' or 'since' where appropriate.",
+      "context": "All sentences are about Anna, a software engineer in Berlin.",
+      "items": [
+        {
+          "n": 1,
+          "stem": "Anna _____ in Berlin since 2019. (live)",
+          "answer": "has lived",
+          "alternatives": ["has been living"],
+          "explanation": "Present Perfect for a state that started in the past and continues now; 'since' marks the start point."
+        },
+        {
+          "n": 2,
+          "stem": "She _____ for the same company for five years. (work)",
+          "answer": "has worked",
+          "alternatives": ["has been working"],
+          "explanation": "'For' + duration with Present Perfect for ongoing employment."
+        },
+        {
+          "n": 3,
+          "stem": "We _____ each other since university. (know)",
+          "answer": "have known",
+          "explanation": "Stative verb 'know' takes Present Perfect Simple, not Continuous."
+        }
+      ]
+    }
+  ]
+}
