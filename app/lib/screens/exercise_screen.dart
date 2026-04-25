@@ -158,24 +158,61 @@ class _ExerciseWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return switch (exercise.type) {
-      ExerciseType.fillBlank => FillBlankWidget(
-          prompt: exercise.prompt,
-          enabled: enabled,
-          onSubmit: onSubmit,
+    final theme = Theme.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primaryContainer.withValues(alpha: 0.35),
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: theme.colorScheme.primaryContainer),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(
+                Icons.task_alt_rounded,
+                size: 18,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  exercise.instruction,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.primary,
+                    fontWeight: FontWeight.w600,
+                    height: 1.4,
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ExerciseType.multipleChoice => MultipleChoiceWidget(
-          prompt: exercise.prompt,
-          options: exercise.options!,
-          enabled: enabled,
-          onSubmit: onSubmit,
-        ),
-      ExerciseType.sentenceCorrection => SentenceCorrectionWidget(
-          prompt: exercise.prompt,
-          enabled: enabled,
-          onSubmit: onSubmit,
-        ),
-    };
+        const SizedBox(height: 18),
+        switch (exercise.type) {
+          ExerciseType.fillBlank => FillBlankWidget(
+              prompt: exercise.prompt,
+              enabled: enabled,
+              onSubmit: onSubmit,
+            ),
+          ExerciseType.multipleChoice => MultipleChoiceWidget(
+              prompt: exercise.prompt,
+              options: exercise.options!,
+              enabled: enabled,
+              onSubmit: onSubmit,
+            ),
+          ExerciseType.sentenceCorrection => SentenceCorrectionWidget(
+              prompt: exercise.prompt,
+              enabled: enabled,
+              onSubmit: onSubmit,
+            ),
+        },
+      ],
+    );
   }
 }
 

@@ -9,6 +9,7 @@ const ExerciseFeedbackSchema = z.object({
 const FillBlankExerciseBaseSchema = z.object({
   exercise_id: z.string().uuid(),
   type: z.literal('fill_blank'),
+  instruction: z.string().min(1),
   prompt: z.string(),
   accepted_answers: z.array(z.string()).min(1),
   feedback: ExerciseFeedbackSchema.optional(),
@@ -22,6 +23,7 @@ const MultipleChoiceOptionSchema = z.object({
 const MultipleChoiceExerciseBaseSchema = z.object({
   exercise_id: z.string().uuid(),
   type: z.literal('multiple_choice'),
+  instruction: z.string().min(1),
   prompt: z.string(),
   options: z.array(MultipleChoiceOptionSchema).min(2).max(4),
   correct_option_id: z.enum(['a', 'b', 'c', 'd']),
@@ -31,6 +33,7 @@ const MultipleChoiceExerciseBaseSchema = z.object({
 const SentenceCorrectionExerciseBaseSchema = z.object({
   exercise_id: z.string().uuid(),
   type: z.literal('sentence_correction'),
+  instruction: z.string().min(1),
   prompt: z.string(),
   accepted_corrections: z.array(z.string()).min(1),
   borderline_ai_fallback: z.literal(true),

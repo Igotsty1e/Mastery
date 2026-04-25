@@ -3,6 +3,7 @@ import 'package:uuid/uuid.dart';
 import '../api/api_client.dart';
 import '../models/evaluation.dart';
 import '../models/lesson.dart';
+import '../progress/local_progress_store.dart';
 import 'session_state.dart';
 
 class SessionController extends ChangeNotifier {
@@ -61,6 +62,10 @@ class SessionController extends ChangeNotifier {
         lastResult: response,
         results: [..._state.results, response.correct],
       ));
+      await LocalProgressStore.recordCompletedExercises(
+        _state.lesson!.lessonId,
+        _state.results.length,
+      );
     } catch (e) {
       _emit(_state.copyWith(
         phase: SessionPhase.error,

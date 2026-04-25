@@ -13,6 +13,7 @@
     {
       "exercise_id": "a1b2c3d4-0001-4000-8000-000000000031",
       "type": "fill_blank",
+      "instruction": "Complete the gap with the correct verb form.",
       "prompt": "I really enjoy ___ new restaurants when I travel.",
       "accepted_answers": [
         "trying"
@@ -24,6 +25,7 @@
     {
       "exercise_id": "a1b2c3d4-0001-4000-8000-000000000032",
       "type": "fill_blank",
+      "instruction": "Complete the gap with the correct verb form.",
       "prompt": "We should avoid ___ important decisions when we're tired.",
       "accepted_answers": [
         "making"
@@ -35,6 +37,7 @@
     {
       "exercise_id": "a1b2c3d4-0001-4000-8000-000000000033",
       "type": "fill_blank",
+      "instruction": "Complete the gap with the correct verb form.",
       "prompt": "She suggested ___ the meeting until Friday.",
       "accepted_answers": [
         "postponing"
@@ -46,6 +49,7 @@
     {
       "exercise_id": "a1b2c3d4-0001-4000-8000-000000000034",
       "type": "fill_blank",
+      "instruction": "Complete the gap with the correct verb form.",
       "prompt": "Do you mind ___ the window before we start?",
       "accepted_answers": [
         "closing"
@@ -57,6 +61,7 @@
     {
       "exercise_id": "a1b2c3d4-0001-4000-8000-000000000035",
       "type": "multiple_choice",
+      "instruction": "Choose the correct option.",
       "prompt": "He keeps ___ about the same problem.",
       "options": [
         {
@@ -84,6 +89,7 @@
     {
       "exercise_id": "a1b2c3d4-0001-4000-8000-000000000036",
       "type": "multiple_choice",
+      "instruction": "Choose the correct option.",
       "prompt": "I finished ___ the report before lunch.",
       "options": [
         {
@@ -111,6 +117,7 @@
     {
       "exercise_id": "a1b2c3d4-0001-4000-8000-000000000037",
       "type": "multiple_choice",
+      "instruction": "Choose the correct option.",
       "prompt": "Which sentence is correct?",
       "options": [
         {
@@ -138,6 +145,7 @@
     {
       "exercise_id": "a1b2c3d4-0001-4000-8000-000000000038",
       "type": "sentence_correction",
+      "instruction": "Rewrite the sentence correctly.",
       "prompt": "She suggested to take a taxi because it was late.",
       "accepted_corrections": [
         "She suggested taking a taxi because it was late."
@@ -150,6 +158,7 @@
     {
       "exercise_id": "a1b2c3d4-0001-4000-8000-000000000039",
       "type": "sentence_correction",
+      "instruction": "Rewrite the sentence correctly.",
       "prompt": "I don't mind to wait for a few minutes.",
       "accepted_corrections": [
         "I don't mind waiting for a few minutes."
@@ -162,6 +171,7 @@
     {
       "exercise_id": "a1b2c3d4-0001-4000-8000-00000000003a",
       "type": "sentence_correction",
+      "instruction": "Rewrite the sentence correctly.",
       "prompt": "We avoided to discuss the budget until everyone arrived.",
       "accepted_corrections": [
         "We avoided discussing the budget until everyone arrived."

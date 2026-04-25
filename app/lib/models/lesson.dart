@@ -26,6 +26,7 @@ class McOption {
 class Exercise {
   final String exerciseId;
   final ExerciseType type;
+  final String instruction;
   final String prompt;
 
   // multiple_choice only
@@ -37,6 +38,7 @@ class Exercise {
   const Exercise({
     required this.exerciseId,
     required this.type,
+    required this.instruction,
     required this.prompt,
     this.options,
     this.borderlineAiFallback = false,
@@ -47,6 +49,7 @@ class Exercise {
     return Exercise(
       exerciseId: j['exercise_id'] as String,
       type: type,
+      instruction: j['instruction'] as String? ?? '',
       prompt: j['prompt'] as String,
       options: type == ExerciseType.multipleChoice
           ? (j['options'] as List)

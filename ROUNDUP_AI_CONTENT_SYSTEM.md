@@ -199,6 +199,7 @@ Only these runtime types are currently allowed in shipped lessons:
 ```json
 {
   "type": "fill_blank",
+  "instruction": "Complete the gap with the correct verb form.",
   "prompt": "I enjoy ___ (read)",
   "accepted_answers": ["reading"],
   "feedback": {
@@ -212,6 +213,7 @@ Only these runtime types are currently allowed in shipped lessons:
 ```json
 {
   "type": "multiple_choice",
+  "instruction": "Choose the correct option.",
   "prompt": "She ___ to school yesterday.",
   "options": [
     { "id": "a", "text": "go" },
@@ -230,6 +232,7 @@ Only these runtime types are currently allowed in shipped lessons:
 ```json
 {
   "type": "sentence_correction",
+  "instruction": "Rewrite the sentence correctly.",
   "prompt": "She don't like coffee.",
   "accepted_corrections": [
     "She doesn't like coffee."
@@ -255,6 +258,20 @@ Only these runtime types are currently allowed in shipped lessons:
 Rule:
 - do not invent runtime widgets the app does not support
 - if a target exercise cannot compile to the current runtime set, it is roadmap content, not shippable MVP content
+
+### 4.4 Instruction Rule (Mandatory)
+
+Every shipped exercise must include a short learner-facing instruction.
+
+The instruction must:
+- say exactly what the learner should do
+- match the runtime exercise type
+- be visible in the UI before the prompt itself
+
+Examples:
+- `Complete the gap with the correct verb form.`
+- `Choose the correct option.`
+- `Rewrite the sentence correctly.`
 
 ---
 

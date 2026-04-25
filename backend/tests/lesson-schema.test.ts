@@ -23,6 +23,7 @@ describe('LessonSchema', () => {
         {
           exercise_id: '00000000-0000-4000-8000-000000000011',
           type: 'fill_blank',
+          instruction: 'Complete the gap with the correct verb form.',
           prompt: 'No placeholder here.',
           accepted_answers: ['x'],
         },
@@ -47,6 +48,7 @@ describe('LessonSchema', () => {
         {
           exercise_id: '00000000-0000-4000-8000-000000000012',
           type: 'multiple_choice',
+          instruction: 'Choose the correct option.',
           prompt: 'Pick one.',
           options: [
             { id: 'a', text: 'A' },
@@ -72,6 +74,7 @@ describe('LessonSchema', () => {
         {
           exercise_id: '00000000-0000-4000-8000-000000000013',
           type: 'multiple_choice',
+          instruction: 'Choose the correct option.',
           prompt: 'Pick one.',
           options: [
             { id: 'a', text: 'A' },
@@ -97,6 +100,7 @@ describe('LessonSchema', () => {
         {
           exercise_id: '00000000-0000-4000-8000-000000000014',
           type: 'sentence_correction',
+          instruction: 'Rewrite the sentence correctly.',
           prompt: 'Bad.',
           accepted_corrections: ['Good.'],
           borderline_ai_fallback: false,
@@ -119,12 +123,14 @@ describe('LessonSchema', () => {
         {
           exercise_id: '00000000-0000-4000-8000-000000000011',
           type: 'fill_blank',
+          instruction: 'Complete the gap with the correct verb form.',
           prompt: 'One ___ placeholder.',
           accepted_answers: ['x'],
         },
         {
           exercise_id: '00000000-0000-4000-8000-000000000011',
           type: 'fill_blank',
+          instruction: 'Complete the gap with the correct verb form.',
           prompt: 'One ___ placeholder.',
           accepted_answers: ['x'],
         },
@@ -134,4 +140,3 @@ describe('LessonSchema', () => {
     expect(LessonSchema.safeParse(lesson).success).toBe(false);
   });
 });
-

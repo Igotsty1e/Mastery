@@ -9,6 +9,7 @@ export interface ExerciseFeedback {
 export interface FillBlankExercise {
   exercise_id: string;
   type: 'fill_blank';
+  instruction: string;
   prompt: string;
   accepted_answers: string[];
   feedback?: ExerciseFeedback;
@@ -22,6 +23,7 @@ export interface MultipleChoiceOption {
 export interface MultipleChoiceExercise {
   exercise_id: string;
   type: 'multiple_choice';
+  instruction: string;
   prompt: string;
   options: MultipleChoiceOption[];
   correct_option_id: string;
@@ -31,6 +33,7 @@ export interface MultipleChoiceExercise {
 export interface SentenceCorrectionExercise {
   exercise_id: string;
   type: 'sentence_correction';
+  instruction: string;
   prompt: string;
   accepted_corrections: string[];
   borderline_ai_fallback: true;

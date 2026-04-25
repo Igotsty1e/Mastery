@@ -43,9 +43,6 @@ class _SentenceCorrectionWidgetState extends State<SentenceCorrectionWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Correct the sentence:',
-            style: Theme.of(context).textTheme.labelLarge),
-        const SizedBox(height: 12),
         TextField(
           controller: _controller,
           enabled: widget.enabled,

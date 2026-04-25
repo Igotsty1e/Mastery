@@ -22,12 +22,14 @@
 {
   "exercise_id": "string (uuid)",
   "type": "fill_blank",
+  "instruction": "string",
   "prompt": "string (contains exactly one `___` placeholder)",
   "accepted_answers": ["string"],
   "feedback": { "explanation": "string" }
 }
 ```
 
+- `instruction`: mandatory learner-facing direction that explains exactly what to do.
 - `accepted_answers`: non-empty list; first entry is canonical answer.
 - `prompt` must contain exactly one `___` token. No variations.
 
@@ -37,6 +39,7 @@
 {
   "exercise_id": "string (uuid)",
   "type": "multiple_choice",
+  "instruction": "string",
   "prompt": "string",
   "options": [
     { "id": "string (a|b|c|d)", "text": "string" }
@@ -48,6 +51,7 @@
 
 - `options`: 2–4 entries. No duplicate `id` values.
 - `correct_option_id` must match exactly one entry in `options`.
+- `instruction` should be concise and action-oriented, e.g. `Choose the correct option.`
 
 ### 2.3 sentence_correction
 
@@ -55,6 +59,7 @@
 {
   "exercise_id": "string (uuid)",
   "type": "sentence_correction",
+  "instruction": "string",
   "prompt": "string (grammatically incorrect sentence)",
   "accepted_corrections": ["string"],
   "borderline_ai_fallback": true,
@@ -64,6 +69,7 @@
 
 - `accepted_corrections`: non-empty list of known-good corrections.
 - `borderline_ai_fallback`: always `true` for this type.
+- `instruction` should clearly tell the learner to rewrite the sentence correctly.
 
 ## 3. Attempt Payload Shape
 
@@ -159,6 +165,7 @@ Example:
 ## 9. Content Author Responsibilities
 
 - Provide valid JSON matching schemas above.
+- Include a concrete learner-facing `instruction` for every exercise.
 - `fill_blank`: populate `accepted_answers` with all valid completions.
 - `multiple_choice`: ensure exactly one `correct_option_id`; distractors must be plausible.
 - `sentence_correction`: provide `prompt` with clear grammatical error; provide `accepted_corrections` covering most common valid corrections.

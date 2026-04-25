@@ -6,6 +6,8 @@ import 'package:mastery/session/session_controller.dart';
 import 'package:mastery/session/session_state.dart';
 import 'package:mastery/models/lesson.dart';
 import 'package:mastery/models/evaluation.dart';
+import 'package:mastery/progress/local_progress_store.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
 // ── fixture helpers ──────────────────────────────────────────────────────────
@@ -25,8 +27,8 @@ Map<String, dynamic> _lessonJson() => {
     {
       'exercise_id': _exId,
       'type': 'fill_blank',
+      'instruction': 'Complete the gap with the correct verb form.',
       'prompt': 'She ___ working.',
-      'hint': null,
     }
   ],
 };
@@ -36,7 +38,7 @@ Map<String, dynamic> _evaluateJson({bool correct = true}) => {
   'exercise_id': _exId,
   'correct': correct,
   'evaluation_source': 'deterministic',
-  'feedback': null,
+  'explanation': null,
   'canonical_answer': 'is',
 };
 
@@ -51,14 +53,14 @@ Map<String, dynamic> _lessonJson2() => {
     {
       'exercise_id': _exId,
       'type': 'fill_blank',
+      'instruction': 'Complete the gap with the correct verb form.',
       'prompt': 'She ___ working.',
-      'hint': null,
     },
     {
       'exercise_id': _exId2,
       'type': 'fill_blank',
+      'instruction': 'Complete the gap with the correct verb form.',
       'prompt': 'They ___ students.',
-      'hint': null,
     },
   ],
 };
@@ -68,7 +70,7 @@ Map<String, dynamic> _evaluateJson2({bool correct = false}) => {
   'exercise_id': _exId2,
   'correct': correct,
   'evaluation_source': 'deterministic',
-  'feedback': null,
+  'explanation': null,
   'canonical_answer': 'are',
 };
 
@@ -102,6 +104,7 @@ void main() {
     final exercise = Exercise(
       exerciseId: _exId,
       type: ExerciseType.fillBlank,
+      instruction: 'Complete the gap with the correct verb form.',
       prompt: 'test',
     );
     final lesson = Lesson(
@@ -183,6 +186,10 @@ void main() {
   });
 
   group('SessionController.submitAnswer', () {
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+    });
+
     Future<SessionController> loadedController() async {
       int call = 0;
       final client = MockClient((_) async {
@@ -207,6 +214,13 @@ void main() {
       final ctrl = await loadedController();
       await ctrl.submitAnswer('is');
       expect(ctrl.state.results, equals([true]));
+    });
+
+    test('stored completed-exercise count equals 1 after one submitAnswer', () async {
+      final ctrl = await loadedController();
+      await ctrl.submitAnswer('is');
+      final stored = await LocalProgressStore.getCompletedExercises(_lessonId);
+      expect(stored, equals(1));
     });
 
     test('network failure during submit → phase becomes error', () async {

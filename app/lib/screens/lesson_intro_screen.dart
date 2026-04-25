@@ -33,34 +33,40 @@ class _LessonIntroScreenState extends State<LessonIntroScreen> {
     super.dispose();
   }
 
-  List<Widget> _buildRuleContent(String text, ThemeData theme) {
+  List<_RuleSection> _parseRuleSections(String text) {
     final paragraphs = text.split('\n\n');
-    final widgets = <Widget>[];
-    for (var i = 0; i < paragraphs.length; i++) {
-      if (i > 0) widgets.add(const SizedBox(height: 14));
-      final para = paragraphs[i];
+    final sections = <_RuleSection>[];
+    for (final para in paragraphs) {
       final lines = para.split('\n');
       final firstLine = lines[0].trim();
       final isSectionHeader = lines.length > 1 && firstLine.length <= 20;
       if (isSectionHeader) {
-        widgets.add(Text(
-          firstLine,
-          style: theme.textTheme.labelLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: theme.colorScheme.primary,
+        sections.add(
+          _RuleSection(
+            title: firstLine,
+            bodyLines: lines.skip(1).toList(),
           ),
-        ));
-        widgets.add(const SizedBox(height: 6));
-        widgets.add(Text(
-          lines.skip(1).join('\n'),
-          style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
-        ));
+        );
       } else {
-        widgets.add(
-            Text(para, style: theme.textTheme.bodyMedium?.copyWith(height: 1.5)));
+        sections.add(
+          _RuleSection(
+            title: '',
+            bodyLines: [para],
+          ),
+        );
       }
     }
-    return widgets;
+    return sections;
+  }
+
+  List<Widget> _buildRuleContent(String text, ThemeData theme) {
+    final sections = _parseRuleSections(text);
+    return sections
+        .map((section) => Padding(
+              padding: const EdgeInsets.only(bottom: 14),
+              child: _RuleSectionCard(section: section),
+            ))
+        .toList();
   }
 
   void _start() {
@@ -151,18 +157,9 @@ class _LessonIntroScreenState extends State<LessonIntroScreen> {
                   ),
                   if (lesson.introRule.isNotEmpty) ...[
                     const SizedBox(height: 28),
-                    Container(
+                    SizedBox(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surface,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: theme.colorScheme.outlineVariant,
-                        ),
-                      ),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: _buildRuleContent(lesson.introRule, theme),
                       ),
                     ),
@@ -174,7 +171,7 @@ class _LessonIntroScreenState extends State<LessonIntroScreen> {
                       padding: const EdgeInsets.all(20),
                       decoration: BoxDecoration(
                         color: theme.colorScheme.primaryContainer
-                            .withOpacity(0.25),
+                            .withValues(alpha: 0.25),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(
                           color: theme.colorScheme.primaryContainer,
@@ -248,6 +245,144 @@ class _LessonIntroScreenState extends State<LessonIntroScreen> {
           ),
         );
       },
+    );
+  }
+}
+
+class _RuleSection {
+  final String title;
+  final List<String> bodyLines;
+
+  const _RuleSection({
+    required this.title,
+    required this.bodyLines,
+  });
+}
+
+class _RuleSectionCard extends StatelessWidget {
+  final _RuleSection section;
+
+  const _RuleSectionCard({required this.section});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final normalized = section.title.trim().toLowerCase();
+    final isImportant = normalized == 'important';
+    final isForm = normalized == 'form';
+    final isUse = normalized == 'use';
+
+    final bgColor = isImportant
+        ? const Color(0xFFFFF7ED)
+        : isForm
+            ? const Color(0xFFEEF2FF)
+            : theme.colorScheme.surface;
+    final borderColor = isImportant
+        ? const Color(0xFFF59E0B)
+        : isForm
+            ? const Color(0xFF818CF8)
+            : theme.colorScheme.outlineVariant;
+    final accentColor = isImportant
+        ? const Color(0xFFB45309)
+        : isForm
+            ? const Color(0xFF4338CA)
+            : theme.colorScheme.primary;
+    final icon = isImportant
+        ? Icons.priority_high_rounded
+        : isForm
+            ? Icons.rule_folder_outlined
+            : isUse
+                ? Icons.lightbulb_outline_rounded
+                : Icons.menu_book_outlined;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: borderColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (section.title.isNotEmpty) ...[
+            Row(
+              children: [
+                Icon(icon, size: 18, color: accentColor),
+                const SizedBox(width: 8),
+                Text(
+                  section.title,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: accentColor,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+          ],
+          ...section.bodyLines.map(
+            (line) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: _RuleLineText(
+                line: line,
+                accentColor: accentColor,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RuleLineText extends StatelessWidget {
+  final String line;
+  final Color accentColor;
+
+  const _RuleLineText({
+    required this.line,
+    required this.accentColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final trimmed = line.trim();
+    final colonIndex = trimmed.indexOf(':');
+
+    if (colonIndex > 0 && colonIndex < trimmed.length - 1) {
+      final label = trimmed.substring(0, colonIndex + 1);
+      final body = trimmed.substring(colonIndex + 1).trimLeft();
+      return RichText(
+        text: TextSpan(
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurface,
+            height: 1.55,
+          ),
+          children: [
+            TextSpan(
+              text: '$label ',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: accentColor,
+              ),
+            ),
+            TextSpan(text: body),
+          ],
+        ),
+      );
+    }
+
+    final isFormula = trimmed.contains('+') || trimmed.contains('...');
+    return Text(
+      trimmed,
+      style: theme.textTheme.bodyMedium?.copyWith(
+        height: 1.55,
+        fontWeight: isFormula ? FontWeight.w600 : FontWeight.normal,
+        color: isFormula ? accentColor : theme.colorScheme.onSurface,
+      ),
     );
   }
 }

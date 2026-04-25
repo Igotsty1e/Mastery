@@ -36,6 +36,7 @@ Map<String, dynamic> _lessonJson() => {
         {
           'exercise_id': _exId,
           'type': 'fill_blank',
+          'instruction': 'Complete the gap with the correct verb form.',
           'prompt': 'I really enjoy ___ new restaurants when I travel.',
         }
       ],
@@ -71,11 +72,13 @@ Map<String, dynamic> _lesson2Json() => {
         {
           'exercise_id': _exId,
           'type': 'fill_blank',
+          'instruction': 'Complete the gap with the correct verb form.',
           'prompt': 'I really enjoy ___ new restaurants when I travel.',
         },
         {
           'exercise_id': _exId2,
           'type': 'fill_blank',
+          'instruction': 'Complete the gap with the correct verb form.',
           'prompt': 'We should avoid ___ important decisions when we\'re tired.',
         },
       ],
