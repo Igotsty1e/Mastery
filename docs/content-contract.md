@@ -14,6 +14,30 @@
 }
 ```
 
+### 1.1 Intro Highlight Markup
+
+`intro_rule` and `intro_examples` strings may use the `**slot**` markup to
+mark the `variable_part` of a contrast (per `exercise_structure.md §2.8.1`
+and `GRAM_STRATEGY.md §5.3.1`). The renderer keeps the `**…**` slot in a
+distinct dusty-rose colour while the surrounding text stays neutral, so the
+learner can see the changing slot before reading the explanation.
+
+Rules:
+
+- Markers are exactly two asterisks on each side: `**been + verb-ing**`.
+- One marker pair per slot. Use sparingly — highlight only the minimum
+  span that carries the contrast decision.
+- The same slot must be wrapped in both the FORM block and the matching
+  EXAMPLES so the learner sees the rule-to-example bridge.
+- For paired contrast lines, write each pattern on its own line under the
+  FORM (or IMPORTANT) header — the renderer stacks them vertically so the
+  changing slots align like a diff.
+- Do not nest markers, do not wrap whole sentences, do not highlight
+  punctuation.
+
+Authors who do not need a contrast highlight should leave the strings
+unmarked; the parser falls back to a plain text rendering.
+
 ## 2. Per-Type Exercise Schema
 
 ### 2.1 fill_blank

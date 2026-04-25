@@ -308,12 +308,20 @@ class _RuleCard extends StatelessWidget {
     final widgets = <Widget>[];
     for (final paragraph in section.body) {
       final lines = paragraph.split('\n').map((l) => l.trim()).toList();
+      final hasHighlight = _hasHighlightMarkup(paragraph);
 
-      if (isForm && lines.length == 1 && _looksLikeFormula(lines.first)) {
+      if (isForm && lines.length == 1 && _looksLikeFormula(lines.first) &&
+          !hasHighlight) {
         widgets.add(_FormulaBox(text: lines.first));
         widgets.add(const SizedBox(height: 14));
-      } else if (isForm && lines.length > 1) {
+      } else if (isForm && lines.length > 1 && !hasHighlight) {
+        // Legacy 2-col verb grid (U01 verb pairs without markup).
         widgets.add(_VerbGrid(items: lines));
+      } else if (lines.length > 1 && hasHighlight) {
+        // Paired vertical stack per `exercise_structure.md §2.8.1` —
+        // common parts neutral, variable_part highlighted, lines stacked
+        // vertically so the changing slot is visible at a glance.
+        widgets.add(_PairedFormStack(lines: lines, accent: accent));
       } else {
         widgets.add(_RuleParagraph(text: paragraph, accent: accent));
         widgets.add(const SizedBox(height: 8));
@@ -330,6 +338,78 @@ class _RuleCard extends StatelessWidget {
 
 bool _looksLikeFormula(String s) {
   return s.contains('+') || s.contains('→') || s.length <= 24;
+}
+
+/// True when `**slot**` markers appear in the text (any pair of `**…**`).
+bool _hasHighlightMarkup(String text) =>
+    RegExp(r'\*\*[^\*]+\*\*').hasMatch(text);
+
+/// Parses `text` into inline spans. `**slot**` segments become highlighted
+/// spans (per `exercise_structure.md §2.8.1` — variable_part visualisation).
+/// All other segments inherit the base style.
+List<InlineSpan> _highlightSpans({
+  required String text,
+  required TextStyle baseStyle,
+  required Color highlightColor,
+}) {
+  final pattern = RegExp(r'\*\*([^\*]+)\*\*');
+  final highlightStyle = baseStyle.copyWith(
+    color: highlightColor,
+    fontWeight: FontWeight.w700,
+    letterSpacing: -0.01,
+  );
+  final spans = <InlineSpan>[];
+  var cursor = 0;
+  for (final match in pattern.allMatches(text)) {
+    if (match.start > cursor) {
+      spans.add(TextSpan(
+        text: text.substring(cursor, match.start),
+        style: baseStyle,
+      ));
+    }
+    spans.add(TextSpan(text: match.group(1) ?? '', style: highlightStyle));
+    cursor = match.end;
+  }
+  if (cursor < text.length) {
+    spans.add(TextSpan(text: text.substring(cursor), style: baseStyle));
+  }
+  return spans;
+}
+
+/// Vertical stack of paired highlighted lines for the FORM block when the
+/// author writes more than one contrast line with `**variable_part**`
+/// markers. Mirrors `GRAM_STRATEGY.md §5.3.1` — present paired forms
+/// vertically and align the changing slot like a diff.
+class _PairedFormStack extends StatelessWidget {
+  final List<String> lines;
+  final Color accent;
+
+  const _PairedFormStack({required this.lines, required this.accent});
+
+  @override
+  Widget build(BuildContext context) {
+    final base = MasteryTextStyles.bodyMd.copyWith(
+      color: MasteryColors.textPrimary,
+      height: 1.55,
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var i = 0; i < lines.length; i++) ...[
+          if (i > 0) const SizedBox(height: 6),
+          Text.rich(
+            TextSpan(
+              children: _highlightSpans(
+                text: lines[i],
+                baseStyle: base,
+                highlightColor: accent,
+              ),
+            ),
+          ),
+        ],
+      ],
+    );
+  }
 }
 
 class _FormulaBox extends StatelessWidget {
@@ -427,12 +507,43 @@ class _RuleParagraph extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: MasteryTextStyles.bodyMd.copyWith(
-        color: MasteryColors.textPrimary,
-        height: 1.65,
-      ),
+    final base = MasteryTextStyles.bodyMd.copyWith(
+      color: MasteryColors.textPrimary,
+      height: 1.65,
+    );
+    if (!_hasHighlightMarkup(text)) {
+      return Text(text, style: base);
+    }
+    // Multi-line paragraph with highlight markers — render line by line so
+    // the contrast diff stays vertical (per §2.8.1 / §5.3.1).
+    final lines = text.split('\n');
+    if (lines.length == 1) {
+      return Text.rich(
+        TextSpan(
+          children: _highlightSpans(
+            text: text,
+            baseStyle: base,
+            highlightColor: accent,
+          ),
+        ),
+      );
+    }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var i = 0; i < lines.length; i++) ...[
+          if (i > 0) const SizedBox(height: 6),
+          Text.rich(
+            TextSpan(
+              children: _highlightSpans(
+                text: lines[i],
+                baseStyle: base,
+                highlightColor: accent,
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }
@@ -462,6 +573,18 @@ class _ExampleLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final base = MasteryTextStyles.bodyMd.copyWith(height: 1.55);
+    final body = _hasHighlightMarkup(text)
+        ? Text.rich(
+            TextSpan(
+              children: _highlightSpans(
+                text: text,
+                baseStyle: base,
+                highlightColor: MasteryColors.actionPrimaryPressed,
+              ),
+            ),
+          )
+        : Text(text, style: base);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -475,12 +598,7 @@ class _ExampleLine extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 10),
-        Expanded(
-          child: Text(
-            text,
-            style: MasteryTextStyles.bodyMd.copyWith(height: 1.55),
-          ),
-        ),
+        Expanded(child: body),
       ],
     );
   }

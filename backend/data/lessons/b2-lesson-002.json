@@ -3,11 +3,12 @@
   "title": "Present Perfect: Continuous vs Simple",
   "language": "en",
   "level": "B2",
-  "intro_rule": "Use\n\nUse the present perfect continuous (have/has been + verb-ing) when the focus is on the duration or the ongoing nature of an action that started in the past and continues now or stopped very recently.\n\nUse the present perfect simple (have/has + past participle) when the focus is on the result or the completion of an action.\n\nForm\n\nContinuous: have / has been + verb-ing\nSimple: have / has + past participle\n\nImportant\n\nDo not mix the two forms. If duration matters, use 'have been + verb-ing'. If the result matters, use 'have / has + past participle'.",
+  "intro_rule": "Use\n\nThe continuous form (**been + verb-ing**) emphasises the duration or ongoing nature of an action that started in the past and continues now.\n\nThe simple form (**past participle**) emphasises the result or completion of an action.\n\nForm\n\nContinuous: have / has **been + verb-ing**\nSimple: have / has **past participle**\n\nImportant\n\nDuration → **been + verb-ing**\nResult → **past participle**",
   "intro_examples": [
-    "I have been working on this report for three hours.",
-    "I have finished the report.",
-    "She has been studying English since 2020."
+    "I have **been working** on this report for three hours.",
+    "I have **finished** the report.",
+    "She has **been studying** English since 2020.",
+    "We have **cleaned** all the windows."
   ],
   "exercises": [
     {
