@@ -6,6 +6,7 @@ import 'package:mastery/session/session_controller.dart';
 import 'package:mastery/session/session_state.dart';
 import 'package:mastery/models/lesson.dart';
 import 'package:mastery/models/evaluation.dart';
+import 'package:mastery/learner/learner_skill_store.dart';
 import 'package:mastery/progress/local_progress_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
@@ -220,6 +221,53 @@ void main() {
       await ctrl.submitAnswer('is');
       final stored = await LocalProgressStore.getCompletedExercises(_lessonId);
       expect(stored, equals(1));
+    });
+
+    test('LearnerSkillStore records the attempt when Wave 1 metadata is present', () async {
+      const tagged = {
+        'lesson_id': _lessonId,
+        'title': 'Test Lesson',
+        'language': 'en',
+        'level': 'B2',
+        'intro_rule': 'Test rule.',
+        'intro_examples': <String>[],
+        'exercises': [
+          {
+            'exercise_id': _exId,
+            'type': 'fill_blank',
+            'instruction': 'Complete the gap with the correct verb form.',
+            'prompt': 'She ___ working.',
+            'skill_id': 'verb-ing-after-gerund-verbs',
+            'primary_target_error': 'contrast_error',
+            'evidence_tier': 'medium',
+          }
+        ],
+      };
+
+      int call = 0;
+      final client = MockClient((_) async {
+        call++;
+        if (call == 1) return _jsonResponse(tagged);
+        return _jsonResponse(_evaluateJson());
+      });
+      final api = ApiClient(baseUrl: 'http://test', client: client);
+      final ctrl = SessionController(api);
+      await ctrl.loadLesson(_lessonId);
+      await ctrl.submitAnswer('is');
+
+      final rec =
+          await LearnerSkillStore.getRecord('verb-ing-after-gerund-verbs');
+      expect(rec.masteryScore, 10); // medium correct → +10
+      expect(rec.evidenceSummary[EvidenceTier.medium], 1);
+      expect(rec.lastAttemptAt, isNotNull);
+    });
+
+    test('LearnerSkillStore is a no-op when the exercise lacks Wave 1 metadata', () async {
+      // Default loadedController uses the un-tagged fixture (`_lessonJson`).
+      final ctrl = await loadedController();
+      await ctrl.submitAnswer('is');
+      final all = await LearnerSkillStore.allRecords();
+      expect(all, isEmpty);
     });
 
     test('network failure during submit → phase becomes error', () async {

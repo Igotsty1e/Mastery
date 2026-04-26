@@ -385,8 +385,13 @@ Every exercise record in the Exercise Bank must declare:
 The Evaluation Engine emits the tier with each attempt result. The Mastery
 Model uses the tier to weight the attempt and to enforce the §6.4 gate.
 
-Status: **planned**. No evidence tier or `meaning_frame` field exists in
-shipped fixtures today.
+Status: **shipped (metadata layer)**. `evidence_tier`, `skill_id`,
+`primary_target_error`, and (where applicable) `meaning_frame` ship on
+every exercise of the shipped B2 lessons (`docs/plans/learning-engine-mvp-2.md`
+Wave 1). Backend validates them; the Mastery Model consumes them on the
+client (Wave 2). New exercise families introduced in later waves must
+declare these fields at authoring time per `docs/content-contract.md
+§1.2`.
 
 ---
 
@@ -452,7 +457,17 @@ production gate must clear.
 
 ### 7.4 Status
 
-Status: **planned**. No per-skill mastery state exists in shipped code.
+Status: **shipped (device-scoped, MVP2 Wave 2)**. The Flutter
+`LearnerSkillStore` (`app/lib/learner/learner_skill_store.dart`) holds
+the §7.1 record per skill, persisted via SharedPreferences and updated
+from `SessionController.submitAnswer` after every evaluation. Status is
+derived on read via `LearnerSkillRecord.statusAt(now)`; only the
+`mastery_score`, `evidence_summary`, `recent_errors`, `last_attempt_at`,
+and the sticky `production_gate_cleared` flag are stored. V0 score
+deltas live in `LearnerSkillStore._scoreDelta` and are tunable; the
+**labels** in §7.2 are part of the contract. No UI surface yet — Wave 4
+introduces the per-skill panel. Server-side learner storage is a
+follow-up wave once accounts exist.
 
 ---
 

@@ -128,16 +128,46 @@ Key data classes (see `app/lib/models/`):
 
 Session state is managed by `SessionController` / `SessionState` (see `app/lib/session/`). Discarded on exit. Client never stores `accepted_answers`, `accepted_corrections`, or `correct_option_id`.
 
-### Wave 1 engine metadata (received but unused)
+### Wave 1 engine metadata (deserialised, used by Wave 2)
 
 `GET /lessons/{lesson_id}` may include the optional Wave 1 engine
-metadata fields per `docs/content-contract.md §1.2` (`skill_id`,
-`primary_target_error`, `evidence_tier`, `meaning_frame`). The current
-client **ignores** these fields — no UI surface, no behaviour change.
-The Flutter exercise model is not required to deserialise them. They
-arrive on the wire so the future Decision Engine and Transparency Layer
-waves (`docs/plans/learning-engine-mvp-2.md` Waves 3 and 4) can read
-them without a second roundtrip.
+metadata fields per `docs/content-contract.md §1.2`:
+
+- `skillId` (`String?`)
+- `primaryTargetError` (`TargetError?` — enum from `LEARNING_ENGINE.md §5`)
+- `evidenceTier` (`EvidenceTier?` — `weak | medium | strong | strongest`)
+- `meaningFrame` (`String?`)
+
+`Exercise.fromJson` in `app/lib/models/lesson.dart` deserialises all
+four. Older fixtures or item types without metadata leave the fields
+`null` and the Wave 2 `LearnerSkillStore` simply does not record an
+attempt for them. No UI surface yet — Wave 4 (Transparency Layer)
+introduces the per-skill panel.
+
+### Wave 2 mastery state — `LearnerSkillStore` (device-scoped)
+
+Per-learner per-skill state per `LEARNING_ENGINE.md §7.1` is held by
+`LearnerSkillStore` (`app/lib/learner/learner_skill_store.dart`),
+SharedPreferences-backed and device-scoped. Server-side learner storage
+is a follow-up wave once accounts exist.
+
+`LearnerSkillRecord` carries:
+
+- `masteryScore` (`int` 0–100, V0 deltas weighted by evidence tier)
+- `lastAttemptAt` (`DateTime?` UTC, recency for review scheduling)
+- `evidenceSummary` (`Map<EvidenceTier, int>`, attempt counts per tier)
+- `recentErrors` (`List<TargetError>`, FIFO-bounded at
+  `LearnerSkillStore.recentErrorsCap` = 5)
+- `productionGateCleared` (`bool`, set once a strongest-tier correct
+  attempt with a `meaningFrame` lands per §6.4 — sticky thereafter
+  per §7.1)
+
+`status` is **derived** on read via `record.statusAt(now)` per §7.2;
+only the inputs above and the production-gate flag are stored.
+`SessionController.submitAnswer` calls `LearnerSkillStore.recordAttempt`
+after every successful evaluation that has both a `skillId` and an
+`evidenceTier`. Persistence failures are tolerated (lesson flow keeps
+working). No UI surface yet.
 
 ## Navigation
 
