@@ -41,30 +41,45 @@ class _SentenceCorrectionWidgetState extends State<SentenceCorrectionWidget> {
 
   @override
   Widget build(BuildContext context) {
+    final tokens = context.masteryTokens;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Direction A · Brief B: the original (broken) sentence is the prompt
-        // hero — Fraunces, large, slightly muted to read as "the thing to
-        // change". The instruction band above already tells the learner to
-        // rewrite, so we drop the ORIGINAL pill chrome.
-        Text(
-          widget.prompt,
-          style: TextStyle(
-            fontFamily: 'Fraunces',
-            fontSize: 26,
-            height: 34 / 26,
-            fontWeight: FontWeight.w600,
-            color: MasteryColors.textPrimary,
-            letterSpacing: -0.4,
-            fontStyle: FontStyle.italic,
-            fontVariations: const [
-              FontVariation('opsz', 144),
-              FontVariation('wght', 600),
+        Container(
+          padding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: tokens.bgSurfaceAlt,
+            borderRadius: BorderRadius.circular(MasteryRadii.sm),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.only(top: 3),
+                child: Text(
+                  'ORIGINAL',
+                  style: MasteryTextStyles.labelSm.copyWith(
+                    color: tokens.textTertiary,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  widget.prompt,
+                  style: MasteryTextStyles.bodySm.copyWith(
+                    color: MasteryColors.textSecondary,
+                    fontStyle: FontStyle.italic,
+                    height: 1.5,
+                  ),
+                ),
+              ),
             ],
           ),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 14),
         TextField(
           controller: _controller,
           enabled: widget.enabled,

@@ -2,7 +2,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class LocalProgressStore {
   static const _lessonPrefix = 'lesson_progress_';
-  static const _onboardingSeenKey = 'onboarding_arrival_ritual_seen_v1';
+  static const _onboardingSeenKey = 'onboarding_arrival_ritual_seen_v2';
 
   static Future<int> getCompletedExercises(String lessonId) async {
     try {

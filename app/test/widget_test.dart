@@ -162,7 +162,7 @@ void main() {
         (tester) async {
       await _useMobileViewport(tester);
       SharedPreferences.setMockInitialValues(<String, Object>{
-        'onboarding_arrival_ritual_seen_v1': true,
+        'onboarding_arrival_ritual_seen_v2': true,
       });
       final client = MockClient((_) async => _jsonOk(_lessonJson()));
 
@@ -214,7 +214,7 @@ void main() {
       await tester.pumpAndSettle();
 
       final prefs = await SharedPreferences.getInstance();
-      expect(prefs.getBool('onboarding_arrival_ritual_seen_v1'), isTrue);
+      expect(prefs.getBool('onboarding_arrival_ritual_seen_v2'), isTrue);
     });
 
     testWidgets('Back button on step 2 returns to step 1',
@@ -520,7 +520,7 @@ void main() {
       await tester.pumpWidget(_withController(const ExerciseScreen(), ctrl));
       await tester.pump();
 
-      expect(find.text('01 / 02'), findsOneWidget);
+      expect(find.text('1 / 2'), findsOneWidget);
     });
 
     testWidgets('shows Next (not Finish) button after first exercise result',
@@ -560,7 +560,7 @@ void main() {
       ctrl.advance();
       await tester.pump();
 
-      expect(find.text('02 / 02'), findsOneWidget);
+      expect(find.text('2 / 2'), findsOneWidget);
       expect(find.text('We should avoid ___ important decisions when we\'re tired.'),
           findsOneWidget);
     });

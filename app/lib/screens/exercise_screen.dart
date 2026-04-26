@@ -103,6 +103,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
 
     final isSubmitted = state.phase == SessionPhase.result;
     final isLoading = state.phase == SessionPhase.evaluating;
+    final progress = (state.currentIndex + 1) / state.totalCount;
 
     return Scaffold(
       backgroundColor: tokens.bgApp,
@@ -111,49 +112,53 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
           SafeArea(
             child: Column(
               children: [
-                // Quieter Direction A chrome (Brief B): segmented progress bar
-                // with mono counter, no chevron-back. Close stays available.
                 _ExerciseTopBar(
                   index: state.currentIndex,
                   total: state.totalCount,
+                  progress: progress,
                 ),
                 Expanded(
                   child: SingleChildScrollView(
                     padding: const EdgeInsets.fromLTRB(
                       MasterySpacing.lg,
-                      MasterySpacing.lg,
+                      18,
                       MasterySpacing.lg,
                       MasterySpacing.md,
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Mono caps instruction line — quieter than the
-                        // tinted InstructionBand it replaces.
-                        Text(
-                          exercise.instruction.toUpperCase(),
-                          style: MasteryTextStyles.mono(
-                            size: 11,
-                            lineHeight: 14,
-                            weight: FontWeight.w600,
-                            color: tokens.textTertiary,
-                            letterSpacing: 1.6,
+                        InstructionBand(
+                          text: exercise.instruction,
+                          icon: switch (exercise.type) {
+                            ExerciseType.sentenceCorrection =>
+                              Icons.edit_outlined,
+                            _ => Icons.task_alt_rounded,
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        MasteryCard(
+                          padding: const EdgeInsets.all(22),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              if (exercise.image != null) ...[
+                                MasteryExerciseImage(image: exercise.image!),
+                                const SizedBox(height: MasterySpacing.lg),
+                              ],
+                              _ExerciseBody(
+                                key: ValueKey(exercise.exerciseId),
+                                exercise: exercise,
+                                enabled: !isSubmitted && !isLoading,
+                                onAnswerChanged: _onAnswerChanged,
+                                onTextSubmit: () =>
+                                    _submitIfReady(controller),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 14),
-                        if (exercise.image != null) ...[
-                          MasteryExerciseImage(image: exercise.image!),
-                          const SizedBox(height: MasterySpacing.lg),
-                        ],
-                        _ExerciseBody(
-                          key: ValueKey(exercise.exerciseId),
-                          exercise: exercise,
-                          enabled: !isSubmitted && !isLoading,
-                          onAnswerChanged: _onAnswerChanged,
-                          onTextSubmit: () => _submitIfReady(controller),
-                        ),
                         if (isSubmitted && state.lastResult != null) ...[
-                          const SizedBox(height: 18),
+                          const SizedBox(height: 16),
                           ResultPanel(
                             correct: state.lastResult!.correct,
                             canonicalAnswer: state.lastResult!.canonicalAnswer,
@@ -201,71 +206,75 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   }
 }
 
-/// Direction A · Brief B chrome: a row of segmented progress pills (one per
-/// exercise) plus a mono counter and an unobtrusive close button. The pills
-/// quietly count up; the heavy LinearProgressIndicator + chevron-back combo
-/// is gone — the prompt is the hero, not the chrome.
 class _ExerciseTopBar extends StatelessWidget {
   final int index;
   final int total;
+  final double progress;
 
   const _ExerciseTopBar({
     required this.index,
     required this.total,
+    required this.progress,
   });
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.masteryTokens;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(
-          MasterySpacing.lg, 12, MasterySpacing.md, 4),
-      child: Row(
-        children: [
-          Expanded(
-            child: Row(
-              children: List.generate(total, (i) {
-                final active = i <= index;
-                return Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.only(right: i == total - 1 ? 0 : 4),
-                    child: AnimatedContainer(
-                      duration: MasteryDurations.short,
-                      curve: MasteryEasing.move,
-                      height: 3,
-                      decoration: BoxDecoration(
-                        color: active
-                            ? MasteryColors.actionPrimary
-                            : tokens.borderStrong,
-                        borderRadius: BorderRadius.circular(2),
+    return Column(
+      children: [
+        SizedBox(
+          height: 48,
+          child: Row(
+            children: [
+              IconButton(
+                icon: const Icon(Icons.chevron_left_rounded, size: 26),
+                onPressed: () => Navigator.of(context).maybePop(),
+              ),
+              const Spacer(),
+              Text.rich(
+                TextSpan(
+                  children: [
+                    TextSpan(
+                      text: '${index + 1}',
+                      style: MasteryTextStyles.mono(
+                        size: 14,
+                        lineHeight: 16,
+                        weight: FontWeight.w600,
+                        color: MasteryColors.textPrimary,
                       ),
                     ),
-                  ),
-                );
-              }),
-            ),
+                    TextSpan(
+                      text: ' / $total',
+                      style: MasteryTextStyles.mono(
+                        size: 14,
+                        lineHeight: 16,
+                        weight: FontWeight.w400,
+                        color: MasteryColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Spacer(),
+              IconButton(
+                icon: Icon(Icons.close_rounded,
+                    size: 22, color: tokens.textTertiary),
+                onPressed: () => Navigator.of(context).maybePop(),
+              ),
+            ],
           ),
-          const SizedBox(width: 14),
-          Text(
-            '${(index + 1).toString().padLeft(2, '0')} / ${total.toString().padLeft(2, '0')}',
-            style: MasteryTextStyles.mono(
-              size: 12,
-              lineHeight: 14,
-              weight: FontWeight.w500,
-              color: tokens.textTertiary,
-              letterSpacing: 0.6,
-            ),
+        ),
+        SizedBox(
+          height: 4,
+          child: LinearProgressIndicator(
+            value: progress.clamp(0.0, 1.0),
+            backgroundColor: tokens.bgSurfaceAlt,
+            valueColor: const AlwaysStoppedAnimation(
+                MasteryColors.actionPrimary),
+            minHeight: 4,
           ),
-          const SizedBox(width: 6),
-          IconButton(
-            visualDensity: VisualDensity.compact,
-            padding: EdgeInsets.zero,
-            constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-            icon: Icon(Icons.close_rounded, size: 20, color: tokens.textTertiary),
-            onPressed: () => Navigator.of(context).maybePop(),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
