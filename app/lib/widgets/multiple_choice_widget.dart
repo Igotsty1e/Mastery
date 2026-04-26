@@ -34,17 +34,24 @@ class _MultipleChoiceWidgetState extends State<MultipleChoiceWidget> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Direction A · Brief B: serif Fraunces hero so the prompt
+        // dominates the screen instead of competing with chrome.
         Text(
           widget.prompt,
-          style: MasteryTextStyles.titleMd.copyWith(
-            fontSize: 20,
-            height: 28 / 20,
+          style: TextStyle(
+            fontFamily: 'Fraunces',
+            fontSize: 26,
+            height: 34 / 26,
             fontWeight: FontWeight.w600,
             color: MasteryColors.textPrimary,
-            letterSpacing: -0.1,
+            letterSpacing: -0.4,
+            fontVariations: const [
+              FontVariation('opsz', 144),
+              FontVariation('wght', 600),
+            ],
           ),
         ),
-        const SizedBox(height: 18),
+        const SizedBox(height: 22),
         ...List.generate(widget.options.length, (i) {
           final opt = widget.options[i];
           final letter = String.fromCharCode('A'.codeUnitAt(0) + i);

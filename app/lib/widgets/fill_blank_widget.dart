@@ -76,9 +76,18 @@ class _PromptWithBlank extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tokens = context.masteryTokens;
-    final base = MasteryTextStyles.bodyLg.copyWith(
-      height: 1.55,
+    // Direction A · Brief B: Fraunces hero so the prompt outranks the chrome.
+    final base = TextStyle(
+      fontFamily: 'Fraunces',
+      fontSize: 26,
+      height: 34 / 26,
+      fontWeight: FontWeight.w600,
       color: MasteryColors.textPrimary,
+      letterSpacing: -0.4,
+      fontVariations: const [
+        FontVariation('opsz', 144),
+        FontVariation('wght', 600),
+      ],
     );
 
     // Render the prompt as a single Text.rich. The literal `___` stays in the

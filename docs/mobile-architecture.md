@@ -27,20 +27,27 @@ HomeScreen
 
 `HomeScreen` carries two distinct states. The split below is authoritative — keep these subsections in sync with the code in `app/lib/screens/home_screen.dart` and with `docs/plans/arrival-ritual.md`.
 
-#### First-launch onboarding — *Arrival Ritual* (transitional)
+#### First-launch onboarding — *Arrival Ritual* (shipped, Direction A · Editorial Notebook)
 
-Status: 3-step version shipped 2026-04-26 in `cea886f..bd0f021`; superseded the same day by a 2-step + dashboard-as-home contract. The shipped code still matches the 3-step direction; the new design pass (`/design-shotgun` output → implementation) will replace it. Source of truth: `docs/plans/arrival-ritual.md`. Implementation: `app/lib/screens/onboarding_arrival_ritual_screen.dart`.
+Status: shipped 2026-04-26. Source of truth: `docs/plans/arrival-ritual.md`. Visual reference: `docs/design-mockups/onboarding-2step/direction-a-editorial.html`. Implementation: `app/lib/screens/onboarding_arrival_ritual_screen.dart`.
 
-**Currently in code (3-step, will be replaced):**
-- 3-step ritual: `Promise` → `Assembly` → `Handoff`. Step indicator + Back link, shared-axis transitions, persisted seen-flag, final CTA → `LessonIntroScreen` directly.
+- 2-step ritual: `Promise` → `Assembly`. Each step lives as a private widget so copy, layout, and motion can be tuned independently.
+- Single text-only step indicator (`STEP N OF 2`) at the top — no duplicate dot row.
+- Editorial typography: Fraunces wordmark in Promise, Fraunces headline in Assembly, gold hairline as a section anchor, numbered ordinals on proof points and stage cards.
+- Final CTA copy: `Continue` on Step 1, `Open my dashboard` on Step 2.
+- Final CTA writes `onboarding_arrival_ritual_seen_v1=true` to `LocalProgressStore`, then reveals the dashboard inside the same `HomeScreen` (no `Navigator.push`). The dashboard is the single Home — it is also the destination of `Done` from `SummaryScreen`.
+- Step transitions: shared-axis fade + slight rise; collapses to opacity-only when `MediaQuery.disableAnimations` is true.
+- Back link appears from Step 2 onward.
 
-**Locked next direction (2-step + dashboard-as-home):**
-- 2 steps: `Promise` → `Assembly`. Final CTA goes to the **dashboard**, never to the lesson intro.
-- Dashboard becomes the single home: it is the destination of `Get started` from onboarding, of `Done` from summary, and of every returning launch.
-- Same persisted `onboarding_arrival_ritual_seen_v1` flag.
-- Visual treatment to be set by the design-shotgun pass currently in flight.
+#### First exercise — quieter chrome (shipped, Direction A · Brief B)
 
-> **First-exercise V2 (Brief B in `docs/plans/arrival-ritual.md`) is still pending.**
+Status: shipped 2026-04-26. Implementation: `app/lib/screens/exercise_screen.dart` plus per-type prompt typography in `multiple_choice_widget.dart`, `fill_blank_widget.dart`, `sentence_correction_widget.dart`.
+
+- Top bar: a row of segmented progress pills (one per exercise) + zero-padded mono counter (`01 / 10`) + small close. No chevron-back, no heavy `LinearProgressIndicator`.
+- Instruction renders as a quiet mono-caps line — replaces the rose-tinted `InstructionBand`.
+- Exercise body sits directly on the page (no `MasteryCard` wrapper).
+- Prompt is rendered as a Fraunces serif hero in each per-type widget so the question outranks the chrome.
+- Listening exercise variant unchanged — the audio player is still the prompt.
 
 #### Returning launch — Dashboard (shipped)
 

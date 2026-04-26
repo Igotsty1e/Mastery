@@ -46,22 +46,15 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  // Onboarding-final CTA contract: mark onboarding seen, then route DIRECTLY
-  // into the lesson intro per the Arrival Ritual hard rule. The dashboard is
-  // pre-loaded so it is ready when the lesson chain pops back.
-  Future<void> _completeOnboardingAndStartLesson() async {
+  // Onboarding-final CTA contract (locked 2026-04-26 per
+  // docs/plans/arrival-ritual.md): mark onboarding seen and reveal the
+  // dashboard. The dashboard is the single Home — both this CTA and the
+  // SummaryScreen `Done` button land here. Onboarding never pushes the
+  // lesson intro directly.
+  Future<void> _completeOnboarding() async {
     await LocalProgressStore.markOnboardingSeen();
     if (!mounted) return;
     setState(() => _showOnboarding = false);
-    await _loadDashboard();
-    if (!mounted) return;
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) =>
-            const LessonIntroScreen(lessonId: AppConfig.defaultLessonId),
-      ),
-    );
-    if (!mounted) return;
     await _loadDashboard();
   }
 
@@ -118,8 +111,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     if (_showOnboarding) {
       return OnboardingArrivalRitualScreen(
-        onComplete: _completeOnboardingAndStartLesson,
-        lessonId: AppConfig.defaultLessonId,
+        onComplete: _completeOnboarding,
       );
     }
     return _buildDashboard();

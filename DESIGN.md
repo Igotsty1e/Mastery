@@ -316,7 +316,7 @@ Method note: this list uses public Android install bands from Google Play as the
 - The final onboarding CTA lands on the **dashboard**. The dashboard is the single Home — it is also where `Done` from SummaryScreen brings the learner back. There is no separate "post-lesson home" surface.
 - Each onboarding step must be individually addressable in implementation so copy, art, and motion can be tuned step-by-step.
 - Motion should make the product feel like it is calmly preparing the workspace: soft float, staged rise, clean handoff into the dashboard.
-- *Historical note:* the original 3-step direction (Promise → Assembly → Handoff, ending directly in the lesson intro) shipped 2026-04-26 (`cea886f..bd0f021`) and was replaced the same day. The decision log row is still accurate for that decision; the new direction supersedes the routing rule.
+- *History:* 2026-04-26 morning shipped a transitional 3-step direction (Promise → Assembly → Handoff, ending directly in the lesson intro, `cea886f..bd0f021`). Same-day reversal to 2-step + dashboard-as-home; final visual locked as Direction A · Editorial Notebook. Reference mockup: `docs/design-mockups/onboarding-2step/direction-a-editorial.html`.
 
 ### Lesson Intro
 - Treat this like opening a premium lesson notebook.

@@ -14,7 +14,7 @@ iOS and Android targets are present in the project but require native toolchain 
 
 | Screen | Route | Description |
 |--------|-------|-------------|
-| HomeScreen | `/` | First launch: Arrival Ritual onboarding (currently 3-step in code, being replaced by 2-step + dashboard-as-home per the locked direction in `docs/plans/arrival-ritual.md`). Returning launch and post-summary `Done` both land on the dashboard (level selector + progress card). State branched on `onboarding_arrival_ritual_seen_v1`. |
+| HomeScreen | `/` | First launch: 2-step Arrival Ritual onboarding (`Promise` → `Assembly`) per Direction A · Editorial Notebook in `docs/plans/arrival-ritual.md`. Final CTA reveals the dashboard. Returning launch and post-summary `Done` also land on the dashboard (level selector + progress card). State branched on `onboarding_arrival_ritual_seen_v1`. |
 | LessonIntroScreen | `/lesson/{id}` | Fetches lesson, shows loading/error states, then rule + examples |
 | ExerciseScreen | (within lesson) | Renders one exercise; submits answer; shows inline result |
 | SummaryScreen | (within lesson) | Shows final score, conclusion, and mistake review |

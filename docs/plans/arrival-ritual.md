@@ -4,21 +4,20 @@
 
 | Wave | Status |
 |---|---|
-| 3-step onboarding ritual (original Brief A) | **Superseded 2026-04-26** — first version shipped in `cea886f..bd0f021` but is being replaced by a 2-step direction. The new contract is below. |
-| 2-step onboarding + dashboard-as-home (current direction) | **Spec locked 2026-04-26.** Three visual directions explored as hand-written HTML mockups in `docs/design-mockups/onboarding-2step/` (open `onboarding-2step/index.html` for the side-by-side comparison). Awaiting direction pick before implementation. |
-| First-exercise V2 hierarchy (original Brief B) | Pending |
-| Motion polish (Brief C) | Onboarding step transitions shipped (shared-axis fade + slide, reduced-motion fallback). Lesson-intro / first-exercise motion pending. |
+| 2-step onboarding + dashboard-as-home (Direction A · Editorial Notebook) | **Shipped 2026-04-26.** Visual reference: `docs/design-mockups/onboarding-2step/direction-a-editorial.html`. Implementation: `app/lib/screens/onboarding_arrival_ritual_screen.dart`, `app/lib/screens/home_screen.dart`. |
+| First-exercise V2 quieter chrome (Brief B) | **Shipped 2026-04-26.** Implementation: `app/lib/screens/exercise_screen.dart` plus per-type prompt typography in `multiple_choice_widget.dart`, `fill_blank_widget.dart`, `sentence_correction_widget.dart`. |
+| Motion polish (Brief C) | Onboarding step transitions shipped (shared-axis fade + slide, reduced-motion fallback). Lesson-intro / exercise-result-reveal motion still pending. |
 | QA / design review (Brief D) | Pending |
 
-## Direction Change Summary (2026-04-26)
+## History (2026-04-26)
 
-The first version of this spec ended onboarding with a `Handoff` step that pushed the learner directly into the lesson intro, explicitly bypassing the dashboard. The product owner reversed that decision after running the shipped flow:
+A first version of this spec shipped a 3-step ritual (Promise → Assembly → Handoff) that routed the final CTA directly into `LessonIntroScreen`, explicitly bypassing the dashboard. After running the shipped flow the product owner reversed that decision the same day:
 
-- **Onboarding shrinks from 3 steps to 2.** The `Handoff` lesson-preview step is gone — its purpose (showing the upcoming lesson) is now part of the dashboard itself.
+- **Onboarding shrinks from 3 steps to 2.** The `Handoff` preview step is gone — its purpose (showing the upcoming lesson) is now part of the dashboard itself.
 - **Dashboard becomes the single home.** Both onboarding-final and post-summary `Done` route to the same dashboard. The learner has one place they always come back to.
 - **No more direct push from onboarding into the lesson intro.** Removes the "where am I?" disorientation when the learner finishes a lesson and lands somewhere they have never seen before.
 
-The remainder of this document describes the new contract. The old 3-step copy is preserved below in *§Original 3-step contract (superseded)* for the audit trail only.
+The 3-step direction lived in commits `cea886f..bd0f021`. The current contract below was implemented in the commit that ships the 2-step + dashboard-as-home direction.
 
 ## Core Principle
 
@@ -98,10 +97,6 @@ The dashboard is the **only** home state. It is the destination of `Get started`
 This is the single home of the product. Behaviour for this wave matches what is already shipped: level chips, progress card for the configured lesson, `Start lesson` CTA, no other surfaces. Visual refinements may follow a separate design pass.
 
 The dashboard is **also the destination of post-lesson `Done`**. SummaryScreen pops back to the dashboard, not to onboarding and not to a separate post-lesson celebration screen.
-
-## Original 3-step contract (superseded)
-
-The first version of this spec defined a `Handoff` step that previewed the upcoming lesson and routed the final CTA directly into `LessonIntroScreen`, with the explicit hard rule "no intermediate dashboard after this CTA". That direction shipped on 2026-04-26 (commits `cea886f..bd0f021`) and was then reversed by the product owner the same day in favour of the 2-step + dashboard-as-home contract above. Code matching the old contract still exists in `app/lib/screens/onboarding_arrival_ritual_screen.dart` and will be replaced by the implementation that follows the design-shotgun output.
 
 ### 04. Lesson Intro Arrival
 
@@ -206,10 +201,11 @@ Reduced-motion fallback:
 - theme/token files only if new documented tokens are truly required
 
 **Acceptance**
-- onboarding is 3 steps
+- onboarding is 2 steps (`Promise` → `Assembly`)
 - each step is independently editable
-- final CTA lands in `LessonIntroScreen`
+- final CTA reveals the dashboard inside the same `HomeScreen` (no `Navigator.push` to `LessonIntroScreen`)
 - returning users are not forced through onboarding every launch
+- post-summary `Done` also lands on the dashboard
 
 ### Agent B — First Exercise V2
 
@@ -273,10 +269,10 @@ Use these as the starting tasks for the next implementation wave. Give each agen
 Implement the approved `Arrival Ritual` onboarding from `docs/plans/arrival-ritual.md` and `DESIGN.md`.
 
 Scope:
-- Replace the current first-launch onboarding with a 3-step sequence: `Promise`, `Assembly`, `Handoff`.
-- Keep the dashboard for returning users.
-- Make each step data-driven or at least independently editable.
-- Final CTA must route directly into `LessonIntroScreen`.
+- Replace the current first-launch onboarding with a 2-step sequence: `Promise`, `Assembly`.
+- Keep the dashboard for returning users — and route the final onboarding CTA there too.
+- Make each step independently editable.
+- Final CTA reveals the dashboard inside `HomeScreen` (no `Navigator.push` to `LessonIntroScreen`).
 - Preserve current progress/dashboard behavior for returning users.
 
 Non-goals:
@@ -286,9 +282,10 @@ Non-goals:
 - no server changes unless strictly required for routing state
 
 Acceptance:
-- first launch shows the 3-step ritual
-- final onboarding CTA lands in the lesson intro
+- first launch shows the 2-step ritual ending on the dashboard
+- final onboarding CTA does **not** push the lesson intro
 - returning launch still works
+- post-summary `Done` returns to the dashboard
 - no broken navigation loops
 
 ### Brief B — First Exercise V2 Agent

@@ -150,15 +150,12 @@ void main() {
         (tester) async {
           await _useMobileViewport(tester);
       await tester.pumpWidget(_withApi(const HomeScreen(), MockClient((_) async => throw UnimplementedError())));
-      await tester.pumpAndSettle(); // resolve hasSeenOnboarding
+      await tester.pumpAndSettle();
 
-      // Step 1 (Promise) — wordmark + opening promise + Continue CTA + step indicator.
+      // Step 1 (Promise) — wordmark + Continue CTA + 1-of-2 indicator.
       expect(find.text('Mastery'), findsOneWidget);
-      expect(
-          find.text('Focused English grammar practice, one rule at a time.'),
-          findsOneWidget);
       expect(find.widgetWithText(FilledButton, 'Continue'), findsOneWidget);
-      expect(find.text('STEP 1 OF 3'), findsOneWidget);
+      expect(find.text('STEP 1 OF 2'), findsOneWidget);
     });
 
     testWidgets('returning user (onboarding seen) lands directly on dashboard',
@@ -175,12 +172,12 @@ void main() {
       // Dashboard subtitle, not onboarding.
       expect(find.text('English practice, one lesson at a time.'), findsOneWidget);
       expect(find.widgetWithText(FilledButton, 'Start lesson'), findsOneWidget);
-      expect(find.widgetWithText(FilledButton, 'Get started'), findsNothing);
+      expect(find.widgetWithText(FilledButton, 'Continue'), findsNothing);
     });
 
-    testWidgets('Continue advances through 3 onboarding steps to LessonIntroScreen',
+    testWidgets('Continue advances Promise → Assembly, final CTA reveals dashboard (no lesson push)',
         (tester) async {
-          await _useMobileViewport(tester);
+      await _useMobileViewport(tester);
       final client = MockClient((_) async => _jsonOk(_lessonJson()));
 
       await tester.pumpWidget(_withApi(const HomeScreen(), client));
@@ -189,19 +186,18 @@ void main() {
       // Step 1 → 2
       await _safeTap(tester, find.widgetWithText(FilledButton, 'Continue'));
       await tester.pumpAndSettle();
-      expect(find.text('STEP 2 OF 3'), findsOneWidget);
+      expect(find.text('STEP 2 OF 2'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Open my dashboard'), findsOneWidget);
 
-      // Step 2 → 3
-      await _safeTap(tester, find.widgetWithText(FilledButton, 'Continue'));
-      await tester.pumpAndSettle();
-      expect(find.text('STEP 3 OF 3'), findsOneWidget);
-
-      // Step 3 final CTA → lesson intro
-      await _safeTap(tester, find.widgetWithText(FilledButton, 'Get started'));
+      // Step 2 final CTA → dashboard (NOT lesson intro)
+      await _safeTap(tester, find.widgetWithText(FilledButton, 'Open my dashboard'));
       await tester.pumpAndSettle();
 
-      expect(find.text('Verbs Followed by -ing'), findsOneWidget);
-      expect(find.widgetWithText(FilledButton, 'Start Practice'), findsOneWidget);
+      // Dashboard markers
+      expect(find.text('English practice, one lesson at a time.'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Start lesson'), findsOneWidget);
+      // Lesson intro NOT pushed automatically
+      expect(find.widgetWithText(FilledButton, 'Start Practice'), findsNothing);
     });
 
     testWidgets('Final-step CTA persists onboarding-seen so next launch skips it',
@@ -214,9 +210,7 @@ void main() {
 
       await _safeTap(tester, find.widgetWithText(FilledButton, 'Continue'));
       await tester.pumpAndSettle();
-      await _safeTap(tester, find.widgetWithText(FilledButton, 'Continue'));
-      await tester.pumpAndSettle();
-      await _safeTap(tester, find.widgetWithText(FilledButton, 'Get started'));
+      await _safeTap(tester, find.widgetWithText(FilledButton, 'Open my dashboard'));
       await tester.pumpAndSettle();
 
       final prefs = await SharedPreferences.getInstance();
@@ -231,11 +225,11 @@ void main() {
 
       await _safeTap(tester, find.widgetWithText(FilledButton, 'Continue'));
       await tester.pumpAndSettle();
-      expect(find.text('STEP 2 OF 3'), findsOneWidget);
+      expect(find.text('STEP 2 OF 2'), findsOneWidget);
 
       await _safeTap(tester, find.widgetWithText(TextButton, 'Back'));
       await tester.pumpAndSettle();
-      expect(find.text('STEP 1 OF 3'), findsOneWidget);
+      expect(find.text('STEP 1 OF 2'), findsOneWidget);
     });
   });
 
@@ -526,7 +520,7 @@ void main() {
       await tester.pumpWidget(_withController(const ExerciseScreen(), ctrl));
       await tester.pump();
 
-      expect(find.text('1 / 2'), findsOneWidget);
+      expect(find.text('01 / 02'), findsOneWidget);
     });
 
     testWidgets('shows Next (not Finish) button after first exercise result',
@@ -566,7 +560,7 @@ void main() {
       ctrl.advance();
       await tester.pump();
 
-      expect(find.text('2 / 2'), findsOneWidget);
+      expect(find.text('02 / 02'), findsOneWidget);
       expect(find.text('We should avoid ___ important decisions when we\'re tired.'),
           findsOneWidget);
     });
@@ -687,16 +681,18 @@ void main() {
         ),
       );
 
-      // Phase 1: 3-step Arrival Ritual onboarding → final CTA routes directly
-      // into the lesson intro per docs/plans/arrival-ritual.md (no dashboard
-      // detour on first launch).
+      // Phase 1: 2-step Arrival Ritual onboarding → final CTA reveals the
+      // dashboard per docs/plans/arrival-ritual.md. Dashboard is the single
+      // Home; the learner taps Start lesson from there.
       await tester.pumpAndSettle();
       expect(find.widgetWithText(FilledButton, 'Continue'), findsOneWidget);
       await _safeTap(tester, find.widgetWithText(FilledButton, 'Continue'));
       await tester.pumpAndSettle();
-      await _safeTap(tester, find.widgetWithText(FilledButton, 'Continue'));
+      await _safeTap(tester, find.widgetWithText(FilledButton, 'Open my dashboard'));
       await tester.pumpAndSettle();
-      await _safeTap(tester, find.widgetWithText(FilledButton, 'Get started'));
+
+      expect(find.widgetWithText(FilledButton, 'Start lesson'), findsOneWidget);
+      await _safeTap(tester, find.widgetWithText(FilledButton, 'Start lesson'));
       await tester.pumpAndSettle();
 
       // Phase 2: LessonIntroScreen — lesson loaded from mocked API
