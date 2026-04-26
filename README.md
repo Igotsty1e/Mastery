@@ -10,10 +10,10 @@ Users complete lessons composed of exercises. The backend decides correctness. A
 
 - Flutter (Dart) client only
 - Backend is single source of truth for all correctness decisions
-- 4 exercise types: `fill_blank`, `multiple_choice`, `sentence_correction`, `listening_discrimination`
+- 4 exercise types: `fill_blank`, `multiple_choice`, `sentence_correction`, `listening_discrimination` (multi-unit families gated on Wave 6)
 - Deterministic evaluation for all types; AI fallback only for `sentence_correction` borderline cases
-- Fixed linear lesson flow — no skipping, no backtracking, no branching
-- No auth, no resume, no adaptive learning, no chat UI
+- Default linear lesson flow with the `LEARNING_ENGINE.md §9.1` 1/2/3 in-session loop layered on top — the Decision Engine may pull a same-skill item to the head after a wrong answer; on the third miss it ends the loop on that skill for the session
+- No auth, no resume, no chat UI; per-skill mastery state + cross-session review cadence are device-scoped (`LearnerSkillStore` + `ReviewScheduler` shipped in Waves 2–3)
 
 ## Stack
 
