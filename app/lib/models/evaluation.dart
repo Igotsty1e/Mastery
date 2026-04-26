@@ -25,12 +25,41 @@ class EvaluateRequest {
       };
 }
 
+/// Wave 5 (`LEARNING_ENGINE.md §8.7`) three-valued evaluation outcome.
+/// Single-decision families shipped today emit `correct` or `wrong`.
+/// `partial` is reserved for Wave 6 multi-unit families.
+enum AttemptResult { correct, partial, wrong }
+
+AttemptResult? _parseAttemptResult(String? s) => switch (s) {
+      'correct' => AttemptResult.correct,
+      'partial' => AttemptResult.partial,
+      'wrong' => AttemptResult.wrong,
+      _ => null,
+    };
+
 class EvaluateResponse {
   final String attemptId;
   final String exerciseId;
+
+  /// Legacy boolean field, preserved for backwards compat. Mirrors
+  /// `result == AttemptResult.correct`.
   final bool correct;
+
   final String? explanation;
   final String canonicalAnswer;
+
+  /// Wave 5 fields. Optional during the Wave 5 rollout window — when a
+  /// learner is on a frontend build that pre-dates a backend that has
+  /// rolled back, these come back null. Wave 6 multi-unit families
+  /// require them.
+  final AttemptResult? result;
+  final List<dynamic>? responseUnits;
+
+  /// `LEARNING_ENGINE.md §12.3` production-gate invalidation pivot. The
+  /// `LearnerSkillStore` reads this on each `recordAttempt` and clears
+  /// the sticky `production_gate_cleared` flag if the version moves
+  /// under the previously-cleared gate.
+  final int? evaluationVersion;
 
   const EvaluateResponse({
     required this.attemptId,
@@ -38,6 +67,9 @@ class EvaluateResponse {
     required this.correct,
     this.explanation,
     required this.canonicalAnswer,
+    this.result,
+    this.responseUnits,
+    this.evaluationVersion,
   });
 
   factory EvaluateResponse.fromJson(Map<String, dynamic> j) => EvaluateResponse(
@@ -46,6 +78,11 @@ class EvaluateResponse {
         correct: j['correct'] as bool,
         explanation: j['explanation'] as String?,
         canonicalAnswer: j['canonical_answer'] as String,
+        result: _parseAttemptResult(j['result'] as String?),
+        responseUnits: j['response_units'] is List
+            ? List<dynamic>.from(j['response_units'] as List)
+            : null,
+        evaluationVersion: (j['evaluation_version'] as num?)?.toInt(),
       );
 }
 

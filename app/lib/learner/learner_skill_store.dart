@@ -58,6 +58,13 @@ class LearnerSkillRecord {
   /// `evidenceSummary`.
   final bool productionGateCleared;
 
+  /// `LEARNING_ENGINE.md §12.3`: the evaluator version at which the
+  /// production gate cleared. When `recordAttempt` sees a higher
+  /// `evaluationVersion` than this, it invalidates the gate (forcing the
+  /// learner to re-clear under the new evaluator semantics). Null on
+  /// records that never cleared the gate.
+  final int? gateClearedAtVersion;
+
   const LearnerSkillRecord({
     required this.skillId,
     required this.masteryScore,
@@ -65,6 +72,7 @@ class LearnerSkillRecord {
     required this.evidenceSummary,
     required this.recentErrors,
     required this.productionGateCleared,
+    this.gateClearedAtVersion,
   });
 
   factory LearnerSkillRecord.empty(String skillId) => LearnerSkillRecord(
@@ -74,6 +82,7 @@ class LearnerSkillRecord {
         evidenceSummary: const {},
         recentErrors: const [],
         productionGateCleared: false,
+        gateClearedAtVersion: null,
       );
 
   LearnerSkillRecord copyWith({
@@ -82,6 +91,8 @@ class LearnerSkillRecord {
     Map<EvidenceTier, int>? evidenceSummary,
     List<TargetError>? recentErrors,
     bool? productionGateCleared,
+    int? gateClearedAtVersion,
+    bool clearGateClearedAtVersion = false,
   }) =>
       LearnerSkillRecord(
         skillId: skillId,
@@ -91,6 +102,9 @@ class LearnerSkillRecord {
         recentErrors: recentErrors ?? this.recentErrors,
         productionGateCleared:
             productionGateCleared ?? this.productionGateCleared,
+        gateClearedAtVersion: clearGateClearedAtVersion
+            ? null
+            : (gateClearedAtVersion ?? this.gateClearedAtVersion),
       );
 
   /// Status derivation per `LEARNING_ENGINE.md §7.2`. Labels are part of
@@ -131,6 +145,7 @@ class LearnerSkillRecord {
         },
         'recent_errors': recentErrors.map(targetErrorToString).toList(),
         'production_gate_cleared': productionGateCleared,
+        'gate_cleared_at_version': gateClearedAtVersion,
       };
 
   /// Tolerant parser: an invalid record yields `null` so the caller can
@@ -161,6 +176,7 @@ class LearnerSkillRecord {
         evidenceSummary: tierMap,
         recentErrors: errors,
         productionGateCleared: j['production_gate_cleared'] as bool? ?? false,
+        gateClearedAtVersion: (j['gate_cleared_at_version'] as num?)?.toInt(),
       );
     } catch (_) {
       return null;
@@ -215,11 +231,26 @@ class LearnerSkillStore {
     TargetError? primaryTargetError,
     String? meaningFrame,
     DateTime? occurredAt,
+    int? evaluationVersion,
   }) async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final existing = _readRecord(prefs, skillId) ??
+      var existing = _readRecord(prefs, skillId) ??
           LearnerSkillRecord.empty(skillId);
+
+      // §12.3 invalidation. If the gate was previously cleared at a
+      // lower evaluator version than what just shipped, drop it before
+      // applying this attempt's effect — the learner has to re-clear
+      // production under the new evaluator semantics.
+      if (existing.productionGateCleared &&
+          evaluationVersion != null &&
+          existing.gateClearedAtVersion != null &&
+          evaluationVersion > existing.gateClearedAtVersion!) {
+        existing = existing.copyWith(
+          productionGateCleared: false,
+          clearGateClearedAtVersion: true,
+        );
+      }
 
       final summary = Map<EvidenceTier, int>.from(existing.evidenceSummary);
       summary[evidenceTier] = (summary[evidenceTier] ?? 0) + 1;
@@ -240,10 +271,18 @@ class LearnerSkillStore {
       // also carries a `meaning_frame` (the §6.3 meaning+form proof).
       // `meaningFrame` non-empty is the proxy the schema uses to flag a
       // §6.3-compliant item.
-      final gate = existing.productionGateCleared ||
-          (correct &&
-              evidenceTier == EvidenceTier.strongest &&
-              (meaningFrame != null && meaningFrame.trim().isNotEmpty));
+      final gateClearedThisAttempt = correct &&
+          evidenceTier == EvidenceTier.strongest &&
+          (meaningFrame != null && meaningFrame.trim().isNotEmpty);
+      final gate = existing.productionGateCleared || gateClearedThisAttempt;
+      // Stamp the version when the gate clears (newly or previously).
+      // Null `evaluationVersion` leaves the existing stamp untouched —
+      // pre-Wave-5 callers still work.
+      final newGateVersion = !gate
+          ? null
+          : (gateClearedThisAttempt
+              ? (evaluationVersion ?? existing.gateClearedAtVersion)
+              : existing.gateClearedAtVersion);
 
       final updated = existing.copyWith(
         masteryScore: score,
@@ -251,6 +290,8 @@ class LearnerSkillStore {
         evidenceSummary: summary,
         recentErrors: errors,
         productionGateCleared: gate,
+        gateClearedAtVersion: newGateVersion,
+        clearGateClearedAtVersion: !gate,
       );
 
       await prefs.setString(_keyPrefix + skillId, jsonEncode(updated.toJson()));

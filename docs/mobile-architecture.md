@@ -161,6 +161,13 @@ is a follow-up wave once accounts exist.
 - `productionGateCleared` (`bool`, set once a strongest-tier correct
   attempt with a `meaningFrame` lands per §6.4 — sticky thereafter
   per §7.1)
+- `gateClearedAtVersion` (`int?`, the evaluator version at which the
+  gate cleared per `LEARNING_ENGINE.md §12.3`). When `recordAttempt`
+  sees an `evaluationVersion` higher than the recorded one, it
+  invalidates the gate so the learner re-clears under the new
+  evaluator semantics. `SessionController.submitAnswer` forwards the
+  Wave 5 `evaluation_version` field on every attempt so this
+  invalidation pivot is wired end-to-end.
 
 `status` is **derived** on read via `record.statusAt(now)` per §7.2;
 only the inputs above and the production-gate flag are stored.

@@ -108,6 +108,9 @@ class SessionController extends ChangeNotifier {
       // LEARNING_ENGINE.md §6 + §7: record per-skill mastery state. Wave 2
       // is device-scoped; the store is no-op when the exercise lacks the
       // Wave 1 metadata trio (older fixtures or item types not yet tagged).
+      // Wave 5 evaluator version is forwarded so the store can invalidate
+      // the §6.4 production gate per §12.3 when the evaluator semantics
+      // change under a previously-cleared learner.
       if (exercise.skillId != null && exercise.evidenceTier != null) {
         await LearnerSkillStore.recordAttempt(
           skillId: exercise.skillId!,
@@ -115,6 +118,7 @@ class SessionController extends ChangeNotifier {
           correct: response.correct,
           primaryTargetError: exercise.primaryTargetError,
           meaningFrame: exercise.meaningFrame,
+          evaluationVersion: response.evaluationVersion,
         );
       }
     } catch (e) {
