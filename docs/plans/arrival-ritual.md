@@ -4,34 +4,25 @@
 
 | Wave | Status |
 |---|---|
-| Onboarding 3-step ritual (Brief A) | **Shipped 2026-04-26** — `app/lib/screens/onboarding_arrival_ritual_screen.dart` |
-| First-exercise V2 hierarchy (Brief B) | Pending |
+| 3-step onboarding ritual (original Brief A) | **Superseded 2026-04-26** — first version shipped in `cea886f..bd0f021` but is being replaced by a 2-step direction. The new contract is below. |
+| 2-step onboarding + dashboard-as-home (current direction) | **Spec locked 2026-04-26**, design-shotgun in flight, implementation pending |
+| First-exercise V2 hierarchy (original Brief B) | Pending |
 | Motion polish (Brief C) | Onboarding step transitions shipped (shared-axis fade + slide, reduced-motion fallback). Lesson-intro / first-exercise motion pending. |
 | QA / design review (Brief D) | Pending |
 
-This document remains the contract for unshipped pieces. Sections that describe the shipped onboarding are still authoritative for behaviour expectations — keep them in sync if onboarding is ever refactored.
+## Direction Change Summary (2026-04-26)
 
-It translates the selected `Variant A / Arrival Ritual` concept into a screen-by-screen contract that implementation agents can ship without reopening the design decision.
+The first version of this spec ended onboarding with a `Handoff` step that pushed the learner directly into the lesson intro, explicitly bypassing the dashboard. The product owner reversed that decision after running the shipped flow:
 
-## Why This Direction Won
+- **Onboarding shrinks from 3 steps to 2.** The `Handoff` lesson-preview step is gone — its purpose (showing the upcoming lesson) is now part of the dashboard itself.
+- **Dashboard becomes the single home.** Both onboarding-final and post-summary `Done` route to the same dashboard. The learner has one place they always come back to.
+- **No more direct push from onboarding into the lesson intro.** Removes the "where am I?" disorientation when the learner finishes a lesson and lands somewhere they have never seen before.
 
-`Arrival Ritual` is the strongest option because it does three jobs at once:
-
-- gives the product a premium first impression;
-- teaches the learner what kind of app this is without feature spam;
-- ends in a direct handoff to the new lesson instead of dropping the learner back into a generic home state.
-
-It feels more intentional than the current onboarding and creates a cleaner bridge into the first exercise.
+The remainder of this document describes the new contract. The old 3-step copy is preserved below in *§Original 3-step contract (superseded)* for the audit trail only.
 
 ## Core Principle
 
-On first launch, the app should feel like it is **preparing a real lesson for the learner**.
-
-The onboarding is not a carousel of marketing slides. It is a short ritual:
-
-1. explain the promise;
-2. show what the app is assembling;
-3. hand the learner into today's lesson.
+On first launch, the app should feel like the product is **introducing itself with respect**, not preparing a transaction. Two short editorial steps are enough to set the tone — then the learner lands in the home they will return to every session.
 
 ## Flow Contract
 
@@ -40,18 +31,22 @@ The onboarding is not a carousel of marketing slides. It is a short ritual:
 ```text
 Onboarding Step 1 — Promise
   → Onboarding Step 2 — Assembly
-    → Onboarding Step 3 — Handoff
-      → LessonIntroScreen (new lesson)
-        → ExerciseScreen (first exercise)
+    → Dashboard (the single Home)
+      → LessonIntroScreen
+        → ExerciseScreen (first exercise) … → SummaryScreen
+          → Dashboard
 ```
 
 ### Returning launch
 
 ```text
-Home / Dashboard
+Dashboard
   → LessonIntroScreen
-    → ExerciseScreen
+    → ExerciseScreen … → SummaryScreen
+      → Dashboard
 ```
+
+The dashboard is the **only** home state. It is the destination of `Get started` from onboarding, of `Done` from summary, and of every fresh launch after onboarding has been seen.
 
 ## Full Screen Set
 
@@ -65,7 +60,7 @@ Home / Dashboard
 - warm editorial hero
 - one strong sentence about what the product does
 - three proof points max
-- progress indicator such as `Step 1 of 3`
+- progress indicator: `Step 1 of 2`
 
 **Tone**
 - calm
@@ -81,31 +76,32 @@ Home / Dashboard
 **Purpose**
 - Show what the app is about to do for the learner.
 - Make the flow feel constructed, not random.
+- End the ritual with a clear handoff into the dashboard.
 
 **Must show**
 - lesson-building metaphor
 - short explanation of rule → practice → review
 - visual sign that the lesson is being prepared
+- progress indicator: `Step 2 of 2`
+- final CTA copy: `Open my dashboard` (or equivalent — design-shotgun may propose alternatives)
 
 **Motion**
 - staged progress fill
 - mini-cards appear one by one as if the session is being assembled
 
-### 03. Onboarding Step 3 — Handoff
-
-**Purpose**
-- End onboarding with a concrete lesson already waiting.
-
-**Must show**
-- lesson title
-- level (`B2`)
-- exercise count
-- estimated duration
-- one-sentence learning promise
-
 **Hard rule**
-- the primary CTA goes directly into the lesson intro
-- no intermediate dashboard after this CTA
+- the primary CTA goes to the **dashboard**, never directly to the lesson intro
+- the seen-flag is persisted before navigation
+
+### 03. Dashboard (Home)
+
+This is the single home of the product. Behaviour for this wave matches what is already shipped: level chips, progress card for the configured lesson, `Start lesson` CTA, no other surfaces. Visual refinements may follow a separate design pass.
+
+The dashboard is **also the destination of post-lesson `Done`**. SummaryScreen pops back to the dashboard, not to onboarding and not to a separate post-lesson celebration screen.
+
+## Original 3-step contract (superseded)
+
+The first version of this spec defined a `Handoff` step that previewed the upcoming lesson and routed the final CTA directly into `LessonIntroScreen`, with the explicit hard rule "no intermediate dashboard after this CTA". That direction shipped on 2026-04-26 (commits `cea886f..bd0f021`) and was then reversed by the product owner the same day in favour of the 2-step + dashboard-as-home contract above. Code matching the old contract still exists in `app/lib/screens/onboarding_arrival_ritual_screen.dart` and will be replaced by the implementation that follows the design-shotgun output.
 
 ### 04. Lesson Intro Arrival
 

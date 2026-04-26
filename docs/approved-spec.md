@@ -69,34 +69,33 @@ Fixed linear sequence. No branching. No skipping. No adaptive reordering.
 
 ```
 HomeScreen
-  → First launch: 3-step onboarding (`Promise` → `Assembly` → `Handoff`)
-      → Lesson Intro / loading
-          → Exercise 1
-              → Submit answer
-              → Receive result (correct / incorrect + canonical answer + explanation)
-              → Next
-          → Exercise 2
-              ...
-          → Exercise N
-              → Submit answer
-              → Receive result
-  → Returning launch: Dashboard (level selector, progress card, "Start Lesson" CTA)
-      → Lesson Intro / loading
-          → Exercise 1
-              ...
-SummaryScreen
-  → Show score (X / N correct)
-  → Show coach's-note **debrief** (AI-generated diagnostic synthesis) when present;
-    deterministic fallback copy otherwise. Hides the legacy one-line conclusion.
-  → Show mistake review cards (incorrect answers only): prompt, canonical answer, explanation
-  → Done button → exit
+  → First launch: 2-step onboarding (`Promise` → `Assembly`)
+      → Dashboard (the single Home: level selector, progress card, "Start Lesson" CTA)
+          → Lesson Intro / loading
+              → Exercise 1
+                  → Submit answer
+                  → Receive result (correct / incorrect + canonical answer + explanation)
+                  → Next
+              → Exercise 2
+                  ...
+              → Exercise N
+                  → Submit answer
+                  → Receive result
+              → SummaryScreen
+                  → Show score (X / N correct)
+                  → Show coach's-note **debrief** (AI-generated when present;
+                    deterministic fallback otherwise; hides the legacy one-line
+                    conclusion when the debrief is shown)
+                  → Show mistake review cards (incorrect answers only)
+                  → Done button → back to Dashboard
+  → Returning launch: Dashboard (same as above)
 ```
 
 **Rules:**
 - User cannot go back to previous exercises.
 - User cannot skip an exercise.
-- First launch uses a step-based onboarding and then lands directly in the lesson intro for the new lesson.
-- Returning users may enter through the dashboard state.
+- First launch uses a 2-step onboarding that ends in the dashboard. The dashboard is the single Home — it is also the destination of `Done` from SummaryScreen.
+- Returning users land on the dashboard directly.
 - Each exercise shows result immediately after submission.
 - No timers. No streaks. No points. No badges.
 - Lesson Complete screen shows raw score only.

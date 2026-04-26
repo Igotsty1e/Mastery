@@ -27,17 +27,20 @@ HomeScreen
 
 `HomeScreen` carries two distinct states. The split below is authoritative — keep these subsections in sync with the code in `app/lib/screens/home_screen.dart` and with `docs/plans/arrival-ritual.md`.
 
-#### First-launch onboarding — *Arrival Ritual* (shipped)
+#### First-launch onboarding — *Arrival Ritual* (transitional)
 
-Status: shipped 2026-04-26. Source of truth: `docs/plans/arrival-ritual.md`. Implementation: `app/lib/screens/onboarding_arrival_ritual_screen.dart`.
+Status: 3-step version shipped 2026-04-26 in `cea886f..bd0f021`; superseded the same day by a 2-step + dashboard-as-home contract. The shipped code still matches the 3-step direction; the new design pass (`/design-shotgun` output → implementation) will replace it. Source of truth: `docs/plans/arrival-ritual.md`. Implementation: `app/lib/screens/onboarding_arrival_ritual_screen.dart`.
 
-- 3-step ritual: `Promise` → `Assembly` → `Handoff`. Each step lives as a private widget in the onboarding screen file so copy, layout, and motion can be tuned per step.
-- Step indicator (`STEP N OF 3` + animated progress dots) and Back link from step 2 onward.
-- Step transitions: shared-axis fade + slight rise; collapses to opacity-only when `MediaQuery.disableAnimations` is true.
-- `Handoff` step fetches the configured lesson via `GET /lessons/{lesson_id}` and renders a preview card (title, level pill, exercise count, estimated duration ~30s/exercise, one-sentence promise grounded in title + level). Soft failure on fetch — preview falls back to a calm note, CTA stays enabled.
-- Final-step CTA writes `onboarding_arrival_ritual_seen_v1=true` to `LocalProgressStore`, then `Navigator.push`es `LessonIntroScreen` directly. The dashboard appears only when the lesson chain pops back. The hard rule «no detour through the dashboard» is enforced by HomeScreen, not the onboarding screen.
+**Currently in code (3-step, will be replaced):**
+- 3-step ritual: `Promise` → `Assembly` → `Handoff`. Step indicator + Back link, shared-axis transitions, persisted seen-flag, final CTA → `LessonIntroScreen` directly.
 
-> **First-exercise V2 (Brief B in `docs/plans/arrival-ritual.md`) is still pending.** Onboarding wave only.
+**Locked next direction (2-step + dashboard-as-home):**
+- 2 steps: `Promise` → `Assembly`. Final CTA goes to the **dashboard**, never to the lesson intro.
+- Dashboard becomes the single home: it is the destination of `Get started` from onboarding, of `Done` from summary, and of every returning launch.
+- Same persisted `onboarding_arrival_ritual_seen_v1` flag.
+- Visual treatment to be set by the design-shotgun pass currently in flight.
+
+> **First-exercise V2 (Brief B in `docs/plans/arrival-ritual.md`) is still pending.**
 
 #### Returning launch — Dashboard (shipped)
 

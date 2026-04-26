@@ -309,16 +309,14 @@ Method note: this list uses public Android install bands from Google Play as the
 - Large hero wordmark or title, one elegant supporting sentence, 3 proof points max.
 - Use a subtle illustration or study still-life near the top or side.
 - The dashboard state should show level, lesson progress, and one main CTA.
-- **Chosen V2 direction:** `Arrival Ritual`.
-- On first launch, onboarding should run as a **3-step ritual**:
+- **Chosen V2 direction:** `Arrival Ritual` (currently in revision — see `docs/plans/arrival-ritual.md` for the locked 2-step + dashboard-as-home contract).
+- On first launch, onboarding should run as a **2-step ritual**:
   1. `Promise`
   2. `Assembly`
-  3. `Handoff`
-- The final onboarding CTA must land directly in the new lesson intro. Do not bounce the learner through the dashboard after the ritual.
-- Returning users may still use the dashboard/home state, but first launch should feel more editorial and ceremonial than operational.
+- The final onboarding CTA lands on the **dashboard**. The dashboard is the single Home — it is also where `Done` from SummaryScreen brings the learner back. There is no separate "post-lesson home" surface.
 - Each onboarding step must be individually addressable in implementation so copy, art, and motion can be tuned step-by-step.
-- Motion should make the product feel like it is calmly preparing the lesson: soft float, staged rise, and a clean handoff into the lesson.
-- The final onboarding step should already preview the upcoming lesson title, level, exercise count, and one-sentence learning promise.
+- Motion should make the product feel like it is calmly preparing the workspace: soft float, staged rise, clean handoff into the dashboard.
+- *Historical note:* the original 3-step direction (Promise → Assembly → Handoff, ending directly in the lesson intro) shipped 2026-04-26 (`cea886f..bd0f021`) and was replaced the same day. The decision log row is still accurate for that decision; the new direction supersedes the routing rule.
 
 ### Lesson Intro
 - Treat this like opening a premium lesson notebook.
