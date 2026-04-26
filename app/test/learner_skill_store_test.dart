@@ -198,6 +198,83 @@ void main() {
       final rec = await LearnerSkillStore.getRecord(_skillA);
       expect(rec.productionGateCleared, isFalse);
     });
+
+    // §12.3: production gate must invalidate when evaluator semantics
+    // move under a previously-cleared learner. Evaluator version pivot.
+    test('§12.3 invalidation: gate clears + restamps to current version on bump', () async {
+      // Clear the gate at version 1
+      var rec = await LearnerSkillStore.recordAttempt(
+        skillId: _skillA,
+        evidenceTier: EvidenceTier.strongest,
+        correct: true,
+        meaningFrame: 'context',
+        evaluationVersion: 1,
+      );
+      expect(rec!.productionGateCleared, isTrue);
+      expect(rec.gateClearedAtVersion, 1);
+
+      // A subsequent attempt with a HIGHER evaluator version invalidates
+      // the gate. The current attempt (medium correct, not strongest)
+      // does not re-clear it, so it stays cleared = false.
+      rec = await LearnerSkillStore.recordAttempt(
+        skillId: _skillA,
+        evidenceTier: EvidenceTier.medium,
+        correct: true,
+        evaluationVersion: 2,
+      );
+      expect(rec!.productionGateCleared, isFalse);
+      expect(rec.gateClearedAtVersion, isNull);
+    });
+
+    test('§12.3: same-version attempt does NOT invalidate the gate', () async {
+      await LearnerSkillStore.recordAttempt(
+        skillId: _skillA,
+        evidenceTier: EvidenceTier.strongest,
+        correct: true,
+        meaningFrame: 'context',
+        evaluationVersion: 1,
+      );
+      final rec = await LearnerSkillStore.recordAttempt(
+        skillId: _skillA,
+        evidenceTier: EvidenceTier.medium,
+        correct: true,
+        evaluationVersion: 1,
+      );
+      expect(rec!.productionGateCleared, isTrue);
+      expect(rec.gateClearedAtVersion, 1);
+    });
+
+    test('§12.3: null evaluationVersion leaves gate version stamp untouched', () async {
+      // Pre-Wave-5 caller path — no evaluator version available.
+      await LearnerSkillStore.recordAttempt(
+        skillId: _skillA,
+        evidenceTier: EvidenceTier.strongest,
+        correct: true,
+        meaningFrame: 'context',
+        evaluationVersion: 1,
+      );
+      final rec = await LearnerSkillStore.recordAttempt(
+        skillId: _skillA,
+        evidenceTier: EvidenceTier.medium,
+        correct: false,
+        primaryTargetError: TargetError.contrast,
+        // evaluationVersion intentionally omitted
+      );
+      expect(rec!.productionGateCleared, isTrue);
+      expect(rec.gateClearedAtVersion, 1);
+    });
+
+    test('§12.3: gate cleared on a fresh strongest+correct stamps the version', () async {
+      final rec = await LearnerSkillStore.recordAttempt(
+        skillId: _skillA,
+        evidenceTier: EvidenceTier.strongest,
+        correct: true,
+        meaningFrame: 'context',
+        evaluationVersion: 7,
+      );
+      expect(rec!.productionGateCleared, isTrue);
+      expect(rec.gateClearedAtVersion, 7);
+    });
   });
 
   group('LearnerSkillStore index', () {
