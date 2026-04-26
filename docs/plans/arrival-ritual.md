@@ -267,7 +267,7 @@ Use these as the starting tasks for the next implementation wave. Give each agen
 
 **Task**
 
-Implement the approved `Arrival Ritual` onboarding from `docs/onboarding-first-exercise-arrival-ritual.md` and `DESIGN.md`.
+Implement the approved `Arrival Ritual` onboarding from `docs/plans/arrival-ritual.md` and `DESIGN.md`.
 
 Scope:
 - Replace the current first-launch onboarding with a 3-step sequence: `Promise`, `Assembly`, `Handoff`.
@@ -296,7 +296,7 @@ Acceptance:
 
 **Task**
 
-Implement the first-exercise visual pass from `docs/onboarding-first-exercise-arrival-ritual.md` and `DESIGN.md`.
+Implement the first-exercise visual pass from `docs/plans/arrival-ritual.md` and `DESIGN.md`.
 
 Scope:
 - quieter chrome
@@ -348,7 +348,7 @@ Acceptance:
 
 Verify the shipped onboarding and first-exercise implementation against:
 - `DESIGN.md`
-- `docs/onboarding-first-exercise-arrival-ritual.md`
+- `docs/plans/arrival-ritual.md`
 - `docs/mobile-architecture.md`
 
 QA checklist:

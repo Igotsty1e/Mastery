@@ -183,7 +183,7 @@ Rules:
   shipping the lesson without the asset breaks the lesson, so the
   pre-merge QA must catch it.
 - `brief` / `dont_show` / `risk` are pipeline metadata — see
-  `docs/implementation-scope.md` Workstream I and the gen-image script.
+  `docs/plans/roadmap.md` Workstream I and the gen-image script.
   Stripped before client response.
 
 ## 3. Attempt Payload Shape

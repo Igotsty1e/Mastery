@@ -764,7 +764,7 @@ This is a deliberate scope decision, not a deferral:
 
 Authors and planners must not introduce speaking-based exercises, screens, or
 scoring until this scope decision is explicitly reversed in this document and
-in `docs/implementation-scope.md`.
+in `docs/plans/roadmap.md`.
 
 ---
 

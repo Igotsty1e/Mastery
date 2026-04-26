@@ -525,7 +525,7 @@ This is a deliberate product decision:
   asking the learner to produce sound
 
 If this position changes, this section must be revised first, then
-`exercise_structure.md §5.7` and `docs/implementation-scope.md`. Until then,
+`exercise_structure.md §5.7` and `docs/plans/roadmap.md`. Until then,
 no speaking-based exercise, screen, scoring path, or backend payload should
 be introduced.
 

@@ -17,7 +17,7 @@
  *   OPENAI_API_KEY=sk-... npm run gen:audio -- --force      # regenerate all
  *   OPENAI_API_KEY=sk-... npm run gen:audio -- --dry-run    # show plan only
  *
- * Authoritative spec: docs/implementation-scope.md §3 Workstream B.
+ * Authoritative spec: docs/plans/roadmap.md §3 Workstream B.
  */
 import fs from 'node:fs/promises';
 import path from 'node:path';

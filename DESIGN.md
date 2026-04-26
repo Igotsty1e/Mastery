@@ -17,11 +17,11 @@
 ## Document Map
 - `DESIGN.md` owns visual language, interaction tone, layout, motion, and component behavior.
 - `docs/design-mockups/` owns screen-level composition reference.
-- `docs/onboarding-first-exercise-arrival-ritual.md` owns the selected V2 onboarding and first-exercise contract derived from the approved design exploration.
+- `docs/plans/arrival-ritual.md` owns the selected V2 onboarding and first-exercise contract derived from the approved design exploration.
 - `GRAM_STRATEGY.md` owns the top-level pedagogy for how Mastery teaches language.
 - `exercise_structure.md` owns the exercise system and authoring rules derived from that pedagogy.
 - `exercise_structure.md §2.9 Visual Context Layer` decides whether a given exercise should remain text-only or may use an image.
-- `docs/content-unit-u01-blueprint.md` owns the current lesson-authoring plan.
+- `docs/content/unit-u01-blueprint.md` owns the current lesson-authoring plan.
 - All instructional content for Mastery must be created or explicitly reviewed using the `english-grammar-methodologist` skill; `DESIGN.md` does not replace that content-authoring workflow.
 
 ## Market Reference Audit
@@ -300,7 +300,7 @@ Method note: this list uses public Android install bands from Google Play as the
 - Failure state (image fetch fails): replace the image area with a quiet `bg.surface-alt` block displaying the `alt` text in `body-sm`, italic, `text.tertiary`. The exercise stays usable — image support is never a hard requirement.
 - The image must obey the role from the schema (`scene_setting | context_support | disambiguation | listening_support`); roles do not change the visual rendering, only the authoring permission.
 - The on-wire `alt` field is the accessibility label and the failure-state caption. Authors must always write a meaningful `alt` even when the image is decorative-feeling, because screen readers will speak it.
-- Generated images are pre-rendered offline by the kie.ai-driven pipeline (see `docs/implementation-scope.md` Workstream I) and served from the backend at `/images/{lesson_id}/{exercise_id}.png` with a one-year immutable cache header.
+- Generated images are pre-rendered offline by the kie.ai-driven pipeline (see `docs/plans/roadmap.md` Workstream I) and served from the backend at `/images/{lesson_id}/{exercise_id}.png` with a one-year immutable cache header.
 
 ## Screen-Level Direction
 

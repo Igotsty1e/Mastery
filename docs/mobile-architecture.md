@@ -8,7 +8,7 @@ Flutter (Dart). Single codebase. Currently runnable local target: **Flutter web*
 
 - Canonical visual spec: `DESIGN.md`
 - Canonical composition reference: `docs/design-mockups/`
-- Approved next-wave screen contract (onboarding + first exercise V2): `docs/onboarding-first-exercise-arrival-ritual.md`
+- Approved next-wave screen contract (onboarding + first exercise V2): `docs/plans/arrival-ritual.md`
 - Flutter theme implementation: `app/lib/theme/mastery_theme.dart`
 - Reusable branded UI primitives: `app/lib/widgets/mastery_widgets.dart`
 
@@ -25,11 +25,11 @@ HomeScreen
 
 ### HomeScreen
 
-`HomeScreen` carries two distinct states. The split below is authoritative — keep these subsections in sync with the code in `app/lib/screens/home_screen.dart` and with `docs/onboarding-first-exercise-arrival-ritual.md`.
+`HomeScreen` carries two distinct states. The split below is authoritative — keep these subsections in sync with the code in `app/lib/screens/home_screen.dart` and with `docs/plans/arrival-ritual.md`.
 
 #### First-launch onboarding — *Arrival Ritual* (proposed, not yet shipped)
 
-Status: spec approved, implementation pending. Source of truth: `docs/onboarding-first-exercise-arrival-ritual.md`.
+Status: spec approved, implementation pending. Source of truth: `docs/plans/arrival-ritual.md`.
 
 - 3 step ritual: `Promise` → `Assembly` → `Handoff`.
 - Each step is independently editable (copy, art, motion).
@@ -68,7 +68,7 @@ Renders one exercise at a time. Each exercise card shows an instruction band at 
 | `sentence_correction` | Multi-line text field; original sentence shown above |
 
 - Instruction is always shown, required, and sourced from the exercise `instruction` field.
-- The first exercise should follow the approved V2 direction in `docs/onboarding-first-exercise-arrival-ritual.md`: quieter chrome, stronger prompt hierarchy, and a more premium focus tunnel.
+- The first exercise should follow the approved V2 direction in `docs/plans/arrival-ritual.md`: quieter chrome, stronger prompt hierarchy, and a more premium focus tunnel.
 - Submit button disabled until non-empty input provided.
 - On submit: POST to `/lessons/{lesson_id}/answers`.
 - Show loading indicator during POST.

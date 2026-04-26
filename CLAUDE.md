@@ -67,7 +67,7 @@ Require explicit user intent before any destructive action.
 
 - `/Users/ivankhanaev/Mastery/DESIGN.md` is the canonical source of truth for all visual design decisions: color system, typography, spacing, component specs, motion, and screen-level direction.
 - `/Users/ivankhanaev/Mastery/docs/design-mockups/` is the canonical **visual reference** for screen-level composition. Eight mobile mockups (390×844): home onboarding/dashboard, lesson intro, three exercise types (multiple choice, fill-the-blank, sentence correction), result, summary. Built directly against DESIGN.md tokens with real lesson content from `backend/data/lessons/b2-lesson-001.json`.
-- `/Users/ivankhanaev/Mastery/docs/onboarding-first-exercise-arrival-ritual.md` is the approved screen contract for the next onboarding and first-exercise redesign wave. Use it together with `DESIGN.md` before changing those flows.
+- `/Users/ivankhanaev/Mastery/docs/plans/arrival-ritual.md` is the approved screen contract for the next onboarding and first-exercise redesign wave. Use it together with `DESIGN.md` before changing those flows.
 - Open the gallery: `cd docs/design-mockups && python3 -m http.server 8765` then `http://127.0.0.1:8765/`.
 - Use both together: DESIGN.md = tokens (color, typography, spacing, motion); design-mockups/ = composition (layout, hierarchy, copy). When implementing or reviewing UI, cross-reference both.
 - Use these as the primary reference whenever evaluating, implementing, or reviewing any UI or design work.
@@ -78,7 +78,7 @@ Require explicit user intent before any destructive action.
 
 - `/Users/ivankhanaev/Mastery/GRAM_STRATEGY.md` is the top-level source of truth for how Mastery teaches English grammar and usage.
 - `/Users/ivankhanaev/Mastery/exercise_structure.md` is the canonical source of truth for exercise types, sequencing, authoring standards, runtime mapping, and examples. It is subordinate to `GRAM_STRATEGY.md`.
-- `/Users/ivankhanaev/Mastery/docs/content-unit-u01-blueprint.md` is the active unit-level authoring plan that turns that pedagogy into the next shippable lesson sequence.
+- `/Users/ivankhanaev/Mastery/docs/content/unit-u01-blueprint.md` is the active unit-level authoring plan that turns that pedagogy into the next shippable lesson sequence.
 - Use it as the primary reference whenever generating, revising, reviewing, or expanding educational content for the app.
 - Treat it as authoritative for the **content layer**, not for unsupported runtime features.
 - If content guidance conflicts with the shipped app architecture or current MVP constraints, keep the content intent but adapt it to the technical source of truth in:
@@ -99,6 +99,21 @@ Require explicit user intent before any destructive action.
 **Every shipped change must update every documentation file it touches — in the same session, not as a follow-up task.**
 
 Documentation drift is a real bug, not cosmetic. A field removed from code but kept in docs misleads the next reader (human or agent) more than no doc at all.
+
+### Doc layer rule (where new docs live)
+
+The doc system is layered. When adding a new document, place it by **layer**, not by topic:
+
+| Layer | Where | What goes there |
+|---|---|---|
+| **Canon** | repo root (`/`) | Slow-changing source-of-truth: `CLAUDE.md`, `DESIGN.md`, `GRAM_STRATEGY.md`, `exercise_structure.md`. Almost always read into context. |
+| **Contracts** | `docs/*.md` (flat) | Source of truth for current shipped behaviour. Updated in lockstep with each shipped feature. `approved-spec.md`, `backend-contract.md`, `mobile-architecture.md`, `content-contract.md`, `qa-golden-cases.md`. |
+| **Plans** | `docs/plans/` | Approved next-wave specs and roadmaps. Promoted out (deleted or archived) once shipped. |
+| **Authoring** | `docs/content/` | Per-unit lesson blueprints and authoring artifacts. |
+| **References** | `docs/design-mockups/` | Visual composition reference for shipped layouts. |
+| **History** | `docs/archive/` | Superseded specs, one-shot reviews, planning artifacts kept for the audit trail only. **Never** used to decide current behaviour. See `docs/archive/README.md` before consulting any file there. |
+
+If the new doc doesn't fit any of these, you probably don't need a new doc — extend an existing one. The full live map is `docs/README.md`; update it whenever a doc is added, renamed, or archived.
 
 ### How to find which docs to update
 

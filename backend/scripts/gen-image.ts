@@ -22,7 +22,7 @@
  *   POST https://api.kie.ai/api/v1/gpt4o-image/generate
  *   GET  https://api.kie.ai/api/v1/gpt4o-image/record-info?taskId=...
  *
- * Authoritative spec: docs/implementation-scope.md Workstream I.
+ * Authoritative spec: docs/plans/roadmap.md Workstream I.
  */
 import fs from 'node:fs/promises';
 import path from 'node:path';

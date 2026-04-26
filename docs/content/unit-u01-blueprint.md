@@ -297,7 +297,7 @@ For the first shipped lesson:
     (`-ing` vs `to + infinitive`) are large phonetic distinctions, not the
     subtle minimal-pair contrasts that listening items are best at; reserve
     listening items for tense/aspect units (e.g. present perfect vs past
-    simple) once the audio widget ships per `docs/implementation-scope.md §3`
+    simple) once the audio widget ships per `docs/plans/roadmap.md §3`
 - no hints
 - every item must include a rule-specific explanation
 - explanations must follow the 3-part contract in
