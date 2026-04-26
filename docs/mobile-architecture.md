@@ -128,6 +128,17 @@ Key data classes (see `app/lib/models/`):
 
 Session state is managed by `SessionController` / `SessionState` (see `app/lib/session/`). Discarded on exit. Client never stores `accepted_answers`, `accepted_corrections`, or `correct_option_id`.
 
+### Wave 1 engine metadata (received but unused)
+
+`GET /lessons/{lesson_id}` may include the optional Wave 1 engine
+metadata fields per `docs/content-contract.md §1.2` (`skill_id`,
+`primary_target_error`, `evidence_tier`, `meaning_frame`). The current
+client **ignores** these fields — no UI surface, no behaviour change.
+The Flutter exercise model is not required to deserialise them. They
+arrive on the wire so the future Decision Engine and Transparency Layer
+waves (`docs/plans/learning-engine-mvp-2.md` Waves 3 and 4) can read
+them without a second roundtrip.
+
 ## Navigation
 
 Linear push-based navigation. No tabs. No drawer. No back stack access after exercise submission.

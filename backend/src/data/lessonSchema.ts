@@ -6,6 +6,29 @@ const ExerciseFeedbackSchema = z.object({
   explanation: z.string(),
 });
 
+// Learning Engine Wave 1 metadata (additive). Every field is optional during
+// the Wave 1 backfill; meaning_frame becomes required when evidence_tier is
+// "strongest" (LEARNING_ENGINE.md §6.5). Runtime ignores these fields beyond
+// validation; GET /lessons/:lessonId passes them through unchanged so the
+// future Mastery Model + Decision Engine waves can consume them.
+export const TargetErrorSchema = z.enum([
+  'conceptual_error',
+  'form_error',
+  'contrast_error',
+  'careless_error',
+  'transfer_error',
+  'pragmatic_error',
+]);
+
+export const EvidenceTierSchema = z.enum(['weak', 'medium', 'strong', 'strongest']);
+
+const EngineMetadataShape = {
+  skill_id: z.string().min(1).optional(),
+  primary_target_error: TargetErrorSchema.optional(),
+  evidence_tier: EvidenceTierSchema.optional(),
+  meaning_frame: z.string().min(1).optional(),
+};
+
 // Visual Context Layer per exercise_structure.md §2.9. Authoring metadata
 // (brief / dont_show / risk) lives inline so authors edit one file; the route
 // layer strips authoring-only fields before sending the public payload.
@@ -32,6 +55,7 @@ const FillBlankExerciseBaseSchema = z.object({
   accepted_answers: z.array(z.string()).min(1),
   image: ExerciseImageSchema.optional(),
   feedback: ExerciseFeedbackSchema.optional(),
+  ...EngineMetadataShape,
 });
 
 const MultipleChoiceOptionSchema = z.object({
@@ -48,6 +72,7 @@ const MultipleChoiceExerciseBaseSchema = z.object({
   correct_option_id: z.enum(['a', 'b', 'c', 'd']),
   image: ExerciseImageSchema.optional(),
   feedback: ExerciseFeedbackSchema.optional(),
+  ...EngineMetadataShape,
 });
 
 const SentenceCorrectionExerciseBaseSchema = z.object({
@@ -58,6 +83,7 @@ const SentenceCorrectionExerciseBaseSchema = z.object({
   accepted_corrections: z.array(z.string()).min(1),
   image: ExerciseImageSchema.optional(),
   feedback: ExerciseFeedbackSchema.optional(),
+  ...EngineMetadataShape,
 });
 
 const VoiceSchema = z.enum(['nova', 'onyx']);
@@ -77,6 +103,7 @@ const ListeningDiscriminationExerciseBaseSchema = z.object({
   correct_option_id: z.enum(['a', 'b', 'c', 'd']),
   image: ExerciseImageSchema.optional(),
   feedback: ExerciseFeedbackSchema.optional(),
+  ...EngineMetadataShape,
 });
 
 const ExerciseBaseSchema = z.discriminatedUnion('type', [
@@ -146,6 +173,18 @@ export const ExerciseSchema = ExerciseBaseSchema.superRefine((value, ctx) => {
         path: ['audio', 'transcript'],
       });
     }
+  }
+
+  // LEARNING_ENGINE.md §6.5: strongest-tier items must declare a
+  // meaning_frame. The field is optional for every other tier and is
+  // optional in the absence of evidence_tier (Wave 1 backfill).
+  if (value.evidence_tier === 'strongest' && !value.meaning_frame) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message:
+        'meaning_frame is required when evidence_tier is "strongest"',
+      path: ['meaning_frame'],
+    });
   }
 });
 

@@ -69,7 +69,7 @@ Engine-level statement of the same rule:
 > **1 exercise = 1 primary skill + 1 primary target error.**
 
 The metadata fields that operationalise this rule
-(`primary_skill_id`, `primary_target_error`, `evidence_tier`, and —
+(`skill_id`, `primary_target_error`, `evidence_tier`, and —
 where applicable — `meaning_frame`) are **not yet required** in shipped
 fixtures. They are introduced as **optional fields** in
 `docs/plans/learning-engine-mvp-2.md` Wave 1 (the metadata layer), become
@@ -827,7 +827,7 @@ This family exists for items like:
 
 ### Hard rules
 
-- one `primary_skill_id` for the whole item
+- one `skill_id` for the whole item
 - one `primary_target_error` for the whole item
 - every error in the item must roll up to that primary — the engine must
   reject items where errors hit different primary skills or different

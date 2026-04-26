@@ -14,6 +14,9 @@
     {
       "exercise_id": "a1b2c3d4-0002-4000-8000-000000000031",
       "type": "fill_blank",
+      "skill_id": "present-perfect-continuous-vs-simple",
+      "primary_target_error": "contrast_error",
+      "evidence_tier": "medium",
       "instruction": "Complete the gap with the correct form of the verb in brackets.",
       "prompt": "I ___ (work) here for five years.",
       "accepted_answers": ["have been working", "'ve been working"],
@@ -24,6 +27,9 @@
     {
       "exercise_id": "a1b2c3d4-0002-4000-8000-000000000032",
       "type": "fill_blank",
+      "skill_id": "present-perfect-continuous-vs-simple",
+      "primary_target_error": "contrast_error",
+      "evidence_tier": "medium",
       "instruction": "Complete the gap with the correct form of the verb in brackets.",
       "prompt": "She ___ (study) English since 2020.",
       "accepted_answers": ["has been studying", "'s been studying"],
@@ -34,6 +40,9 @@
     {
       "exercise_id": "a1b2c3d4-0002-4000-8000-000000000033",
       "type": "multiple_choice",
+      "skill_id": "present-perfect-continuous-vs-simple",
+      "primary_target_error": "contrast_error",
+      "evidence_tier": "weak",
       "instruction": "Choose the correct option.",
       "prompt": "Look — I ___ all the dishes. The kitchen is clean now.",
       "options": [
@@ -50,6 +59,9 @@
     {
       "exercise_id": "a1b2c3d4-0002-4000-8000-000000000034",
       "type": "fill_blank",
+      "skill_id": "present-perfect-continuous-vs-simple",
+      "primary_target_error": "contrast_error",
+      "evidence_tier": "medium",
       "instruction": "Complete the gap with the correct form of the verb in brackets.",
       "prompt": "We ___ (clean) all the windows. They sparkle now.",
       "accepted_answers": ["have cleaned", "'ve cleaned"],
@@ -60,6 +72,9 @@
     {
       "exercise_id": "a1b2c3d4-0002-4000-8000-000000000035",
       "type": "multiple_choice",
+      "skill_id": "present-perfect-continuous-vs-simple",
+      "primary_target_error": "contrast_error",
+      "evidence_tier": "weak",
       "instruction": "Choose the correct option.",
       "prompt": "I ___ this email three times — please read it carefully.",
       "options": [
@@ -76,6 +91,9 @@
     {
       "exercise_id": "a1b2c3d4-0002-4000-8000-000000000036",
       "type": "multiple_choice",
+      "skill_id": "present-perfect-continuous-vs-simple",
+      "primary_target_error": "contrast_error",
+      "evidence_tier": "weak",
       "instruction": "Choose the correct option.",
       "prompt": "He ___ to play the guitar for ten years.",
       "options": [
@@ -92,6 +110,9 @@
     {
       "exercise_id": "a1b2c3d4-0002-4000-8000-000000000037",
       "type": "multiple_choice",
+      "skill_id": "present-perfect-continuous-vs-simple",
+      "primary_target_error": "contrast_error",
+      "evidence_tier": "weak",
       "instruction": "Choose the correct option.",
       "prompt": "Welcome back! I ___ for you for an hour.",
       "options": [
@@ -117,6 +138,9 @@
     {
       "exercise_id": "a1b2c3d4-0002-4000-8000-000000000038",
       "type": "listening_discrimination",
+      "skill_id": "present-perfect-continuous-vs-simple",
+      "primary_target_error": "contrast_error",
+      "evidence_tier": "weak",
       "instruction": "Listen and choose what you hear.",
       "audio": {
         "url": "/audio/a1b2c3d4-0002-4000-8000-000000000001/a1b2c3d4-0002-4000-8000-000000000038.mp3",
@@ -137,6 +161,9 @@
     {
       "exercise_id": "a1b2c3d4-0002-4000-8000-000000000039",
       "type": "sentence_correction",
+      "skill_id": "present-perfect-continuous-vs-simple",
+      "primary_target_error": "form_error",
+      "evidence_tier": "strong",
       "instruction": "Rewrite the sentence correctly.",
       "prompt": "I have working in this company for ten years.",
       "accepted_corrections": [
@@ -149,6 +176,9 @@
     {
       "exercise_id": "a1b2c3d4-0002-4000-8000-00000000003a",
       "type": "multiple_choice",
+      "skill_id": "present-perfect-continuous-vs-simple",
+      "primary_target_error": "contrast_error",
+      "evidence_tier": "weak",
       "instruction": "Choose the correct option.",
       "prompt": "Look how exhausted he is — he ___ all morning.",
       "options": [

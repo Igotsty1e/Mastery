@@ -1,0 +1,50 @@
+{
+  "version": "1",
+  "engine_spec_ref": "LEARNING_ENGINE.md §4 Skill Model",
+  "notes": "Initial skill registry covering only the two shipped B2 lessons. Skills are deliberately narrow: each one is a single rule decision, defensible in one sentence, and supported by ≥10 items of evidence in the shipped bank. Do not extend by adding broad vague skills — extend by adding the skill the next shipped lesson actually teaches.",
+  "skills": [
+    {
+      "skill_id": "verb-ing-after-gerund-verbs",
+      "title": "Verb + -ing after gerund-taking verbs",
+      "description": "After enjoy, avoid, suggest, mind, keep, finish (and consider in this cluster), the next verb takes the -ing form, not to + infinitive.",
+      "cefr_level": "B2",
+      "prerequisites": [],
+      "contrasts_with": [],
+      "target_errors": [
+        "contrast_error",
+        "form_error",
+        "conceptual_error"
+      ],
+      "mastery_signals": [
+        "weak",
+        "medium",
+        "strong",
+        "strongest"
+      ],
+      "lesson_refs": [
+        "a1b2c3d4-0001-4000-8000-000000000001"
+      ]
+    },
+    {
+      "skill_id": "present-perfect-continuous-vs-simple",
+      "title": "Present perfect continuous vs simple",
+      "description": "Choose have/has been + verb-ing when the focus is duration or an ongoing action, and have/has + past participle when the focus is a completed result.",
+      "cefr_level": "B2",
+      "prerequisites": [],
+      "contrasts_with": [],
+      "target_errors": [
+        "contrast_error",
+        "form_error"
+      ],
+      "mastery_signals": [
+        "weak",
+        "medium",
+        "strong",
+        "strongest"
+      ],
+      "lesson_refs": [
+        "a1b2c3d4-0002-4000-8000-000000000001"
+      ]
+    }
+  ]
+}

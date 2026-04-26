@@ -118,32 +118,44 @@ state. Within a wave, sub-tasks may parallelise.
 **Goal:** every shipped item declares the engine metadata the rest of the
 plan depends on. No runtime behaviour change.
 
+**Status (engineering side):** schema, registry loader, and route
+pass-through landed on branch
+`codex/learning-engine-wave1-metadata`. Optional engine metadata fields
+are now part of `LessonSchema` (`backend/src/data/lessonSchema.ts`); the
+skills registry loader/validator lives in
+`backend/src/data/skills.ts`; `GET /lessons/{lesson_id}` passes the new
+fields through unchanged via
+`backend/src/data/exerciseProjection.ts`. Tests cover the schema, the
+registry, and the route projection. **Content side (`backend/data/skills.json`,
+metadata backfill on shipped lesson fixtures) is owned by the
+english-grammar-methodologist track and lands in the same wave.**
+
 Tasks:
 
-- extend the lesson JSON schema in `docs/content-contract.md` to add
-  optional fields on every `Exercise`. **Until Wave 1 lands these fields
-  in `docs/content-contract.md`, none of them are required on shipped
-  fixtures, and currently shipped lessons in `backend/data/lessons/` are
-  not expected to carry them.** Once Wave 1 ships:
+- ✅ extend the lesson JSON schema in `docs/content-contract.md` to add
+  optional fields on every `Exercise`. The fields below are now declared
+  in `docs/content-contract.md §1.2` and validated by
+  `LessonSchema`:
   - `skill_id` (string, required for content **authored after Wave 1
     lands**; optional during the one-shot backfill of pre-Wave-1
     fixtures)
   - `primary_target_error` (enum from `LEARNING_ENGINE.md §5`)
   - `evidence_tier` (`weak | medium | strong | strongest`)
   - `meaning_frame` (string, required only when
-    `evidence_tier == "strongest"`)
-- declare an initial `skills.json` registry (skill graph entries with
-  `skill_id`, `title`, `cefr_level`, `prerequisites[]`, `contrasts_with[]`,
-  `target_errors[]`, `mastery_signals[]`)
-- backfill metadata for shipped fixtures in `backend/data/lessons/`
-  starting with `b2-lesson-001.json`
-- backend ignores the new fields; serves them through to the client
+    `evidence_tier == "strongest"` — enforced by schema)
+- ✅ declare an initial `skills.json` registry contract (loader,
+  validator, and tests; the populated file is authored by the
+  methodologist track)
+- ⏳ backfill metadata for shipped fixtures in `backend/data/lessons/`
+  starting with `b2-lesson-001.json` (methodologist-owned)
+- ✅ backend ignores the new fields; serves them through to the client
   unchanged so future client work has the data
-- update `docs/content-contract.md` to document the new fields as optional
-  for MVP2 (no breaking change)
+- ✅ update `docs/content-contract.md` to document the new fields as
+  optional for MVP2 (no breaking change)
 
 Exit criteria:
-- every shipped exercise carries valid metadata
+- every shipped exercise carries valid metadata (gated on the
+  methodologist backfill)
 - `docs/content-contract.md` describes the new fields
 - runtime behaviour identical to pre-wave
 

@@ -38,6 +38,48 @@ Rules:
 Authors who do not need a contrast highlight should leave the strings
 unmarked; the parser falls back to a plain text rendering.
 
+## 1.2 Learning Engine Metadata (Wave 1, additive)
+
+Every `Exercise` may carry the optional engine metadata fields below. They
+were introduced by `docs/plans/learning-engine-mvp-2.md` Wave 1 and are
+additive — the runtime ignores them today, validates them at lesson-load
+time, and passes them through unchanged on `GET /lessons/{lesson_id}` so
+later waves (Mastery Model, Decision Engine, Transparency Layer) can
+consume them.
+
+```json
+{
+  "skill_id": "string (registry id, e.g. 'verbs.suggest_ing')",
+  "primary_target_error": "conceptual_error | form_error | contrast_error | careless_error | transfer_error | pragmatic_error",
+  "evidence_tier": "weak | medium | strong | strongest",
+  "meaning_frame": "string (required only when evidence_tier == 'strongest')"
+}
+```
+
+Rules:
+
+- All four fields are **optional** during the Wave 1 backfill. New content
+  authored after Wave 1 lands declares all four (per
+  `LEARNING_ENGINE.md §§4.2, 5, 6.5`); pre-Wave-1 fixtures may be
+  backfilled lazily.
+- `skill_id` must reference an entry declared in the skills registry
+  (`backend/data/skills.json`). The registry is the source of truth for
+  the skill graph; see §10 below. This cross-reference is asserted by a
+  CI test, not by `LessonSchema` itself, so registry-absent fixtures
+  still load.
+- `primary_target_error` must be one of the six codes in
+  `LEARNING_ENGINE.md §5`.
+- `evidence_tier` follows the four-tier hierarchy in
+  `LEARNING_ENGINE.md §6.1`.
+- `meaning_frame` is **required** when `evidence_tier == "strongest"`,
+  per `LEARNING_ENGINE.md §6.3`. The schema rejects a strongest-tier item
+  without a meaning_frame.
+- The fields apply to all exercise families (`fill_blank`,
+  `multiple_choice`, `sentence_correction`, `listening_discrimination`).
+
+The fields are emitted on the wire by `GET /lessons/{lesson_id}` exactly
+as authored — see `docs/backend-contract.md`.
+
 ## 2. Per-Type Exercise Schema
 
 ### 2.1 fill_blank
@@ -292,3 +334,64 @@ Example:
 - Flag any exercise where AI fallback is expected to be frequently needed (for review).
 - Keep `prompt` strings under 300 characters.
 - Do not use HTML or markdown inside `prompt`, `feedback.explanation`, or answer fields.
+- For new content authored after Wave 1 lands: declare `skill_id`,
+  `primary_target_error`, and `evidence_tier` per §1.2; declare
+  `meaning_frame` whenever `evidence_tier == "strongest"`.
+
+## 10. Skills Registry
+
+The skills registry lives at `backend/data/skills.json` and is the source
+of truth for the skill graph referenced by `Exercise.skill_id` (§1.2).
+The backend loads the file on startup and validates it; an absent file is
+treated as an empty registry during the Wave 1 rollout.
+
+```json
+{
+  "version": "string (registry version tag, optional — provenance only)",
+  "engine_spec_ref": "string (pointer into LEARNING_ENGINE.md, optional)",
+  "notes": "string (authoring rationale, optional)",
+  "skills": [
+    {
+      "skill_id": "string (stable identifier, e.g. 'verb-ing-after-gerund-verbs')",
+      "title": "string (short human-readable name)",
+      "description": "string (one-sentence rationale, optional)",
+      "cefr_level": "A1 | A2 | B1 | B2 | C1 | C2",
+      "prerequisites": ["string (skill_id of an earlier-mastered skill)"],
+      "contrasts_with": ["string (skill_id of a sibling commonly confused with this one)"],
+      "target_errors": ["conceptual_error | form_error | contrast_error | careless_error | transfer_error | pragmatic_error"],
+      "mastery_signals": ["weak | medium | strong | strongest"],
+      "lesson_refs": ["string (lesson_id where this skill is exercised)"]
+    }
+  ]
+}
+```
+
+`skill_id` is a stable string. The shipped registry uses readable
+kebab-case (`verb-ing-after-gerund-verbs`) but the schema does not
+prescribe a separator — pick one form and stay consistent.
+
+Validation rules (enforced at load time):
+
+- `skill_id` must be unique within the registry.
+- Every `prerequisites` and `contrasts_with` entry must reference a
+  declared `skill_id`.
+- A skill cannot list itself as its own prerequisite.
+- `cefr_level`, `target_errors`, and `mastery_signals` use the closed
+  enums declared above.
+- `prerequisites`, `contrasts_with`, `target_errors`, `mastery_signals`,
+  and `lesson_refs` default to `[]` when omitted.
+- `description`, `version`, `engine_spec_ref`, and `notes` are optional
+  authoring metadata; the runtime preserves them on parse but no current
+  code path consumes them.
+
+Cross-reference between an exercise's `skill_id` (§1.2) and the registry
+is **not enforced by `LessonSchema` itself** — it is asserted by the
+`skills registry cross-reference` test in
+`backend/tests/skills-registry.test.ts`, which fails CI if a shipped
+exercise references a `skill_id` that the registry does not declare. The
+runtime tolerates registry absence (treats it as empty) so the loader
+does not block boot before the file is authored.
+
+The registry is consumed by future engine waves (Mastery Model, Decision
+Engine). Wave 1 ships only the loader and validator — no runtime decision
+yet depends on the registry contents.
