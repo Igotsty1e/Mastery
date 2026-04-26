@@ -4,8 +4,16 @@
 
 Canonical source of truth for exercise design and authoring rules.
 
-This document is subordinate to:
-- `GRAM_STRATEGY.md`
+This document is one of the **three sibling top-level canonical docs**
+(per `GRAM_STRATEGY.md §Authority chain`). It is itself authoritative on
+**exercise authoring** questions; it defers to its siblings on questions
+they own:
+
+- For **pedagogical** claims (what we teach and why), `GRAM_STRATEGY.md`
+  wins.
+- For **engine invariants** (skill rollup, evidence tier, multi-error
+  rules, mastery accounting), `LEARNING_ENGINE.md` wins; this file is
+  updated to follow.
 
 This file governs:
 - exercise taxonomy
@@ -16,10 +24,13 @@ This file governs:
 - runtime mapping
 - future exercise expansion logic
 
-If this file conflicts with `GRAM_STRATEGY.md`, `GRAM_STRATEGY.md` wins.
-
 All shipped exercise output must compile exactly to the runtime schema and scoring
 rules defined in `docs/content-contract.md`.
+
+This file is the authoring counterpart to `LEARNING_ENGINE.md`. The engine
+spec defines **what an exercise must declare** (skill, target error,
+evidence tier); this file defines **how to write the exercise** so those
+declarations are honest.
 
 ---
 
@@ -52,6 +63,27 @@ Allowed:
 
 Not allowed:
 - combining multiple unrelated rules into one item
+
+Engine-level statement of the same rule:
+
+> **1 exercise = 1 primary skill + 1 primary target error.**
+
+The metadata fields that operationalise this rule
+(`primary_skill_id`, `primary_target_error`, `evidence_tier`, and —
+where applicable — `meaning_frame`) are **not yet required** in shipped
+fixtures. They are introduced as **optional fields** in
+`docs/plans/learning-engine-mvp-2.md` Wave 1 (the metadata layer), become
+**required for new content** as that wave rolls out, and are backfilled
+on existing fixtures inside the same wave. Until Wave 1 ships, current
+fixtures correctly omit the fields and the runtime does not require them.
+
+The pedagogical rule itself (one primary skill, one primary target error
+per item) applies at authoring time today. The declarative metadata
+representation lands when the engine layer ships (see
+`LEARNING_ENGINE.md §4 Skill Model` and `§5 Error Model`). Multi-error
+items are a narrow exception governed by §5.8 Multi-Error Correction —
+every error in the item must roll up to the **same** primary skill and
+the **same** primary target error.
 
 ### 2.2 Natural Language Only
 
@@ -240,16 +272,23 @@ Mastery uses two layers:
 
 | Family | Primary learner action | Typical purpose | Current app |
 |---|---|---|---|
-| Recognition choice | identify correct form | early contrast, low-load checking | supported |
-| Controlled completion | supply missing form | controlled production | supported |
-| Guided correction | repair wrong sentence | error awareness and repair | supported |
-| Transformation | rewrite into a target pattern | guided production | roadmap |
+| Recognition choice | identify correct form | early contrast, low-load checking | supported (`multiple_choice`) |
+| Plural recognition / multi-select | identify **all** correct items in a small set | dense recognition with anti-gaming guard | roadmap (engine alias `multi_select`, see §5.6) |
+| Controlled completion | supply missing form | controlled production | supported (`fill_blank`) |
+| Multi-blank controlled completion | supply more than one form against the same rule | parallel retrieval | roadmap (engine alias `multi_blank`, see §5.7) |
+| Guided correction | repair wrong sentence | error awareness and repair | supported (`sentence_correction`) |
+| Multi-error correction | repair multiple errors that all roll up to the same primary skill | dense repair drilling | roadmap (engine alias `multi_error_correction`, see §5.8) |
+| Transformation | rewrite into a target pattern | guided production | roadmap (engine alias `sentence_rewrite`, see §5.1) |
 | Matching / sorting | pair forms, meanings, or triggers | noticing and contrast | roadmap |
 | Ordering / build-a-sentence | construct correct syntax | word order and structure control | roadmap |
 | Dialogue completion | choose or produce a line in context | contextualized grammar choice | roadmap |
-| Constrained short production | produce one short original sentence within limits | bounded transfer | roadmap |
-| Listening discrimination | hear and identify the target form | auditory noticing | shipped — see §5.6 |
+| Constrained short production | produce one short original sentence within limits | bounded transfer | roadmap (engine alias `short_free_sentence`, see §5.5) |
+| Listening discrimination | hear and identify the target form | auditory noticing | shipped — see §5.9 |
 | Speaking production | say the target form aloud | production + transfer | out of scope |
+
+The five families with engine aliases above are the new families
+sequenced into `docs/plans/learning-engine-mvp-2.md Wave 6`. Their
+engine-side safeguards live in `LEARNING_ENGINE.md §8.4.1`.
 
 ### 3.2 Current Runtime Widgets
 
@@ -498,6 +537,14 @@ contracts before they can ship.
 
 ## 5.1 Transformation
 
+Engine alias: `sentence_rewrite`. Evidence tier is **strongest** when the
+item is meaning-coupled per `LEARNING_ENGINE.md §6.3` (i.e. the prompt
+forces the learner to commit to a meaning, not just swap a surface form);
+otherwise the item drops to **strong-tier** evidence and does **not**
+clear the §6.4 mastery production gate. Strongest-tier sentence_rewrite
+items therefore must declare a `meaning_frame` field, the same way
+`short_free_sentence` items do (§5.5).
+
 ### Use when
 
 The learner should rewrite a sentence into a target structure while preserving meaning.
@@ -514,6 +561,25 @@ The learner should rewrite a sentence into a target structure while preserving m
 - the target structure must be explicit
 - the meaning to preserve must be stable
 - the answer space must be known in advance or robustly judgeable
+
+### Bounded answer-space discipline
+
+Transformation is a **constrained** rewrite, not free production. The author
+must:
+
+- name the target structure in the instruction
+  (e.g. `Rewrite the sentence using the passive.`)
+- enumerate the small set of grammar-equivalent rewrites that should count as
+  correct, the same way `sentence_correction` enumerates `accepted_corrections`
+- cap the accepted rewrite set with a hard ceiling (suggested `≤ 3`,
+  matching the existing `sentence_correction` cap in §4.3) — if more than
+  three rewrites are needed for fairness, the prompt is too open and must be
+  re-scoped or deferred
+- reject any prompt where preserving meaning naturally opens up many
+  unrelated paraphrases (those belong in `short_free_sentence`, not here)
+
+Authoring rule: if a human reviewer cannot list the accepted rewrites in
+under a minute, the item is not ready.
 
 ### Example
 
@@ -579,6 +645,8 @@ The learner should complete a short exchange where grammar choice depends on con
 
 ## 5.5 Constrained Short Production
 
+Engine alias: `short_free_sentence` (strongest evidence tier).
+
 ### Use when
 
 The learner should produce one original sentence under clear constraints.
@@ -589,9 +657,228 @@ The learner should produce one original sentence under clear constraints.
 - scoring must accept a reasonable answer range
 - feedback must judge grammar first, not style first
 
+### Target-structure constraint
+
+A `short_free_sentence` item is not "write any sentence on this topic." It
+is a bounded production task with a **specific structural commitment** the
+learner must satisfy.
+
+Required authoring fields (engine metadata, planned):
+
+- `target_structure` — the exact pattern the produced sentence must use
+  (e.g. `present perfect continuous with for + duration`)
+- `must_include[]` — the lexical/structural anchors the sentence must contain
+  (e.g. `for`, an `-ing` verb form)
+- `forbidden_patterns[]` — surface forms the learner often substitutes that
+  would prove they sidestepped the target (e.g. `since` in a duration item,
+  bare `to + infinitive` after `suggest`)
+- `meaning_frame` — the topical / contextual frame the sentence must serve
+  (per §11.1 of `GRAM_STRATEGY.md`: production counts only when meaning is
+  also at stake)
+
+### Scoring discipline — deterministic-first, AI-bounded
+
+`short_free_sentence` is the family closest to free production but it must
+remain scoreable. The scoring stack runs deterministic-first and only falls
+back to AI inside an explicit, narrow envelope:
+
+1. **Deterministic structural check.** Verify presence of `must_include[]`
+   markers and absence of `forbidden_patterns[]`. A failure here is a
+   deterministic `wrong`.
+2. **Deterministic meaning frame check.** Verify the sentence respects the
+   `meaning_frame` (e.g. duration context for present perfect continuous).
+   May be implemented as keyword/regex sets in the simplest version.
+3. **AI fallback for borderline grammaticality.** Only after (1) and (2)
+   pass. AI is bounded to the same kind of decision as the existing
+   `sentence_correction` borderline path: a short `correct/incorrect +
+   feedback` verdict on the produced sentence, with the target structure
+   explicitly in the prompt context.
+
+Authoring rule: if the item cannot be made deterministic-first plus a
+bounded AI fallback, it is not yet a `short_free_sentence` — it is open
+production and out of scope for the current product (`GRAM_STRATEGY.md
+§14`). The engine boundary statement in `LEARNING_ENGINE.md §12.4` defines
+where AI is allowed to enter scoring.
+
 ---
 
-## 5.6 Listening Discrimination
+## 5.6 Multi-Select
+
+Engine alias: `multi_select` (weak evidence tier — recognition).
+
+### Use when
+
+The learner should identify **all** correct items in a small set, not just
+one. Use sparingly — the family exists for cases where two or more options
+are simultaneously valid by design (e.g. "Which of these are correct uses
+of the past participle?").
+
+### Hard authoring rules
+
+- 3 to 6 options total
+- between 1 and `n-1` options are correct (never zero, never all)
+- each correct option and each distractor must reflect a real learner
+  decision against the target rule (per §7 distractor strategy)
+- never author an item where "select all" is the trivially safe answer
+
+### Scoring rule
+
+Multi-select must not be gameable by checking every box. Each item must
+declare exactly one of two scoring modes in its metadata:
+
+1. **Exact-set (default).** The item is `correct` only when the learner's
+   selected set equals the canonical set exactly. Any other selection is
+   `wrong`.
+2. **Bounded partial credit (opt-in for engine MVP 2.0).**
+   - raw score = `true_positive_count − false_positive_count`
+   - normalised score = `raw / num_correct_options`, clamped to
+     `[−1, 1]`
+   - mapping: `< 0.5` → `wrong`, `0.5 ≤ score < 1.0` → `partial`,
+     `score == 1.0` → `correct`
+
+In both modes the same anti-gaming guards apply, regardless of the
+formula's numeric output:
+
+- selecting every option is treated as `wrong` by definition (gaming
+  guard) — this overrides any partial-credit calculation
+- selecting nothing is `wrong`, never `partial`
+
+The chosen scoring mode for a given item must be declared in the exercise
+metadata so the runtime cannot silently switch modes between items. The
+runtime must reject any item whose declared mode would let
+"select everything" outscore "select nothing."
+
+### Distractors
+
+Same rules as `multiple_choice` (§4.2). Every distractor must reflect a
+real learner error, not filler.
+
+---
+
+## 5.7 Multi-Blank
+
+Engine alias: `multi_blank` (medium evidence tier — controlled completion).
+
+### Use when
+
+The learner should retrieve more than one form in the same sentence, where
+each blank is a separate, independent decision against the same target rule
+(e.g. tense agreement across two clauses, two parallel `-ing` slots after
+two trigger verbs).
+
+### Hard authoring rules
+
+- 2 or 3 blanks per item, never more
+- exactly one primary skill across all blanks (per §2.1)
+- exactly one primary target error across all blanks (per `LEARNING_ENGINE.md
+  §5`); multi-blank items are **not** a vehicle for combining unrelated rules
+- every blank must include the base-form hint convention from §4.1
+  (`(work)`) where applicable, the same as single-blank `fill_blank`
+- accepted answer set declared per blank, not as a single concatenated
+  string — the runtime must score blanks independently
+
+### No interdependent blanks
+
+Interdependent blanks are banned. A blank is **interdependent** when its
+correct answer changes depending on what the learner typed in another blank
+of the same item (e.g. an item where Blank A is "is/are" and Blank B is
+"working/works" and the right pair is `is working` or `are working` but not
+`is works`).
+
+This is banned because:
+
+- it forces the evaluator to score against the cross-product of plausible
+  pairs, which explodes the answer space
+- it mixes one decision (subject-verb agreement) with another (form
+  selection) inside one item, violating §2.1
+- the learner cannot diagnose which blank they actually got wrong
+
+If the rule under test genuinely requires two slots to agree, write **two
+separate single-blank items** that test the agreement rule clearly, or use
+a `sentence_correction` item where the agreement violation is fully on
+display.
+
+### Scoring rule
+
+- per-blank score: `correct / wrong` (no partial inside a blank)
+- aggregate item score, default: `correct` only if all blanks correct;
+  `partial` if some blanks correct; `wrong` if zero blanks correct
+- the engine emits per-blank evidence so the Mastery Model can credit each
+  retrieval independently (`LEARNING_ENGINE.md §8.2 Response Units`)
+
+---
+
+## 5.8 Multi-Error Correction
+
+Engine alias: `multi_error_correction` (strong evidence tier — repair).
+
+### Use when
+
+The learner should detect and repair more than one error in the same
+sentence, **and every error rolls up to the same primary skill and the
+same primary target error.**
+
+This family exists for items like:
+
+- a sentence with two parallel `-ing` violations after two trigger verbs
+- a paragraph-style item where the same tense rule is broken twice
+- an item that pairs a primary error with the inseparable local support
+  fix it always drags along
+
+### Hard rules
+
+- one `primary_skill_id` for the whole item
+- one `primary_target_error` for the whole item
+- every error in the item must roll up to that primary — the engine must
+  reject items where errors hit different primary skills or different
+  primary target errors (see `LEARNING_ENGINE.md §8.3`)
+- 2 or 3 correctable spans per item, not more
+- each span must be unambiguously corrupt — no "stylistic improvement"
+  spans, no "this could also be better" spans
+- accepted corrections enumerated per span, not as a single rewrite
+
+### No-error decoy rule
+
+When the rule under test makes "is there an error?" itself a meaningful
+decision (e.g. learners commonly hyper-correct a valid `-ing` form),
+authors **may** include up to 25% of items in a lesson where the spans
+contain no error and the correct response is "no change."
+
+When this is allowed:
+
+- the instruction must explicitly tell the learner that some spans may be
+  correct (`Find and fix any errors. Some spans may already be correct.`)
+- the engine must support a "no change" answer per span without scoring it
+  as a wrong submission of an empty correction
+- never use no-error decoys when the item is also the learner's first
+  encounter with the rule — decoys belong in consolidation/contrast slots,
+  not rule-introduction slots
+- declare `allows_no_error_spans: true` in the exercise metadata so the QA
+  reviewer and the runtime both know decoys are intentional
+
+When this is not allowed:
+
+- in rule-introduction lessons, no-error decoys are off
+- in `sentence_correction` (single-error) items, no-error decoys are off —
+  this family is reserved for `multi_error_correction`
+
+### Scoring rule
+
+- per-span score: `correct / wrong` against `accepted_corrections[span]`
+  (or against `no_error` when allowed)
+- aggregate item score: `correct` if all spans correct; `partial` if some
+  spans correct; `wrong` if zero spans correct
+- engine emits per-span evidence
+
+### Authoring guard
+
+If two errors in a candidate item roll up to different primary skills or
+different primary target errors, the item is not a `multi_error_correction`
+— it is two separate `sentence_correction` items fused into one. Split it.
+
+---
+
+## 5.9 Listening Discrimination
 
 ### Pedagogical role
 
@@ -750,7 +1037,7 @@ Why it fails:
 
 ---
 
-## 5.7 Speaking Production — Out Of Scope
+## 5.10 Speaking Production — Out Of Scope
 
 Spoken production is currently **not planned** for Mastery. Mastery is a
 listen-and-read product. The learner is never asked to speak into a microphone.

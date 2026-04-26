@@ -119,7 +119,7 @@ unmarked; the parser falls back to a plain text rendering.
   fixture ships (no broken URLs allowed in shipped lessons).
 - `audio.voice`: enum, exactly `nova` (default warm female) or `onyx` (low
   calm male). One US accent. No other voices are supported in shipped
-  lessons. See `exercise_structure.md §5.6` for voice-role guidance.
+  lessons. See `exercise_structure.md §5.9` for voice-role guidance.
 - `audio.transcript`: full and exact spoken text, character-for-character.
   Required even though it is hidden in the UI by default — used for the
   `Show transcript` reveal, accessibility, and QA review.
@@ -132,7 +132,7 @@ unmarked; the parser falls back to a plain text rendering.
 - this type does **not** use AI evaluation. Scoring is exact id match against
   `correct_option_id`, identical to `multiple_choice`.
 
-Authoring rules and distractor strategy: see `exercise_structure.md §5.6`.
+Authoring rules and distractor strategy: see `exercise_structure.md §5.9`.
 
 ### 2.5 ExerciseImage (optional, all exercise types)
 
