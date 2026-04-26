@@ -10,7 +10,7 @@ Known scope deviations vs the spec text (recorded honestly so future passes don'
 
 - **Last lesson report is in-memory only.** The spec demands "always visible after the learner has completed at least one lesson". True persistence requires a server-side store; that work is tracked as tech debt in `docs/plans/roadmap.md` (Persistent Last Lesson Report). Until then, the block is visible only inside the runtime session that completed the lesson.
 - **Hero progress cluster shows lesson-level exercise progress, not unit-level lesson progress.** The MVP backend ships a single lesson per unit, so the spec's `Lesson 2 / 5` style would be degenerate (`Lesson 1 / 1` always). Switch back when the multi-lesson worktree (`codex/b2-content`) lands.
-- **Coming Next section uses two stub rows** (U02, U03 preview labels) until the backend exposes a multi-lesson list. Block carries an explicit "Stub preview" caption so the placeholder is honest.
+- **Coming Next block was removed** post-ship. Future units now live behind an `All units ▾` trigger in the Current Unit section header (see §9). Mirrors the level-dropdown pattern.
 - **Premium block is a visual stub.** No monetisation in MVP; the block exists as the last-row placeholder per spec.
 - **CTA `Start next lesson`** is wired but always disabled until a real next lesson exists. Activates automatically when the multi-lesson backend lands.
 
@@ -96,11 +96,10 @@ No loose right-aligned raw text.
 1. header
 2. next lesson hero
 3. last lesson report
-4. current unit
-5. coming next
-6. premium / future block
+4. current unit (with `All units ▾` trigger in its header)
+5. premium / future block
 
-This order is locked for the next implementation pass.
+The `Coming Next` block is **removed** — see §9.
 
 ---
 
@@ -214,15 +213,15 @@ Allowed badge states:
 
 ---
 
-## 9. Coming Next Contract
+## 9. Coming Next — REMOVED 2026-04-26
 
-Quiet preview only.
+The original `Coming Next` block was dropped after the first ship: even as a 2-row quiet preview it added scroll length without helping the learner make a decision. Future units now live behind an `All units ▾` trigger placed in the header of the `Current Unit` section — same "tuck-away" pattern as the level dropdown.
 
-Rules:
-- 2 to 3 rows max
-- no carousel
-- no thumbnails
-- no equal weight to the hero
+Rules for the trigger:
+- compact pill in the section header, never a full-width row
+- opens a popup menu listing units with `Current` / `Locked` states
+- no real switching until the multi-unit backend lands
+- popup uses the same surface treatment as the level dropdown so the two read as one motion language
 
 ---
 
@@ -272,9 +271,8 @@ If the next agent needs a strict build order:
 1. header + level dropdown trigger
 2. next lesson hero
 3. last lesson report
-4. current unit with badges
-5. coming next
-6. premium block
+4. current unit with badges + `All units ▾` trigger
+5. premium block
 
 ---
 

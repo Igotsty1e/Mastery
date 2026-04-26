@@ -58,8 +58,9 @@ Layout, in locked order:
 2. **Next-lesson hero** — `Unit 01` eyebrow + `B2` tag + Fraunces serif lesson title + meta row (`N exercises · ~M min · Next lesson`) + one-sentence promise + a stacked progress cluster (label + fraction pill + thick rail) + a single primary CTA (`Start lesson` / `Continue lesson` / `Start next lesson` — last one disabled until multi-lesson backend lands).
 3. **Last lesson report** — only visible when `LastLessonStore.instance.record != null` (in-memory; lost on app restart). Block contains a `Lesson completed` eyebrow, lesson title, factual meta (when, exercises, mistakes), gold-soft `score pill`, debrief headline + body, optional `WATCH OUT` tail, and two actions: `Review mistakes` (pushes `SummaryScreen` with `initialScrollToMistakes: true`) and `See full report` (pushes `SummaryScreen` from the top).
 4. **Current unit** — `Unit 01` card with shipped `Verbs Followed by -ing` row marked `Current` or `Done`, plus a single stub locked row for the next lesson.
-5. **Coming next** — quiet two-row stub (`Verbs Followed by to + infinitive`, `Reported Speech: Statements`) carrying an explicit `Stub preview` caption. Will be replaced once the multi-lesson backend lands.
-6. **Premium block** — visual stub at the bottom; gold-soft surface, no `onTap`. No monetisation in MVP.
+5. **Premium block** — visual stub at the bottom; gold-soft surface, no `onTap`. No monetisation in MVP.
+
+The original `Coming Next` block from the first ship was removed — future units now live behind an `All units ▾` trigger placed in the Current Unit section header. The trigger opens a popup listing units (`Current` / `Locked` states) and uses the same surface treatment as the level dropdown so the two read as one motion language. No real switching until the multi-unit backend lands.
 
 Lesson data:
 - On mount, fetches the lesson via `GET /lessons/{lesson_id}` (`AppConfig.defaultLessonId`) to populate level, lesson title, and exercise count.

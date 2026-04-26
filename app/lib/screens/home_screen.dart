@@ -199,8 +199,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     _totalExercises > 0,
               ),
               const SizedBox(height: 22),
-              const _ComingNextBlock(),
-              const SizedBox(height: 22),
               const _PremiumBlock(),
             ],
           ),
@@ -988,6 +986,7 @@ class _CurrentUnitBlock extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Expanded(
               child: Text(
@@ -1001,6 +1000,7 @@ class _CurrentUnitBlock extends StatelessWidget {
                 ),
               ),
             ),
+            const _AllUnitsTrigger(),
           ],
         ),
         const SizedBox(height: 10),
@@ -1151,117 +1151,153 @@ class _UnitRow extends StatelessWidget {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// Coming Next
+// All-units trigger — small affordance in the Current Unit header that
+// opens a popup of future units. Replaces the "Coming Next" block per the
+// product call to tuck future content away (mirrors the level-dropdown
+// pattern). Future units are stubs until multi-unit backend lands.
 // ─────────────────────────────────────────────────────────────────────────
 
-class _ComingNextBlock extends StatelessWidget {
-  const _ComingNextBlock();
+class _AllUnitsTrigger extends StatelessWidget {
+  const _AllUnitsTrigger();
 
-  @override
-  Widget build(BuildContext context) {
+  Future<void> _show(BuildContext context) async {
     final tokens = context.masteryTokens;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'COMING NEXT',
-          style: MasteryTextStyles.mono(
-            size: 11,
-            lineHeight: 14,
-            weight: FontWeight.w600,
-            color: MasteryColors.textSecondary,
-            letterSpacing: 1.6,
-          ),
+    await showMenu<void>(
+      context: context,
+      position: const RelativeRect.fromLTRB(140, 360, 16, 0),
+      color: MasteryColors.bgSurface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(MasteryRadii.md),
+        side: BorderSide(color: tokens.borderSoft),
+      ),
+      elevation: 6,
+      items: const [
+        _UnitMenuItem(
+          ordinal: '01',
+          title: 'Verb patterns',
+          state: _UnitMenuState.current,
         ),
-        const SizedBox(height: 10),
-        const _ComingRow(
+        _UnitMenuItem(
           ordinal: '02',
-          title: 'Verbs Followed by to + infinitive',
-          subtitle: 'Unit 01 · 10 exercises',
+          title: 'Time & completed actions',
+          state: _UnitMenuState.locked,
         ),
-        const SizedBox(height: 8),
-        const _ComingRow(
+        _UnitMenuItem(
           ordinal: '03',
-          title: 'Reported Speech: Statements',
-          subtitle: 'Unit 02 · 10 exercises',
+          title: 'Conditionals',
+          state: _UnitMenuState.locked,
         ),
-        Padding(
-          padding: const EdgeInsets.only(top: 10),
-          child: Text(
-            'Stub preview until the curriculum lands.',
-            style: MasteryTextStyles.bodySm.copyWith(
-              color: tokens.textTertiary,
-              fontStyle: FontStyle.italic,
-            ),
-          ),
+        _UnitMenuItem(
+          ordinal: '04',
+          title: 'Reported speech',
+          state: _UnitMenuState.locked,
         ),
       ],
     );
   }
-}
-
-class _ComingRow extends StatelessWidget {
-  final String ordinal;
-  final String title;
-  final String subtitle;
-
-  const _ComingRow({
-    required this.ordinal,
-    required this.title,
-    required this.subtitle,
-  });
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.masteryTokens;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: tokens.bgSurfaceAlt,
-        border: Border.all(color: tokens.borderSoft),
-        borderRadius: BorderRadius.circular(MasteryRadii.md),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(MasteryRadii.pill),
+        onTap: () => _show(context),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: MasteryColors.bgSurface,
+            border: Border.all(color: tokens.borderSoft),
+            borderRadius: BorderRadius.circular(MasteryRadii.pill),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'All units',
+                style: MasteryTextStyles.labelSm.copyWith(
+                  color: MasteryColors.textSecondary,
+                  letterSpacing: 0.4,
+                ),
+              ),
+              const SizedBox(width: 4),
+              Icon(Icons.keyboard_arrow_down_rounded,
+                  size: 14, color: tokens.textTertiary),
+            ],
+          ),
+        ),
       ),
+    );
+  }
+}
+
+enum _UnitMenuState { current, locked }
+
+class _UnitMenuItem extends PopupMenuEntry<void> {
+  final String ordinal;
+  final String title;
+  final _UnitMenuState state;
+
+  const _UnitMenuItem({
+    required this.ordinal,
+    required this.title,
+    required this.state,
+  });
+
+  @override
+  double get height => 48;
+
+  @override
+  bool represents(void value) => false;
+
+  @override
+  State<_UnitMenuItem> createState() => _UnitMenuItemState();
+}
+
+class _UnitMenuItemState extends State<_UnitMenuItem> {
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.masteryTokens;
+    final isCurrent = widget.state == _UnitMenuState.current;
+    return Container(
+      width: 240,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       child: Row(
         children: [
-          Container(
-            width: 28,
-            height: 28,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: MasteryColors.bgRaised,
-              border: Border.all(color: tokens.borderSoft),
-              shape: BoxShape.circle,
-            ),
+          SizedBox(
+            width: 22,
             child: Text(
-              ordinal,
+              widget.ordinal,
               style: MasteryTextStyles.mono(
                 size: 11,
                 lineHeight: 12,
-                weight: FontWeight.w500,
-                color: MasteryColors.textTertiary,
+                weight: FontWeight.w600,
+                color: tokens.textTertiary,
+                letterSpacing: 0.6,
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 8),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: MasteryTextStyles.bodyMd.copyWith(
-                    color: MasteryColors.textPrimary,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: MasteryTextStyles.bodySm.copyWith(
-                    color: MasteryColors.textTertiary,
-                  ),
-                ),
-              ],
+            child: Text(
+              widget.title,
+              style: MasteryTextStyles.labelMd.copyWith(
+                color: isCurrent
+                    ? MasteryColors.actionPrimaryPressed
+                    : MasteryColors.textSecondary,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            isCurrent ? 'Current' : 'Locked',
+            style: MasteryTextStyles.mono(
+              size: 10,
+              lineHeight: 12,
+              weight: FontWeight.w500,
+              color: tokens.textTertiary,
+              letterSpacing: 0.6,
             ),
           ),
         ],

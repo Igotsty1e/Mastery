@@ -640,7 +640,7 @@
       <section class="section" aria-label="Current unit">
         <div class="section__head">
           <h3 class="section__title">Current unit</h3>
-          <a class="section__link" href="#">Open unit</a>
+          <span style="display:inline-flex; align-items:center; gap:4px; padding:6px 12px; border-radius:999px; background:var(--bg-surface); border:1px solid var(--border-soft); font-family:var(--ff-body); font-size:12px; font-weight:600; color:var(--text-secondary); letter-spacing:0.04em;">All units <span style="color:var(--text-tertiary)">⌄</span></span>
         </div>
 
         <div class="unit-card">
@@ -677,27 +677,9 @@
         </div>
       </section>
 
-      <section class="section" aria-label="Coming next">
-        <div class="section__head">
-          <h3 class="section__title">Coming next</h3>
-          <a class="section__link" href="#">See all</a>
-        </div>
-
-        <div class="next-row">
-          <div class="next-row__num">03</div>
-          <div class="flex-grow">
-            <p class="next-row__title">For vs Since</p>
-            <p class="next-row__sub">Unit 02 · 10 exercises</p>
-          </div>
-        </div>
-        <div class="next-row">
-          <div class="next-row__num">04</div>
-          <div class="flex-grow">
-            <p class="next-row__title">Already vs Yet</p>
-            <p class="next-row__sub">Unit 02 · 10 exercises</p>
-          </div>
-        </div>
-      </section>
+      <!-- "Coming next" was removed 2026-04-26. Future units now live behind
+           the `All units ▾` trigger placed in the Current unit section header
+           — same tuck-away pattern as the level dropdown in the topbar. -->
 
       <section class="premium" aria-label="Premium preview">
         <span class="eyebrow eyebrow--gold"><span class="eyebrow__dot"></span>Premium</span>

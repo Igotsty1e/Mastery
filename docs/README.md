@@ -35,7 +35,7 @@ When adding a new doc, ask: *which of those buckets is this?* If it doesn't fit,
 |---|---|
 | [`plans/roadmap.md`](plans/roadmap.md) | Next-step roadmap for audio, exercise expansion, screens, and tooling |
 | [`plans/arrival-ritual.md`](plans/arrival-ritual.md) | Onboarding (Direction A · Editorial Notebook) shipped 2026-04-26: 2-step + dashboard-as-home, calm route transitions, code-level conformance audit. Brief B (first-exercise V2 chrome) declined by the product owner — current exercise chrome is the long-term contract. Live visual QA in a real browser still pending. |
-| [`plans/dashboard-study-desk.md`](plans/dashboard-study-desk.md) | Dashboard V2 (Study Desk) shipped 2026-04-26: compact level dropdown, next-lesson hero with progress cluster, in-memory Last lesson report, badge-based current-unit rows, quiet Coming Next stub, premium block stub. Persistent Last lesson report = tech debt (see `plans/roadmap.md` Workstream H). |
+| [`plans/dashboard-study-desk.md`](plans/dashboard-study-desk.md) | Dashboard V2 (Study Desk) shipped 2026-04-26: compact level dropdown, next-lesson hero with progress cluster, in-memory Last lesson report, badge-based current-unit rows + `All units ▾` trigger, premium block stub. Persistent Last lesson report = tech debt (see `plans/roadmap.md` Workstream H). |
 
 ### Content authoring (`docs/content/`)
 
