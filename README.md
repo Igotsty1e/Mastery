@@ -32,6 +32,7 @@ Repo-root canon, in load order:
 - [`DESIGN.md`](DESIGN.md) — visual canon
 - [`GRAM_STRATEGY.md`](GRAM_STRATEGY.md) — pedagogy canon
 - [`exercise_structure.md`](exercise_structure.md) — exercise authoring canon
+- [`LEARNING_ENGINE.md`](LEARNING_ENGINE.md) — target-state engine canon (skill graph, evidence model, mastery model, decision engine, transparency layer); migration in [`docs/plans/learning-engine-mvp-2.md`](docs/plans/learning-engine-mvp-2.md)
 
 Everything else lives under `docs/` — start at [`docs/README.md`](docs/README.md).
 

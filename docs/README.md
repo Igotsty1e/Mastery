@@ -6,7 +6,7 @@ The doc system follows one rule:
 
 | Layer | Where | What lives there |
 |---|---|---|
-| **Canon** | repo root | Slow-changing source-of-truth. Read into context almost every session: `CLAUDE.md`, `DESIGN.md`, `GRAM_STRATEGY.md`, `exercise_structure.md`. |
+| **Canon** | repo root | Slow-changing source-of-truth. Read into context almost every session: `CLAUDE.md`, `DESIGN.md`, `GRAM_STRATEGY.md`, `exercise_structure.md`, `LEARNING_ENGINE.md`. |
 | **Contracts** | `docs/*.md` (flat) | Source of truth for current shipped behaviour. Updated in lockstep with each shipped feature. |
 | **Plans** | `docs/plans/` | Approved next-wave specs and roadmaps. Promoted out (deleted or archived) once shipped. |
 | **Authoring** | `docs/content/` | Per-unit lesson blueprints and authoring artifacts. |
@@ -36,6 +36,7 @@ When adding a new doc, ask: *which of those buckets is this?* If it doesn't fit,
 | [`plans/roadmap.md`](plans/roadmap.md) | Next-step roadmap for audio, exercise expansion, screens, and tooling |
 | [`plans/arrival-ritual.md`](plans/arrival-ritual.md) | Onboarding (Direction A · Editorial Notebook) shipped 2026-04-26: 2-step + dashboard-as-home, calm route transitions, code-level conformance audit. Brief B (first-exercise V2 chrome) declined by the product owner — current exercise chrome is the long-term contract. Live visual QA in a real browser still pending. |
 | [`plans/dashboard-study-desk.md`](plans/dashboard-study-desk.md) | Dashboard V2 (Study Desk) shipped 2026-04-26: compact level dropdown, next-lesson hero with progress cluster, in-memory Last lesson report, badge-based current-unit rows + `All units ▾` trigger, premium block stub. Persistent Last lesson report = tech debt (see `plans/roadmap.md` Workstream H). |
+| [`plans/learning-engine-mvp-2.md`](plans/learning-engine-mvp-2.md) | Migration plan from current shipped runtime → target Learning Engine (`LEARNING_ENGINE.md`). Sequences nine waves: metadata layer, mastery state, decision engine + 1d/3d/7d/21d cadence, transparency layer, evaluation upgrades, new exercise families with safeguards, diagnostic onboarding, two-agent QA + versioning, error-model coverage. Companion to `roadmap.md` (engine layer vs product surfaces). |
 
 ### Content authoring (`docs/content/`)
 
@@ -60,6 +61,7 @@ Visual references beyond the shipped set:
 | [`/DESIGN.md`](../DESIGN.md) | Visual canon: colors, typography, spacing, components, motion |
 | [`/GRAM_STRATEGY.md`](../GRAM_STRATEGY.md) | Top-level pedagogy: how Mastery teaches grammar and usage |
 | [`/exercise_structure.md`](../exercise_structure.md) | Canonical exercise authoring rules, sequencing, runtime mapping |
+| [`/LEARNING_ENGINE.md`](../LEARNING_ENGINE.md) | Target-state engine spec: skill graph, error model, evidence/mastery model, decision engine, transparency layer. Defines where the product is going; runtime contracts in `docs/*.md` define what ships today. Migration in `docs/plans/learning-engine-mvp-2.md`. |
 
 ### Archive (`docs/archive/`)
 

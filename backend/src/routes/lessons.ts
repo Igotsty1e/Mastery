@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { getAllLessons, getLessonById } from '../data/lessons';
-import type { Exercise } from '../data/lessons';
+import { projectExerciseForClient } from '../data/exerciseProjection';
 import { AnswerRequestSchema } from '../schemas';
 import { evaluateFillBlank } from '../evaluators/fillBlank';
 import { evaluateMultipleChoice } from '../evaluators/multipleChoice';
@@ -29,36 +29,6 @@ function slugifyLessonTitle(title: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
-// Image objects carry an authoring layer (brief / dont_show / risk) used by
-// the gen-image pipeline. None of those should reach the client.
-function stripImageAuthoring(image: NonNullable<Exercise['image']>): object {
-  const { brief: _b, dont_show: _d, risk: _r, ...pub } = image;
-  return pub;
-}
-
-function stripSecrets(exercise: Exercise): object {
-  const stripImage = (e: Exercise) =>
-    e.image ? { image: stripImageAuthoring(e.image) } : {};
-  if (exercise.type === 'fill_blank') {
-    const { accepted_answers: _a, feedback: _f, image: _i, ...pub } = exercise;
-    return { ...pub, ...stripImage(exercise) };
-  }
-  if (exercise.type === 'multiple_choice') {
-    const { correct_option_id: _c, feedback: _f, image: _i, ...pub } = exercise;
-    return { ...pub, ...stripImage(exercise) };
-  }
-  if (exercise.type === 'listening_discrimination') {
-    // Keep audio.transcript on the wire — the client reveals it on demand
-    // for accessibility and the `Show transcript` toggle. Only strip the
-    // correctness signal and the post-submit feedback string.
-    const { correct_option_id: _c, feedback: _f, image: _i, ...pub } = exercise;
-    return { ...pub, ...stripImage(exercise) };
-  }
-  // sentence_correction
-  const { accepted_corrections: _ac, feedback: _f, image: _i, ...pub } = exercise;
-  return { ...pub, ...stripImage(exercise) };
-}
-
 export function makeLessonsRouter(ai: AiProvider): Router {
   const router = Router();
 
@@ -85,7 +55,7 @@ export function makeLessonsRouter(ai: AiProvider): Router {
       level: lesson.level,
       intro_rule: lesson.intro_rule,
       intro_examples: lesson.intro_examples,
-      exercises: lesson.exercises.map(stripSecrets),
+      exercises: lesson.exercises.map(projectExerciseForClient),
     });
   });
 

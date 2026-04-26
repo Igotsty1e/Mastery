@@ -6,8 +6,19 @@ This document captures the major workstreams required to move Mastery from the c
 controlled-practice MVP toward the stronger teaching system defined in:
 - `GRAM_STRATEGY.md`
 - `exercise_structure.md`
+- `LEARNING_ENGINE.md`
 
 It is a planning document, not an approved MVP spec replacement.
+
+This roadmap addresses **product-surface** workstreams (content hardening,
+audio, imagery, frontend screens, backend/API). The **engine-side**
+migration that introduces skill metadata, mastery state, decision-engine
+routing, the in-session 1/2/3 loop, the cross-session 1d / 3d / 7d / 21d
+review cadence, and the new exercise families (`multi_blank`,
+`multi_select`, `multi_error_correction`, `sentence_rewrite`,
+`short_free_sentence`) is sequenced separately in
+`docs/plans/learning-engine-mvp-2.md`. The two plans are parallel tracks
+and must update each other in lockstep when their scopes overlap.
 
 ---
 
@@ -24,7 +35,7 @@ Major expansion areas:
 8. visual context layer (imagery)
 
 Speaking / microphone input is **not** in scope. See `GRAM_STRATEGY.md §15.1`
-and `exercise_structure.md §5.7`.
+and `exercise_structure.md §5.10`.
 
 ---
 
@@ -83,7 +94,7 @@ without turning the app into a generic TTS wrapper.
 
 Authoritative references:
 - pedagogy: `GRAM_STRATEGY.md §15` (listening planned, speaking out)
-- exercise authoring: `exercise_structure.md §5.6`
+- exercise authoring: `exercise_structure.md §5.9`
 - schema: `docs/content-contract.md §2.4 listening_discrimination`
 - UI: `DESIGN.md §14 Audio Player` and `Exercise Screen → Listening exercise variant`
 
@@ -135,7 +146,7 @@ Spoken production and microphone capture are **not planned** for Mastery.
 The learner is never asked to speak.
 
 Authoritative scope statement: `GRAM_STRATEGY.md §15.1`.
-Operational rule: `exercise_structure.md §5.7`.
+Operational rule: `exercise_structure.md §5.10`.
 
 This workstream is left in the document only as a forwarding pointer so
 future planners do not silently re-introduce speaking. To revive it, both
@@ -153,14 +164,37 @@ Expand beyond the current four runtime types to better express the teaching mode
 
 ### Candidate additions
 
-Priority 1:
-- transformation
+The engine target-state names nine families (`LEARNING_ENGINE.md §8.4`).
+Five of them are planned new families with engine-side safeguards
+declared in `LEARNING_ENGINE.md §8.4.1` and authoring contracts in
+`exercise_structure.md §§5.1, 5.5, 5.6, 5.7, 5.8`. They are sequenced —
+lowest scoring risk first — in `docs/plans/learning-engine-mvp-2.md
+Wave 6`:
+
+1. `multi_blank` — multi-blank controlled completion
+   (`exercise_structure.md §5.7`); safeguard: no interdependent blanks.
+2. `sentence_rewrite` — transformation
+   (`exercise_structure.md §5.1`); safeguard: bounded answer-space,
+   `accepted_rewrites` cap of 3.
+3. `multi_error_correction` — multi-error guided correction
+   (`exercise_structure.md §5.8`); safeguard: same primary skill /
+   target error rollup, no-error decoy rule.
+4. `multi_select` — plural recognition with anti-gaming guard
+   (`exercise_structure.md §5.6`).
+5. `short_free_sentence` — constrained short production, written only
+   (`exercise_structure.md §5.5`); safeguard: deterministic-first
+   scoring with bounded AI fallback (`LEARNING_ENGINE.md §12.4`).
+
+Other pedagogical families called out in `exercise_structure.md §3.1`
+that are **not** yet sequenced into a wave:
+
 - ordering / sentence building
 - matching / sorting
-
-Priority 2:
 - dialogue completion
-- constrained short production (written only)
+
+These remain on the roadmap as longer-horizon additions; they need their
+widget, schema, and scoring contracts scoped before they enter a wave in
+`docs/plans/learning-engine-mvp-2.md`.
 
 Speaking production is excluded. See `GRAM_STRATEGY.md §15.1`.
 
@@ -172,6 +206,8 @@ Speaking production is excluded. See `GRAM_STRATEGY.md §15.1`.
 - define explanation policy
 - define QA golden cases
 - map each type to lesson stages and lesson archetypes
+- enforce each family's `LEARNING_ENGINE.md §8.4.1` safeguard at the
+  runtime, not just in docs
 
 ---
 

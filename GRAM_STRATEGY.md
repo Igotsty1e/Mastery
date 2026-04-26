@@ -11,14 +11,35 @@ This file defines the pedagogical model above:
 - scoring contracts
 
 Authority chain:
-- `GRAM_STRATEGY.md` — top-level pedagogy
-- `exercise_structure.md` — exercise system and authoring rules derived from this pedagogy
-- unit blueprints and lesson fixtures — concrete planning and shipped content
-- technical/runtime docs — implementation constraints only
 
-If a lower-level content document conflicts with this strategy, the lower document
-must be updated unless the conflict is caused by a hard runtime limit in the current
-app.
+The three top-level canonical docs are **siblings**, each authoritative
+in its own domain:
+
+- `GRAM_STRATEGY.md` — pedagogy: what we teach and why
+- `exercise_structure.md` — exercise authoring: how individual items are
+  written
+- `LEARNING_ENGINE.md` — engine design: how the system uses that pedagogy
+  to make per-learner decisions (skill graph, evidence model, mastery
+  model, decision engine, transparency)
+
+Below those three sit the implementation layers:
+
+- unit blueprints and lesson fixtures — concrete planning and shipped
+  content
+- technical/runtime docs (`docs/approved-spec.md`, `docs/backend-contract.md`,
+  `docs/mobile-architecture.md`, `docs/content-contract.md`) —
+  implementation constraints only
+
+Conflict resolution:
+
+- Cross-canon conflicts (between the three sibling docs) are resolved by
+  domain: pedagogy decisions live in `GRAM_STRATEGY.md`, authoring rules
+  in `exercise_structure.md`, engine invariants in `LEARNING_ENGINE.md`.
+- If an implementation-layer document conflicts with any canon doc, the
+  implementation doc must be updated — unless the conflict is caused by a
+  hard runtime limit in the current app, in which case the runtime
+  contract wins for what ships **today** and the canon doc still wins for
+  where the product is **going** (per `LEARNING_ENGINE.md §Status`).
 
 ---
 
@@ -164,6 +185,11 @@ Mastery requires:
 - later retrieval
 - later contrast against competing forms
 - later use in mixed review
+
+The engine-side review cadence that operationalises "later" is defined in
+`LEARNING_ENGINE.md §9.3` (default expanding intervals: 1 day → 3 days → 7
+days → 21 days). Authors and planners should not invent ad-hoc review windows
+that contradict that cadence.
 
 ### 4.8 Reinforce Immediately After Error
 
@@ -416,6 +442,33 @@ It is:
 - `contrast control`
 - `error awareness`
 
+### 11.1 Production Is A Gate, Not A Bonus
+
+Recognition and controlled completion are necessary but not sufficient. A
+learner is **not** mastered on a rule until they have produced the rule
+correctly in a setting that tests **meaning together with form**, not surface
+form in isolation.
+
+Operational consequence:
+
+- Production-tier success on the target rule is a **mastery gate**, not one
+  optional signal among many. A skill cannot enter `mastered` without it.
+- The production item must commit the learner to a meaning choice — a
+  context, a contrast, a scenario — that the rule has to serve. A
+  surface-only transformation (e.g. re-typing a sentence with a verb form
+  swapped, with no meaning decision) does **not** clear this gate.
+- Strong-tier evidence (correction / repair) on the target rule is the
+  **typical** path toward the production gate, but it cannot substitute
+  for production. See `LEARNING_ENGINE.md §6.4` for the engine-side rule
+  on whether a separate strong-tier attempt is required.
+
+Pedagogical reason: mastery means the learner can *use* the rule when the
+situation calls for it, not only recognise or repair it after someone else
+has supplied the context.
+
+The engine-side counterpart to this gate is `LEARNING_ENGINE.md §6 Evidence
+Model` and `§7 Mastery Model`.
+
 ---
 
 ## 12. Error Philosophy
@@ -423,6 +476,11 @@ It is:
 ### 12.1 Errors Are Signals
 
 An error is evidence of a specific wrong decision, not learner failure.
+
+The engine classifies every shipped target error into a small catalogue —
+see `LEARNING_ENGINE.md §5 Error Model`. Authors should reach for the
+catalogue when writing distractors and explanations so that the same wrong
+choice is named the same way across the product.
 
 ### 12.2 Explanations Must Be Specific
 
@@ -524,7 +582,7 @@ This is a deliberate product decision:
   asking the learner to produce sound
 
 If this position changes, this section must be revised first, then
-`exercise_structure.md §5.7` and `docs/plans/roadmap.md`. Until then,
+`exercise_structure.md §5.10` and `docs/plans/roadmap.md`. Until then,
 no speaking-based exercise, screen, scoring path, or backend payload should
 be introduced.
 

@@ -6,7 +6,29 @@ export interface ExerciseFeedback {
   explanation: string;
 }
 
-export interface FillBlankExercise {
+// Learning Engine Wave 1 metadata (LEARNING_ENGINE.md §§5, 6.5).
+// Optional during the backfill; meaning_frame is required by the schema
+// when evidence_tier is "strongest". The runtime ignores the fields beyond
+// validation; they reach the client unchanged so future engine waves can
+// use them.
+export type TargetError =
+  | 'conceptual_error'
+  | 'form_error'
+  | 'contrast_error'
+  | 'careless_error'
+  | 'transfer_error'
+  | 'pragmatic_error';
+
+export type EvidenceTier = 'weak' | 'medium' | 'strong' | 'strongest';
+
+export interface ExerciseEngineMetadata {
+  skill_id?: string;
+  primary_target_error?: TargetError;
+  evidence_tier?: EvidenceTier;
+  meaning_frame?: string;
+}
+
+export interface FillBlankExercise extends ExerciseEngineMetadata {
   exercise_id: string;
   type: 'fill_blank';
   instruction: string;
@@ -21,7 +43,7 @@ export interface MultipleChoiceOption {
   text: string;
 }
 
-export interface MultipleChoiceExercise {
+export interface MultipleChoiceExercise extends ExerciseEngineMetadata {
   exercise_id: string;
   type: 'multiple_choice';
   instruction: string;
@@ -32,7 +54,7 @@ export interface MultipleChoiceExercise {
   feedback?: ExerciseFeedback;
 }
 
-export interface SentenceCorrectionExercise {
+export interface SentenceCorrectionExercise extends ExerciseEngineMetadata {
   exercise_id: string;
   type: 'sentence_correction';
   instruction: string;
@@ -69,7 +91,7 @@ export interface ExerciseImage {
   risk?: 'low' | 'medium' | 'high';
 }
 
-export interface ListeningDiscriminationExercise {
+export interface ListeningDiscriminationExercise extends ExerciseEngineMetadata {
   exercise_id: string;
   type: 'listening_discrimination';
   instruction: string;

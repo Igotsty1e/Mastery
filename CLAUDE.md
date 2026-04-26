@@ -78,8 +78,9 @@ Require explicit user intent before any destructive action.
 
 ## Content Source Of Truth
 
-- `/Users/ivankhanaev/Mastery/GRAM_STRATEGY.md` is the top-level source of truth for how Mastery teaches English grammar and usage.
-- `/Users/ivankhanaev/Mastery/exercise_structure.md` is the canonical source of truth for exercise types, sequencing, authoring standards, runtime mapping, and examples. It is subordinate to `GRAM_STRATEGY.md`.
+- `/Users/ivankhanaev/Mastery/GRAM_STRATEGY.md`, `/Users/ivankhanaev/Mastery/exercise_structure.md`, and `/Users/ivankhanaev/Mastery/LEARNING_ENGINE.md` are the three **sibling** top-level canonical docs, each authoritative in its own domain — pedagogy / authoring rules / engine design — per `GRAM_STRATEGY.md §Authority chain`. None is subordinate to another; cross-canon conflicts are resolved by domain (pedagogy → `GRAM_STRATEGY.md`, authoring → `exercise_structure.md`, engine invariants → `LEARNING_ENGINE.md`).
+- `/Users/ivankhanaev/Mastery/GRAM_STRATEGY.md` is the canonical source of truth for how Mastery teaches English grammar and usage (pedagogy: what we teach and why).
+- `/Users/ivankhanaev/Mastery/exercise_structure.md` is the canonical source of truth for exercise types, sequencing, authoring standards, runtime mapping, and examples (authoring: how individual items are written).
 - `/Users/ivankhanaev/Mastery/docs/content/unit-u01-blueprint.md` is the active unit-level authoring plan that turns that pedagogy into the next shippable lesson sequence.
 - Use it as the primary reference whenever generating, revising, reviewing, or expanding educational content for the app.
 - Treat it as authoritative for the **content layer**, not for unsupported runtime features.
@@ -96,6 +97,14 @@ Require explicit user intent before any destructive action.
 - Do not load or invoke it for app engineering, UI implementation, deployment, infra, or documentation tasks unless those tasks explicitly require creating or checking English-learning content.
 - If `english-grammar-methodologist` is unavailable in the current session, treat that as a blocker for new content authoring unless the user explicitly overrides it.
 
+## Learning Engine Source Of Truth
+
+- `/Users/ivankhanaev/Mastery/LEARNING_ENGINE.md` is the canonical source of truth for the **target-state** Mastery learning engine: skill graph, error model, evidence model, mastery model, decision engine, transparency layer, content strategy.
+- It defines **where the product is going**, not what the runtime ships today. Anything currently in production is documented in the contract layer (`docs/approved-spec.md`, `docs/backend-contract.md`, `docs/mobile-architecture.md`, `docs/content-contract.md`).
+- When the engine spec is in tension with those runtime contracts, the runtime contracts win for what the code can do **today**, and `LEARNING_ENGINE.md` wins for where the product is **going**.
+- The migration plan from current shipped runtime to the target engine is `/Users/ivankhanaev/Mastery/docs/plans/learning-engine-mvp-2.md`. Read that before starting any wave that adds engine metadata, mastery state, decision-engine routing, or new exercise families.
+- `LEARNING_ENGINE.md` is paired with — not a replacement for — `GRAM_STRATEGY.md` (pedagogy) and `exercise_structure.md` (authoring rules). Pedagogy decides what to teach; engine decides how the system uses that pedagogy to make per-learner decisions.
+
 ## Documentation Maintenance Rule
 
 **Every shipped change must update every documentation file it touches — in the same session, not as a follow-up task.**
@@ -108,7 +117,7 @@ The doc system is layered. When adding a new document, place it by **layer**, no
 
 | Layer | Where | What goes there |
 |---|---|---|
-| **Canon** | repo root (`/`) | Slow-changing source-of-truth: `CLAUDE.md`, `DESIGN.md`, `GRAM_STRATEGY.md`, `exercise_structure.md`. Almost always read into context. |
+| **Canon** | repo root (`/`) | Slow-changing source-of-truth: `CLAUDE.md`, `DESIGN.md`, `GRAM_STRATEGY.md`, `exercise_structure.md`, `LEARNING_ENGINE.md`. Almost always read into context. |
 | **Contracts** | `docs/*.md` (flat) | Source of truth for current shipped behaviour. Updated in lockstep with each shipped feature. `approved-spec.md`, `backend-contract.md`, `mobile-architecture.md`, `content-contract.md`, `qa-golden-cases.md`. |
 | **Plans** | `docs/plans/` | Approved next-wave specs and roadmaps. Promoted out (deleted or archived) once shipped. |
 | **Authoring** | `docs/content/` | Per-unit lesson blueprints and authoring artifacts. |
@@ -134,6 +143,7 @@ Treat **every `.md` file in the repo** (root + `docs/` + nested) as a candidate.
 - `CLAUDE.md` — deploy config, env vars, tooling, source-of-truth pointers, this rule.
 - `README.md` — top-level doc map and quick orientation.
 - `DESIGN.md` and `docs/design-mockups/` — when shipped visuals change.
+- `LEARNING_ENGINE.md` — when target-state engine behaviour changes (skill graph, error model, evidence/mastery model, decision engine, transparency layer); update `docs/plans/learning-engine-mvp-2.md` in lockstep.
 
 ### Required practice
 
