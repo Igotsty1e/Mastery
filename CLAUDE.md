@@ -303,6 +303,9 @@ Key routing rules:
 - `AI_PROVIDER=stub` (change to `openai` when ready)
 - `OPENAI_API_KEY` — set manually, never commit
 - `OPENAI_MODEL=gpt-4o-mini`
+- `DATABASE_URL` — Postgres connection string for the auth/identity persistence
+- `AUTH_SECRET` — HMAC key for access tokens. **Boot fails when unset under `NODE_ENV=production`** (no silent dev-fallback)
+- `APPLE_STUB_ENABLED` — leave unset in real prod. Set to `1` only on staging if `/auth/apple/stub/login` needs to remain reachable
 
 **mastery-web-igotsty1e** — build-time env var used by `scripts/render-build-web.sh`:
 - `API_BASE_URL=https://mastery-backend-igotsty1e.onrender.com` (baked into Flutter binary via `--dart-define`)

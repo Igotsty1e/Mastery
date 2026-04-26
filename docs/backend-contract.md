@@ -320,4 +320,179 @@ All errors return HTTP 4xx/5xx with body: `{ "error": "snake_case_error_code" }`
 | `exercise_not_found` | 404 | Unknown exercise_id |
 | `invalid_payload` | 400 | Malformed request |
 | `rate_limit_exceeded` | 429 | Too many AI-eligible submissions from this IP (10/60s) |
+| `unauthorized` | 401 | Missing, malformed, or revoked access token |
+| `invalid_refresh_token` | 401 | Refresh token unknown, expired, or already revoked |
+| `user_not_found` | 404 | Authenticated session points at a deleted user row |
 | `internal_error` | 500 | Unexpected server failure |
+
+---
+
+## Authentication & Sessions (Wave 1)
+
+Wave 1 ships the backend identity foundation. The Flutter client is not
+wired yet; these endpoints exist so Wave 2 can ship login UX without
+re-shaping the contract.
+
+### Identity model
+
+- `users(id, created_at)` — opaque user row. No email field.
+- `auth_identities(id, user_id, provider, subject, created_at)` — one
+  row per upstream identity. Unique on `(provider, subject)`. Multiple
+  rows per user are supported so the same person can link additional
+  providers later. Provider values today: `apple_stub`. Production will
+  add `apple` once the real Sign In with Apple verifier ships.
+- `user_profiles(user_id PK, display_name, level, created_at, updated_at)`
+  — single profile row per user. Created on first login.
+- `auth_sessions(id, user_id, refresh_token_hash, created_at,
+  last_used_at, expires_at, revoked_at, user_agent, ip_address)` — one
+  row per refresh token. Refresh tokens are stored as their `sha256`
+  hex hash; the raw token only exists in transit and on the client.
+- `audit_events(id, user_id NULLABLE, event_type, payload, created_at)`
+  — append-only log. `user_id` is nullable so tombstone rows survive a
+  user hard-delete.
+- `integration_events(id, source, event_type, external_id, payload,
+  processed_at, created_at)` — placeholder inbox/outbox for upstream
+  webhooks (Apple notifications, future payment events). Wave 1 only
+  writes a single `identity.linked` row on user creation.
+
+### Token model
+
+- **Access token** — stateless HMAC-SHA256, payload `{ userId,
+  sessionId, exp }`, base64url-encoded. TTL 15 minutes. Verified on
+  every request via `requireAuth`, which also looks up the session row
+  to enforce immediate revocation on logout.
+- **Refresh token** — opaque random 32-byte url-safe string. TTL 30
+  days. Stored hashed; rotated on every `/auth/refresh`. Rotation runs
+  inside a transaction with a conditional UPDATE on
+  `(refresh_token_hash, revoked_at IS NULL, expires_at > now())`, so two
+  concurrent refreshes with the same token can never both mint a live
+  session — exactly one wins, the other gets `401 invalid_refresh_token`.
+- **HMAC secret** — `AUTH_SECRET` env var. **Required in production.**
+  Boot fails with a clear error if `NODE_ENV=production` and the var is
+  unset. Token signing/verification will also throw rather than fall
+  back to the dev-only constant.
+
+### Trust boundary for caller IP
+
+Both the lessons routes (rate limiting) and the auth routes (session
+metadata) resolve the caller IP through the same helper
+(`src/middleware/clientIp.ts:resolveClientIp`). `X-Forwarded-For` is
+honoured only when the socket itself sits on a loopback or RFC 1918
+address, and the rightmost XFF entry is used. A public client cannot
+spoof its session IP or rate-limit bucket via XFF.
+
+Authenticated requests must send `Authorization: Bearer <accessToken>`.
+
+### POST /auth/apple/stub/login
+
+Stub Apple sign-in for Wave 1. The real Apple verifier replaces the
+body parser in a later wave; the **response shape stays stable** so
+mobile can code against it now.
+
+**Production gating.** This route is **not registered** when
+`NODE_ENV=production` unless an operator explicitly opts in by setting
+`APPLE_STUB_ENABLED=1` (e.g. for staging smoke checks). When unregistered
+the catchall returns `404 not_found`, so the stub cannot be used to mint
+sessions on the production backend.
+
+**First-login concurrency.** The create path (insert `users`, identity,
+profile, audit, integration event) runs inside a single transaction. If
+two concurrent first-logins for the same `(provider, subject)` race, the
+unique index on `(provider, subject)` rejects the loser; the
+transaction rolls back so no orphan `users` row is left behind, and the
+loser re-reads and lands on the winner's user.
+
+**Request body:**
+```json
+{ "subject": "string", "displayName": "string|optional" }
+```
+
+**Response 200:**
+```json
+{
+  "user": { "id": "uuid" },
+  "accessToken": "base64url.body.base64url.sig",
+  "accessTokenExpiresAt": "ISO 8601 UTC",
+  "refreshToken": "base64url-32-bytes",
+  "refreshTokenExpiresAt": "ISO 8601 UTC"
+}
+```
+
+Repeat logins with the same `subject` resolve to the existing user and
+issue a fresh session pair. First-time logins also create the matching
+`user_profiles` row and emit `user.created` + `auth.session.created`
+audit entries plus an `identity.linked` integration event.
+
+### POST /auth/refresh
+
+**Request body:** `{ "refreshToken": "string" }`
+
+**Response 200:** same shape as login (minus `user`). The presented
+refresh token is revoked via a conditional UPDATE inside a single
+transaction, so concurrent refreshes with the same token are
+serialised — exactly one wins and gets the new pair, the other gets
+`401 invalid_refresh_token`. Replay also returns 401.
+
+### POST /auth/logout
+
+**Request body:** `{ "refreshToken": "string" }` → `204 No Content`.
+
+Always returns 204 — even for unknown tokens — to avoid token
+enumeration.
+
+### POST /auth/logout-all
+
+Auth required. Revokes every non-revoked session for the caller. The
+caller's own access token is invalidated on next request because the
+middleware re-checks the session row.
+
+**Response:** `204 No Content`.
+
+### GET /me
+
+Auth required.
+
+**Response 200:**
+```json
+{
+  "user": { "id": "uuid", "createdAt": "ISO 8601 UTC" },
+  "profile": {
+    "displayName": "string|null",
+    "level": "A1|A2|B1|B2|C1|C2|null",
+    "updatedAt": "ISO 8601 UTC"
+  }
+}
+```
+
+### PATCH /me/profile
+
+Auth required. Strict body: only `displayName` and `level` are
+accepted. Unknown fields → 400.
+
+```json
+{ "displayName": "string|null|optional",
+  "level": "A1|A2|B1|B2|C1|C2|null|optional" }
+```
+
+**Response 200:** `{ "profile": { ... } }`.
+
+### DELETE /me
+
+Auth required. Hard-deletes the user row. The schema's
+`ON DELETE CASCADE` clears `auth_identities`, `auth_sessions`, and
+`user_profiles`. `audit_events.user_id` is `ON DELETE SET NULL`, so the
+audit trail (including the `user.deleted` tombstone) survives. The
+delete and the tombstone insert run in the same transaction so the
+audit trail and the deletion can never disagree.
+
+**Response:** `204 No Content`.
+
+### Wave 2 transition notes
+
+- `lesson_sessions` and `exercise_attempt` persistence remain
+  in-memory in Wave 1. Wave 2 introduces those tables and migrates the
+  `/lessons/:id/answers` + `/result` paths to read/write the database
+  with the authenticated `userId` as the scope key.
+- `apple_stub` is replaced by a verified `apple` provider; the route
+  will validate the `identityToken` JWT against Apple's JWKS before
+  inserting `auth_identities`.

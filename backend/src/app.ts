@@ -3,6 +3,13 @@ import path from 'path';
 import healthRouter from './routes/health';
 import { makeLessonsRouter } from './routes/lessons';
 import type { AiProvider } from './ai/interface';
+import type { AppDatabase } from './db/client';
+import { makeAuthRouter } from './auth/routes';
+import { makeUsersRouter } from './users/routes';
+
+export interface CreateAppOptions {
+  db?: AppDatabase;
+}
 
 const DEFAULT_ALLOWED_ORIGINS = [
   'https://mastery-web-igotsty1e.onrender.com',
@@ -15,7 +22,7 @@ const allowedOrigins: string[] = process.env.ALLOWED_ORIGINS
   ? process.env.ALLOWED_ORIGINS.split(',').map(s => s.trim())
   : DEFAULT_ALLOWED_ORIGINS;
 
-export function createApp(ai: AiProvider): express.Express {
+export function createApp(ai: AiProvider, opts: CreateAppOptions = {}): express.Express {
   const app = express();
   app.set('trust proxy', 1);
   app.use((req, res, next) => {
@@ -24,8 +31,8 @@ export function createApp(ai: AiProvider): express.Express {
       res.setHeader('Access-Control-Allow-Origin', origin);
       res.setHeader('Vary', 'Origin');
     }
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
     if (req.method === 'OPTIONS') { res.sendStatus(204); return; }
     next();
   });
@@ -65,6 +72,10 @@ export function createApp(ai: AiProvider): express.Express {
   );
 
   app.use(healthRouter);
+  if (opts.db) {
+    app.use(makeAuthRouter(opts.db));
+    app.use(makeUsersRouter(opts.db));
+  }
   app.use(makeLessonsRouter(ai));
 
   app.use((_req, res) => {

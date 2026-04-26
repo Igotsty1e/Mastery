@@ -378,8 +378,8 @@ describe('CORS origin allowlist', () => {
     });
     expect(res.status).toBe(204);
     expect(res.headers['access-control-allow-origin']).toBe('https://mastery-web-igotsty1e.onrender.com');
-    expect(res.headers['access-control-allow-methods']).toBe('GET, POST, OPTIONS');
-    expect(res.headers['access-control-allow-headers']).toBe('Content-Type');
+    expect(res.headers['access-control-allow-methods']).toBe('GET, POST, PATCH, DELETE, OPTIONS');
+    expect(res.headers['access-control-allow-headers']).toBe('Content-Type, Authorization');
   });
 
   it('OPTIONS preflight from unknown origin returns 204 but no CORS allow header', async () => {
@@ -392,6 +392,6 @@ describe('CORS origin allowlist', () => {
     expect(res.status).toBe(204);
     expect(res.headers['access-control-allow-origin']).toBeUndefined();
     // Other CORS headers should still be present
-    expect(res.headers['access-control-allow-methods']).toBe('GET, POST, OPTIONS');
+    expect(res.headers['access-control-allow-methods']).toBe('GET, POST, PATCH, DELETE, OPTIONS');
   });
 });

@@ -17,6 +17,18 @@ The backend is the pedagogical authority for:
 | GET | `/lessons/:lessonId` | Lesson definition (secrets stripped) |
 | POST | `/lessons/:lessonId/answers` | Submit answer, get evaluation result |
 | GET | `/lessons/:lessonId/result` | Lesson score summary |
+| POST | `/auth/apple/stub/login` | Stub Apple sign-in — issues an access + refresh token pair |
+| POST | `/auth/refresh` | Rotate a refresh token, returning a new pair |
+| POST | `/auth/logout` | Revoke a single session by refresh token |
+| POST | `/auth/logout-all` | Revoke every active session for the caller |
+| GET | `/me` | Current user + profile (auth required) |
+| PATCH | `/me/profile` | Update `displayName` / `level` (auth required) |
+| DELETE | `/me` | Hard-delete the user and cascade-delete identities, sessions, profile |
+
+See `../docs/backend-contract.md §Authentication & Sessions` for full
+request/response shapes, error codes, and threat-model notes. Wave 1
+ships only the backend foundation — the Flutter client is wired in a
+later wave.
 
 ## Evaluation rules
 
@@ -71,7 +83,44 @@ AI fallback on timeout (5s) or error defaults to `correct=false, evaluation_sour
 - **AI result cache:** in-memory, keyed by `(session_id, exercise_id, normalizedAnswer)`. TTL 4h, LRU cap 10K entries. Repeat submissions with the same answer return cached result — no AI call, no rate-limit consumption.
 - **AI rate limit:** 10 AI-eligible submissions per IP per 60s sliding window. Checked only after deterministic gate and cache miss. Returns `429 rate_limit_exceeded`.
 - **XFF trust boundary:** X-Forwarded-For accepted only when socket originates from loopback or RFC 1918 address. Rightmost entry used to prevent client spoofing.
-- **Session store:** attempts keyed by `session_id:lesson_id`. TTL 4h, LRU cap 10K. Resets on server restart — no persistence across deploys.
+- **Lesson session store:** attempts keyed by `session_id:lesson_id`. TTL 4h, LRU cap 10K. Resets on server restart — no persistence across deploys. Wave 2 will move this to Postgres alongside `lesson_sessions` / `exercise_attempts`.
+
+## Persistence
+
+Wave 1 introduces the auth/identity persistence layer (Drizzle ORM over
+Postgres-compatible storage):
+
+- `users`, `auth_identities (provider, subject)`, `auth_sessions`,
+  `user_profiles`, `audit_events`, `integration_events`.
+- Production uses `node-postgres` against `DATABASE_URL`. Local dev /
+  tests use [`@electric-sql/pglite`](https://pglite.dev) — an in-process
+  Postgres-compatible engine — so tests remain hermetic.
+- Migrations live in `src/db/migrate.ts` (single embedded init script
+  for now; drizzle-kit will take over once we have multiple).
+- Run `npm start` to bootstrap the DB and apply migrations on boot.
+
+### Auth env vars
+
+- `DATABASE_URL` — postgres connection string. If unset, the server
+  falls back to an in-memory PGlite instance (data lost on restart). Set
+  this in production.
+- `AUTH_SECRET` — HMAC key for signing access tokens. **Required when
+  `NODE_ENV=production`.** Boot fails loudly when missing, and
+  `signAccessToken` / `verifyAccessToken` also refuse to fall back to
+  the dev-only constant in production. Outside of production a dev
+  fallback key is used so unit tests work out-of-the-box.
+- `APPLE_STUB_ENABLED` — set to `1` to keep `/auth/apple/stub/login`
+  exposed when `NODE_ENV=production` (only useful for staging smoke
+  tests). Unset in real production deploys; the route is not registered
+  and the catchall returns `404 not_found`.
+
+### Postgres extension
+
+Migrations run `CREATE EXTENSION IF NOT EXISTS pgcrypto` against real
+Postgres so `gen_random_uuid()` resolves on managed-Postgres flavours
+that don't pre-create the extension. PGlite ships `gen_random_uuid` in
+core and rejects `CREATE EXTENSION pgcrypto`, so the helper skips the
+call on the in-memory driver.
 
 ## Setup
 

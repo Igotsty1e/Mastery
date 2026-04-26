@@ -200,8 +200,8 @@ No other endpoints required for MVP.
 
 The following will NOT be built in this MVP. Any request to add them is a scope change requiring spec revision.
 
-- User authentication or accounts
-- Server-side progress persistence or accounts (local on-device exercise progress via SharedPreferences is in scope as of current implementation; **post-MVP Wave 2** added per-skill mastery state via `LearnerSkillStore`, also device-scoped)
+- ~~User authentication or accounts~~ **Post-MVP (Wave 7):** auth + server-owned learner state migration per `docs/plans/auth-server-state-wave7.md`. Backend foundation (Apple stub auth, refresh tokens, server-owned `lesson_sessions`, `/me`, audit log) is staged in this PR; Flutter wiring is Wave 7.4. The shipped MVP remains anonymous + in-memory until the auth surface is wired into the client.
+- ~~Server-side progress persistence~~ **Post-MVP (Wave 7):** Drizzle + Postgres backs `lesson_sessions` + `exercise_attempts` + `lesson_progress`. Legacy in-memory route `src/store/memory.ts` stays alongside until the Flutter client cuts over. Local `SharedPreferences` (`LocalProgressStore`, `LearnerSkillStore`, `ReviewScheduler`) keeps working as device-scoped fallback during the migration window.
 - Resume / save state (lesson session cannot be resumed mid-flow)
 - ~~Adaptive learning or difficulty adjustment~~ **Post-MVP (Waves 2–3):**
   per-learner per-skill mastery state + the §9.1 in-session 1/2/3 loop
