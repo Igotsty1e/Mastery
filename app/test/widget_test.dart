@@ -146,10 +146,11 @@ void main() {
   });
 
   group('HomeScreen', () {
-    testWidgets('shows onboarding first',
+    testWidgets('shows onboarding first when not seen',
         (tester) async {
           await _useMobileViewport(tester);
       await tester.pumpWidget(_withApi(const HomeScreen(), MockClient((_) async => throw UnimplementedError())));
+      await tester.pumpAndSettle(); // resolve hasSeenOnboarding
 
       expect(find.text('Mastery'), findsOneWidget);
       expect(
@@ -158,7 +159,24 @@ void main() {
       expect(find.widgetWithText(FilledButton, 'Get started'), findsOneWidget);
     });
 
-    testWidgets('onboarding continues to home and then navigates to LessonIntroScreen',
+    testWidgets('returning user (onboarding seen) lands directly on dashboard',
+        (tester) async {
+      await _useMobileViewport(tester);
+      SharedPreferences.setMockInitialValues(<String, Object>{
+        'onboarding_arrival_ritual_seen_v1': true,
+      });
+      final client = MockClient((_) async => _jsonOk(_lessonJson()));
+
+      await tester.pumpWidget(_withApi(const HomeScreen(), client));
+      await tester.pumpAndSettle();
+
+      // Dashboard subtitle, not onboarding.
+      expect(find.text('English practice, one lesson at a time.'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Start lesson'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Get started'), findsNothing);
+    });
+
+    testWidgets('Get started routes directly to LessonIntroScreen, bypassing dashboard',
         (tester) async {
           await _useMobileViewport(tester);
       final client = MockClient((_) async => _jsonOk(_lessonJson()));
@@ -169,14 +187,25 @@ void main() {
       await _safeTap(tester, find.widgetWithText(FilledButton, 'Get started'));
       await tester.pumpAndSettle();
 
-      expect(find.text('English practice, one lesson at a time.'), findsOneWidget);
-      expect(find.widgetWithText(FilledButton, 'Start lesson'), findsOneWidget);
-
-      await _safeTap(tester, find.widgetWithText(FilledButton, 'Start lesson'));
-      await tester.pumpAndSettle();
-
+      // We jump straight into the lesson intro — no `Start lesson` CTA in the trip.
       expect(find.text('Verbs Followed by -ing'), findsOneWidget);
       expect(find.widgetWithText(FilledButton, 'Start Practice'), findsOneWidget);
+    });
+
+    testWidgets('Get started persists onboarding-seen so next launch skips it',
+        (tester) async {
+      await _useMobileViewport(tester);
+      final client = MockClient((_) async => _jsonOk(_lessonJson()));
+
+      await tester.pumpWidget(_withApi(const HomeScreen(), client));
+      await tester.pumpAndSettle();
+
+      await _safeTap(tester, find.widgetWithText(FilledButton, 'Get started'));
+      await tester.pumpAndSettle();
+
+      // Verify the SharedPreferences flag has flipped.
+      final prefs = await SharedPreferences.getInstance();
+      expect(prefs.getBool('onboarding_arrival_ritual_seen_v1'), isTrue);
     });
   });
 
@@ -628,14 +657,12 @@ void main() {
         ),
       );
 
-      // Phase 1: HomeScreen onboarding → main CTA
+      // Phase 1: HomeScreen onboarding → Get started routes directly into
+      // the lesson intro per docs/plans/arrival-ritual.md (no dashboard detour
+      // for first launch).
       await tester.pumpAndSettle();
       expect(find.widgetWithText(FilledButton, 'Get started'), findsOneWidget);
       await _safeTap(tester, find.widgetWithText(FilledButton, 'Get started'));
-      await tester.pumpAndSettle();
-
-      expect(find.widgetWithText(FilledButton, 'Start lesson'), findsOneWidget);
-      await _safeTap(tester, find.widgetWithText(FilledButton, 'Start lesson'));
       await tester.pumpAndSettle(); // navigate + fetch lesson
 
       // Phase 2: LessonIntroScreen — lesson loaded from mocked API

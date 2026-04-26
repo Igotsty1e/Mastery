@@ -16,12 +16,53 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  bool _resolving = true;
   bool _showOnboarding = true;
   bool _isLoadingDashboard = false;
   int _completedExercises = 0;
   int _totalExercises = 10;
   String _lessonTitle = 'Verbs Followed by -ing';
   String _selectedLevel = 'B2';
+
+  @override
+  void initState() {
+    super.initState();
+    _resolveInitialView();
+  }
+
+  // First-launch detection per docs/plans/arrival-ritual.md: if the learner
+  // has already completed the Arrival Ritual onboarding, drop them into the
+  // dashboard. Otherwise show the onboarding flow.
+  Future<void> _resolveInitialView() async {
+    final seen = await LocalProgressStore.hasSeenOnboarding();
+    if (!mounted) return;
+    setState(() {
+      _showOnboarding = !seen;
+      _resolving = false;
+    });
+    if (seen) {
+      await _loadDashboard();
+    }
+  }
+
+  // Onboarding-final CTA contract: mark onboarding seen, then route DIRECTLY
+  // into the lesson intro per the Arrival Ritual hard rule. The dashboard is
+  // pre-loaded so it is ready when the lesson chain pops back.
+  Future<void> _completeOnboardingAndStartLesson() async {
+    await LocalProgressStore.markOnboardingSeen();
+    if (!mounted) return;
+    setState(() => _showOnboarding = false);
+    await _loadDashboard();
+    if (!mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) =>
+            const LessonIntroScreen(lessonId: AppConfig.defaultLessonId),
+      ),
+    );
+    if (!mounted) return;
+    await _loadDashboard();
+  }
 
   Future<void> _loadDashboard() async {
     if (_isLoadingDashboard) return;
@@ -68,6 +109,12 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_resolving) {
+      return Scaffold(
+        backgroundColor: context.masteryTokens.bgApp,
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
     return _showOnboarding ? _buildOnboarding() : _buildDashboard();
   }
 
@@ -156,10 +203,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           crossAxisAlignment: CrossAxisAlignment.stretch,
                           children: [
                             FilledButton(
-                              onPressed: () {
-                                setState(() => _showOnboarding = false);
-                                _loadDashboard();
-                              },
+                              onPressed: _completeOnboardingAndStartLesson,
                               child: const Text('Get started'),
                             ),
                             const SizedBox(height: MasterySpacing.sm),
