@@ -319,7 +319,7 @@ Support richer content and scoring while keeping backend authority.
 - add richer result payloads if needed:
   - transcript (for listening items)
   - structured error codes
-- **Persistent Last Lesson Report** — the dashboard `Last lesson report` block (per `docs/plans/dashboard-study-desk.md` §7) requires the most recent lesson outcome to survive app restart. Today the data lives in the in-memory `LastLessonStore` singleton (`app/lib/session/last_lesson_store.dart`), populated only when `SessionController._fetchSummary` succeeds in the same runtime session. Real implementation needs server-side completion records — likely a `GET /lessons/last-result?session_id=...` style endpoint OR a learner-scoped store that survives the session model. Until shipped, the block disappears after restart.
+- **Persistent Last Lesson Report** — backend portion shipped 2026-04-26 in Wave 2: the `/dashboard` endpoint returns `last_lesson_report` from the most recent completed `lesson_session` (with the persisted debrief snapshot). The Flutter client is **not yet rewired** against `/dashboard`; until the client cutover, the in-memory `LastLessonStore` singleton (`app/lib/session/last_lesson_store.dart`) is still authoritative on-device and the block disappears after app restart.
 
 ---
 

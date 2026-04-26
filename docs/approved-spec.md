@@ -188,11 +188,20 @@ Server responses are final. Client displays them without modification.
 
 ```
 GET  /lessons/{lesson_id}                          → lesson definition (ordered exercise list)
-POST /lessons/{lesson_id}/answers                  → submit one answer, receive result
-GET  /lessons/{lesson_id}/result?session_id={uuid} → final lesson score (requires session_id)
+POST /lessons/{lesson_id}/answers                  → transitional anonymous answer submission (Wave 1)
+GET  /lessons/{lesson_id}/result?session_id={uuid} → transitional anonymous result (Wave 1)
+
+# Wave 2 — server-owned sessions (auth required)
+POST /lessons/{lesson_id}/sessions/start           → create or resume the user's in-progress session
+GET  /lessons/{lesson_id}/sessions/current         → return the active in-progress session (or 404)
+POST /lesson-sessions/{session_id}/answers         → submit one answer (immutable history)
+POST /lesson-sessions/{session_id}/complete        → mark completed + persist debrief snapshot
+GET  /lesson-sessions/{session_id}/result          → result payload (live or persisted snapshot)
+GET  /dashboard                                    → per-user lessons + recommended-next + last report
 ```
 
-No other endpoints required for MVP.
+The legacy anonymous routes will be removed once the Flutter client has
+cut over to the auth-protected lesson-session surface.
 
 ---
 
@@ -201,8 +210,8 @@ No other endpoints required for MVP.
 The following will NOT be built in this MVP. Any request to add them is a scope change requiring spec revision.
 
 - ~~User authentication or accounts~~ **Post-MVP (Wave 7):** auth + server-owned learner state migration per `docs/plans/auth-server-state-wave7.md`. Backend foundation (Apple stub auth, refresh tokens, server-owned `lesson_sessions`, `/me`, audit log) is staged in this PR; Flutter wiring is Wave 7.4. The shipped MVP remains anonymous + in-memory until the auth surface is wired into the client.
-- ~~Server-side progress persistence~~ **Post-MVP (Wave 7):** Drizzle + Postgres backs `lesson_sessions` + `exercise_attempts` + `lesson_progress`. Legacy in-memory route `src/store/memory.ts` stays alongside until the Flutter client cuts over. Local `SharedPreferences` (`LocalProgressStore`, `LearnerSkillStore`, `ReviewScheduler`) keeps working as device-scoped fallback during the migration window.
-- Resume / save state (lesson session cannot be resumed mid-flow)
+- ~~Server-side progress persistence~~ **Post-MVP (Wave 7):** Drizzle + Postgres backs `lesson_sessions`, `exercise_attempts`, `lesson_progress` tables and the `/lessons/:id/sessions/*` + `/lesson-sessions/:id/*` + `/dashboard` endpoints. Legacy in-memory `src/store/memory.ts` stays alongside until the Flutter client cuts over. Local `SharedPreferences` (`LocalProgressStore`, `LearnerSkillStore`, `ReviewScheduler`) keeps working as device-scoped fallback during the migration window.
+- ~~Resume / save state~~ **Post-MVP (Wave 7):** server-owned sessions support cross-device resume (one active in-progress session per user+lesson, enforced by a partial unique index). The Flutter client wiring lands in Wave 7.4.
 - ~~Adaptive learning or difficulty adjustment~~ **Post-MVP (Waves 2–3):**
   per-learner per-skill mastery state + the §9.1 in-session 1/2/3 loop
   + the §9.3 review cadence shipped via the `LEARNING_ENGINE.md`

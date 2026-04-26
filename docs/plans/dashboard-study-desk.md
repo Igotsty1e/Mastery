@@ -8,7 +8,7 @@ Implementation: `app/lib/screens/home_screen.dart` (returning-launch state) + a 
 
 Known scope deviations vs the spec text (recorded honestly so future passes don't drift):
 
-- **Last lesson report is in-memory only.** The spec demands "always visible after the learner has completed at least one lesson". True persistence requires a server-side store; that work is tracked as tech debt in `docs/plans/roadmap.md` (Persistent Last Lesson Report). Until then, the block is visible only inside the runtime session that completed the lesson.
+- **Last lesson report is in-memory on the client.** Wave 2 backend (2026-04-26) added `/dashboard.last_lesson_report`, sourced from the most recent completed `lesson_session` with its persisted debrief snapshot. The Flutter client is **not yet rewired** against `/dashboard`, so the on-device block is still backed by the in-memory `LastLessonStore` singleton and disappears across app restart. The Flutter client cutover is tracked in `docs/plans/auth-foundation.md §Wave 3 — remaining`.
 - **Hero progress cluster shows lesson-level exercise progress, not unit-level lesson progress.** The MVP backend ships a single lesson per unit, so the spec's `Lesson 2 / 5` style would be degenerate (`Lesson 1 / 1` always). Switch back when the multi-lesson worktree (`codex/b2-content`) lands.
 - **Coming Next block was removed** post-ship. Future units now live behind an `All units ▾` trigger in the Current Unit section header (see §9). Mirrors the level-dropdown pattern.
 - **Premium block is a visual stub.** No monetisation in MVP; the block exists as the last-row placeholder per spec.

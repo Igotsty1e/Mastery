@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import { LessonSchema } from './lessonSchema';
@@ -121,6 +122,31 @@ export interface Lesson {
 interface ManifestEntry {
   lesson_id: string;
   file: string;
+  unit_id?: string;
+  rule_tag?: string;
+  micro_rule_tag?: string;
+}
+
+export interface LessonMeta {
+  lesson_id: string;
+  title: string;
+  slug: string;
+  level: string;
+  language: string;
+  exercise_count: number;
+  unit_id: string | null;
+  rule_tag: string | null;
+  micro_rule_tag: string | null;
+  // sha256 hex of the canonical lesson JSON. Stable across whitespace edits
+  // because we re-stringify with sorted keys before hashing.
+  content_hash: string;
+  // Authoring-side opaque version label. Today equals `content_hash`; left
+  // as a separate field so a hand-rolled version (e.g. "v3") can replace it
+  // without forcing the persisted attempt history to follow.
+  lesson_version: string;
+  // Manifest order, 1-indexed. Used by the dashboard for recommended-next
+  // selection (lowest order wins among incomplete lessons).
+  order: number;
 }
 
 interface Manifest {
@@ -139,7 +165,37 @@ function assertLesson(value: unknown, source: string): Lesson {
   return parsed.data as unknown as Lesson;
 }
 
-function loadLessons(): Lesson[] {
+function slugify(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+// Deterministic JSON.stringify that sorts object keys recursively. We want
+// the same lesson content to produce the same hash regardless of how the
+// fixture file orders its keys, so that whitespace-only or key-order edits
+// to the JSON do not invalidate every learner's persisted attempt history.
+function canonicalStringify(value: unknown): string {
+  if (value === null || typeof value !== 'object') {
+    return JSON.stringify(value);
+  }
+  if (Array.isArray(value)) {
+    return `[${value.map((v) => canonicalStringify(v)).join(',')}]`;
+  }
+  const obj = value as Record<string, unknown>;
+  const keys = Object.keys(obj).sort();
+  return `{${keys
+    .map((k) => `${JSON.stringify(k)}:${canonicalStringify(obj[k])}`)
+    .join(',')}}`;
+}
+
+interface LoadedLesson {
+  lesson: Lesson;
+  meta: LessonMeta;
+}
+
+function loadLessons(): LoadedLesson[] {
   const dataDir = path.resolve(__dirname, '../../data');
   const manifestPath = path.join(dataDir, 'manifest.json');
   const manifestRaw = fs.readFileSync(manifestPath, 'utf8');
@@ -149,7 +205,7 @@ function loadLessons(): Lesson[] {
     throw new Error(`No lessons found in manifest: ${manifestPath}`);
   }
 
-  return manifest.lessons.map((entry) => {
+  return manifest.lessons.map((entry, idx) => {
     const lessonPath = path.join(dataDir, entry.file);
     const lessonRaw = fs.readFileSync(lessonPath, 'utf8');
     const lesson = assertLesson(JSON.parse(lessonRaw), lessonPath);
@@ -160,12 +216,35 @@ function loadLessons(): Lesson[] {
       );
     }
 
-    return lesson;
+    const contentHash = crypto
+      .createHash('sha256')
+      .update(canonicalStringify(lesson))
+      .digest('hex');
+
+    const meta: LessonMeta = {
+      lesson_id: lesson.lesson_id,
+      title: lesson.title,
+      slug: slugify(lesson.title),
+      level: lesson.level,
+      language: lesson.language,
+      exercise_count: lesson.exercises.length,
+      unit_id: entry.unit_id ?? null,
+      rule_tag: entry.rule_tag ?? null,
+      micro_rule_tag: entry.micro_rule_tag ?? null,
+      content_hash: contentHash,
+      lesson_version: contentHash,
+      order: idx + 1,
+    };
+
+    return { lesson, meta };
   });
 }
 
-const LESSONS = loadLessons();
-const INDEX = new Map(LESSONS.map((lesson) => [lesson.lesson_id, lesson]));
+const LOADED = loadLessons();
+const LESSONS = LOADED.map((l) => l.lesson);
+const META_LIST = LOADED.map((l) => l.meta);
+const INDEX = new Map(LOADED.map((l) => [l.lesson.lesson_id, l.lesson]));
+const META_INDEX = new Map(LOADED.map((l) => [l.meta.lesson_id, l.meta]));
 
 export function getLessonById(id: string): Lesson | undefined {
   return INDEX.get(id);
@@ -173,4 +252,12 @@ export function getLessonById(id: string): Lesson | undefined {
 
 export function getAllLessons(): Lesson[] {
   return LESSONS;
+}
+
+export function getLessonMeta(id: string): LessonMeta | undefined {
+  return META_INDEX.get(id);
+}
+
+export function getAllLessonMeta(): LessonMeta[] {
+  return META_LIST;
 }

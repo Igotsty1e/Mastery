@@ -16,7 +16,7 @@ The backend ships an auth & identity foundation (Drizzle ORM, opaque refresh-tok
 - Deterministic evaluation for all types; AI fallback only for `sentence_correction` borderline cases
 - Default linear lesson flow with the `LEARNING_ENGINE.md §9.1` 1/2/3 in-session loop layered on top — the Decision Engine may pull a same-skill item to the head after a wrong answer; on the third miss it ends the loop on that skill for the session
 - Per-skill mastery state + cross-session review cadence are device-scoped today (`LearnerSkillStore` + `ReviewScheduler` shipped in Waves 2–3); server-side migration lives in `docs/plans/auth-server-state-wave7.md` Wave 7
-- Backend auth foundation (Apple stub + refresh tokens + server-owned lesson sessions) is shipped; Flutter client wiring is Wave 7.4. No chat UI, no resume mid-session.
+- Backend auth + server-owned lesson sessions (Apple stub login, refresh tokens, immutable `exercise_attempts`, `lesson_progress`, `/dashboard`) shipped server-side. No chat UI, no resume mid-session yet — Flutter client wire-up is Wave 7.4.
 
 ## Stack
 
