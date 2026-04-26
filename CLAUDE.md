@@ -94,6 +94,41 @@ Require explicit user intent before any destructive action.
 - Do not load or invoke it for app engineering, UI implementation, deployment, infra, or documentation tasks unless those tasks explicitly require creating or checking English-learning content.
 - If `english-grammar-methodologist` is unavailable in the current session, treat that as a blocker for new content authoring unless the user explicitly overrides it.
 
+## Documentation Maintenance Rule
+
+**Every shipped change must update every documentation file it touches — in the same session, not as a follow-up task.**
+
+Documentation drift is a real bug, not cosmetic. A field removed from code but kept in docs misleads the next reader (human or agent) more than no doc at all.
+
+### How to find which docs to update
+
+Treat **every `.md` file in the repo** (root + `docs/` + nested) as a candidate. Do not work from a fixed checklist — sweep with `grep` against the changed code:
+
+- For a removed/renamed field, function, env var, route, or screen: `rg -l '<old name>'` across `*.md` and update every hit. If the new shape has a different name, also `rg` for the new name to confirm coverage.
+- For a new feature: `rg -l '<related concept>'` across `*.md` to find docs that already discuss the area and need to be extended.
+- For visual changes: also check `docs/design-mockups/` (HTML) and `DESIGN.md`.
+
+### Files that are almost always relevant (start here, then sweep)
+
+- `docs/approved-spec.md` — system boundaries, AI usage, exercise types, navigation, non-goals.
+- `docs/backend-contract.md` — API surface, request/response shape, errors, headers, evaluator routing.
+- `docs/mobile-architecture.md` — client model, screen list, state, navigation, data classes (**field lists must be exact**).
+- `docs/content-contract.md` — lesson schema, authoring rules, normalization, accepted-answers policy.
+- `docs/system-architecture.md` — high-level layout when service boundaries shift.
+- `CLAUDE.md` — deploy config, env vars, tooling, source-of-truth pointers, this rule.
+- `README.md` — top-level doc map and quick orientation.
+- `DESIGN.md` and `docs/design-mockups/` — when shipped visuals change.
+
+### Required practice
+
+1. After landing a feature/fix, run `rg -l '<key term>' --glob '*.md'` for every notable identifier the change introduces or removes.
+2. Open every hit and decide: update / leave / delete the line.
+3. Failing to do this counts as the change being unfinished. The Documentation drift sweep is part of the feature, not a separate ticket.
+
+### Past incident
+
+AI debrief feature shipped 2026-04-25 updated `backend-contract.md`, `approved-spec.md`, and `mobile-architecture.md`, but missed the `evaluationSource` field reference in `mobile-architecture.md` after the field was deleted from the Flutter model in a follow-up cleanup. Fixed 2026-04-26. Caused by working from a memorised list instead of `grep`.
+
 ## Orchestration Mode
 
 - Primary execution path is `Claude Code` using `GSTACK` agents and skills

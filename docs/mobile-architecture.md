@@ -8,6 +8,7 @@ Flutter (Dart). Single codebase. Currently runnable local target: **Flutter web*
 
 - Canonical visual spec: `DESIGN.md`
 - Canonical composition reference: `docs/design-mockups/`
+- Approved next-wave screen contract (onboarding + first exercise V2): `docs/onboarding-first-exercise-arrival-ritual.md`
 - Flutter theme implementation: `app/lib/theme/mastery_theme.dart`
 - Reusable branded UI primitives: `app/lib/widgets/mastery_widgets.dart`
 
@@ -24,15 +25,27 @@ HomeScreen
 
 ### HomeScreen
 
-- First-launch flow is being upgraded from a minimal single-screen onboarding to the approved `Arrival Ritual` sequence (see `docs/onboarding-first-exercise-arrival-ritual.md`).
-- The target onboarding is 3 steps:
-  - `Promise`
-  - `Assembly`
-  - `Handoff`
-- The final onboarding CTA must route directly into `LessonIntroScreen` for the new lesson; it should not bounce the learner through the dashboard first.
-- Returning/home state still shows a read-only level selector (A2/B1/B2/C1 chips; only B2 is active in the current MVP), a progress card with completed/total exercises, and a `Start Lesson` CTA.
-- On entering the dashboard, fetches the lesson via `GET /lessons/{lesson_id}` to populate level and total exercise count; reads locally stored completed-exercise count from `LocalProgressStore` (SharedPreferences).
-- On return from a completed lesson, re-fetches progress to refresh the card.
+`HomeScreen` carries two distinct states. The split below is authoritative — keep these subsections in sync with the code in `app/lib/screens/home_screen.dart` and with `docs/onboarding-first-exercise-arrival-ritual.md`.
+
+#### First-launch onboarding — *Arrival Ritual* (proposed, not yet shipped)
+
+Status: spec approved, implementation pending. Source of truth: `docs/onboarding-first-exercise-arrival-ritual.md`.
+
+- 3 step ritual: `Promise` → `Assembly` → `Handoff`.
+- Each step is independently editable (copy, art, motion).
+- The final `Handoff` step previews the upcoming lesson title, level, exercise count, and one-sentence learning promise.
+- Final CTA routes **directly** into `LessonIntroScreen` — no detour through the dashboard.
+- Currently shipped code: a single-screen minimal onboarding (`_buildOnboarding()` in `home_screen.dart`). The Arrival Ritual will replace it.
+
+#### Returning launch — Dashboard (shipped)
+
+Status: shipped. The screen the learner sees on every launch after the first.
+
+- Read-only level selector chips (A2 / B1 / B2 / C1; only B2 is active in the current MVP).
+- Progress card showing completed-exercise count vs total for the configured lesson.
+- `Start Lesson` CTA → `LessonIntroScreen`.
+- On mount, fetches the lesson via `GET /lessons/{lesson_id}` (`AppConfig.defaultLessonId`) to populate level and total exercise count; reads locally stored completed count from `LocalProgressStore` (SharedPreferences).
+- On return from a completed lesson, re-fetches to refresh the card.
 - Single hardcoded lesson ID from `AppConfig.defaultLessonId`. No lesson list, no dynamic level switching.
 
 ### LessonIntroScreen
@@ -87,7 +100,7 @@ Session state (current exercise, results, score) is in-memory and discarded when
 
 Key data classes (see `app/lib/models/`):
 
-- `EvaluateResponse` — result of one answer submission: `{correct, evaluationSource, explanation?, canonicalAnswer}`
+- `EvaluateResponse` — result of one answer submission: `{correct, explanation?, canonicalAnswer}`. The wire payload also carries `evaluation_source` (`deterministic | ai_fallback`), but the client does not parse or use it — the server alone reasons about evaluator routing.
 - `LessonResultAnswer` — per-exercise entry in the summary: `{exerciseId, correct, prompt?, canonicalAnswer?, explanation?}`
 - `LessonDebrief` — AI-generated post-lesson note: `{debriefType, headline, body, watchOut?, nextStep?, source}` (`source` ∈ `ai | fallback | deterministic_perfect`).
 - `LessonResultResponse` — full lesson result from the result endpoint: `{lessonId, totalExercises, correctCount, answers, conclusion?, debrief?}`
