@@ -80,15 +80,17 @@ npm start         # node dist/server.js
 
 ## AI provider
 
-Default is `StubAiProvider` (always returns incorrect).
+Default is `StubAiProvider` (always returns incorrect). Production uses
+`OpenAiProvider` (Responses API, structured outputs) for both
+`sentence_correction` borderline evaluation and the post-lesson debrief.
 
-Preparation artifacts for the next AI-focused session:
-- `../docs/ai-prompt-spec.md`
-- `../docs/ai-eval-dataset.template.jsonl`
-- `../docs/ai-readiness-checklist.md`
-- `.env.example`
-- `.env`
-- `scripts/dev-local-openai.sh`
+Active references:
+- `src/ai/openai.ts` — provider implementation (prompts, schemas)
+- `../docs/backend-contract.md` — request/response contract + debrief generation flow
+- `.env.example`, `.env`, `scripts/dev-local-openai.sh` — local-dev env
+
+Historical AI-prep notes (rubric, dataset, smoke pack) live in
+`../docs/archive/`.
 
 To enable the built-in OpenAI provider (Responses API structured outputs):
 

@@ -114,7 +114,6 @@ Treat **every `.md` file in the repo** (root + `docs/` + nested) as a candidate.
 - `docs/backend-contract.md` — API surface, request/response shape, errors, headers, evaluator routing.
 - `docs/mobile-architecture.md` — client model, screen list, state, navigation, data classes (**field lists must be exact**).
 - `docs/content-contract.md` — lesson schema, authoring rules, normalization, accepted-answers policy.
-- `docs/system-architecture.md` — high-level layout when service boundaries shift.
 - `CLAUDE.md` — deploy config, env vars, tooling, source-of-truth pointers, this rule.
 - `README.md` — top-level doc map and quick orientation.
 - `DESIGN.md` and `docs/design-mockups/` — when shipped visuals change.
