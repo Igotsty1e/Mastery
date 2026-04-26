@@ -240,6 +240,11 @@ Support richer pedagogy in UI without losing the calm, linear experience.
 
 ### Likely screen / component expansions
 
+- richer `HomeScreen` / dashboard as a true study desk:
+  - compact level dropdown
+  - stronger next-lesson hero
+  - persistent last-lesson report
+  - badge-based current-unit rows
 - audio player control inside exercise card (only on
   `listening_discrimination` items — see Workstream B scope decisions)
 - listening exercise variant of the existing exercise screen
@@ -250,6 +255,12 @@ Support richer pedagogy in UI without losing the calm, linear experience.
 
 ### Tasks
 
+- define next dashboard states and data needs:
+  - first launch after onboarding
+  - returning in-progress
+  - post-lesson return with persistent report
+- define how the summary's debrief compresses into a home-screen report module
+- define status badge system for `done / current / locked`
 - design variants for new exercise families
 - define responsive behavior with keyboard + audio controls
 - maintain one-primary-action discipline
@@ -272,6 +283,7 @@ Support richer content and scoring while keeping backend authority.
 - add richer result payloads if needed:
   - transcript (for listening items)
   - structured error codes
+- **Persistent Last Lesson Report** — the dashboard `Last lesson report` block (per `docs/plans/dashboard-study-desk.md` §7) requires the most recent lesson outcome to survive app restart. Today the data lives in the in-memory `LastLessonStore` singleton (`app/lib/session/last_lesson_store.dart`), populated only when `SessionController._fetchSummary` succeeds in the same runtime session. Real implementation needs server-side completion records — likely a `GET /lessons/last-result?session_id=...` style endpoint OR a learner-scoped store that survives the session model. Until shipped, the block disappears after restart.
 
 ---
 

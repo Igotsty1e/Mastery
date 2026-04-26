@@ -4,6 +4,7 @@ import '../api/api_client.dart';
 import '../models/evaluation.dart';
 import '../models/lesson.dart';
 import '../progress/local_progress_store.dart';
+import 'last_lesson_store.dart';
 import 'session_state.dart';
 
 class SessionController extends ChangeNotifier {
@@ -99,6 +100,16 @@ class SessionController extends ChangeNotifier {
     try {
       final summary = await _api.getResult(_state.lesson!.lessonId, _sessionId);
       _emit(_state.copyWith(phase: SessionPhase.summary, summary: summary));
+      // Publish to the in-memory cross-screen store so the dashboard's
+      // "Last lesson report" block can render once the user pops back.
+      LastLessonStore.instance.recordLesson(LastLessonRecord(
+        lessonId: _state.lesson!.lessonId,
+        lessonTitle: _state.lesson!.title,
+        completedAt: DateTime.now(),
+        totalExercises: summary.totalExercises,
+        correctCount: summary.correctCount,
+        debrief: summary.debrief,
+      ));
     } catch (e, st) {
       debugPrint('_fetchSummary failed – showing local counts. Error: $e\n$st');
       _emit(_state.copyWith(phase: SessionPhase.summary));

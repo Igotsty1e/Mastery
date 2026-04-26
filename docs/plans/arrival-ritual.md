@@ -117,6 +117,10 @@ The dashboard is the **only** home state. It is the destination of `Get started`
 
 This is the single home of the product. Behaviour for this wave matches what is already shipped: level chips, progress card for the configured lesson, `Start lesson` CTA, no other surfaces. Visual refinements may follow a separate design pass.
 
+That separate pass is now tracked in:
+- `docs/plans/dashboard-study-desk.md`
+- `docs/design-mockups/dashboard-study-desk.html`
+
 The dashboard is **also the destination of post-lesson `Done`**. SummaryScreen pops back to the dashboard, not to onboarding and not to a separate post-lesson celebration screen.
 
 ### 04. Lesson Intro Arrival

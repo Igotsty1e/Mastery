@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=390, initial-scale=1" />
+  <title>Mastery - Dashboard Concept</title>
+  <link rel="stylesheet" href="tokens.css" />
+  <style>
+    .dash {
+      flex: 1;
+      padding: 16px 24px 36px;
+      background:
+        radial-gradient(140% 88% at 100% 0%, rgba(243, 230, 233, 0.95), transparent 56%),
+        linear-gradient(180deg, rgba(255, 253, 252, 0.96), var(--bg-app) 26%),
+        var(--bg-app);
+    }
+
+    .topbar {
+      position: relative;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    .topbar__eyebrow {
+      margin: 0 0 8px;
+      font-family: var(--ff-mono);
+      font-size: 11px;
+      line-height: 14px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+    }
+    .topbar__greeting {
+      margin: 0;
+      font-family: var(--ff-display);
+      font-size: 30px;
+      line-height: 1.05;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+    .topbar__sub {
+      margin: 8px 0 0;
+      max-width: 228px;
+      font: var(--t-body-sm);
+      color: var(--text-secondary);
+    }
+
+    .controls {
+      position: relative;
+      display: flex;
+      flex-direction: row;
+      align-items: flex-end;
+      gap: 10px;
+    }
+    .level-trigger {
+      min-width: 84px;
+      height: 40px;
+      padding: 0 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(176, 122, 132, 0.16);
+      background: rgba(255, 253, 252, 0.92);
+      color: var(--text-primary);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: center;
+      font: var(--t-label-md);
+      font-weight: 700;
+      box-shadow: var(--shadow-card);
+    }
+    .level-trigger__dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--action-primary);
+    }
+    .level-trigger__chevron {
+      color: var(--text-tertiary);
+      font-size: 14px;
+      transform: translateY(-1px);
+    }
+    .avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      border: 1px solid var(--border-soft);
+      background:
+        radial-gradient(circle at 36% 28%, rgba(255, 255, 255, 0.86), transparent 42%),
+        linear-gradient(160deg, #ead8dc, #caa79d);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fffdfc;
+      font: var(--t-label-md);
+      font-weight: 700;
+      box-shadow: var(--shadow-card);
+    }
+    .level-menu {
+      position: absolute;
+      top: 48px;
+      right: 50px;
+      width: 132px;
+      padding: 8px;
+      border-radius: 18px;
+      background: rgba(255, 253, 252, 0.98);
+      border: 1px solid var(--border-soft);
+      box-shadow: 0 18px 40px rgba(43, 35, 38, 0.08);
+      z-index: 2;
+    }
+    .level-option {
+      height: 36px;
+      padding: 0 12px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font: var(--t-label-sm);
+      color: var(--text-secondary);
+    }
+    .level-option + .level-option {
+      margin-top: 4px;
+    }
+    .level-option--active {
+      background: var(--bg-primary-soft);
+      color: var(--action-primary-pressed);
+      font-weight: 700;
+    }
+    .level-option--locked::after {
+      content: "Locked";
+      font-family: var(--ff-mono);
+      font-size: 10px;
+      letter-spacing: 0.04em;
+      color: var(--text-tertiary);
+    }
+    .level-option--active::after {
+      content: "Current";
+      font-family: var(--ff-mono);
+      font-size: 10px;
+      letter-spacing: 0.04em;
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      padding: 22px;
+      border-radius: 26px;
+      border: 1px solid rgba(176, 122, 132, 0.16);
+      background:
+        radial-gradient(140% 100% at 100% 0%, rgba(247, 220, 224, 0.9), transparent 58%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(255, 253, 252, 0.98)),
+        var(--bg-raised);
+      box-shadow: var(--shadow-card);
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -30px;
+      top: -30px;
+      width: 156px;
+      height: 156px;
+      border-radius: 999px;
+      background: radial-gradient(circle, rgba(200, 154, 82, 0.12), transparent 66%);
+      pointer-events: none;
+    }
+    .hero__top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .hero__chip {
+      height: 28px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: var(--bg-primary-soft);
+      color: var(--action-primary-pressed);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font: var(--t-label-sm);
+      font-weight: 700;
+    }
+    .hero__title {
+      margin: 12px 0 8px;
+      max-width: 260px;
+      font-family: var(--ff-display);
+      font-size: 30px;
+      line-height: 1.08;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--text-primary);
+    }
+    .hero__meta {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+      font: var(--t-body-sm);
+      color: var(--text-secondary);
+    }
+    .hero__meta-dot {
+      width: 3px;
+      height: 3px;
+      border-radius: 999px;
+      background: var(--text-tertiary);
+    }
+    .hero__promise {
+      margin: 0 0 18px;
+      max-width: 292px;
+      font: var(--t-body-md);
+      color: var(--text-primary);
+    }
+    .hero__footer {
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 12px;
+    }
+    .hero__progress {
+      padding: 14px 14px 12px;
+      border-radius: 18px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(246, 239, 236, 0.88)),
+        var(--bg-raised);
+      border: 1px solid rgba(176, 122, 132, 0.12);
+    }
+    .hero__progress-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+    .hero__progress-label {
+      font: var(--t-label-sm);
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+    .hero__fraction {
+      height: 24px;
+      padding: 0 10px;
+      border-radius: 999px;
+      background: var(--bg-primary-soft);
+      border: 1px solid rgba(176, 122, 132, 0.12);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--ff-mono);
+      font-size: 12px;
+      color: var(--action-primary-pressed);
+      white-space: nowrap;
+    }
+    .hero__rail {
+      height: 12px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, rgba(233, 221, 218, 0.92), rgba(246, 239, 236, 0.98));
+      border: 1px solid rgba(176, 122, 132, 0.1);
+      box-shadow: inset 0 1px 2px rgba(43, 35, 38, 0.06);
+      overflow: hidden;
+    }
+    .hero__fill {
+      width: 58%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #b07a84, #ca99a2 78%, #d8b2b9);
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+    }
+    .hero__progress-copy {
+      margin-top: 8px;
+      font: var(--t-body-sm);
+      color: var(--text-secondary);
+    }
+    .hero__cta {
+      width: 100%;
+    }
+
+    .section {
+      margin-top: 18px;
+    }
+    .section__head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .section__title {
+      margin: 0;
+      font: var(--t-label-sm);
+      font-weight: 700;
+      letter-spacing: 0.11em;
+      text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+    .section__link {
+      color: var(--action-primary);
+      font: var(--t-label-sm);
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .report {
+      padding: 18px;
+      border-radius: 22px;
+      border: 1px solid rgba(176, 122, 132, 0.14);
+      background:
+        linear-gradient(180deg, rgba(255, 253, 252, 0.98), rgba(243, 230, 233, 0.72)),
+        var(--bg-raised);
+      box-shadow: var(--shadow-card);
+    }
+    .report__top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .report__score {
+      min-width: 74px;
+      padding: 10px 10px 9px;
+      border-radius: 16px;
+      background: rgba(244, 231, 206, 0.82);
+      border: 1px solid rgba(200, 154, 82, 0.2);
+      text-align: center;
+      color: #8b6a2a;
+    }
+    .report__score strong {
+      display: block;
+      font-family: var(--ff-display);
+      font-size: 30px;
+      line-height: 1;
+      font-weight: 600;
+    }
+    .report__score span {
+      display: block;
+      margin-top: 2px;
+      font-family: var(--ff-mono);
+      font-size: 10px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .report__lesson {
+      margin: 8px 0 4px;
+      font: var(--t-title-sm);
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .report__meta {
+      margin: 0;
+      font: var(--t-body-sm);
+      color: var(--text-secondary);
+    }
+    .report__headline {
+      margin: 14px 0 6px;
+      font: var(--t-body-md);
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .report__body {
+      margin: 0;
+      font: var(--t-body-sm);
+      color: var(--text-primary);
+    }
+    .report__tail {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid rgba(176, 122, 132, 0.1);
+      font: var(--t-label-sm);
+      color: var(--text-secondary);
+    }
+    .report__tail strong {
+      color: var(--text-primary);
+    }
+    .report__actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .report__btn {
+      flex: 1;
+      height: 44px;
+      border-radius: 16px;
+      font: var(--t-label-md);
+      font-weight: 700;
+    }
+
+    .hero__cta.btn {
+      height: 54px;
+    }
+
+    .unit-card {
+      padding: 18px;
+      border-radius: 22px;
+      background: var(--bg-raised);
+      border: 1px solid var(--border-soft);
+      box-shadow: var(--shadow-card);
+    }
+    .unit-card__title {
+      margin: 10px 0 4px;
+      font: var(--t-title-md);
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .unit-card__sub {
+      margin: 0 0 14px;
+      font: var(--t-body-sm);
+      color: var(--text-secondary);
+    }
+    .unit-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 0;
+    }
+    .unit-row + .unit-row {
+      border-top: 1px solid rgba(228, 215, 212, 0.72);
+    }
+    .unit-row__num {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--ff-mono);
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--bg-surface-alt);
+      border: 1px solid var(--border-soft);
+      color: var(--text-secondary);
+      flex: 0 0 28px;
+    }
+    .unit-row__num--done {
+      background: rgba(78, 124, 104, 0.12);
+      color: var(--success);
+      border-color: rgba(78, 124, 104, 0.18);
+    }
+    .unit-row__num--current {
+      background: var(--bg-primary-soft);
+      color: var(--action-primary-pressed);
+      border-color: rgba(176, 122, 132, 0.14);
+    }
+    .unit-row__title {
+      margin: 0;
+      font: var(--t-body-md);
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .unit-row__sub {
+      margin: 2px 0 0;
+      font: var(--t-body-sm);
+      color: var(--text-tertiary);
+    }
+
+    .status-badge {
+      margin-left: auto;
+      min-height: 30px;
+      padding: 0 12px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font: var(--t-label-sm);
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      border: 1px solid transparent;
+    }
+    .status-badge--done {
+      background: rgba(78, 124, 104, 0.1);
+      color: var(--success);
+      border-color: rgba(78, 124, 104, 0.16);
+    }
+    .status-badge--current {
+      background: rgba(176, 122, 132, 0.12);
+      color: var(--action-primary-pressed);
+      border-color: rgba(176, 122, 132, 0.18);
+    }
+    .status-badge--locked {
+      background: rgba(233, 221, 218, 0.78);
+      color: var(--text-secondary);
+      border-color: rgba(210, 192, 189, 0.9);
+    }
+
+    .next-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: var(--bg-surface-alt);
+      border: 1px solid var(--border-soft);
+    }
+    .next-row + .next-row {
+      margin-top: 8px;
+    }
+    .next-row__num {
+      width: 28px;
+      height: 28px;
+      flex: 0 0 28px;
+      border-radius: 999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--ff-mono);
+      font-size: 12px;
+      font-weight: 600;
+      background: var(--bg-raised);
+      border: 1px solid var(--border-soft);
+      color: var(--text-secondary);
+    }
+    .next-row__title {
+      margin: 0;
+      font: var(--t-body-md);
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .next-row__sub {
+      margin: 2px 0 0;
+      font: var(--t-body-sm);
+      color: var(--text-tertiary);
+    }
+
+    .premium {
+      margin-top: 18px;
+      padding: 16px 18px;
+      border-radius: 20px;
+      border: 1px solid rgba(200, 154, 82, 0.24);
+      background:
+        linear-gradient(180deg, rgba(255, 253, 252, 0.98), rgba(244, 231, 206, 0.72)),
+        var(--bg-raised);
+    }
+    .premium__title {
+      margin: 10px 0 4px;
+      font: var(--t-title-sm);
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .premium__sub {
+      margin: 0;
+      font: var(--t-body-sm);
+      color: var(--text-secondary);
+    }
+  </style>
+</head>
+<body>
+  <div class="screen">
+    <div class="screen__safe-top">
+      <span>9:41</span>
+      <span class="battery"><span class="signal-dot"></span><span class="signal-dot"></span><span class="signal-dot"></span> 􀙇 100%</span>
+    </div>
+
+    <div class="dash">
+      <header class="topbar">
+        <div>
+          <p class="topbar__eyebrow">Study desk</p>
+          <h1 class="topbar__greeting">Good evening, Anna</h1>
+          <p class="topbar__sub">Your next lesson is ready, and your last result is still close at hand.</p>
+        </div>
+
+        <div class="controls">
+          <div class="level-trigger">
+            <span class="level-trigger__dot"></span>
+            <span>B2</span>
+            <span class="level-trigger__chevron">⌄</span>
+          </div>
+          <div class="avatar">A</div>
+          <div class="level-menu">
+            <div class="level-option level-option--locked"><span>A2</span></div>
+            <div class="level-option level-option--locked"><span>B1</span></div>
+            <div class="level-option level-option--active"><span>B2 path</span></div>
+            <div class="level-option level-option--locked"><span>C1</span></div>
+          </div>
+        </div>
+      </header>
+
+      <section class="hero" aria-label="Next lesson">
+        <div class="hero__top">
+          <span class="eyebrow"><span class="eyebrow__dot"></span>Unit 02 · Time & results</span>
+          <span class="hero__chip">B2</span>
+        </div>
+        <h2 class="hero__title">Present Perfect vs Past Simple</h2>
+        <div class="hero__meta">
+          <span>10 exercises</span>
+          <span class="hero__meta-dot"></span>
+          <span>6 minutes</span>
+          <span class="hero__meta-dot"></span>
+          <span>Next lesson</span>
+        </div>
+        <p class="hero__promise">Keep the time contrast clear and finish the unit with one focused lesson.</p>
+        <div class="hero__footer">
+          <div class="hero__progress">
+            <div class="hero__progress-head">
+              <span class="hero__progress-label">Unit progress</span>
+              <span class="hero__fraction">Lesson 2 / 5</span>
+            </div>
+            <div class="hero__rail"><div class="hero__fill"></div></div>
+            <div class="hero__progress-copy">2 of 5 lessons complete in this unit</div>
+          </div>
+          <button class="btn btn--primary hero__cta">Start next lesson</button>
+        </div>
+      </section>
+
+      <section class="section" aria-label="Last lesson report">
+        <div class="section__head">
+          <h3 class="section__title">Last lesson report</h3>
+          <a class="section__link" href="#">Open full summary</a>
+        </div>
+
+        <div class="report">
+          <div class="report__top">
+            <div>
+              <span class="eyebrow eyebrow--gold"><span class="eyebrow__dot"></span>Lesson completed</span>
+              <p class="report__lesson">Present Perfect Simple vs Continuous</p>
+              <p class="report__meta">Today · 10 exercises · 2 mistakes to review</p>
+            </div>
+            <div class="report__score">
+              <strong>8/10</strong>
+              <span>Score</span>
+            </div>
+          </div>
+
+          <p class="report__headline">You separated result and duration well.</p>
+          <p class="report__body">The core contrast is already stable. The remaining risk is defaulting to the simple form when the sentence still describes an unfinished duration.</p>
+          <div class="report__tail"><strong>Watch out:</strong> if the action is still in progress, keep <code>have been + verb-ing</code> active before you answer.</div>
+
+          <div class="report__actions">
+            <button class="btn btn--secondary report__btn">Review mistakes</button>
+            <button class="btn btn--ghost report__btn">See full report</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" aria-label="Current unit">
+        <div class="section__head">
+          <h3 class="section__title">Current unit</h3>
+          <a class="section__link" href="#">Open unit</a>
+        </div>
+
+        <div class="unit-card">
+          <span class="eyebrow eyebrow--ink"><span class="eyebrow__dot"></span>Unit 02</span>
+          <h4 class="unit-card__title">Time & completed actions</h4>
+          <p class="unit-card__sub">A textbook sequence on result, duration, and the time signals that separate them.</p>
+
+          <div class="unit-row">
+            <div class="unit-row__num unit-row__num--done">01</div>
+            <div>
+              <p class="unit-row__title">Present Perfect Simple vs Continuous</p>
+              <p class="unit-row__sub">Completed · 10 exercises</p>
+            </div>
+            <span class="status-badge status-badge--done">Done</span>
+          </div>
+
+          <div class="unit-row">
+            <div class="unit-row__num unit-row__num--current">02</div>
+            <div>
+              <p class="unit-row__title">Present Perfect vs Past Simple</p>
+              <p class="unit-row__sub">Current lesson · 10 exercises</p>
+            </div>
+            <span class="status-badge status-badge--current">Current</span>
+          </div>
+
+          <div class="unit-row">
+            <div class="unit-row__num">03</div>
+            <div>
+              <p class="unit-row__title">For vs Since</p>
+              <p class="unit-row__sub">Locked until Lesson 02 is complete</p>
+            </div>
+            <span class="status-badge status-badge--locked">Locked</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" aria-label="Coming next">
+        <div class="section__head">
+          <h3 class="section__title">Coming next</h3>
+          <a class="section__link" href="#">See all</a>
+        </div>
+
+        <div class="next-row">
+          <div class="next-row__num">03</div>
+          <div class="flex-grow">
+            <p class="next-row__title">For vs Since</p>
+            <p class="next-row__sub">Unit 02 · 10 exercises</p>
+          </div>
+        </div>
+        <div class="next-row">
+          <div class="next-row__num">04</div>
+          <div class="flex-grow">
+            <p class="next-row__title">Already vs Yet</p>
+            <p class="next-row__sub">Unit 02 · 10 exercises</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="premium" aria-label="Premium preview">
+        <span class="eyebrow eyebrow--gold"><span class="eyebrow__dot"></span>Premium</span>
+        <h3 class="premium__title">Unlock the full B2 course path</h3>
+        <p class="premium__sub">Keep the home calm. Keep premium quiet. Let it extend the path, not interrupt it.</p>
+      </section>
+    </div>
+
+    <div class="screen__home-indicator"></div>
+  </div>
+</body>
+</html>

@@ -35,6 +35,7 @@ When adding a new doc, ask: *which of those buckets is this?* If it doesn't fit,
 |---|---|
 | [`plans/roadmap.md`](plans/roadmap.md) | Next-step roadmap for audio, exercise expansion, screens, and tooling |
 | [`plans/arrival-ritual.md`](plans/arrival-ritual.md) | Onboarding (Direction A · Editorial Notebook) shipped 2026-04-26: 2-step + dashboard-as-home, calm route transitions, code-level conformance audit. Brief B (first-exercise V2 chrome) declined by the product owner — current exercise chrome is the long-term contract. Live visual QA in a real browser still pending. |
+| [`plans/dashboard-study-desk.md`](plans/dashboard-study-desk.md) | Dashboard V2 (Study Desk) shipped 2026-04-26: compact level dropdown, next-lesson hero with progress cluster, in-memory Last lesson report, badge-based current-unit rows, quiet Coming Next stub, premium block stub. Persistent Last lesson report = tech debt (see `plans/roadmap.md` Workstream H). |
 
 ### Content authoring (`docs/content/`)
 
@@ -44,10 +45,11 @@ When adding a new doc, ask: *which of those buckets is this?* If it doesn't fit,
 
 ### Visual references (`docs/design-mockups/`)
 
-Eight 390×844 mobile mockups showing canonical screen composition for shipped layouts. Open via `cd docs/design-mockups && python3 -m http.server 8765`. Built directly against the `DESIGN.md` token system with real lesson content.
+Eight 390×844 mobile mockups show canonical composition for shipped layouts. Open via `cd docs/design-mockups && python3 -m http.server 8765`. Built directly against the `DESIGN.md` token system with real lesson content.
 
-In-flight visual exploration:
-- [`design-mockups/onboarding-2step/`](design-mockups/onboarding-2step/index.html) — three direction takes (Editorial Notebook / Atelier / Clinical Calm) on the locked 2-step onboarding + dashboard-as-home + quieter first exercise. Awaiting a pick before implementation.
+Visual references beyond the shipped set:
+- [`design-mockups/onboarding-2step/`](design-mockups/onboarding-2step/index.html) — the exploration board for the now-shipped onboarding wave. Kept as audit trail / design history; Direction A was selected and shipped.
+- [`design-mockups/dashboard-study-desk.html`](design-mockups/dashboard-study-desk.html) — visual reference for the shipped Study Desk dashboard. Paired with `plans/dashboard-study-desk.md`.
 
 ### Project root (canon)
 

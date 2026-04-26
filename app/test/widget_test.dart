@@ -170,7 +170,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Dashboard subtitle, not onboarding.
-      expect(find.text('English practice, one lesson at a time.'), findsOneWidget);
+      expect(find.text('STUDY DESK'), findsOneWidget);
       expect(find.widgetWithText(FilledButton, 'Start lesson'), findsOneWidget);
       expect(find.widgetWithText(FilledButton, 'Continue'), findsNothing);
     });
@@ -194,7 +194,7 @@ void main() {
       await tester.pumpAndSettle();
 
       // Dashboard markers
-      expect(find.text('English practice, one lesson at a time.'), findsOneWidget);
+      expect(find.text('STUDY DESK'), findsOneWidget);
       expect(find.widgetWithText(FilledButton, 'Start lesson'), findsOneWidget);
       // Lesson intro NOT pushed automatically
       expect(find.widgetWithText(FilledButton, 'Start Practice'), findsNothing);

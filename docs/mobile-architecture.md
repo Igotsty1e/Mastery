@@ -8,7 +8,8 @@ Flutter (Dart). Single codebase. Currently runnable local target: **Flutter web*
 
 - Canonical visual spec: `DESIGN.md`
 - Canonical composition reference: `docs/design-mockups/`
-- Approved next-wave screen contract (onboarding + first exercise V2): `docs/plans/arrival-ritual.md`
+- Approved shipped onboarding/home wave: `docs/plans/arrival-ritual.md`
+- Approved next-wave dashboard redesign contract: `docs/plans/dashboard-study-desk.md`
 - Flutter theme implementation: `app/lib/theme/mastery_theme.dart`
 - Reusable branded UI primitives: `app/lib/widgets/mastery_widgets.dart`
 
@@ -47,16 +48,25 @@ Status: declined 2026-04-26 by the product owner. A first attempt landed in 317a
 
 Status: shipped 2026-04-26. `MasteryFadeRoute` (`app/lib/widgets/mastery_route.dart`) renders a calm fade-through plus a 4% rise; collapses to opacity-only when `MediaQuery.disableAnimations` is on. Used for HomeScreen → LessonIntroScreen and LessonIntroScreen → ExerciseScreen, replacing the default sliding `MaterialPageRoute`. Onboarding step transitions already use the same motion contract. Exercise result-reveal motion is intentionally not done — the Brief B closure protects the exercise screen as the long-term contract.
 
-#### Returning launch — Dashboard (shipped)
+#### Returning launch — Study Desk dashboard (shipped)
 
-Status: shipped. The screen the learner sees on every launch after the first.
+Status: shipped 2026-04-26 (Dashboard V2 · Study Desk wave). Source of truth: `docs/plans/dashboard-study-desk.md`. Visual reference: `docs/design-mockups/dashboard-study-desk.html`. Implementation: `app/lib/screens/home_screen.dart` plus `LastLessonStore` (`app/lib/session/last_lesson_store.dart`) and the reusable `StatusBadge` widget in `app/lib/widgets/mastery_widgets.dart`.
 
-- Read-only level selector chips (A2 / B1 / B2 / C1; only B2 is active in the current MVP).
-- Progress card showing completed-exercise count vs total for the configured lesson.
-- `Start Lesson` CTA → `LessonIntroScreen`.
-- On mount, fetches the lesson via `GET /lessons/{lesson_id}` (`AppConfig.defaultLessonId`) to populate level and total exercise count; reads locally stored completed count from `LocalProgressStore` (SharedPreferences).
+Layout, in locked order:
+
+1. **Header** — eyebrow `STUDY DESK`, time-based greeting (`Good morning / afternoon / evening`), one-line sub. Compact level dropdown trigger (`B2 ▾` → menu with A2/B1/C1 marked Locked, B2 marked Current — no real switching) and a static `M` avatar circle. Dropdown overlays via `showMenu`, does not push content.
+2. **Next-lesson hero** — `Unit 01` eyebrow + `B2` tag + Fraunces serif lesson title + meta row (`N exercises · ~M min · Next lesson`) + one-sentence promise + a stacked progress cluster (label + fraction pill + thick rail) + a single primary CTA (`Start lesson` / `Continue lesson` / `Start next lesson` — last one disabled until multi-lesson backend lands).
+3. **Last lesson report** — only visible when `LastLessonStore.instance.record != null` (in-memory; lost on app restart). Block contains a `Lesson completed` eyebrow, lesson title, factual meta (when, exercises, mistakes), gold-soft `score pill`, debrief headline + body, optional `WATCH OUT` tail, and two actions: `Review mistakes` (pushes `SummaryScreen` with `initialScrollToMistakes: true`) and `See full report` (pushes `SummaryScreen` from the top).
+4. **Current unit** — `Unit 01` card with shipped `Verbs Followed by -ing` row marked `Current` or `Done`, plus a single stub locked row for the next lesson.
+5. **Coming next** — quiet two-row stub (`Verbs Followed by to + infinitive`, `Reported Speech: Statements`) carrying an explicit `Stub preview` caption. Will be replaced once the multi-lesson backend lands.
+6. **Premium block** — visual stub at the bottom; gold-soft surface, no `onTap`. No monetisation in MVP.
+
+Lesson data:
+- On mount, fetches the lesson via `GET /lessons/{lesson_id}` (`AppConfig.defaultLessonId`) to populate level, lesson title, and exercise count.
+- Reads locally stored completed-exercise count from `LocalProgressStore` (SharedPreferences).
 - On return from a completed lesson, re-fetches to refresh the card.
-- Single hardcoded lesson ID from `AppConfig.defaultLessonId`. No lesson list, no dynamic level switching.
+
+Known scope deviations vs the spec text — see `docs/plans/dashboard-study-desk.md` Status section. The biggest one is **Last lesson report = in-memory only**; persistence is tracked as tech debt in `docs/plans/roadmap.md` (Workstream H).
 
 ### LessonIntroScreen
 
@@ -113,6 +123,7 @@ Key data classes (see `app/lib/models/`):
 - `LessonResultAnswer` — per-exercise entry in the summary: `{exerciseId, correct, prompt?, canonicalAnswer?, explanation?}`
 - `LessonDebrief` — AI-generated post-lesson note: `{debriefType, headline, body, watchOut?, nextStep?, source}` (`source` ∈ `ai | fallback | deterministic_perfect`).
 - `LessonResultResponse` — full lesson result from the result endpoint: `{lessonId, totalExercises, correctCount, answers, conclusion?, debrief?}`
+- `LastLessonRecord` — in-memory snapshot held by `LastLessonStore` (`app/lib/session/last_lesson_store.dart`) so the dashboard "Last lesson report" block can render across navigation: `{lessonId, lessonTitle, completedAt, totalExercises, correctCount, debrief?}`. **Not persistent** — see `docs/plans/roadmap.md` Workstream H "Persistent Last Lesson Report".
 
 Session state is managed by `SessionController` / `SessionState` (see `app/lib/session/`). Discarded on exit. Client never stores `accepted_answers`, `accepted_corrections`, or `correct_option_id`.
 

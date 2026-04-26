@@ -135,6 +135,58 @@ class LevelChip extends StatelessWidget {
   }
 }
 
+/// Lesson-row state badge (Done / Current / Locked) for the dashboard
+/// "Current unit" block per `docs/plans/dashboard-study-desk.md` §8.
+enum StatusBadgeVariant { done, current, locked }
+
+class StatusBadge extends StatelessWidget {
+  final String label;
+  final StatusBadgeVariant variant;
+
+  const StatusBadge({
+    super.key,
+    required this.label,
+    required this.variant,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.masteryTokens;
+    final (bg, fg, border) = switch (variant) {
+      StatusBadgeVariant.done => (
+          tokens.success.withAlpha(28),
+          tokens.success,
+          tokens.success.withAlpha(40),
+        ),
+      StatusBadgeVariant.current => (
+          MasteryColors.actionPrimary.withAlpha(30),
+          MasteryColors.actionPrimaryPressed,
+          MasteryColors.actionPrimary.withAlpha(46),
+        ),
+      StatusBadgeVariant.locked => (
+          tokens.bgSurfaceAlt,
+          MasteryColors.textSecondary,
+          tokens.borderStrong,
+        ),
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: bg,
+        border: Border.all(color: border),
+        borderRadius: BorderRadius.circular(MasteryRadii.pill),
+      ),
+      child: Text(
+        label,
+        style: MasteryTextStyles.labelSm.copyWith(
+          color: fg,
+          letterSpacing: 0.4,
+        ),
+      ),
+    );
+  }
+}
+
 /// Compact tag pill (e.g. B2 in lesson intro header).
 class TagPill extends StatelessWidget {
   final String label;
@@ -210,9 +262,14 @@ class SectionEyebrow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        Text(
-          label.toUpperCase(),
-          style: MasteryTextStyles.eyebrow(color: color),
+        // Flexible so a long eyebrow inside an Expanded parent ellipsises
+        // instead of triggering a RenderFlex overflow.
+        Flexible(
+          child: Text(
+            label.toUpperCase(),
+            overflow: TextOverflow.ellipsis,
+            style: MasteryTextStyles.eyebrow(color: color),
+          ),
         ),
       ],
     );

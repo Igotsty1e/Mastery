@@ -1,14 +1,29 @@
+// HomeScreen — first-launch routes through the Arrival Ritual onboarding;
+// the dashboard is the single Home for every other launch. The dashboard
+// implements the locked Study Desk contract (`docs/plans/dashboard-study-desk.md`)
+// with reference visual at `docs/design-mockups/dashboard-study-desk.html`.
+//
+// Order on the dashboard (locked):
+//   1. header (greeting + level dropdown trigger + avatar)
+//   2. next-lesson hero
+//   3. last-lesson report (only when LastLessonStore has a record)
+//   4. current unit with badge states
+//   5. coming next (quiet)
+//   6. premium block (visual stub — no monetisation in MVP)
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../api/api_client.dart';
 import '../config.dart';
 import '../progress/local_progress_store.dart';
+import '../session/last_lesson_store.dart';
 import '../theme/mastery_theme.dart';
-import '../widgets/mastery_widgets.dart';
 import '../widgets/mastery_route.dart';
+import '../widgets/mastery_widgets.dart';
 import 'lesson_intro_screen.dart';
 import 'onboarding_arrival_ritual_screen.dart';
+import 'summary_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -102,6 +117,25 @@ class _HomeScreenState extends State<HomeScreen> {
     await _loadDashboard();
   }
 
+  void _openLastLessonSummary({bool toMistakes = false}) {
+    final record = LastLessonStore.instance.record;
+    if (record == null) return;
+    Navigator.of(context).push(
+      MasteryFadeRoute(
+        builder: (_) => SummaryScreen(
+          correctCount: record.correctCount,
+          totalCount: record.totalExercises,
+          summary: null, // record holds the headline data; SummaryScreen
+          // re-renders via correct/total. The full LessonResultResponse
+          // (with mistake list) is intentionally NOT carried — see tech
+          // debt note in docs/plans/roadmap.md "Persistent Last Lesson
+          // Report". `toMistakes` is honoured when summary is non-null.
+          initialScrollToMistakes: toMistakes,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_resolving) {
@@ -115,139 +149,59 @@ class _HomeScreenState extends State<HomeScreen> {
         onComplete: _completeOnboarding,
       );
     }
-    return _buildDashboard();
+    return ListenableBuilder(
+      listenable: LastLessonStore.instance,
+      builder: (context, _) => _buildDashboard(),
+    );
   }
 
-  // ---------- Dashboard ----------
+  // ────────────────────────────────────────────────────────────────────────
+  // Dashboard — Study Desk (docs/plans/dashboard-study-desk.md)
+  // ────────────────────────────────────────────────────────────────────────
+
   Widget _buildDashboard() {
     final tokens = context.masteryTokens;
-    final progress = _totalExercises == 0
-        ? 0.0
-        : _completedExercises / _totalExercises;
+    final lastRecord = LastLessonStore.instance.record;
 
     return Scaffold(
       backgroundColor: tokens.bgApp,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(
-              MasterySpacing.lg, 28, MasterySpacing.lg, MasterySpacing.xl),
+              MasterySpacing.lg, 16, MasterySpacing.lg, MasterySpacing.xl),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Mastery',
-                style: MasteryTextStyles.displayItalic(
-                  size: 32,
-                  lineHeight: 34,
+              const _DashboardHeader(),
+              const SizedBox(height: 18),
+              _NextLessonHero(
+                lessonTitle: _lessonTitle,
+                level: _selectedLevel,
+                totalExercises: _totalExercises,
+                completedExercises: _completedExercises,
+                isLoading: _isLoadingDashboard,
+                lessonHasNext: false,
+                onStart: _startLesson,
+              ),
+              if (lastRecord != null) ...[
+                const SizedBox(height: 22),
+                _LastLessonReport(
+                  record: lastRecord,
+                  onReviewMistakes: () =>
+                      _openLastLessonSummary(toMistakes: true),
+                  onOpenFullSummary: () => _openLastLessonSummary(),
                 ),
+              ],
+              const SizedBox(height: 22),
+              _CurrentUnitBlock(
+                lessonTitle: _lessonTitle,
+                completed: _completedExercises >= _totalExercises &&
+                    _totalExercises > 0,
               ),
-              const SizedBox(height: 6),
-              Text(
-                'English practice, one lesson at a time.',
-                style: MasteryTextStyles.bodyMd.copyWith(
-                  color: MasteryColors.textSecondary,
-                ),
-              ),
-              const SizedBox(height: 28),
-              Text(
-                'LEVEL',
-                style: MasteryTextStyles.labelMd.copyWith(
-                  color: MasteryColors.textSecondary,
-                  letterSpacing: 1.2,
-                ),
-              ),
-              const SizedBox(height: MasterySpacing.sm),
-              Wrap(
-                spacing: 10,
-                runSpacing: 10,
-                children: [
-                  LevelChip(
-                      label: 'A2',
-                      active: _selectedLevel == 'A2',
-                      locked: _selectedLevel != 'A2'),
-                  LevelChip(
-                      label: 'B1',
-                      active: _selectedLevel == 'B1',
-                      locked: _selectedLevel != 'B1'),
-                  LevelChip(
-                      label: 'B2',
-                      active: _selectedLevel == 'B2',
-                      locked: _selectedLevel != 'B2'),
-                  LevelChip(
-                      label: 'C1',
-                      active: _selectedLevel == 'C1',
-                      locked: _selectedLevel != 'C1'),
-                ],
-              ),
-              const SizedBox(height: 28),
-              MasteryCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        const Expanded(
-                          child: SectionEyebrow(label: "Today's lesson"),
-                        ),
-                        TagPill(label: _selectedLevel),
-                      ],
-                    ),
-                    const SizedBox(height: 14),
-                    Text(
-                      _lessonTitle,
-                      style: MasteryTextStyles.headlineMd.copyWith(
-                        fontFamily: 'Fraunces',
-                        fontSize: 26,
-                        height: 30 / 26,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: -0.3,
-                        fontVariations: const [
-                          FontVariation('opsz', 144),
-                          FontVariation('wght', 600),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      '$_totalExercises exercises  ·  ~5 minutes',
-                      style: MasteryTextStyles.bodySm.copyWith(
-                        color: MasteryColors.textSecondary,
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    Row(
-                      children: [
-                        Expanded(
-                            child:
-                                MasteryProgressTrack(value: progress)),
-                        const SizedBox(width: 14),
-                        Text(
-                          _isLoadingDashboard
-                              ? '— / $_totalExercises'
-                              : '$_completedExercises / $_totalExercises',
-                          style: MasteryTextStyles.mono(
-                            size: 14,
-                            lineHeight: 18,
-                            weight: FontWeight.w600,
-                            color: MasteryColors.textPrimary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 22),
-                    FilledButton(
-                      onPressed: _isLoadingDashboard ? null : _startLesson,
-                      child: Text(
-                        _completedExercises > 0
-                            ? 'Continue lesson'
-                            : 'Start lesson',
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: MasterySpacing.lg),
-              const _ComingNext(),
+              const SizedBox(height: 22),
+              const _ComingNextBlock(),
+              const SizedBox(height: 22),
+              const _PremiumBlock(),
             ],
           ),
         ),
@@ -256,57 +210,1003 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class _ComingNext extends StatelessWidget {
-  const _ComingNext();
+// ─────────────────────────────────────────────────────────────────────────
+// Header
+// ─────────────────────────────────────────────────────────────────────────
+
+class _DashboardHeader extends StatelessWidget {
+  const _DashboardHeader();
+
+  String get _greeting {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Column(
+    final tokens = context.masteryTokens;
+    return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Text(
-              'COMING NEXT',
-              style: MasteryTextStyles.labelMd.copyWith(
-                color: MasteryColors.textSecondary,
-                letterSpacing: 1.2,
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'STUDY DESK',
+                style: MasteryTextStyles.mono(
+                  size: 11,
+                  lineHeight: 14,
+                  weight: FontWeight.w600,
+                  color: tokens.textTertiary,
+                  letterSpacing: 1.6,
+                ),
               ),
-            ),
-            const Spacer(),
-            Text(
-              'See all',
-              style: MasteryTextStyles.labelSm.copyWith(
-                color: MasteryColors.actionPrimary,
-                fontWeight: FontWeight.w700,
+              const SizedBox(height: 8),
+              Text(
+                _greeting,
+                style: MasteryTextStyles.headlineMd.copyWith(
+                  fontFamily: 'Fraunces',
+                  fontSize: 28,
+                  height: 32 / 28,
+                  fontWeight: FontWeight.w600,
+                  color: MasteryColors.textPrimary,
+                  letterSpacing: -0.4,
+                  fontVariations: const [
+                    FontVariation('opsz', 144),
+                    FontVariation('wght', 600),
+                  ],
+                ),
               ),
-            ),
-          ],
+              const SizedBox(height: 6),
+              Text(
+                'Your next lesson is ready, your last result is close at hand.',
+                style: MasteryTextStyles.bodySm.copyWith(
+                  color: MasteryColors.textSecondary,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 12),
-        _NextRow(
-          number: '02',
-          title: 'Verbs Followed by to-Infinitive',
-          subtitle: 'B2  ·  10 exercises',
-        ),
-        const SizedBox(height: 8),
-        _NextRow(
-          number: '03',
-          title: 'Reported Speech: Statements',
-          subtitle: 'B2  ·  10 exercises',
+        const SizedBox(width: 12),
+        Padding(
+          padding: const EdgeInsets.only(top: 22),
+          child: Row(
+            children: const [
+              _LevelTrigger(level: 'B2'),
+              SizedBox(width: 10),
+              _Avatar(),
+            ],
+          ),
         ),
       ],
     );
   }
 }
 
-class _NextRow extends StatelessWidget {
-  final String number;
+class _LevelTrigger extends StatelessWidget {
+  final String level;
+  const _LevelTrigger({required this.level});
+
+  Future<void> _show(BuildContext context) async {
+    final tokens = context.masteryTokens;
+    await showMenu<void>(
+      context: context,
+      position: const RelativeRect.fromLTRB(140, 110, 16, 0),
+      color: MasteryColors.bgSurface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(MasteryRadii.md),
+        side: BorderSide(color: tokens.borderSoft),
+      ),
+      elevation: 6,
+      items: const [
+        _LevelMenuItem(label: 'A2', state: _LevelState.locked),
+        _LevelMenuItem(label: 'B1', state: _LevelState.locked),
+        _LevelMenuItem(label: 'B2', state: _LevelState.current),
+        _LevelMenuItem(label: 'C1', state: _LevelState.locked),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.masteryTokens;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(MasteryRadii.pill),
+        onTap: () => _show(context),
+        child: Container(
+          height: 36,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: MasteryColors.bgSurface,
+            border: Border.all(color: tokens.borderSoft),
+            borderRadius: BorderRadius.circular(MasteryRadii.pill),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: const BoxDecoration(
+                  color: MasteryColors.actionPrimary,
+                  shape: BoxShape.circle,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                level,
+                style: MasteryTextStyles.labelMd.copyWith(
+                  color: MasteryColors.textPrimary,
+                  letterSpacing: 0.4,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Icon(Icons.keyboard_arrow_down_rounded,
+                  size: 16, color: tokens.textTertiary),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+enum _LevelState { current, locked }
+
+class _LevelMenuItem extends PopupMenuEntry<void> {
+  final String label;
+  final _LevelState state;
+
+  const _LevelMenuItem({required this.label, required this.state});
+
+  @override
+  double get height => 40;
+
+  @override
+  bool represents(void value) => false;
+
+  @override
+  State<_LevelMenuItem> createState() => _LevelMenuItemState();
+}
+
+class _LevelMenuItemState extends State<_LevelMenuItem> {
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.masteryTokens;
+    final isCurrent = widget.state == _LevelState.current;
+    return Container(
+      width: 160,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      child: Row(
+        children: [
+          Text(
+            widget.label,
+            style: MasteryTextStyles.labelMd.copyWith(
+              color: isCurrent
+                  ? MasteryColors.actionPrimaryPressed
+                  : MasteryColors.textSecondary,
+            ),
+          ),
+          const Spacer(),
+          Text(
+            isCurrent ? 'Current' : 'Locked',
+            style: MasteryTextStyles.mono(
+              size: 10,
+              lineHeight: 12,
+              weight: FontWeight.w500,
+              color: tokens.textTertiary,
+              letterSpacing: 0.6,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Avatar extends StatelessWidget {
+  const _Avatar();
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.masteryTokens;
+    return Container(
+      width: 36,
+      height: 36,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            tokens.bgPrimarySoft,
+            MasteryColors.actionPrimary,
+          ],
+        ),
+        border: Border.all(color: tokens.borderSoft),
+        shape: BoxShape.circle,
+        boxShadow: tokens.shadowCard,
+      ),
+      child: Text(
+        'M',
+        style: MasteryTextStyles.labelMd.copyWith(
+          color: MasteryColors.bgSurface,
+          letterSpacing: 0,
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Next Lesson Hero
+// ─────────────────────────────────────────────────────────────────────────
+
+class _NextLessonHero extends StatelessWidget {
+  final String lessonTitle;
+  final String level;
+  final int totalExercises;
+  final int completedExercises;
+  final bool isLoading;
+
+  /// True only when there is a real next lesson to launch after the current
+  /// one is finished. The MVP backend ships a single lesson, so this stays
+  /// `false` until more lessons land (`codex/b2-content` worktree). See
+  /// `docs/plans/roadmap.md` "Multi-lesson units".
+  final bool lessonHasNext;
+  final VoidCallback onStart;
+
+  const _NextLessonHero({
+    required this.lessonTitle,
+    required this.level,
+    required this.totalExercises,
+    required this.completedExercises,
+    required this.isLoading,
+    required this.lessonHasNext,
+    required this.onStart,
+  });
+
+  bool get _isFinished =>
+      totalExercises > 0 && completedExercises >= totalExercises;
+
+  String get _ctaLabel {
+    if (_isFinished) return 'Start next lesson';
+    return completedExercises > 0 ? 'Continue lesson' : 'Start lesson';
+  }
+
+  String get _promise {
+    if (_isFinished) {
+      return 'Next lesson in this unit is on the way. Until then, your last result is below.';
+    }
+    return 'Stay focused on one rule, finish the set, and the dashboard remembers your run.';
+  }
+
+  String _estimatedTime(int n) {
+    if (n <= 0) return '~5 min';
+    final minutes = (n * 0.5).ceil();
+    return '~$minutes min';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.masteryTokens;
+    final progress = totalExercises == 0
+        ? 0.0
+        : (completedExercises / totalExercises).clamp(0.0, 1.0);
+    final canStart = !isLoading && (!_isFinished || lessonHasNext);
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topRight,
+          end: Alignment.bottomLeft,
+          colors: [
+            tokens.bgPrimarySoft.withAlpha(110),
+            MasteryColors.bgRaised,
+          ],
+          stops: const [0.0, 0.65],
+        ),
+        border: Border.all(color: MasteryColors.actionPrimary.withAlpha(40)),
+        borderRadius: BorderRadius.circular(MasteryRadii.xl),
+        boxShadow: tokens.shadowCard,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: SectionEyebrow(
+                  label: 'Unit 01',
+                  variant: SectionEyebrowVariant.gold,
+                ),
+              ),
+              TagPill(label: level),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            _isFinished ? 'Coming next: Lesson 02' : lessonTitle,
+            style: TextStyle(
+              fontFamily: 'Fraunces',
+              fontSize: 28,
+              height: 34 / 28,
+              fontWeight: FontWeight.w600,
+              color: MasteryColors.textPrimary,
+              letterSpacing: -0.4,
+              fontVariations: const [
+                FontVariation('opsz', 144),
+                FontVariation('wght', 600),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          _MetaRow(
+            entries: [
+              '$totalExercises exercises',
+              _estimatedTime(totalExercises),
+              _isFinished ? 'On the way' : 'Next lesson',
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            _promise,
+            style: MasteryTextStyles.bodyMd.copyWith(
+              color: MasteryColors.textPrimary,
+              height: 1.55,
+            ),
+          ),
+          const SizedBox(height: 18),
+          _ProgressCluster(
+            label: 'Lesson progress',
+            current: completedExercises,
+            total: totalExercises,
+            progress: progress,
+            isLoading: isLoading,
+          ),
+          const SizedBox(height: 16),
+          FilledButton(
+            onPressed: canStart ? onStart : null,
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(54),
+            ),
+            child: Text(_ctaLabel),
+          ),
+          if (_isFinished && !lessonHasNext) ...[
+            const SizedBox(height: 10),
+            Center(
+              child: Text(
+                'New lesson arrives once it lands in the curriculum.',
+                style: MasteryTextStyles.bodySm.copyWith(
+                  color: MasteryColors.textSecondary,
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _MetaRow extends StatelessWidget {
+  final List<String> entries;
+  const _MetaRow({required this.entries});
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.masteryTokens;
+    final children = <Widget>[];
+    for (var i = 0; i < entries.length; i++) {
+      children.add(Text(
+        entries[i],
+        style: MasteryTextStyles.bodySm.copyWith(
+          color: MasteryColors.textSecondary,
+        ),
+      ));
+      if (i < entries.length - 1) {
+        children.add(Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          child: Container(
+            width: 3,
+            height: 3,
+            decoration: BoxDecoration(
+              color: tokens.textTertiary,
+              shape: BoxShape.circle,
+            ),
+          ),
+        ));
+      }
+    }
+    return Wrap(
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: children,
+    );
+  }
+}
+
+class _ProgressCluster extends StatelessWidget {
+  final String label;
+  final int current;
+  final int total;
+  final double progress;
+  final bool isLoading;
+
+  const _ProgressCluster({
+    required this.label,
+    required this.current,
+    required this.total,
+    required this.progress,
+    required this.isLoading,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.masteryTokens;
+    final fraction = isLoading ? '— / $total' : '$current / $total';
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: MasteryColors.bgRaised,
+        border: Border.all(color: tokens.borderSoft),
+        borderRadius: BorderRadius.circular(MasteryRadii.md),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  label.toUpperCase(),
+                  style: MasteryTextStyles.mono(
+                    size: 11,
+                    lineHeight: 14,
+                    weight: FontWeight.w600,
+                    color: MasteryColors.textSecondary,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 10, vertical: 3),
+                decoration: BoxDecoration(
+                  color: tokens.bgPrimarySoft,
+                  borderRadius: BorderRadius.circular(MasteryRadii.pill),
+                ),
+                child: Text(
+                  fraction,
+                  style: MasteryTextStyles.mono(
+                    size: 12,
+                    lineHeight: 14,
+                    weight: FontWeight.w600,
+                    color: MasteryColors.actionPrimaryPressed,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(MasteryRadii.pill),
+            child: SizedBox(
+              height: 10,
+              child: LinearProgressIndicator(
+                value: progress,
+                backgroundColor: tokens.bgSurfaceAlt,
+                valueColor: const AlwaysStoppedAnimation(
+                    MasteryColors.actionPrimary),
+                minHeight: 10,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Last Lesson Report
+// ─────────────────────────────────────────────────────────────────────────
+
+class _LastLessonReport extends StatelessWidget {
+  final LastLessonRecord record;
+  final VoidCallback onReviewMistakes;
+  final VoidCallback onOpenFullSummary;
+
+  const _LastLessonReport({
+    required this.record,
+    required this.onReviewMistakes,
+    required this.onOpenFullSummary,
+  });
+
+  String _whenText(DateTime t) {
+    final now = DateTime.now();
+    if (now.year == t.year && now.month == t.month && now.day == t.day) {
+      return 'Today';
+    }
+    final yesterday = now.subtract(const Duration(days: 1));
+    if (yesterday.year == t.year &&
+        yesterday.month == t.month &&
+        yesterday.day == t.day) {
+      return 'Yesterday';
+    }
+    return '${t.day.toString().padLeft(2, '0')}.${t.month.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.masteryTokens;
+    final debrief = record.debrief;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Text(
+                'LAST LESSON REPORT',
+                style: MasteryTextStyles.mono(
+                  size: 11,
+                  lineHeight: 14,
+                  weight: FontWeight.w600,
+                  color: MasteryColors.textSecondary,
+                  letterSpacing: 1.6,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: onOpenFullSummary,
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 6),
+                minimumSize: const Size(0, 32),
+              ),
+              child: Text(
+                'Open full summary',
+                style: MasteryTextStyles.labelSm.copyWith(
+                  color: MasteryColors.actionPrimary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.all(18),
+          decoration: BoxDecoration(
+            color: MasteryColors.bgRaised,
+            border: Border.all(color: tokens.borderSoft),
+            borderRadius: BorderRadius.circular(MasteryRadii.lg),
+            boxShadow: tokens.shadowCard,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        SectionEyebrow(
+                          label: 'Lesson completed',
+                          variant: SectionEyebrowVariant.gold,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          record.lessonTitle,
+                          style: MasteryTextStyles.titleSm.copyWith(
+                            color: MasteryColors.textPrimary,
+                            height: 1.3,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${_whenText(record.completedAt)} · '
+                          '${record.totalExercises} exercises · '
+                          '${record.mistakesCount} ${record.mistakesCount == 1 ? "mistake" : "mistakes"}',
+                          style: MasteryTextStyles.bodySm.copyWith(
+                            color: MasteryColors.textSecondary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  _ScorePill(
+                    correct: record.correctCount,
+                    total: record.totalExercises,
+                  ),
+                ],
+              ),
+              if (debrief != null && debrief.headline.isNotEmpty) ...[
+                const SizedBox(height: 14),
+                Text(
+                  debrief.headline,
+                  style: MasteryTextStyles.bodyMd.copyWith(
+                    color: MasteryColors.textPrimary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                if (debrief.body.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    debrief.body,
+                    style: MasteryTextStyles.bodySm.copyWith(
+                      color: MasteryColors.textPrimary,
+                      height: 1.55,
+                    ),
+                  ),
+                ],
+                if (debrief.watchOut != null &&
+                    debrief.watchOut!.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
+                    decoration: BoxDecoration(
+                      color: tokens.bgPrimarySoft.withAlpha(120),
+                      borderRadius: BorderRadius.circular(MasteryRadii.sm),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'WATCH OUT',
+                          style: MasteryTextStyles.mono(
+                            size: 10,
+                            lineHeight: 12,
+                            weight: FontWeight.w600,
+                            color: tokens.accentGoldDeep,
+                            letterSpacing: 1.2,
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            debrief.watchOut!,
+                            style: MasteryTextStyles.bodySm.copyWith(
+                              color: MasteryColors.textPrimary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: onReviewMistakes,
+                      style: OutlinedButton.styleFrom(
+                        minimumSize: const Size.fromHeight(44),
+                        side: BorderSide(color: tokens.borderStrong),
+                      ),
+                      child: const Text('Review mistakes'),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextButton(
+                      onPressed: onOpenFullSummary,
+                      style: TextButton.styleFrom(
+                        minimumSize: const Size.fromHeight(44),
+                      ),
+                      child: const Text('See full report'),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ScorePill extends StatelessWidget {
+  final int correct;
+  final int total;
+  const _ScorePill({required this.correct, required this.total});
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.masteryTokens;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
+      decoration: BoxDecoration(
+        color: tokens.accentGoldSoft.withAlpha(140),
+        border: Border.all(color: tokens.accentGold.withAlpha(60)),
+        borderRadius: BorderRadius.circular(MasteryRadii.md),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '$correct / $total',
+            style: TextStyle(
+              fontFamily: 'Fraunces',
+              fontSize: 22,
+              height: 1.0,
+              fontWeight: FontWeight.w600,
+              color: tokens.accentGoldDeep,
+              fontVariations: const [
+                FontVariation('opsz', 144),
+                FontVariation('wght', 600),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'SCORE',
+            style: MasteryTextStyles.mono(
+              size: 10,
+              lineHeight: 12,
+              weight: FontWeight.w600,
+              color: tokens.accentGoldDeep,
+              letterSpacing: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Current Unit
+// ─────────────────────────────────────────────────────────────────────────
+
+class _CurrentUnitBlock extends StatelessWidget {
+  final String lessonTitle;
+  final bool completed;
+
+  const _CurrentUnitBlock({
+    required this.lessonTitle,
+    required this.completed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.masteryTokens;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'CURRENT UNIT',
+                style: MasteryTextStyles.mono(
+                  size: 11,
+                  lineHeight: 14,
+                  weight: FontWeight.w600,
+                  color: MasteryColors.textSecondary,
+                  letterSpacing: 1.6,
+                ),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        Container(
+          padding: const EdgeInsets.fromLTRB(18, 16, 18, 8),
+          decoration: BoxDecoration(
+            color: MasteryColors.bgRaised,
+            border: Border.all(color: tokens.borderSoft),
+            borderRadius: BorderRadius.circular(MasteryRadii.lg),
+            boxShadow: tokens.shadowCard,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SectionEyebrow(
+                label: 'Unit 01',
+                variant: SectionEyebrowVariant.secondary,
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Verb patterns',
+                style: MasteryTextStyles.titleSm.copyWith(
+                  color: MasteryColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'A textbook sequence on verbs that change the form of what follows them.',
+                style: MasteryTextStyles.bodySm.copyWith(
+                  color: MasteryColors.textSecondary,
+                  height: 1.5,
+                ),
+              ),
+              const SizedBox(height: 12),
+              _UnitRow(
+                ordinal: '01',
+                title: lessonTitle,
+                meta:
+                    completed ? 'Completed · 10 exercises' : 'Current lesson · 10 exercises',
+                state:
+                    completed ? StatusBadgeVariant.done : StatusBadgeVariant.current,
+              ),
+              _UnitRow(
+                ordinal: '02',
+                title: 'Verbs Followed by to + infinitive',
+                meta: 'Coming soon',
+                state: StatusBadgeVariant.locked,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _UnitRow extends StatelessWidget {
+  final String ordinal;
+  final String title;
+  final String meta;
+  final StatusBadgeVariant state;
+
+  const _UnitRow({
+    required this.ordinal,
+    required this.title,
+    required this.meta,
+    required this.state,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.masteryTokens;
+    final (numBg, numFg, numBorder) = switch (state) {
+      StatusBadgeVariant.done => (
+          tokens.success.withAlpha(28),
+          tokens.success,
+          tokens.success.withAlpha(40),
+        ),
+      StatusBadgeVariant.current => (
+          tokens.bgPrimarySoft,
+          MasteryColors.actionPrimaryPressed,
+          MasteryColors.actionPrimary.withAlpha(46),
+        ),
+      StatusBadgeVariant.locked => (
+          tokens.bgSurfaceAlt,
+          MasteryColors.textTertiary,
+          tokens.borderSoft,
+        ),
+    };
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Row(
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: numBg,
+              border: Border.all(color: numBorder),
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              ordinal,
+              style: MasteryTextStyles.mono(
+                size: 11,
+                lineHeight: 12,
+                weight: FontWeight.w600,
+                color: numFg,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: MasteryTextStyles.bodyMd.copyWith(
+                    color: MasteryColors.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  meta,
+                  style: MasteryTextStyles.bodySm.copyWith(
+                    color: MasteryColors.textTertiary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 10),
+          StatusBadge(
+            label: switch (state) {
+              StatusBadgeVariant.done => 'Done',
+              StatusBadgeVariant.current => 'Current',
+              StatusBadgeVariant.locked => 'Locked',
+            },
+            variant: state,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Coming Next
+// ─────────────────────────────────────────────────────────────────────────
+
+class _ComingNextBlock extends StatelessWidget {
+  const _ComingNextBlock();
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.masteryTokens;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'COMING NEXT',
+          style: MasteryTextStyles.mono(
+            size: 11,
+            lineHeight: 14,
+            weight: FontWeight.w600,
+            color: MasteryColors.textSecondary,
+            letterSpacing: 1.6,
+          ),
+        ),
+        const SizedBox(height: 10),
+        const _ComingRow(
+          ordinal: '02',
+          title: 'Verbs Followed by to + infinitive',
+          subtitle: 'Unit 01 · 10 exercises',
+        ),
+        const SizedBox(height: 8),
+        const _ComingRow(
+          ordinal: '03',
+          title: 'Reported Speech: Statements',
+          subtitle: 'Unit 02 · 10 exercises',
+        ),
+        Padding(
+          padding: const EdgeInsets.only(top: 10),
+          child: Text(
+            'Stub preview until the curriculum lands.',
+            style: MasteryTextStyles.bodySm.copyWith(
+              color: tokens.textTertiary,
+              fontStyle: FontStyle.italic,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ComingRow extends StatelessWidget {
+  final String ordinal;
   final String title;
   final String subtitle;
 
-  const _NextRow({
-    required this.number,
+  const _ComingRow({
+    required this.ordinal,
     required this.title,
     required this.subtitle,
   });
@@ -315,7 +1215,7 @@ class _NextRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final tokens = context.masteryTokens;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: tokens.bgSurfaceAlt,
         border: Border.all(color: tokens.borderSoft),
@@ -330,19 +1230,19 @@ class _NextRow extends StatelessWidget {
             decoration: BoxDecoration(
               color: MasteryColors.bgRaised,
               border: Border.all(color: tokens.borderSoft),
-              borderRadius: BorderRadius.circular(MasteryRadii.pill),
+              shape: BoxShape.circle,
             ),
             child: Text(
-              number,
+              ordinal,
               style: MasteryTextStyles.mono(
-                size: 12,
+                size: 11,
                 lineHeight: 12,
                 weight: FontWeight.w500,
-                color: MasteryColors.textSecondary,
+                color: MasteryColors.textTertiary,
               ),
             ),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -350,22 +1250,65 @@ class _NextRow extends StatelessWidget {
                 Text(
                   title,
                   style: MasteryTextStyles.bodyMd.copyWith(
-                    fontWeight: FontWeight.w700,
                     color: MasteryColors.textPrimary,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
                 const SizedBox(height: 2),
                 Text(
                   subtitle,
                   style: MasteryTextStyles.bodySm.copyWith(
-                    color: tokens.textTertiary,
+                    color: MasteryColors.textTertiary,
                   ),
                 ),
               ],
             ),
           ),
-          Icon(Icons.lock_outline,
-              size: 16, color: tokens.textTertiary),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Premium block (visual stub — no monetisation in MVP)
+// ─────────────────────────────────────────────────────────────────────────
+
+class _PremiumBlock extends StatelessWidget {
+  const _PremiumBlock();
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.masteryTokens;
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
+      decoration: BoxDecoration(
+        color: tokens.accentGoldSoft.withAlpha(80),
+        border: Border.all(color: tokens.accentGold.withAlpha(80)),
+        borderRadius: BorderRadius.circular(MasteryRadii.lg),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SectionEyebrow(
+            label: 'Premium',
+            variant: SectionEyebrowVariant.gold,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Unlock the full B2 course path',
+            style: MasteryTextStyles.titleSm.copyWith(
+              color: MasteryColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Quiet by design. Premium will extend the path, never interrupt it.',
+            style: MasteryTextStyles.bodySm.copyWith(
+              color: MasteryColors.textSecondary,
+              height: 1.5,
+            ),
+          ),
         ],
       ),
     );

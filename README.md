@@ -34,3 +34,7 @@ Repo-root canon, in load order:
 - [`exercise_structure.md`](exercise_structure.md) — exercise authoring canon
 
 Everything else lives under `docs/` — start at [`docs/README.md`](docs/README.md).
+
+Current active design wave after the shipped onboarding/home pass:
+- [`docs/plans/dashboard-study-desk.md`](docs/plans/dashboard-study-desk.md) — next `HomeScreen` redesign handoff
+- [`docs/design-mockups/dashboard-study-desk.html`](docs/design-mockups/dashboard-study-desk.html) — visual prototype for that wave

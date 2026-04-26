@@ -4,23 +4,54 @@ import '../models/evaluation.dart';
 import '../theme/mastery_theme.dart';
 import '../widgets/mastery_widgets.dart';
 
-class SummaryScreen extends StatelessWidget {
+class SummaryScreen extends StatefulWidget {
   final int correctCount;
   final int totalCount;
   final LessonResultResponse? summary;
+
+  /// When `true`, the screen scrolls to the "Review your mistakes" section
+  /// after first frame. Used by the dashboard "Last lesson report" block so
+  /// its `Review mistakes` button lands directly at the relevant content.
+  final bool initialScrollToMistakes;
 
   const SummaryScreen({
     super.key,
     required this.correctCount,
     required this.totalCount,
     this.summary,
+    this.initialScrollToMistakes = false,
   });
+
+  @override
+  State<SummaryScreen> createState() => _SummaryScreenState();
+}
+
+class _SummaryScreenState extends State<SummaryScreen> {
+  final GlobalKey _mistakesKey = GlobalKey();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialScrollToMistakes) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final ctx = _mistakesKey.currentContext;
+        if (ctx == null || !mounted) return;
+        Scrollable.ensureVisible(
+          ctx,
+          duration: MasteryDurations.medium,
+          curve: MasteryEasing.move,
+          alignment: 0.05,
+        );
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.masteryTokens;
-    final displayCorrect = summary?.correctCount ?? correctCount;
-    final displayTotal = summary?.totalExercises ?? totalCount;
+    final summary = widget.summary;
+    final displayCorrect = summary?.correctCount ?? widget.correctCount;
+    final displayTotal = summary?.totalExercises ?? widget.totalCount;
     final mistakes = summary?.answers.where((a) => !a.correct).toList() ?? [];
     final conclusion = summary?.conclusion;
 
@@ -74,6 +105,7 @@ class SummaryScreen extends StatelessWidget {
               if (mistakes.isNotEmpty) ...[
                 const SizedBox(height: 28),
                 Row(
+                  key: _mistakesKey,
                   crossAxisAlignment: CrossAxisAlignment.baseline,
                   textBaseline: TextBaseline.alphabetic,
                   children: [
