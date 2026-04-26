@@ -489,10 +489,9 @@ Current strengths:
 
 Current limitations:
 - no open production
-- no listening tasks (planned)
 - no speaking tasks (out of scope — see §15)
 - no adaptive recycle based on learner weakness
-- only three runtime exercise types
+- four runtime exercise types: `fill_blank`, `multiple_choice`, `sentence_correction`, `listening_discrimination`
 
 Pedagogical consequence:
 - we can build a strong accuracy-and-repair grammar trainer now

@@ -248,17 +248,18 @@ Mastery uses two layers:
 | Ordering / build-a-sentence | construct correct syntax | word order and structure control | roadmap |
 | Dialogue completion | choose or produce a line in context | contextualized grammar choice | roadmap |
 | Constrained short production | produce one short original sentence within limits | bounded transfer | roadmap |
-| Listening discrimination | hear and identify the target form | auditory noticing | next priority — see §5.6 |
+| Listening discrimination | hear and identify the target form | auditory noticing | shipped — see §5.6 |
 | Speaking production | say the target form aloud | production + transfer | out of scope |
 
 ### 3.2 Current Runtime Widgets
 
-Current shipped runtime supports only:
+Current shipped runtime supports:
 - `fill_blank`
 - `multiple_choice`
 - `sentence_correction`
+- `listening_discrimination`
 
-These are the only exercise widgets that may appear in current shipped lessons.
+These are the exercise widgets that may appear in current shipped lessons.
 
 ---
 

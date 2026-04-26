@@ -25,13 +25,13 @@ Roundups AI Assistant is a Flutter mobile app for English language practice. Use
 **Hard rules:**
 - AI never runs on the client.
 - Client never makes its own correctness decisions.
-- AI is never called for `fill_blank` or `multiple_choice` — those are fully deterministic.
+- AI is never called for `fill_blank`, `multiple_choice`, or `listening_discrimination` — those are fully deterministic.
 - AI output is always validated server-side before being returned to client.
 - Debrief AI is **never** called on a perfect score (zero-error short-circuit). Failure modes (timeout, malformed JSON, refusal) fall back to deterministic copy keyed off the score bucket. The score-bucket → `debrief_type` mapping is deterministic; AI generates copy only.
 
 ---
 
-## 3. Exercise Types (Exactly 3)
+## 3. Exercise Types (4 Shipped)
 
 Every exercise has a required `instruction` field shown to the learner in a prominent band at the top of the exercise card before the prompt. It must be a short, action-oriented sentence (e.g. "Fill in the blank with the correct verb form.").
 
@@ -51,7 +51,15 @@ Evaluation: deterministic exact match against `accepted_corrections[]` first.
 AI fallback: triggered only when deterministic check fails AND the submission meets borderline criteria (see Section 6).  
 AI output: `{ "correct": bool, "feedback": string (max 80 chars) }`.
 
-No other exercise types will be added in this MVP.
+### 3.4 `listening_discrimination`
+User listens to a pre-generated audio clip and selects the sentence they heard from 2–4 options.  
+Evaluation: deterministic — `correct_option_id` comparison.  
+No AI.  
+Audio: pre-generated TTS served at `/audio/{lesson_id}/{exercise_id}.mp3`. Transcript required; hidden behind `Show transcript` toggle.  
+Schema: see `docs/content-contract.md §2.4`.  
+UI: see `DESIGN.md §14`.
+
+No other exercise types will be added beyond these four without a spec revision.
 
 ---
 
@@ -185,7 +193,7 @@ The following will NOT be built in this MVP. Any request to add them is a scope 
 - Multiple language support beyond English
 - Analytics or telemetry
 - AI-generated lesson content
-- More than 3 exercise types
+- More than 4 exercise types (the 4 shipped types are `fill_blank`, `multiple_choice`, `sentence_correction`, `listening_discrimination`)
 - Hints or practical tips shown after an incorrect answer
 
 ---
@@ -195,7 +203,7 @@ The following will NOT be built in this MVP. Any request to add them is a scope 
 All gates must pass before implementation begins on each component.
 
 ### Gate 1 — Data Contract
-- [ ] Exercise schema defined and reviewed for all 3 types
+- [ ] Exercise schema defined and reviewed for all 4 types
 - [ ] `accepted_answers[]` / `accepted_corrections[]` formats specified (string arrays, normalized at write time)
 - [ ] AI request/response schema finalized and documented
 - [ ] API endpoint schemas finalized (request + response for all 3 endpoints)

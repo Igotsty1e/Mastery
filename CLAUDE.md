@@ -66,7 +66,7 @@ Require explicit user intent before any destructive action.
 ## Design Source Of Truth
 
 - `/Users/ivankhanaev/Mastery/DESIGN.md` is the canonical source of truth for all visual design decisions: color system, typography, spacing, component specs, motion, and screen-level direction.
-- `/Users/ivankhanaev/Mastery/docs/design-mockups/` is the canonical **visual reference** for screen-level composition. Eight mobile mockups (390×844): home onboarding/dashboard, lesson intro, three exercise types (multiple choice, fill-the-blank, sentence correction), result, summary. Built directly against DESIGN.md tokens with real lesson content from `backend/data/lessons/b2-lesson-001.json`.
+- `/Users/ivankhanaev/Mastery/docs/design-mockups/` is the canonical **visual reference** for screen-level composition. Eight mobile mockups (390×844): home onboarding/dashboard, lesson intro, three text-based exercise types (multiple choice, fill-the-blank, sentence correction), result, summary. Built directly against DESIGN.md tokens with real lesson content from `backend/data/lessons/b2-lesson-001.json`. The `listening_discrimination` exercise variant is specified in `DESIGN.md §14` (not in the mockup set).
 - `/Users/ivankhanaev/Mastery/docs/plans/arrival-ritual.md` is the approved screen contract for the next onboarding and first-exercise redesign wave. Use it together with `DESIGN.md` before changing those flows.
 - Open the gallery: `cd docs/design-mockups && python3 -m http.server 8765` then `http://127.0.0.1:8765/`.
 - Use both together: DESIGN.md = tokens (color, typography, spacing, motion); design-mockups/ = composition (layout, hierarchy, copy). When implementing or reviewing UI, cross-reference both.

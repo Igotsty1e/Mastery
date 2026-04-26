@@ -10,7 +10,7 @@ Users complete lessons composed of exercises. The backend decides correctness. A
 
 - Flutter (Dart) client only
 - Backend is single source of truth for all correctness decisions
-- Exactly 3 exercise types: `fill_blank`, `multiple_choice`, `sentence_correction` (+ `listening_discrimination` runtime variant)
+- 4 exercise types: `fill_blank`, `multiple_choice`, `sentence_correction`, `listening_discrimination`
 - Deterministic evaluation for all types; AI fallback only for `sentence_correction` borderline cases
 - Fixed linear lesson flow — no skipping, no backtracking, no branching
 - No auth, no resume, no adaptive learning, no chat UI

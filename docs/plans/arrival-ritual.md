@@ -225,7 +225,7 @@ Reduced-motion fallback:
 
 **Acceptance**
 - first exercise reads more premium and more focused than current shipped screen
-- all three runtime exercise types still fit the same design language
+- all four runtime exercise types (`fill_blank`, `multiple_choice`, `sentence_correction`, `listening_discrimination`) still fit the same design language
 - incorrect/correct result reveal stays calm and teacher-like
 
 ### Agent C — Motion + Continuity

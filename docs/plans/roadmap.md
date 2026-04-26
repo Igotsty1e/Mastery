@@ -147,7 +147,9 @@ canonical pedagogy documents above must be revised first.
 
 ### Goal
 
-Expand beyond the current three runtime types to better express the teaching model.
+Expand beyond the current four runtime types to better express the teaching model.
+
+`listening_discrimination` is already shipped. The candidates below are future additions only.
 
 ### Candidate additions
 
@@ -159,7 +161,6 @@ Priority 1:
 Priority 2:
 - dialogue completion
 - constrained short production (written only)
-- listening discrimination
 
 Speaking production is excluded. See `GRAM_STRATEGY.md §15.1`.
 
@@ -299,9 +300,7 @@ Support richer content and scoring while keeping backend authority.
 
 ### Phase 4
 
-- listening-discrimination exercises
-- audio-first UI states
-- related QA packs
+- audio-first UI polish and QA packs for `listening_discrimination` (widget already shipped; audio pipeline and content expansion continue here)
 
 (There is no Phase 5. Speaking capture is excluded — see
 `GRAM_STRATEGY.md §15.1`.)
@@ -376,9 +375,8 @@ authorial discipline is.
 
 ## 11. What Requires Spec Revision
 
-These are outside the current locked MVP and must not be implemented silently:
-- more than 3 exercise types
-- listening tasks
+These are outside the current 4-type shipped set and must not be implemented silently:
+- more than 4 exercise types (shipped: `fill_blank`, `multiple_choice`, `sentence_correction`, `listening_discrimination`)
 - new scoring models beyond current contracts
 - broader AI role in learner-facing evaluation
 - new screen states that alter lesson flow materially
