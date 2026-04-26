@@ -117,9 +117,6 @@ class Exercise {
   // multiple_choice + listening_discrimination
   final List<McOption>? options;
 
-  // sentence_correction only
-  final bool borderlineAiFallback;
-
   // listening_discrimination only
   final ExerciseAudio? audio;
 
@@ -133,7 +130,6 @@ class Exercise {
     required this.instruction,
     this.prompt,
     this.options,
-    this.borderlineAiFallback = false,
     this.audio,
     this.image,
   });
@@ -152,7 +148,6 @@ class Exercise {
               .map((o) => McOption.fromJson(o as Map<String, dynamic>))
               .toList()
           : null,
-      borderlineAiFallback: j['borderline_ai_fallback'] as bool? ?? false,
       audio: type == ExerciseType.listeningDiscrimination
           ? ExerciseAudio.fromJson(j['audio'] as Map<String, dynamic>)
           : null,

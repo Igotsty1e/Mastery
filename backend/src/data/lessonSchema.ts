@@ -56,7 +56,6 @@ const SentenceCorrectionExerciseBaseSchema = z.object({
   instruction: z.string().min(1),
   prompt: z.string(),
   accepted_corrections: z.array(z.string()).min(1),
-  borderline_ai_fallback: z.literal(true),
   image: ExerciseImageSchema.optional(),
   feedback: ExerciseFeedbackSchema.optional(),
 });

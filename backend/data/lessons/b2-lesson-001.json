@@ -150,7 +150,6 @@
       "accepted_corrections": [
         "She suggested taking a taxi because it was late."
       ],
-      "borderline_ai_fallback": true,
       "feedback": {
         "explanation": "After suggest, do not use to + infinitive when another verb follows directly. Use the -ing form: 'suggest taking'."
       }
@@ -163,7 +162,6 @@
       "accepted_corrections": [
         "I don't mind waiting for a few minutes."
       ],
-      "borderline_ai_fallback": true,
       "feedback": {
         "explanation": "Mind is followed by the -ing form, not to + infinitive. The correct pattern is 'mind waiting'."
       }
@@ -176,7 +174,6 @@
       "accepted_corrections": [
         "We avoided discussing the budget until everyone arrived."
       ],
-      "borderline_ai_fallback": true,
       "feedback": {
         "explanation": "After avoid, we use the -ing form. The correct structure is 'avoid discussing', not 'avoid to discuss'."
       }

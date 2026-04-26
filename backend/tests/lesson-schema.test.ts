@@ -88,29 +88,6 @@ describe('LessonSchema', () => {
     expect(LessonSchema.safeParse(lesson).success).toBe(false);
   });
 
-  it('rejects sentence_correction when borderline_ai_fallback is not true', () => {
-    const lesson = {
-      lesson_id: '00000000-0000-4000-8000-000000000001',
-      title: 'T',
-      language: 'en',
-      level: 'B2',
-      intro_rule: '',
-      intro_examples: [],
-      exercises: [
-        {
-          exercise_id: '00000000-0000-4000-8000-000000000014',
-          type: 'sentence_correction',
-          instruction: 'Rewrite the sentence correctly.',
-          prompt: 'Bad.',
-          accepted_corrections: ['Good.'],
-          borderline_ai_fallback: false,
-        },
-      ],
-    };
-
-    expect(LessonSchema.safeParse(lesson).success).toBe(false);
-  });
-
   it('rejects lessons with duplicate exercise_id values', () => {
     const lesson = {
       lesson_id: '00000000-0000-4000-8000-000000000001',

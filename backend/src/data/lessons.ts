@@ -38,7 +38,6 @@ export interface SentenceCorrectionExercise {
   instruction: string;
   prompt: string;
   accepted_corrections: string[];
-  borderline_ai_fallback: true;
   image?: ExerciseImage;
   feedback?: ExerciseFeedback;
 }

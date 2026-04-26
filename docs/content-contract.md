@@ -86,13 +86,11 @@ unmarked; the parser falls back to a plain text rendering.
   "instruction": "string",
   "prompt": "string (grammatically incorrect sentence)",
   "accepted_corrections": ["string"],
-  "borderline_ai_fallback": true,
   "feedback": { "explanation": "string" }
 }
 ```
 
 - `accepted_corrections`: non-empty list of known-good corrections.
-- `borderline_ai_fallback`: always `true` for this type.
 - `instruction` should clearly tell the learner to rewrite the sentence correctly.
 
 ### 2.4 listening_discrimination

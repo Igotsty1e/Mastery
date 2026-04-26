@@ -7,12 +7,11 @@
 // image lives on a different origin than the SPA).
 
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
-import '../config.dart';
 import '../models/lesson.dart';
 import '../theme/mastery_theme.dart';
+import 'asset_url.dart';
 
 class MasteryExerciseImage extends StatelessWidget {
   final ExerciseImage image;
@@ -23,22 +22,6 @@ class MasteryExerciseImage extends StatelessWidget {
     required this.image,
     this.aspectRatio = 3 / 2,
   });
-
-  String _resolveUrl() {
-    final url = image.url;
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return url;
-    }
-    if (kIsWeb) {
-      // Same-origin path; the build script mirrors backend/public/images/
-      // into app/web/images/ so the frontend serves the asset itself and
-      // avoids canvaskit's cross-origin canvas tainting.
-      return url.startsWith('/') ? url : '/$url';
-    }
-    final base = AppConfig.apiBaseUrl.replaceAll(RegExp(r'/+$'), '');
-    final tail = url.startsWith('/') ? url : '/$url';
-    return '$base$tail';
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -53,7 +36,7 @@ class MasteryExerciseImage extends StatelessWidget {
             border: Border.all(color: tokens.borderSoft),
           ),
           child: CachedNetworkImage(
-            imageUrl: _resolveUrl(),
+            imageUrl: resolveAssetUrl(image.url),
             fit: BoxFit.cover,
             placeholder: (_, __) => _ImageSkeleton(tokens: tokens),
             errorWidget: (_, __, ___) => _ImageUnavailable(

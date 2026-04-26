@@ -90,8 +90,7 @@ Exercise fixture:
   "accepted_corrections": [
     "She doesn't like coffee.",
     "She does not like coffee."
-  ],
-  "borderline_ai_fallback": true
+  ]
 }
 ```
 

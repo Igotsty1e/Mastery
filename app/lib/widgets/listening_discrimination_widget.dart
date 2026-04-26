@@ -1,9 +1,8 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
-import '../config.dart';
 import '../models/lesson.dart';
 import '../theme/mastery_theme.dart';
+import 'asset_url.dart';
 import 'mastery_audio_player.dart';
 
 /// Renders a `listening_discrimination` exercise: an audio player on top
@@ -34,22 +33,6 @@ class _ListeningDiscriminationWidgetState
     extends State<ListeningDiscriminationWidget> {
   String? _selected;
 
-  String _resolveAudioUrl() {
-    final url = widget.audio.url;
-    if (url.startsWith('http://') || url.startsWith('https://')) {
-      return url;
-    }
-    if (kIsWeb) {
-      // Same-origin path; the web build copies backend/public/audio/ into
-      // the frontend bundle so the browser fetches the clip from the same
-      // origin as the SPA.
-      return url.startsWith('/') ? url : '/$url';
-    }
-    final base = AppConfig.apiBaseUrl.replaceAll(RegExp(r'/+$'), '');
-    final tail = url.startsWith('/') ? url : '/$url';
-    return '$base$tail';
-  }
-
   void _select(String id) {
     setState(() => _selected = id);
     widget.onChanged(id);
@@ -61,7 +44,7 @@ class _ListeningDiscriminationWidgetState
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         MasteryAudioPlayer(
-          url: _resolveAudioUrl(),
+          url: resolveAssetUrl(widget.audio.url),
           transcript: widget.audio.transcript,
           enabled: widget.enabled,
         ),

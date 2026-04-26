@@ -142,7 +142,6 @@
       "accepted_corrections": [
         "I have been working in this company for ten years."
       ],
-      "borderline_ai_fallback": true,
       "feedback": {
         "explanation": "You wrote 'have working', but the correct form is 'have been working' because the present perfect continuous needs the auxiliary 'been' before the verb-ing. If duration is expressed with 'for + a period of time' → usually 'have / has been + verb-ing', never 'have + verb-ing'."
       }

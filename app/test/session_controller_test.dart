@@ -137,7 +137,6 @@ void main() {
         attemptId: '1',
         exerciseId: _exId,
         correct: true,
-        evaluationSource: 'deterministic',
         canonicalAnswer: 'is',
       );
       final s = SessionState(lastResult: result)

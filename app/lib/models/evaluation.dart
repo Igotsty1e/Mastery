@@ -29,7 +29,6 @@ class EvaluateResponse {
   final String attemptId;
   final String exerciseId;
   final bool correct;
-  final String evaluationSource;
   final String? explanation;
   final String canonicalAnswer;
 
@@ -37,7 +36,6 @@ class EvaluateResponse {
     required this.attemptId,
     required this.exerciseId,
     required this.correct,
-    required this.evaluationSource,
     this.explanation,
     required this.canonicalAnswer,
   });
@@ -46,7 +44,6 @@ class EvaluateResponse {
         attemptId: j['attempt_id'] as String,
         exerciseId: j['exercise_id'] as String,
         correct: j['correct'] as bool,
-        evaluationSource: j['evaluation_source'] as String,
         explanation: j['explanation'] as String?,
         canonicalAnswer: j['canonical_answer'] as String,
       );
