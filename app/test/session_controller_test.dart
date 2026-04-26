@@ -7,6 +7,7 @@ import 'package:mastery/session/session_state.dart';
 import 'package:mastery/models/lesson.dart';
 import 'package:mastery/models/evaluation.dart';
 import 'package:mastery/learner/learner_skill_store.dart';
+import 'package:mastery/learner/review_scheduler.dart';
 import 'package:mastery/progress/local_progress_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
@@ -268,6 +269,289 @@ void main() {
       await ctrl.submitAnswer('is');
       final all = await LearnerSkillStore.allRecords();
       expect(all, isEmpty);
+    });
+  });
+
+  // ── Wave 3 — DecisionEngine + ReviewScheduler integration ──────────────────
+
+  group('SessionController + DecisionEngine (§9.1)', () {
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+    });
+
+    Future<SessionController> makeCtrl({
+      required Map<String, dynamic> lessonJson,
+      required List<Map<String, dynamic>> evalJsonByCallOrder,
+    }) async {
+      int call = 0;
+      final client = MockClient((_) async {
+        call++;
+        if (call == 1) return _jsonResponse(lessonJson);
+        return _jsonResponse(evalJsonByCallOrder[call - 2]);
+      });
+      final api = ApiClient(baseUrl: 'http://test', client: client);
+      final ctrl = SessionController(api);
+      await ctrl.loadLesson(_lessonId);
+      return ctrl;
+    }
+
+    test('correct answer on tagged item → no decision reason, linear advance', () async {
+      final ctrl = await makeCtrl(
+        lessonJson: {
+          'lesson_id': _lessonId,
+          'title': 'T',
+          'language': 'en',
+          'level': 'B2',
+          'intro_rule': '',
+          'intro_examples': <String>[],
+          'exercises': [
+            {
+              'exercise_id': _exId,
+              'type': 'fill_blank',
+              'instruction': 'i',
+              'prompt': 'p',
+              'skill_id': 'verb-ing-after-gerund-verbs',
+              'evidence_tier': 'medium',
+              'primary_target_error': 'contrast_error',
+            },
+            {
+              'exercise_id': _exId2,
+              'type': 'fill_blank',
+              'instruction': 'i',
+              'prompt': 'p',
+              'skill_id': 'present-perfect-continuous-vs-simple',
+              'evidence_tier': 'medium',
+            },
+          ],
+        },
+        evalJsonByCallOrder: [
+          {
+            'attempt_id': 'a1',
+            'exercise_id': _exId,
+            'correct': true,
+            'evaluation_source': 'deterministic',
+            'canonical_answer': 'is',
+          }
+        ],
+      );
+      await ctrl.submitAnswer('is');
+      ctrl.advance();
+      expect(ctrl.state.currentExercise?.exerciseId, _exId2);
+      expect(ctrl.state.lastDecisionReason, isNull);
+    });
+
+    test('1st mistake on skill A pulls a later skill-A item to the head', () async {
+      // Lesson: [skillA, skillB, skillA]. Wrong on idx 0 → expect idx 2 next.
+      const taggedLesson = {
+        'lesson_id': _lessonId,
+        'title': 'T',
+        'language': 'en',
+        'level': 'B2',
+        'intro_rule': '',
+        'intro_examples': <String>[],
+        'exercises': [
+          {
+            'exercise_id': 'a1b2c3d4-0001-4000-8000-000000000041',
+            'type': 'fill_blank',
+            'instruction': 'i',
+            'prompt': 'p',
+            'skill_id': 'verb-ing-after-gerund-verbs',
+            'evidence_tier': 'medium',
+            'primary_target_error': 'contrast_error',
+          },
+          {
+            'exercise_id': 'a1b2c3d4-0001-4000-8000-000000000042',
+            'type': 'fill_blank',
+            'instruction': 'i',
+            'prompt': 'p',
+            'skill_id': 'present-perfect-continuous-vs-simple',
+            'evidence_tier': 'medium',
+          },
+          {
+            'exercise_id': 'a1b2c3d4-0001-4000-8000-000000000043',
+            'type': 'fill_blank',
+            'instruction': 'i',
+            'prompt': 'p',
+            'skill_id': 'verb-ing-after-gerund-verbs',
+            'evidence_tier': 'medium',
+          },
+        ],
+      };
+      final ctrl = await makeCtrl(
+        lessonJson: taggedLesson,
+        evalJsonByCallOrder: [
+          {
+            'attempt_id': 'a1',
+            'exercise_id': 'a1b2c3d4-0001-4000-8000-000000000041',
+            'correct': false,
+            'evaluation_source': 'deterministic',
+            'canonical_answer': 'enjoying',
+          }
+        ],
+      );
+      await ctrl.submitAnswer('to enjoy');
+      ctrl.advance();
+      expect(ctrl.state.currentExercise?.exerciseId,
+          'a1b2c3d4-0001-4000-8000-000000000043');
+      expect(ctrl.state.lastDecisionReason, contains('different angle'));
+    });
+
+    test('reason string clears once a subsequent linear advance fires', () async {
+      // Two-skill lesson: A, B, A. Wrong on first A → reason set; advance
+      // to second A. If that's correct, the next linear advance should
+      // not carry the prior reason.
+      const lesson = {
+        'lesson_id': _lessonId,
+        'title': 'T',
+        'language': 'en',
+        'level': 'B2',
+        'intro_rule': '',
+        'intro_examples': <String>[],
+        'exercises': [
+          {
+            'exercise_id': 'a1',
+            'type': 'fill_blank',
+            'instruction': 'i',
+            'prompt': 'p',
+            'skill_id': 'verb-ing-after-gerund-verbs',
+            'evidence_tier': 'medium',
+          },
+          {
+            'exercise_id': 'b1',
+            'type': 'fill_blank',
+            'instruction': 'i',
+            'prompt': 'p',
+            'skill_id': 'present-perfect-continuous-vs-simple',
+            'evidence_tier': 'medium',
+          },
+          {
+            'exercise_id': 'a2',
+            'type': 'fill_blank',
+            'instruction': 'i',
+            'prompt': 'p',
+            'skill_id': 'verb-ing-after-gerund-verbs',
+            'evidence_tier': 'medium',
+          },
+        ],
+      };
+      final ctrl = await makeCtrl(
+        lessonJson: lesson,
+        evalJsonByCallOrder: [
+          {
+            'attempt_id': 'a1',
+            'exercise_id': 'a1',
+            'correct': false,
+            'evaluation_source': 'deterministic',
+            'canonical_answer': 'enjoying',
+          },
+          {
+            'attempt_id': 'a2',
+            'exercise_id': 'a2',
+            'correct': true,
+            'evaluation_source': 'deterministic',
+            'canonical_answer': 'avoiding',
+          },
+        ],
+      );
+      await ctrl.submitAnswer('to enjoy');
+      expect(ctrl.state.lastDecisionReason, isNotNull);
+      ctrl.advance();
+      // Now on a2 (reason carried through advance).
+      expect(ctrl.state.currentExercise?.exerciseId, 'a2');
+      expect(ctrl.state.lastDecisionReason, isNotNull);
+      await ctrl.submitAnswer('avoiding');
+      // Correct answer on a2 → linear advance, no decision; reason cleared.
+      ctrl.advance();
+      expect(ctrl.state.lastDecisionReason, isNull);
+    });
+  });
+
+  group('SessionController → ReviewScheduler (§9.3)', () {
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+    });
+
+    test('every touched skill enters the cadence on session end', () async {
+      const lesson = {
+        'lesson_id': _lessonId,
+        'title': 'T',
+        'language': 'en',
+        'level': 'B2',
+        'intro_rule': '',
+        'intro_examples': <String>[],
+        'exercises': [
+          {
+            'exercise_id': 'a1',
+            'type': 'fill_blank',
+            'instruction': 'i',
+            'prompt': 'p',
+            'skill_id': 'verb-ing-after-gerund-verbs',
+            'evidence_tier': 'medium',
+          },
+          {
+            'exercise_id': 'b1',
+            'type': 'fill_blank',
+            'instruction': 'i',
+            'prompt': 'p',
+            'skill_id': 'present-perfect-continuous-vs-simple',
+            'evidence_tier': 'medium',
+          },
+        ],
+      };
+      const summary = {
+        'lesson_id': _lessonId,
+        'total_exercises': 2,
+        'correct_count': 2,
+        'answers': [
+          {'exercise_id': 'a1', 'correct': true},
+          {'exercise_id': 'b1', 'correct': true},
+        ],
+      };
+      int call = 0;
+      final client = MockClient((_) async {
+        call++;
+        if (call == 1) return _jsonResponse(lesson);
+        if (call == 2) {
+          return _jsonResponse({
+            'attempt_id': 'a1',
+            'exercise_id': 'a1',
+            'correct': true,
+            'evaluation_source': 'deterministic',
+            'canonical_answer': 'enjoying',
+          });
+        }
+        if (call == 3) {
+          return _jsonResponse({
+            'attempt_id': 'b1',
+            'exercise_id': 'b1',
+            'correct': true,
+            'evaluation_source': 'deterministic',
+            'canonical_answer': 'have been',
+          });
+        }
+        return _jsonResponse(summary);
+      });
+      final api = ApiClient(baseUrl: 'http://test', client: client);
+      final ctrl = SessionController(api);
+      await ctrl.loadLesson(_lessonId);
+      await ctrl.submitAnswer('enjoying');
+      ctrl.advance();
+      await ctrl.submitAnswer('have been');
+      ctrl.advance();
+      // Allow async _scheduleReviews to flush.
+      await Future.delayed(Duration.zero);
+      await Future.delayed(Duration.zero);
+      final scheduled = await ReviewScheduler.all();
+      final ids = scheduled.map((r) => r.skillId).toSet();
+      expect(ids, {
+        'verb-ing-after-gerund-verbs',
+        'present-perfect-continuous-vs-simple',
+      });
+      // Both clean → step 1, due in 1 day.
+      for (final r in scheduled) {
+        expect(r.step, 1);
+        expect(r.lastOutcomeMistakes, 0);
+      }
     });
 
     test('network failure during submit → phase becomes error', () async {

@@ -169,6 +169,47 @@ after every successful evaluation that has both a `skillId` and an
 `evidenceTier`. Persistence failures are tolerated (lesson flow keeps
 working). No UI surface yet.
 
+### Wave 3 in-session loop — `DecisionEngine` + `ReviewScheduler`
+
+Wave 3 introduces the §9 learning loop without adding a UI surface
+(Wave 4 renders).
+
+`DecisionEngine` (`app/lib/learner/decision_engine.dart`) is a pure
+function: given the lesson, the remaining-exercise queue, and the
+session's per-skill mistake counts, it decides the next item to show
+after an attempt per `LEARNING_ENGINE.md §9.1`:
+
+- **1st mistake** on skill X → pull the next un-attempted item on the
+  same skill to the head ("Same rule, different angle.")
+- **2nd mistake** on skill X → pull the next same-skill item with a
+  softer reason ("Same rule, simpler ask.")
+- **3rd mistake** on skill X → drop every remaining same-skill item
+  from the session and surface the §11.3 reason ("Three misses on this
+  rule — moving on for now. We will come back later.")
+
+If no replacement candidate exists (last skill-X item already played),
+the engine falls through to the linear default with `reason = null`.
+
+`SessionState` now carries `remainingIndices` (the exercise queue) and
+`lastDecisionReason` (the §11.3 string for Wave 4 to render).
+`SessionController` tracks `_sessionMistakesBySkill`, computes the
+decision after every `submitAnswer`, and applies the reordered queue on
+the next `advance()`.
+
+`ReviewScheduler` (`app/lib/learner/review_scheduler.dart`) is the
+cross-session cadence per §§9.2, 9.3, 9.4. SharedPreferences-backed,
+device-scoped. On session end (in `_fetchSummary`), every skill the
+session touched gets a `recordSessionEnd` call:
+
+- 0 mistakes → step advances by 1 (capped at 5; step 5 with no resets
+  flags `graduated` per §9.4)
+- 1+ mistakes → cadence resets to step 1
+
+Cadence intervals (§9.3): step 1 = 1 day, step 2 = 3 days, step 3 =
+7 days, step 4+ = 21 days (capped). `ReviewScheduler.dueAt(now)` returns
+every non-graduated skill due at or before `now`, sorted oldest-first
+— Wave 4 reads this on dashboard load to surface "review due" prompts.
+
 ## Navigation
 
 Linear push-based navigation. No tabs. No drawer. No back stack access after exercise submission.
