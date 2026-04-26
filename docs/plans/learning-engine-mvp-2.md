@@ -163,28 +163,44 @@ Exit criteria:
 
 **Goal:** start recording per-learner per-skill state from each attempt.
 
+**Status:** shipped on branch `codex/learning-engine-wave2-mastery-state`.
+Device-scoped via SharedPreferences; server-side learner storage is a
+follow-up wave once accounts exist. Flutter `Exercise` model now
+deserialises the Wave 1 metadata trio + `meaning_frame`;
+`LearnerSkillStore` (`app/lib/learner/learner_skill_store.dart`) records
+each attempt from `SessionController.submitAnswer`. `status` is derived
+on read per `LEARNING_ENGINE.md §7.2`; only the inputs above and the
+sticky `production_gate_cleared` flag are stored per §7.1. No UI surface
+— Wave 4 introduces the Transparency Layer panel.
+
 Tasks:
 
-- decide storage scope. Conservative default for MVP2 is **device-scoped
-  local persistence** via SharedPreferences (mirrors the existing
-  `LocalProgressStore`); server-side learner storage is a follow-up wave
-  once accounts exist
-- add a `LearnerSkillStore` that holds:
-  - `mastery_score` (0–100)
-  - `status` (per `LEARNING_ENGINE.md §7.2`)
+- ✅ decide storage scope. **Device-scoped local persistence** via
+  SharedPreferences, mirroring the existing `LocalProgressStore`.
+  Server-side learner storage is a follow-up wave once accounts exist.
+- ✅ add a `LearnerSkillStore` that holds:
+  - `mastery_score` (0–100, V0 score deltas in
+    `LearnerSkillStore._scoreDelta`, tunable)
+  - `status` (derived per `LEARNING_ENGINE.md §7.2` via
+    `LearnerSkillRecord.statusAt(now)`)
   - `last_attempt_at`
   - `evidence_summary` (counts per evidence tier)
-  - `recent_errors[]` (last N target-error codes)
-  - `production_gate_cleared` (bool, per `LEARNING_ENGINE.md §6.4`)
-- write to it from the existing answer-submission flow using the metadata
-  shipped in Wave 1
-- no UI surface yet
+  - `recent_errors[]` (FIFO, capped at
+    `LearnerSkillStore.recentErrorsCap = 5`)
+  - `production_gate_cleared` (bool, per `LEARNING_ENGINE.md §6.4`,
+    sticky per §7.1)
+- ✅ write to it from the existing answer-submission flow using the
+  metadata shipped in Wave 1 (`SessionController.submitAnswer`)
+- ✅ no UI surface yet (Wave 4 Transparency Layer)
 
 Exit criteria:
-- after a session, the local store reflects the attempts that happened
-- the production-gate flag flips correctly on the first valid
-  strongest-tier correct attempt
-- runtime UX identical from the learner's perspective
+- ✅ after a session, the local store reflects the attempts that happened
+  (covered by `app/test/session_controller_test.dart` integration tests)
+- ✅ the production-gate flag flips correctly on the first valid
+  strongest-tier correct attempt (covered by
+  `app/test/learner_skill_store_test.dart`)
+- ✅ runtime UX identical from the learner's perspective (no UI surface,
+  persistence failures tolerated)
 
 ### Wave 3 — Decision Engine v0 + Review Cadence
 

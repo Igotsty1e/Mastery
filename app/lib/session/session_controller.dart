@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import '../api/api_client.dart';
+import '../learner/learner_skill_store.dart';
 import '../models/evaluation.dart';
 import '../models/lesson.dart';
 import '../progress/local_progress_store.dart';
@@ -67,6 +68,18 @@ class SessionController extends ChangeNotifier {
         _state.lesson!.lessonId,
         _state.results.length,
       );
+      // LEARNING_ENGINE.md §6 + §7: record per-skill mastery state. Wave 2
+      // is device-scoped; the store is no-op when the exercise lacks the
+      // Wave 1 metadata trio (older fixtures or item types not yet tagged).
+      if (exercise.skillId != null && exercise.evidenceTier != null) {
+        await LearnerSkillStore.recordAttempt(
+          skillId: exercise.skillId!,
+          evidenceTier: exercise.evidenceTier!,
+          correct: response.correct,
+          primaryTargetError: exercise.primaryTargetError,
+          meaningFrame: exercise.meaningFrame,
+        );
+      }
     } catch (e) {
       _emit(_state.copyWith(
         phase: SessionPhase.error,

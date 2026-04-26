@@ -105,6 +105,57 @@ class ExerciseImage {
       );
 }
 
+/// Engine-side classification of the error an exercise primarily probes,
+/// per `LEARNING_ENGINE.md §5`. Used by the Mastery Model to populate
+/// `recent_errors[]` when the learner answers incorrectly.
+enum TargetError {
+  conceptual,
+  form,
+  contrast,
+  careless,
+  transfer,
+  pragmatic,
+}
+
+TargetError? _parseTargetError(String? s) => switch (s) {
+      'conceptual_error' => TargetError.conceptual,
+      'form_error' => TargetError.form,
+      'contrast_error' => TargetError.contrast,
+      'careless_error' => TargetError.careless,
+      'transfer_error' => TargetError.transfer,
+      'pragmatic_error' => TargetError.pragmatic,
+      _ => null,
+    };
+
+String targetErrorToString(TargetError e) => switch (e) {
+      TargetError.conceptual => 'conceptual_error',
+      TargetError.form => 'form_error',
+      TargetError.contrast => 'contrast_error',
+      TargetError.careless => 'careless_error',
+      TargetError.transfer => 'transfer_error',
+      TargetError.pragmatic => 'pragmatic_error',
+    };
+
+/// Evidence tier per `LEARNING_ENGINE.md §6.1`. Higher tiers count for more
+/// in mastery accounting; only `strongest` (with a `meaning_frame`) clears
+/// the production gate per §6.4.
+enum EvidenceTier { weak, medium, strong, strongest }
+
+EvidenceTier? _parseEvidenceTier(String? s) => switch (s) {
+      'weak' => EvidenceTier.weak,
+      'medium' => EvidenceTier.medium,
+      'strong' => EvidenceTier.strong,
+      'strongest' => EvidenceTier.strongest,
+      _ => null,
+    };
+
+String evidenceTierToString(EvidenceTier t) => switch (t) {
+      EvidenceTier.weak => 'weak',
+      EvidenceTier.medium => 'medium',
+      EvidenceTier.strong => 'strong',
+      EvidenceTier.strongest => 'strongest',
+    };
+
 class Exercise {
   final String exerciseId;
   final ExerciseType type;
@@ -124,6 +175,15 @@ class Exercise {
   /// `exercise_structure.md §2.9`.
   final ExerciseImage? image;
 
+  // Wave 1 engine metadata (LEARNING_ENGINE.md §§4–6 + content-contract.md
+  // §1.2). Optional during Wave 1 backfill; the client uses them in Wave 2
+  // to populate the `LearnerSkillStore`. Older fixtures and item types
+  // without metadata stay null and are simply not recorded.
+  final String? skillId;
+  final TargetError? primaryTargetError;
+  final EvidenceTier? evidenceTier;
+  final String? meaningFrame;
+
   const Exercise({
     required this.exerciseId,
     required this.type,
@@ -132,6 +192,10 @@ class Exercise {
     this.options,
     this.audio,
     this.image,
+    this.skillId,
+    this.primaryTargetError,
+    this.evidenceTier,
+    this.meaningFrame,
   });
 
   factory Exercise.fromJson(Map<String, dynamic> j) {
@@ -154,6 +218,10 @@ class Exercise {
       image: j['image'] != null
           ? ExerciseImage.fromJson(j['image'] as Map<String, dynamic>)
           : null,
+      skillId: j['skill_id'] as String?,
+      primaryTargetError: _parseTargetError(j['primary_target_error'] as String?),
+      evidenceTier: _parseEvidenceTier(j['evidence_tier'] as String?),
+      meaningFrame: j['meaning_frame'] as String?,
     );
   }
 }
