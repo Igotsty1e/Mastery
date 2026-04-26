@@ -22,6 +22,24 @@ import { buildDebrief, type DebriefDto } from '../debrief/debrief';
 
 type EvaluationResult = SentenceCorrectionResult;
 
+// Wave 5 (LEARNING_ENGINE.md §8.7): bumped when the evaluator's contract
+// changes in a way clients should re-route on. Initial release = 1.
+// Stored on every attempt response so the future Mastery Model can
+// invalidate per-skill production-gate state when the evaluator semantics
+// move under it.
+const EVALUATION_VERSION = 1;
+
+// Wave 5 partial-credit shape (LEARNING_ENGINE.md §8.7). Single-decision
+// items (the families shipped today) emit only `correct` or `wrong` and
+// leave `response_units` empty. The `partial` value is reserved for the
+// multi-unit families introduced in Wave 6 (multi_blank,
+// multi_error_correction, multi_select).
+type AttemptResult = 'correct' | 'partial' | 'wrong';
+
+function deriveResult(correct: boolean): AttemptResult {
+  return correct ? 'correct' : 'wrong';
+}
+
 function slugifyLessonTitle(title: string): string {
   return title
     .toLowerCase()
@@ -140,6 +158,12 @@ export function makeLessonsRouter(ai: AiProvider): Router {
       attempt_id,
       exercise_id,
       correct: result.correct,
+      // Wave 5 partial-credit shape. `correct: bool` is preserved for
+      // backwards compat; `result` is the forward-looking field that
+      // multi-unit families (Wave 6) extend with `'partial'`.
+      result: deriveResult(result.correct),
+      response_units: [] as Array<unknown>,
+      evaluation_version: EVALUATION_VERSION,
       evaluation_source: result.evaluation_source,
       explanation,
       canonical_answer: result.canonical_answer,

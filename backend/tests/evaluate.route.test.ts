@@ -434,3 +434,67 @@ describe('POST /lessons/:lessonId/answers — AI result cache (identical resubmi
     expect(ai.evaluateSentenceCorrection).toHaveBeenCalledTimes(1);
   });
 });
+
+// Wave 5 partial-credit shape per LEARNING_ENGINE.md §8.7. The
+// `correct: bool` field stays for backwards compat; the new `result`
+// enum is the forward-looking field that Wave 6 multi-unit families
+// extend with `'partial'`.
+describe('POST /lessons/:lessonId/answers — Wave 5 response shape', () => {
+  const app = createApp(stubAi);
+
+  it('correct fill_blank → result="correct", response_units=[], evaluation_version=1', async () => {
+    const res = await inject(app, {
+      method: 'POST',
+      path: `/lessons/${LESSON_ID}/answers`,
+      json: makeBody({ user_answer: 'trying' }),
+    });
+    expect(res.status).toBe(200);
+    expect((res.json as any).correct).toBe(true);
+    expect((res.json as any).result).toBe('correct');
+    expect((res.json as any).response_units).toEqual([]);
+    expect((res.json as any).evaluation_version).toBe(1);
+  });
+
+  it('wrong fill_blank → result="wrong" mirrors correct=false', async () => {
+    const res = await inject(app, {
+      method: 'POST',
+      path: `/lessons/${LESSON_ID}/answers`,
+      json: makeBody({ user_answer: 'tries' }),
+    });
+    expect((res.json as any).correct).toBe(false);
+    expect((res.json as any).result).toBe('wrong');
+    expect((res.json as any).response_units).toEqual([]);
+    expect((res.json as any).evaluation_version).toBe(1);
+  });
+
+  it('correct multiple_choice → result="correct"', async () => {
+    const res = await inject(app, {
+      method: 'POST',
+      path: `/lessons/${LESSON_ID}/answers`,
+      json: makeBody({
+        exercise_id: MC_EX_ID,
+        exercise_type: 'multiple_choice',
+        user_answer: 'b',
+      }),
+    });
+    expect((res.json as any).result).toBe('correct');
+  });
+
+  it('Wave 5 fields ship alongside the legacy fields, not replacing them', async () => {
+    const res = await inject(app, {
+      method: 'POST',
+      path: `/lessons/${LESSON_ID}/answers`,
+      json: makeBody({ user_answer: 'trying' }),
+    });
+    const body = res.json as any;
+    // Legacy contract preserved
+    expect(body.correct).toBeDefined();
+    expect(body.evaluation_source).toBeDefined();
+    expect(body.canonical_answer).toBeDefined();
+    expect(body.attempt_id).toBeDefined();
+    // Wave 5 additions
+    expect(body.result).toBeDefined();
+    expect(body.response_units).toBeDefined();
+    expect(body.evaluation_version).toBeDefined();
+  });
+});
