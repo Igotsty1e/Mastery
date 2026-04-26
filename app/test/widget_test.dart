@@ -146,17 +146,19 @@ void main() {
   });
 
   group('HomeScreen', () {
-    testWidgets('shows onboarding first when not seen',
+    testWidgets('shows Promise step first when onboarding not seen',
         (tester) async {
           await _useMobileViewport(tester);
       await tester.pumpWidget(_withApi(const HomeScreen(), MockClient((_) async => throw UnimplementedError())));
       await tester.pumpAndSettle(); // resolve hasSeenOnboarding
 
+      // Step 1 (Promise) — wordmark + opening promise + Continue CTA + step indicator.
       expect(find.text('Mastery'), findsOneWidget);
       expect(
           find.text('Focused English grammar practice, one rule at a time.'),
           findsOneWidget);
-      expect(find.widgetWithText(FilledButton, 'Get started'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Continue'), findsOneWidget);
+      expect(find.text('STEP 1 OF 3'), findsOneWidget);
     });
 
     testWidgets('returning user (onboarding seen) lands directly on dashboard',
@@ -176,7 +178,7 @@ void main() {
       expect(find.widgetWithText(FilledButton, 'Get started'), findsNothing);
     });
 
-    testWidgets('Get started routes directly to LessonIntroScreen, bypassing dashboard',
+    testWidgets('Continue advances through 3 onboarding steps to LessonIntroScreen',
         (tester) async {
           await _useMobileViewport(tester);
       final client = MockClient((_) async => _jsonOk(_lessonJson()));
@@ -184,15 +186,25 @@ void main() {
       await tester.pumpWidget(_withApi(const HomeScreen(), client));
       await tester.pumpAndSettle();
 
+      // Step 1 → 2
+      await _safeTap(tester, find.widgetWithText(FilledButton, 'Continue'));
+      await tester.pumpAndSettle();
+      expect(find.text('STEP 2 OF 3'), findsOneWidget);
+
+      // Step 2 → 3
+      await _safeTap(tester, find.widgetWithText(FilledButton, 'Continue'));
+      await tester.pumpAndSettle();
+      expect(find.text('STEP 3 OF 3'), findsOneWidget);
+
+      // Step 3 final CTA → lesson intro
       await _safeTap(tester, find.widgetWithText(FilledButton, 'Get started'));
       await tester.pumpAndSettle();
 
-      // We jump straight into the lesson intro — no `Start lesson` CTA in the trip.
       expect(find.text('Verbs Followed by -ing'), findsOneWidget);
       expect(find.widgetWithText(FilledButton, 'Start Practice'), findsOneWidget);
     });
 
-    testWidgets('Get started persists onboarding-seen so next launch skips it',
+    testWidgets('Final-step CTA persists onboarding-seen so next launch skips it',
         (tester) async {
       await _useMobileViewport(tester);
       final client = MockClient((_) async => _jsonOk(_lessonJson()));
@@ -200,12 +212,30 @@ void main() {
       await tester.pumpWidget(_withApi(const HomeScreen(), client));
       await tester.pumpAndSettle();
 
+      await _safeTap(tester, find.widgetWithText(FilledButton, 'Continue'));
+      await tester.pumpAndSettle();
+      await _safeTap(tester, find.widgetWithText(FilledButton, 'Continue'));
+      await tester.pumpAndSettle();
       await _safeTap(tester, find.widgetWithText(FilledButton, 'Get started'));
       await tester.pumpAndSettle();
 
-      // Verify the SharedPreferences flag has flipped.
       final prefs = await SharedPreferences.getInstance();
       expect(prefs.getBool('onboarding_arrival_ritual_seen_v1'), isTrue);
+    });
+
+    testWidgets('Back button on step 2 returns to step 1',
+        (tester) async {
+      await _useMobileViewport(tester);
+      await tester.pumpWidget(_withApi(const HomeScreen(), MockClient((_) async => throw UnimplementedError())));
+      await tester.pumpAndSettle();
+
+      await _safeTap(tester, find.widgetWithText(FilledButton, 'Continue'));
+      await tester.pumpAndSettle();
+      expect(find.text('STEP 2 OF 3'), findsOneWidget);
+
+      await _safeTap(tester, find.widgetWithText(TextButton, 'Back'));
+      await tester.pumpAndSettle();
+      expect(find.text('STEP 1 OF 3'), findsOneWidget);
     });
   });
 
@@ -657,13 +687,17 @@ void main() {
         ),
       );
 
-      // Phase 1: HomeScreen onboarding → Get started routes directly into
-      // the lesson intro per docs/plans/arrival-ritual.md (no dashboard detour
-      // for first launch).
+      // Phase 1: 3-step Arrival Ritual onboarding → final CTA routes directly
+      // into the lesson intro per docs/plans/arrival-ritual.md (no dashboard
+      // detour on first launch).
       await tester.pumpAndSettle();
-      expect(find.widgetWithText(FilledButton, 'Get started'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Continue'), findsOneWidget);
+      await _safeTap(tester, find.widgetWithText(FilledButton, 'Continue'));
+      await tester.pumpAndSettle();
+      await _safeTap(tester, find.widgetWithText(FilledButton, 'Continue'));
+      await tester.pumpAndSettle();
       await _safeTap(tester, find.widgetWithText(FilledButton, 'Get started'));
-      await tester.pumpAndSettle(); // navigate + fetch lesson
+      await tester.pumpAndSettle();
 
       // Phase 2: LessonIntroScreen — lesson loaded from mocked API
       expect(find.text('Verbs Followed by -ing'), findsOneWidget);
