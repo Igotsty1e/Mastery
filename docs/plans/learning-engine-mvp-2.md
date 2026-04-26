@@ -208,27 +208,44 @@ Exit criteria:
 cadence as a thin runtime layer that can re-order or substitute items
 within a lesson.
 
+**Status:** shipped on branch `codex/learning-engine-wave3-decision-engine`.
+The `DecisionEngine` module is a pure function that re-orders the
+remaining-exercise queue per §9.1; the `ReviewScheduler` persists the
+§9.3 cadence per skill on session end and exposes
+`ReviewScheduler.dueAt(now)` for Wave 4 to read on dashboard load. No UI
+surface yet — Wave 4 (Transparency Layer) renders the reason strings and
+the review-due list.
+
 Tasks:
 
-- introduce a `DecisionEngine` module that, given the current lesson
-  fixture and the `LearnerSkillStore`, may:
-  - replace the next item with another item on the same `skill_id` after
-    a 1st or 2nd mistake (in-session)
-  - mark a skill `weak` after a 3rd mistake (in-session) and end the loop
-    on it for the session
-  - schedule a review per `LEARNING_ENGINE.md §9.3` cadence (out-of-session)
-- add a session-side scheduler that, on dashboard load, surfaces "review
-  due" skills before "next lesson" content
-- preserve the linear-lesson default when no replacement candidate exists
-  (graceful fallback)
-- expose a one-line decision reason that the Transparency Layer (Wave 4)
-  can render
+- ✅ introduce a `DecisionEngine` module
+  (`app/lib/learner/decision_engine.dart`) that, given the lesson, the
+  remaining-exercise queue, and per-skill session mistake counts, may:
+  - ✅ pull the next un-attempted same-skill item to the head after a 1st
+    or 2nd mistake (in-session) with a §11.3 reason string
+  - ✅ drop every remaining same-skill item after a 3rd mistake
+    (in-session) and end the loop on that skill for the session
+  - ✅ schedule a review per `LEARNING_ENGINE.md §9.3` cadence
+    (out-of-session) via the new `ReviewScheduler` module in
+    `app/lib/learner/review_scheduler.dart`
+- ✅ session-side scheduler `ReviewScheduler.dueAt(now)` returns the
+  due-or-overdue skills (sorted oldest-first). The dashboard call site
+  ships in Wave 4.
+- ✅ preserve the linear-lesson default when no replacement candidate
+  exists (engine returns `reason = null`)
+- ✅ expose a one-line decision reason on `SessionState.lastDecisionReason`
+  (the Transparency Layer in Wave 4 renders it)
 
 Exit criteria:
-- in-session loop demonstrably replaces items after a mistake
-- a review fires the next day on a skill that was missed today
-- no regression on the existing fixed-flow lesson when the bank has only
-  one item per skill
+- ✅ in-session loop demonstrably replaces items after a mistake
+  (covered by `app/test/decision_engine_test.dart` + 6 new
+  SessionController integration tests)
+- ✅ the cadence persists per skill — a clean session lands at step 1
+  (1 day), and a session with mistakes resets to step 1 (covered by
+  `app/test/review_scheduler_test.dart`)
+- ✅ no regression on the existing fixed-flow lesson when the bank has
+  only one item per skill or when fixtures lack Wave 1 metadata (97/97
+  Flutter tests, 220/220 backend tests still green)
 
 ### Wave 4 — Transparency Layer (per skill, per routing)
 

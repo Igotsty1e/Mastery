@@ -154,7 +154,9 @@ Per-learner per-skill state (see §7).
 Inputs: attempt history, evidence weights, recency.
 Outputs: per-skill score 0–100 + status label + reason string.
 
-Status: **planned**. No per-skill state exists today.
+Status: **shipped (device-scoped, MVP2 Wave 2)**. Per-skill state lives
+in the Flutter `LearnerSkillStore` (`app/lib/learner/learner_skill_store.dart`)
+on each learner's device.
 
 ### 2.6 Layer 6 — Decision Engine
 
@@ -165,8 +167,12 @@ in the Exercise Bank.
 
 Outputs: next-item or next-lesson recommendation + a machine-readable reason.
 
-Status: **planned**. Today the lesson order is fixed; there is no decision
-engine.
+Status: **shipped (in-session loop + cadence, MVP2 Wave 3)**. The Flutter
+`DecisionEngine` implements the §9.1 1/2/3 loop in-session;
+`ReviewScheduler` persists the §9.3 cadence per skill across sessions.
+Skill-graph prerequisite traversal is not yet wired (`prerequisites[]`
+ships in `skills.json` but no decision yet reads them — that is a Wave
+3+ extension).
 
 ### 2.7 Layer 7 — Transparency Layer
 
@@ -664,10 +670,16 @@ Graduation is a soft signal, not a guarantee. A graduated skill that fails
 in mixed review or in a contrast item drops back into the cadence at
 step 1.
 
-Status: **planned**. The shipped runtime delivers a fixed linear sequence
-identical to every learner. There is no cadence today; the static-authoring
-adjacency rule in `exercise_structure.md §6.5` is the only in-product
-re-test mechanism.
+Status: **shipped (engine-side, MVP2 Wave 3)**. The Flutter
+`DecisionEngine` (`app/lib/learner/decision_engine.dart`) implements the
+in-session 1/2/3 loop on top of the Wave 1 metadata trio: it re-orders
+the remaining-exercise queue when the learner misses a skill, and ends
+the loop on that skill at the third mistake. The cross-session cadence
+lives in `ReviewScheduler` (`app/lib/learner/review_scheduler.dart`),
+which persists the §9.3 step + due time per skill on session end and
+exposes `dueAt(now)` for the dashboard. No UI surface yet — the §11.3
+reason string is held on `SessionState.lastDecisionReason` and the
+review-due list is read on demand; Wave 4 renders both.
 
 ---
 

@@ -12,6 +12,18 @@ class SessionState {
   final String? errorMessage;
   final LessonResultResponse? summary;
 
+  /// Ordered queue of remaining exercise indices (head = current). Wave 3
+  /// `DecisionEngine` re-orders this queue in response to in-session
+  /// mistakes per `LEARNING_ENGINE.md §9.1`. With Wave 1/Wave 2 fixtures
+  /// only (no Wave 3 decision yet fired) the queue is the linear
+  /// `[0..exercises.length-1]`.
+  final List<int> remainingIndices;
+
+  /// One-line learner-facing reason from the most recent `DecisionEngine`
+  /// decision per `LEARNING_ENGINE.md §11.3`. Wave 3 stores it on state;
+  /// Wave 4 (Transparency Layer) renders it.
+  final String? lastDecisionReason;
+
   const SessionState({
     this.lesson,
     this.currentIndex = 0,
@@ -20,6 +32,8 @@ class SessionState {
     this.results = const [],
     this.errorMessage,
     this.summary,
+    this.remainingIndices = const [],
+    this.lastDecisionReason,
   });
 
   Exercise? get currentExercise =>
@@ -27,8 +41,10 @@ class SessionState {
           ? lesson!.exercises[currentIndex]
           : null;
 
+  /// True when there is no exercise to advance to — either the queue
+  /// has one item left (the current one) or the lesson is missing.
   bool get isLastExercise =>
-      lesson != null && currentIndex >= lesson!.exercises.length - 1;
+      lesson != null && remainingIndices.length <= 1;
 
   int get totalCount => lesson?.exercises.length ?? 0;
   int get correctCount => results.where((r) => r).length;
@@ -42,6 +58,9 @@ class SessionState {
     List<bool>? results,
     String? errorMessage,
     LessonResultResponse? summary,
+    List<int>? remainingIndices,
+    String? lastDecisionReason,
+    bool clearLastDecisionReason = false,
   }) =>
       SessionState(
         lesson: lesson ?? this.lesson,
@@ -51,5 +70,9 @@ class SessionState {
         results: results ?? this.results,
         errorMessage: errorMessage ?? this.errorMessage,
         summary: summary ?? this.summary,
+        remainingIndices: remainingIndices ?? this.remainingIndices,
+        lastDecisionReason: clearLastDecisionReason
+            ? null
+            : (lastDecisionReason ?? this.lastDecisionReason),
       );
 }

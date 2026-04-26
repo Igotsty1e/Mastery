@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import '../api/api_client.dart';
+import '../learner/decision_engine.dart';
 import '../learner/learner_skill_store.dart';
+import '../learner/review_scheduler.dart';
 import '../models/evaluation.dart';
 import '../models/lesson.dart';
 import '../progress/local_progress_store.dart';
@@ -19,6 +21,16 @@ class SessionController extends ChangeNotifier {
   String? _lastAnswer;
   late String _sessionId;
 
+  /// Wave 3 §9.1 in-session mistake counter, per skill, reset on
+  /// `loadLesson`. The `DecisionEngine` reads this to decide the 1/2/3
+  /// loop; the `ReviewScheduler` reads it on session end to compute the
+  /// next cadence step per §9.3.
+  Map<String, int> _sessionMistakesBySkill = {};
+
+  /// Pending decision computed in `submitAnswer` and applied on
+  /// `advance()`. Stored so we don't recompute when `advance()` runs.
+  DecisionResult? _pendingDecision;
+
   SessionController(this._api) : _state = const SessionState() {
     _sessionId = _uuid.v4();
   }
@@ -27,6 +39,8 @@ class SessionController extends ChangeNotifier {
     _lastLessonId = lessonId;
     _lastAnswer = null;
     _sessionId = _uuid.v4();
+    _sessionMistakesBySkill = {};
+    _pendingDecision = null;
     _emit(_state.copyWith(phase: SessionPhase.loading));
     try {
       final lesson = await _api.getLesson(lessonId);
@@ -35,6 +49,9 @@ class SessionController extends ChangeNotifier {
         phase: SessionPhase.ready,
         currentIndex: 0,
         results: [],
+        remainingIndices:
+            List<int>.generate(lesson.exercises.length, (i) => i),
+        clearLastDecisionReason: true,
       ));
     } catch (e) {
       _emit(_state.copyWith(
@@ -59,10 +76,30 @@ class SessionController extends ChangeNotifier {
         userAnswer: userAnswer,
         submittedAt: DateTime.now().toUtc().toIso8601String(),
       ));
+
+      // Track per-skill in-session mistake count (§9.1 1/2/3 loop input).
+      if (!response.correct && exercise.skillId != null) {
+        final sid = exercise.skillId!;
+        _sessionMistakesBySkill[sid] = (_sessionMistakesBySkill[sid] ?? 0) + 1;
+      }
+
+      // Compute the next-item decision now so `advance()` is a pure state
+      // transition with no async logic. With Wave 1 metadata absent on
+      // older fixtures, the engine returns the linear default.
+      _pendingDecision = DecisionEngine.decideAfterAttempt(
+        lesson: _state.lesson!,
+        remainingQueue: _state.remainingIndices,
+        mistakesBySkill: _sessionMistakesBySkill,
+        justAttempted: exercise,
+        justCorrect: response.correct,
+      );
+
       _emit(_state.copyWith(
         phase: SessionPhase.result,
         lastResult: response,
         results: [..._state.results, response.correct],
+        lastDecisionReason: _pendingDecision?.reason,
+        clearLastDecisionReason: _pendingDecision?.reason == null,
       ));
       await LocalProgressStore.recordCompletedExercises(
         _state.lesson!.lessonId,
@@ -97,16 +134,39 @@ class SessionController extends ChangeNotifier {
   }
 
   void advance() {
-    if (_state.isLastExercise) {
-      _emit(_state.copyWith(phase: SessionPhase.evaluating, clearLastResult: true));
-      _fetchSummary();
-    } else {
+    final decision = _pendingDecision;
+    _pendingDecision = null;
+
+    // Decision Engine signalled session end (e.g. 3rd-mistake skip emptied
+    // the queue), or the queue genuinely has only the current item left.
+    if (decision?.endSession ?? _state.isLastExercise) {
       _emit(_state.copyWith(
-        currentIndex: _state.currentIndex + 1,
-        phase: SessionPhase.ready,
-        clearLastResult: true,
-      ));
+          phase: SessionPhase.evaluating, clearLastResult: true));
+      _fetchSummary();
+      return;
     }
+
+    final newQueue = decision?.remainingQueue ??
+        (_state.remainingIndices.isNotEmpty
+            ? _state.remainingIndices.sublist(1)
+            : const <int>[]);
+    if (newQueue.isEmpty) {
+      _emit(_state.copyWith(
+          phase: SessionPhase.evaluating, clearLastResult: true));
+      _fetchSummary();
+      return;
+    }
+
+    _emit(_state.copyWith(
+      currentIndex: newQueue.first,
+      remainingIndices: newQueue,
+      phase: SessionPhase.ready,
+      clearLastResult: true,
+      // Carry forward the decision reason so the result→ready transition
+      // does not silently drop it before Wave 4 can render it.
+      lastDecisionReason: decision?.reason,
+      clearLastDecisionReason: decision?.reason == null,
+    ));
   }
 
   Future<void> _fetchSummary() async {
@@ -126,6 +186,28 @@ class SessionController extends ChangeNotifier {
     } catch (e, st) {
       debugPrint('_fetchSummary failed – showing local counts. Error: $e\n$st');
       _emit(_state.copyWith(phase: SessionPhase.summary));
+    }
+    // LEARNING_ENGINE.md §9.3 cadence — record the just-finished session
+    // outcome for every skill the learner touched. The scheduler decides
+    // the next due time; the dashboard reads it via ReviewScheduler.dueAt.
+    await _scheduleReviews();
+  }
+
+  Future<void> _scheduleReviews() async {
+    final touched = <String>{};
+    final lesson = _state.lesson;
+    if (lesson == null) return;
+    for (final ex in lesson.exercises) {
+      if (ex.skillId != null) touched.add(ex.skillId!);
+    }
+    final now = DateTime.now().toUtc();
+    for (final skillId in touched) {
+      final mistakes = _sessionMistakesBySkill[skillId] ?? 0;
+      await ReviewScheduler.recordSessionEnd(
+        skillId: skillId,
+        mistakesInSession: mistakes,
+        occurredAt: now,
+      );
     }
   }
 
