@@ -2,9 +2,16 @@
 
 ## Status
 
-Approved direction for the next UI implementation wave.
+| Wave | Status |
+|---|---|
+| Onboarding 3-step ritual (Brief A) | **Shipped 2026-04-26** — `app/lib/screens/onboarding_arrival_ritual_screen.dart` |
+| First-exercise V2 hierarchy (Brief B) | Pending |
+| Motion polish (Brief C) | Onboarding step transitions shipped (shared-axis fade + slide, reduced-motion fallback). Lesson-intro / first-exercise motion pending. |
+| QA / design review (Brief D) | Pending |
 
-This document translates the selected `Variant A / Arrival Ritual` concept into a screen-by-screen contract that implementation agents can ship without reopening the design decision.
+This document remains the contract for unshipped pieces. Sections that describe the shipped onboarding are still authoritative for behaviour expectations — keep them in sync if onboarding is ever refactored.
+
+It translates the selected `Variant A / Arrival Ritual` concept into a screen-by-screen contract that implementation agents can ship without reopening the design decision.
 
 ## Why This Direction Won
 

@@ -51,6 +51,24 @@ class _OnboardingArrivalRitualScreenState
     setState(() => _index -= 1);
   }
 
+  // Step-to-step transition: shared-axis style — incoming step rises and
+  // fades in, outgoing step settles and fades out. Honours reduced-motion
+  // (MediaQuery.disableAnimations) by collapsing to opacity-only.
+  Widget _stepTransition(Widget child, Animation<double> animation) {
+    final reduceMotion = MediaQuery.of(context).disableAnimations;
+    if (reduceMotion) {
+      return FadeTransition(opacity: animation, child: child);
+    }
+    final offset = Tween<Offset>(
+      begin: const Offset(0, 0.04),
+      end: Offset.zero,
+    ).animate(animation);
+    return FadeTransition(
+      opacity: animation,
+      child: SlideTransition(position: offset, child: child),
+    );
+  }
+
   String get _ctaLabel => switch (_index) {
         0 => 'Continue',
         1 => 'Continue',
@@ -101,6 +119,7 @@ class _OnboardingArrivalRitualScreenState
                           duration: MasteryDurations.medium,
                           switchInCurve: MasteryEasing.move,
                           switchOutCurve: MasteryEasing.move,
+                          transitionBuilder: _stepTransition,
                           child: KeyedSubtree(
                             key: ValueKey(_index),
                             child: _bodyForIndex(_index),

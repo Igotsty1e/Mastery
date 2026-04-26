@@ -27,15 +27,17 @@ HomeScreen
 
 `HomeScreen` carries two distinct states. The split below is authoritative — keep these subsections in sync with the code in `app/lib/screens/home_screen.dart` and with `docs/plans/arrival-ritual.md`.
 
-#### First-launch onboarding — *Arrival Ritual* (proposed, not yet shipped)
+#### First-launch onboarding — *Arrival Ritual* (shipped)
 
-Status: spec approved, implementation pending. Source of truth: `docs/plans/arrival-ritual.md`.
+Status: shipped 2026-04-26. Source of truth: `docs/plans/arrival-ritual.md`. Implementation: `app/lib/screens/onboarding_arrival_ritual_screen.dart`.
 
-- 3 step ritual: `Promise` → `Assembly` → `Handoff`.
-- Each step is independently editable (copy, art, motion).
-- The final `Handoff` step previews the upcoming lesson title, level, exercise count, and one-sentence learning promise.
-- Final CTA routes **directly** into `LessonIntroScreen` — no detour through the dashboard.
-- Currently shipped code: a single-screen minimal onboarding (`_buildOnboarding()` in `home_screen.dart`). The Arrival Ritual will replace it.
+- 3-step ritual: `Promise` → `Assembly` → `Handoff`. Each step lives as a private widget in the onboarding screen file so copy, layout, and motion can be tuned per step.
+- Step indicator (`STEP N OF 3` + animated progress dots) and Back link from step 2 onward.
+- Step transitions: shared-axis fade + slight rise; collapses to opacity-only when `MediaQuery.disableAnimations` is true.
+- `Handoff` step fetches the configured lesson via `GET /lessons/{lesson_id}` and renders a preview card (title, level pill, exercise count, estimated duration ~30s/exercise, one-sentence promise grounded in title + level). Soft failure on fetch — preview falls back to a calm note, CTA stays enabled.
+- Final-step CTA writes `onboarding_arrival_ritual_seen_v1=true` to `LocalProgressStore`, then `Navigator.push`es `LessonIntroScreen` directly. The dashboard appears only when the lesson chain pops back. The hard rule «no detour through the dashboard» is enforced by HomeScreen, not the onboarding screen.
+
+> **First-exercise V2 (Brief B in `docs/plans/arrival-ritual.md`) is still pending.** Onboarding wave only.
 
 #### Returning launch — Dashboard (shipped)
 

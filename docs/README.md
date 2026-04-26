@@ -34,7 +34,7 @@ When adding a new doc, ask: *which of those buckets is this?* If it doesn't fit,
 | Document | Purpose |
 |---|---|
 | [`plans/roadmap.md`](plans/roadmap.md) | Next-step roadmap for audio, exercise expansion, screens, and tooling |
-| [`plans/arrival-ritual.md`](plans/arrival-ritual.md) | Approved next-wave UI contract: 3-step onboarding + first-exercise V2 |
+| [`plans/arrival-ritual.md`](plans/arrival-ritual.md) | Onboarding 3-step ritual shipped 2026-04-26; first-exercise V2 + motion polish + QA still pending |
 
 ### Content authoring (`docs/content/`)
 

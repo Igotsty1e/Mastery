@@ -14,7 +14,7 @@ iOS and Android targets are present in the project but require native toolchain 
 
 | Screen | Route | Description |
 |--------|-------|-------------|
-| HomeScreen | `/` | Minimal onboarding, then dashboard with level selector and progress card |
+| HomeScreen | `/` | First launch: 3-step Arrival Ritual onboarding (`Promise` → `Assembly` → `Handoff`) routed directly into the lesson intro. Returning launch: dashboard with level selector and progress card. State branched on the persisted `onboarding_arrival_ritual_seen_v1` flag. See `docs/plans/arrival-ritual.md`. |
 | LessonIntroScreen | `/lesson/{id}` | Fetches lesson, shows loading/error states, then rule + examples |
 | ExerciseScreen | (within lesson) | Renders one exercise; submits answer; shows inline result |
 | SummaryScreen | (within lesson) | Shows final score, conclusion, and mistake review |
