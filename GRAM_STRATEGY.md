@@ -548,8 +548,8 @@ Current strengths:
 Current limitations:
 - no open production
 - no speaking tasks (out of scope — see §15)
-- no adaptive recycle based on learner weakness
-- four runtime exercise types: `fill_blank`, `multiple_choice`, `sentence_correction`, `listening_discrimination`
+- ~~no adaptive recycle based on learner weakness~~ — closed by `LEARNING_ENGINE.md §9.1` and shipped in `docs/plans/learning-engine-mvp-2.md` Wave 3 (in-session 1/2/3 loop) + Wave 2 (`LearnerSkillStore` device-scoped state). The `DecisionEngine` re-orders the remaining-exercise queue on a same-skill mistake; the `ReviewScheduler` schedules cross-session reviews per §9.3.
+- four runtime exercise types: `fill_blank`, `multiple_choice`, `sentence_correction`, `listening_discrimination` (multi-unit families gated on Wave 6)
 
 Pedagogical consequence:
 - we can build a strong accuracy-and-repair grammar trainer now

@@ -2,6 +2,14 @@
 
 All cases are implementation-ready. Each case specifies input, expected `correct`, `evaluation_source`, and `canonical_answer`.
 
+> **Wave 5 note (2026-04-27):** the response samples below show the
+> original MVP shape. The shipped wire response from
+> `POST /lessons/:lessonId/answers` additionally carries
+> `result: "correct"|"partial"|"wrong"`, `response_units: []`, and
+> `evaluation_version: 1` per `docs/backend-contract.md`. Existing
+> samples are still valid for the legacy `correct: bool` path; new
+> golden cases for multi-unit families ship with Wave 6.
+
 ---
 
 ## 1. fill_blank

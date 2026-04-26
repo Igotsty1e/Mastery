@@ -35,11 +35,16 @@ AI fallback on timeout (5s) or error defaults to `correct=false, evaluation_sour
   "attempt_id": "...",
   "exercise_id": "...",
   "correct": true,
+  "result": "correct",            // Wave 5: "correct" | "partial" | "wrong"
+  "response_units": [],            // Wave 5: per-unit results, [] for single-decision items
+  "evaluation_version": 1,         // Wave 5: bumps when evaluator semantics change
   "evaluation_source": "deterministic | ai_fallback",
   "canonical_answer": "...",
-  "explanation": "..."     // optional — always from exercise feedback.explanation
+  "explanation": "..."             // optional — always from exercise feedback.explanation
 }
 ```
+
+`correct: bool` is preserved on the wire for backwards compat. Mirror of `result === "correct"`. See `docs/backend-contract.md` and `LEARNING_ENGINE.md §8.7` for the full Wave 5 contract.
 
 `GET /lessons/:lessonId/result` returns:
 

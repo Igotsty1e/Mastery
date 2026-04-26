@@ -2,7 +2,13 @@
 
 **Status:** Approved. Implementation-ready.  
 **Date:** 2026-04-17  
-**Version:** 1.0
+**Version:** 1.0  
+**Successor:** `LEARNING_ENGINE.md` + `docs/plans/learning-engine-mvp-2.md` for post-MVP engine evolution. This doc froze the original
+MVP scope and remains authoritative for what the **launch product** committed to. Where the shipped engine has moved past the
+original frozen scope, the relevant section below carries an explicit "**Post-MVP update**" pointer to the
+`learning-engine-mvp-2.md` wave that landed the change. Cross-canon conflicts resolve per `CLAUDE.md §Content Source Of Truth`:
+runtime contracts (`backend-contract.md`, `mobile-architecture.md`, `content-contract.md`) win for what the code does **today**;
+`LEARNING_ENGINE.md` wins for where the product is **going**.
 
 ---
 
@@ -134,6 +140,14 @@ The `evaluation_source` field in response payloads may be one of:
 | `ai_timeout` | AI call exceeded 5-second timeout; submission marked incorrect as fallback |
 | `ai_error` | AI call failed (invalid response schema, network error); submission marked incorrect as fallback |
 
+**Post-MVP update (Wave 5).** The evaluation response shape has been
+extended additively per `LEARNING_ENGINE.md §8.7` and
+`docs/plans/learning-engine-mvp-2.md` Wave 5. The `correct: bool` field
+is preserved for backwards compat; the wire response also carries
+`result: "correct"|"partial"|"wrong"`, `response_units: []` (populated
+only by Wave 6 multi-unit families), and `evaluation_version: 1`. Full
+contract: `docs/backend-contract.md`.
+
 ---
 
 ## 6. Borderline Definition (sentence_correction only)
@@ -155,7 +169,16 @@ This definition is fixed. Do not expand criteria without a spec revision.
 The backend is the single source of truth. The client renders what the server sends. The client never:
 - Stores lesson definitions locally beyond the current session render.
 - Computes correctness.
-- Modifies exercise order.
+- ~~Modifies exercise order.~~ **Post-MVP update (Wave 3):** the Flutter
+  `DecisionEngine` (`app/lib/learner/decision_engine.dart`) re-orders the
+  remaining-exercise queue per `LEARNING_ENGINE.md §9.1` after a learner
+  mistake. The lesson fixture and the per-attempt evaluation verdict
+  remain server-authored; only the **order** in which the learner sees
+  the next un-attempted item is now a client decision, driven by stored
+  metadata (`skill_id`) shipped from the server. Reorder fires only on a
+  same-skill replacement candidate; with a single-skill bank the linear
+  default is preserved. Audit trail: `docs/plans/learning-engine-mvp-2.md`
+  Wave 3.
 - Decides when to call AI.
 - Interprets AI output directly.
 
@@ -178,9 +201,14 @@ No other endpoints required for MVP.
 The following will NOT be built in this MVP. Any request to add them is a scope change requiring spec revision.
 
 - User authentication or accounts
-- Server-side progress persistence or accounts (local on-device exercise progress via SharedPreferences is in scope as of current implementation)
+- Server-side progress persistence or accounts (local on-device exercise progress via SharedPreferences is in scope as of current implementation; **post-MVP Wave 2** added per-skill mastery state via `LearnerSkillStore`, also device-scoped)
 - Resume / save state (lesson session cannot be resumed mid-flow)
-- Adaptive learning or difficulty adjustment
+- ~~Adaptive learning or difficulty adjustment~~ **Post-MVP (Waves 2–3):**
+  per-learner per-skill mastery state + the §9.1 in-session 1/2/3 loop
+  + the §9.3 review cadence shipped via the `LEARNING_ENGINE.md`
+  migration path. Status surfaces are still planned (Wave 4 Transparency
+  Layer). Original-MVP scope is unchanged: launch shipped a fixed linear
+  flow; the engine evolution is a deliberate, audited extension.
 - Branching lesson paths
 - Chat UI or conversational interface
 - Gamification (streaks, badges, points, leaderboards, levels)
