@@ -4,7 +4,7 @@
 
 - Hand-built HTML mockups for all eight shipped core screens live in `docs/design-mockups/`. Open `docs/design-mockups/index.html` (or run `cd docs/design-mockups && python3 -m http.server 8765` and visit `http://127.0.0.1:8765/`) for the comparison gallery.
 - Shipped coverage: home onboarding, home dashboard, lesson intro, exercise (multiple choice — active and result revealed), exercise (fill-the-blank with keyboard up), exercise (sentence correction with keyboard up), summary.
-- In addition to the shipped set, `docs/design-mockups/dashboard-study-desk.html` is the approved concept study for the next dashboard wave.
+- `docs/design-mockups/dashboard-study-desk.html` is the visual reference for the shipped Study Desk dashboard (Dashboard V2 wave, 2026-04-26).
 - Mockups use the lesson content from `backend/data/lessons/b2-lesson-001.json` and the tokens from this document. They are the canonical composition reference.
 - Relationship: this document = tokens (the specification). `docs/design-mockups/` = composition (the reference). When the two disagree, this document wins. Update both when visual decisions change.
 
@@ -19,7 +19,7 @@
 - `DESIGN.md` owns visual language, interaction tone, layout, motion, and component behavior.
 - `docs/design-mockups/` owns screen-level composition reference.
 - `docs/plans/arrival-ritual.md` owns the selected V2 onboarding and first-exercise contract derived from the approved design exploration.
-- `docs/plans/dashboard-study-desk.md` owns the next dashboard redesign contract.
+- `docs/plans/dashboard-study-desk.md` owns the dashboard redesign contract (Study Desk wave, shipped 2026-04-26).
 - `GRAM_STRATEGY.md` owns the top-level pedagogy for how Mastery teaches language.
 - `exercise_structure.md` owns the exercise system and authoring rules derived from that pedagogy.
 - `exercise_structure.md §2.9 Visual Context Layer` decides whether a given exercise should remain text-only or may use an image.
@@ -321,21 +321,23 @@ Method note: this list uses public Android install bands from Google Play as the
 - Large hero wordmark or title, one elegant supporting sentence, 3 proof points max.
 - Use a subtle illustration or study still-life near the top or side.
 - The dashboard state should show one clear next lesson, visible unit orientation, and one main CTA.
-- **Chosen shipped direction:** `Arrival Ritual` — see `docs/plans/arrival-ritual.md` for the locked 2-step + dashboard-as-home contract.
-- **Chosen next dashboard wave:** `Study Desk` — see `docs/plans/dashboard-study-desk.md` and `docs/design-mockups/dashboard-study-desk.html`.
-- On first launch, onboarding should run as a **2-step ritual**:
+- **Shipped onboarding direction:** `Arrival Ritual` — see `docs/plans/arrival-ritual.md` for the locked 2-step + dashboard-as-home contract.
+- **Shipped dashboard direction:** `Study Desk` — see `docs/plans/dashboard-study-desk.md` and `docs/design-mockups/dashboard-study-desk.html`.
+- On first launch, onboarding runs as a **2-step ritual**:
   1. `Promise`
   2. `Assembly`
 - The final onboarding CTA lands on the **dashboard**. The dashboard is the single Home — it is also where `Done` from SummaryScreen brings the learner back. There is no separate "post-lesson home" surface.
 - Each onboarding step must be individually addressable in implementation so copy, art, and motion can be tuned step-by-step.
 - Motion should make the product feel like it is calmly preparing the workspace: soft float, staged rise, clean handoff into the dashboard.
 - *History:* 2026-04-26 morning shipped a transitional 3-step direction (Promise → Assembly → Handoff, ending directly in the lesson intro, `cea886f..bd0f021`). Same-day reversal to 2-step + dashboard-as-home; final visual locked as Direction A · Editorial Notebook. Reference mockup: `docs/design-mockups/onboarding-2step/direction-a-editorial.html`.
-- Next dashboard implementation rules:
-  - use a compact level dropdown, not a full-width chip row
-  - keep one dominant next-lesson hero
-  - keep the last lesson report always visible once a lesson has been completed
-  - keep the full summary as a deeper separate view, not an inline duplicate screen
-  - current-unit rows should use readable status badges
+- **Dashboard rules (shipped Study Desk):**
+  - compact level dropdown trigger in the header, never a full-width chip row
+  - one dominant next-lesson hero with progress cluster + CTA
+  - `Last lesson report` is always visible once a lesson has been completed (in-memory only today; persistence is tech debt)
+  - full summary remains a deeper separate view; the dashboard report is a persistent module, not the full screen duplicated inline
+  - current-unit rows use readable `Done / Current / Locked` status badges
+  - future units live behind an `All units ▾` trigger in the Current Unit section header — same tuck-away pattern as the level dropdown. **No standalone Coming Next block** — the trigger replaced it after first ship because the row preview added scroll length without helping decisions
+  - premium block (if shown) sits last, gold-soft, never competes with the hero or the report
 
 ### Lesson Intro
 - Treat this like opening a premium lesson notebook.
@@ -439,4 +441,5 @@ Method note: this list uses public Android install bands from Google Play as the
 | 2026-04-25 | Chosen font pairing: Fraunces + Manrope | Gives editorial trust and premium character without sacrificing mobile readability |
 | 2026-04-26 | Chosen onboarding direction: Arrival Ritual | Best balance of premium calm and editorial handoff into the single Home |
 | 2026-04-26 | Dashboard is the single Home | First launch ends on dashboard; SummaryScreen `Done` returns to the same home surface |
-| 2026-04-26 | Next dashboard wave: Study Desk | Compact level dropdown, persistent last-lesson report, one dominant next-lesson hero, badge-based unit states |
+| 2026-04-26 | Dashboard wave: Study Desk shipped | Compact level dropdown, persistent last-lesson report, one dominant next-lesson hero, badge-based unit states |
+| 2026-04-26 | Coming Next block dropped, replaced with `All units ▾` trigger | Two-row preview added scroll length without helping decisions; tucking future units behind a popup mirrors the level-dropdown pattern and keeps the home calm |
