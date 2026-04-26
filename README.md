@@ -21,6 +21,7 @@ Users complete lessons composed of exercises. The backend decides correctness. A
 |---|---|
 | `DESIGN.md` | Canonical design system: visual language, colors, typography, components |
 | `docs/design-mockups/` | Canonical visual composition reference for the shipped screen layouts |
+| `docs/onboarding-first-exercise-arrival-ritual.md` | Approved V2 contract for the new onboarding and first exercise flow |
 | `GRAM_STRATEGY.md` | Top-level pedagogy: how Mastery teaches grammar and usage |
 | `exercise_structure.md` | Canonical rules for exercise design, sequencing, runtime mapping, and examples |
 | `docs/content-unit-u01-blueprint.md` | Active lesson-authoring plan for the next shippable grammar unit |

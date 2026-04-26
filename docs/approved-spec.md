@@ -61,9 +61,8 @@ Fixed linear sequence. No branching. No skipping. No adaptive reordering.
 
 ```
 HomeScreen
-  → Minimal onboarding
-      → Dashboard (level selector, progress card, "Start Lesson" CTA)
-          → Lesson Intro / loading
+  → First launch: 3-step onboarding (`Promise` → `Assembly` → `Handoff`)
+      → Lesson Intro / loading
           → Exercise 1
               → Submit answer
               → Receive result (correct / incorrect + canonical answer + explanation)
@@ -73,6 +72,10 @@ HomeScreen
           → Exercise N
               → Submit answer
               → Receive result
+  → Returning launch: Dashboard (level selector, progress card, "Start Lesson" CTA)
+      → Lesson Intro / loading
+          → Exercise 1
+              ...
 SummaryScreen
   → Show score (X / N correct)
   → Show coach's-note **debrief** (AI-generated diagnostic synthesis) when present;
@@ -84,7 +87,8 @@ SummaryScreen
 **Rules:**
 - User cannot go back to previous exercises.
 - User cannot skip an exercise.
-- HomeScreen may show a lightweight onboarding before the lesson CTA.
+- First launch uses a step-based onboarding and then lands directly in the lesson intro for the new lesson.
+- Returning users may enter through the dashboard state.
 - Each exercise shows result immediately after submission.
 - No timers. No streaks. No points. No badges.
 - Lesson Complete screen shows raw score only.

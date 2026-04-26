@@ -17,6 +17,7 @@
 ## Document Map
 - `DESIGN.md` owns visual language, interaction tone, layout, motion, and component behavior.
 - `docs/design-mockups/` owns screen-level composition reference.
+- `docs/onboarding-first-exercise-arrival-ritual.md` owns the selected V2 onboarding and first-exercise contract derived from the approved design exploration.
 - `GRAM_STRATEGY.md` owns the top-level pedagogy for how Mastery teaches language.
 - `exercise_structure.md` owns the exercise system and authoring rules derived from that pedagogy.
 - `exercise_structure.md §2.9 Visual Context Layer` decides whether a given exercise should remain text-only or may use an image.
@@ -308,6 +309,16 @@ Method note: this list uses public Android install bands from Google Play as the
 - Large hero wordmark or title, one elegant supporting sentence, 3 proof points max.
 - Use a subtle illustration or study still-life near the top or side.
 - The dashboard state should show level, lesson progress, and one main CTA.
+- **Chosen V2 direction:** `Arrival Ritual`.
+- On first launch, onboarding should run as a **3-step ritual**:
+  1. `Promise`
+  2. `Assembly`
+  3. `Handoff`
+- The final onboarding CTA must land directly in the new lesson intro. Do not bounce the learner through the dashboard after the ritual.
+- Returning users may still use the dashboard/home state, but first launch should feel more editorial and ceremonial than operational.
+- Each onboarding step must be individually addressable in implementation so copy, art, and motion can be tuned step-by-step.
+- Motion should make the product feel like it is calmly preparing the lesson: soft float, staged rise, and a clean handoff into the lesson.
+- The final onboarding step should already preview the upcoming lesson title, level, exercise count, and one-sentence learning promise.
 
 ### Lesson Intro
 - Treat this like opening a premium lesson notebook.
@@ -325,6 +336,16 @@ Method note: this list uses public Android install bands from Google Play as the
 - No side quests, no floating secondary widgets.
 - The exercise surface should occupy emotional focus.
 - Submission and “Next” controls should stay visually consistent to reduce friction.
+- The first exercise should feel like the lesson has fully arrived: quieter chrome, stronger prompt hierarchy, less visual competition.
+- The prompt must outrank the chrome. Progress is visible but infrastructural.
+- Required first-exercise state coverage:
+  - `idle`
+  - `focused`
+  - `answer selected / input entered`
+  - `correct result revealed`
+  - `incorrect result revealed`
+- The instruction band should stay present but feel more distilled and premium than a generic helper box.
+- Result reveal should feel teacher-like and decisive, never game-like or punitive.
 
 #### Listening exercise variant (`listening_discrimination`)
 - The exercise card shows the instruction band, then the Audio Player (component §14) where the prompt would normally sit.
@@ -400,3 +421,6 @@ Method note: this list uses public Android install bands from Google Play as the
 | 2026-04-25 | Chosen direction: Quiet Premium Coach | Fits the product’s non-gamified, adult, structured learning model better than playful or hyper-tech aesthetics |
 | 2026-04-25 | Chosen core color: dusty rose | Matches user instruction while keeping the product warm, premium, and distinct from blue/purple EdTech defaults |
 | 2026-04-25 | Chosen font pairing: Fraunces + Manrope | Gives editorial trust and premium character without sacrificing mobile readability |
+| 2026-04-26 | Chosen onboarding direction: Arrival Ritual | Best balance of premium calm, emotional handoff, and immediate lesson readiness |
+| 2026-04-26 | First-launch path should land directly in the lesson intro | Removes dead time after onboarding and makes the app feel useful immediately |
+| 2026-04-26 | First exercise should use a quieter, prompt-led hierarchy | The learner should feel the lesson has arrived, not that they are still inside setup chrome |

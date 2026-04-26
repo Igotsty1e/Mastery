@@ -24,9 +24,13 @@ HomeScreen
 
 ### HomeScreen
 
-- Shows a minimal onboarding first: short product framing plus three bullet points about the learning model.
-- CTA: `Get started` dismisses onboarding into the dashboard state.
-- Dashboard shows a read-only level selector (A2/B1/B2/C1 chips; only B2 is active in the current MVP), a progress card with completed/total exercises, and a `Start Lesson` CTA.
+- First-launch flow is being upgraded from a minimal single-screen onboarding to the approved `Arrival Ritual` sequence (see `docs/onboarding-first-exercise-arrival-ritual.md`).
+- The target onboarding is 3 steps:
+  - `Promise`
+  - `Assembly`
+  - `Handoff`
+- The final onboarding CTA must route directly into `LessonIntroScreen` for the new lesson; it should not bounce the learner through the dashboard first.
+- Returning/home state still shows a read-only level selector (A2/B1/B2/C1 chips; only B2 is active in the current MVP), a progress card with completed/total exercises, and a `Start Lesson` CTA.
 - On entering the dashboard, fetches the lesson via `GET /lessons/{lesson_id}` to populate level and total exercise count; reads locally stored completed-exercise count from `LocalProgressStore` (SharedPreferences).
 - On return from a completed lesson, re-fetches progress to refresh the card.
 - Single hardcoded lesson ID from `AppConfig.defaultLessonId`. No lesson list, no dynamic level switching.
@@ -51,6 +55,7 @@ Renders one exercise at a time. Each exercise card shows an instruction band at 
 | `sentence_correction` | Multi-line text field; original sentence shown above |
 
 - Instruction is always shown, required, and sourced from the exercise `instruction` field.
+- The first exercise should follow the approved V2 direction in `docs/onboarding-first-exercise-arrival-ritual.md`: quieter chrome, stronger prompt hierarchy, and a more premium focus tunnel.
 - Submit button disabled until non-empty input provided.
 - On submit: POST to `/lessons/{lesson_id}/answers`.
 - Show loading indicator during POST.
@@ -60,6 +65,7 @@ Renders one exercise at a time. Each exercise card shows an instruction band at 
 
 - Correct: green indicator + explanation (if present).
 - Incorrect: red indicator + canonical answer + explanation (if present).
+- Result reveal for the first exercise should feel teacher-like and decisive, not game-like or punitive.
 - `explanation` always comes from the exercise's curated `feedback.explanation` block in the lesson fixture.
 - AI is used only to decide correctness on borderline `sentence_correction` cases; its raw feedback is not shown to the learner.
 - "Next" button appears. Tapping Next advances to next exercise or to SummaryScreen.
