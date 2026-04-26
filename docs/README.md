@@ -44,7 +44,10 @@ When adding a new doc, ask: *which of those buckets is this?* If it doesn't fit,
 
 ### Visual references (`docs/design-mockups/`)
 
-Eight 390×844 mobile mockups showing canonical screen composition. Open via `cd docs/design-mockups && python3 -m http.server 8765`. Built directly against the `DESIGN.md` token system with real lesson content.
+Eight 390×844 mobile mockups showing canonical screen composition for shipped layouts. Open via `cd docs/design-mockups && python3 -m http.server 8765`. Built directly against the `DESIGN.md` token system with real lesson content.
+
+In-flight visual exploration:
+- [`design-mockups/onboarding-2step/`](design-mockups/onboarding-2step/index.html) — three direction takes (Editorial Notebook / Atelier / Clinical Calm) on the locked 2-step onboarding + dashboard-as-home + quieter first exercise. Awaiting a pick before implementation.
 
 ### Project root (canon)
 

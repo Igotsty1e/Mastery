@@ -1,0 +1,515 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=410, initial-scale=1" />
+  <title>Mastery — Direction A · Editorial Notebook</title>
+  <link rel="stylesheet" href="../tokens.css" />
+  <style>
+    body {
+      background: var(--bg-app);
+      padding: 32px 16px 64px;
+    }
+    .column {
+      display: flex;
+      flex-direction: column;
+      gap: 28px;
+      align-items: center;
+      max-width: 410px;
+      margin: 0 auto;
+    }
+    .tile {
+      width: 390px;
+      box-shadow: var(--shadow-card);
+      border-radius: 32px;
+      overflow: hidden;
+      position: relative;
+      background: var(--bg-app);
+    }
+    .tile__caption {
+      width: 390px;
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      padding: 4px 4px 0;
+    }
+    .tile__num {
+      font-family: var(--ff-mono);
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      color: var(--text-tertiary);
+    }
+    .tile__name {
+      font: var(--t-label-md);
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    /* ---------- shared editorial bits ---------- */
+    .step-indicator {
+      font-family: var(--ff-mono);
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      font-weight: 600;
+    }
+    .step-dots {
+      display: inline-flex;
+      gap: 6px;
+    }
+    .step-dot {
+      width: 14px;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--border-strong);
+    }
+    .step-dot--active {
+      width: 24px;
+      background: var(--action-primary);
+    }
+    .gold-rule {
+      height: 1px;
+      background: var(--accent-gold);
+      opacity: 0.55;
+    }
+    .gold-rule--short { width: 36px; }
+
+    /* ---------- Promise ---------- */
+    .promise {
+      flex: 1;
+      padding: 26px 24px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      background:
+        radial-gradient(120% 70% at 50% -10%, var(--bg-onboard-panel) 0%, transparent 60%),
+        var(--bg-app);
+      position: relative;
+    }
+    .promise__top {
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .promise__brand {
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .promise__wordmark {
+      font-family: var(--ff-display);
+      font-style: italic;
+      font-weight: 600;
+      font-variation-settings: "opsz" 144, "SOFT" 100;
+      font-size: 56px;
+      line-height: 1.0;
+      letter-spacing: -0.025em;
+      color: var(--action-primary-pressed);
+      margin: 0;
+    }
+    .promise__lede {
+      max-width: 320px;
+      font: var(--t-body-md);
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin: 0;
+    }
+    .proof {
+      display: flex; gap: 14px; align-items: flex-start;
+      padding: 14px 0;
+      border-top: 1px solid var(--border-soft);
+    }
+    .proof:first-of-type { border-top: 0; }
+    .proof__num {
+      font-family: var(--ff-mono);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent-gold);
+      letter-spacing: 0.1em;
+      width: 24px;
+      flex: 0 0 24px;
+    }
+    .proof__title {
+      font: var(--t-title-sm);
+      font-weight: 700;
+      margin: 0 0 4px;
+      color: var(--text-primary);
+    }
+    .proof__body {
+      font: var(--t-body-sm);
+      font-weight: 500;
+      color: var(--text-secondary);
+      margin: 0;
+      line-height: 1.5;
+    }
+    .promise__cta {
+      margin-top: auto;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+
+    /* ---------- Assembly ---------- */
+    .assembly {
+      flex: 1;
+      padding: 26px 24px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      background: var(--bg-app);
+    }
+    .assembly__title {
+      font-family: var(--ff-display);
+      font-weight: 600;
+      font-size: 32px;
+      line-height: 1.15;
+      letter-spacing: -0.018em;
+      color: var(--text-primary);
+      margin: 0;
+    }
+    .assembly__lede {
+      font: var(--t-body-md);
+      color: var(--text-secondary);
+      margin: 0;
+    }
+    .stage {
+      display: flex; gap: 16px;
+      padding: 18px 18px;
+      background: var(--bg-raised);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--r-lg);
+    }
+    .stage__num {
+      font-family: var(--ff-mono);
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      color: var(--accent-gold);
+      flex: 0 0 28px;
+    }
+    .stage__title {
+      font: var(--t-title-sm);
+      font-weight: 700;
+      margin: 0 0 4px;
+    }
+    .stage__body {
+      font: var(--t-body-sm);
+      color: var(--text-secondary);
+      margin: 0;
+      line-height: 1.55;
+    }
+
+    /* ---------- Dashboard ---------- */
+    .dash {
+      flex: 1;
+      padding: 26px 24px 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      background: var(--bg-app);
+    }
+    .dash__hello {
+      display: flex; flex-direction: column; gap: 6px;
+    }
+    .dash__title {
+      font-family: var(--ff-display);
+      font-style: italic;
+      font-weight: 600;
+      font-size: 28px;
+      letter-spacing: -0.015em;
+      margin: 0;
+      color: var(--text-primary);
+    }
+    .dash__sub {
+      font: var(--t-body-sm);
+      color: var(--text-secondary);
+      margin: 0;
+    }
+    .dash__section-label {
+      display: flex; align-items: center; gap: 10px;
+      font-family: var(--ff-mono);
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin-bottom: 4px;
+    }
+    .level-row {
+      display: flex; gap: 8px; flex-wrap: wrap;
+    }
+    .lvl {
+      height: 36px;
+      padding: 0 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border-strong);
+      background: var(--bg-surface);
+      color: var(--text-secondary);
+      font: var(--t-label-md);
+      font-weight: 700;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .lvl--active {
+      background: var(--action-primary);
+      border-color: var(--action-primary);
+      color: #FFFDFC;
+    }
+    .lvl--locked { color: var(--text-tertiary); }
+    .lesson-card {
+      padding: 22px 20px;
+      background: var(--bg-raised);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--r-lg);
+      box-shadow: var(--shadow-card);
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .lesson-card__eyebrow {
+      font-family: var(--ff-mono);
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--accent-gold);
+      font-weight: 600;
+    }
+    .lesson-card__title {
+      font-family: var(--ff-display);
+      font-weight: 600;
+      font-size: 24px;
+      letter-spacing: -0.012em;
+      line-height: 1.2;
+      color: var(--text-primary);
+      margin: 0;
+    }
+    .lesson-card__meta {
+      display: flex; align-items: baseline; gap: 8px;
+      font: var(--t-label-sm);
+      color: var(--text-secondary);
+    }
+    .lesson-card__meta .mono-num {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    /* ---------- First exercise ---------- */
+    .ex {
+      flex: 1;
+      padding: 22px 24px 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      background: var(--bg-app);
+    }
+    .ex__top {
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .ex__progress {
+      display: flex; gap: 4px; flex: 1; align-items: center;
+    }
+    .ex__progress-fill {
+      height: 3px;
+      border-radius: 2px;
+      flex: 1;
+      background: var(--border-strong);
+    }
+    .ex__progress-fill--active { background: var(--action-primary); }
+    .ex__counter {
+      font-family: var(--ff-mono);
+      font-size: 12px;
+      color: var(--text-tertiary);
+      letter-spacing: 0.06em;
+      margin-left: 12px;
+    }
+    .ex__instruction {
+      font-family: var(--ff-mono);
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+    }
+    .ex__prompt {
+      font-family: var(--ff-display);
+      font-weight: 600;
+      font-size: 28px;
+      line-height: 1.25;
+      letter-spacing: -0.014em;
+      color: var(--text-primary);
+      margin: 8px 0 0;
+    }
+    .ex__options { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+    .ex__opt {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 18px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--r-md);
+      font: var(--t-body-md);
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .ex__opt-letter {
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: var(--bg-app);
+      border: 1px solid var(--border-strong);
+      font-family: var(--ff-mono);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      display: inline-flex; align-items: center; justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="column">
+
+    <!-- 01 PROMISE -->
+    <div class="tile__caption"><span class="tile__num">01</span><span class="tile__name">PROMISE · STEP 1 OF 2</span></div>
+    <div class="tile screen">
+      <div class="screen__safe-top"><span>9:41</span><span class="battery"><span class="signal-dot"></span><span class="signal-dot"></span><span class="signal-dot"></span> 100%</span></div>
+      <div class="promise">
+        <div class="promise__top">
+          <span class="step-indicator">STEP 1 OF 2</span>
+          <span class="step-dots"><span class="step-dot step-dot--active"></span><span class="step-dot"></span></span>
+        </div>
+        <div class="promise__brand">
+          <h1 class="promise__wordmark">Mastery</h1>
+          <p class="promise__lede">Focused English grammar practice. One rule per lesson, taught with the precision an adult learner deserves.</p>
+        </div>
+        <div class="gold-rule gold-rule--short" style="margin-top:6px"></div>
+        <div>
+          <div class="proof">
+            <span class="proof__num">01</span>
+            <div>
+              <h3 class="proof__title">One rule per lesson</h3>
+              <p class="proof__body">Single grammar point — no mixing, no distraction.</p>
+            </div>
+          </div>
+          <div class="proof">
+            <span class="proof__num">02</span>
+            <div>
+              <h3 class="proof__title">Targeted exercises</h3>
+              <p class="proof__body">Fill the blank, choose the form, repair the sentence, listen and pick.</p>
+            </div>
+          </div>
+          <div class="proof">
+            <span class="proof__num">03</span>
+            <div>
+              <h3 class="proof__title">Calm diagnostic feedback</h3>
+              <p class="proof__body">After each answer, what was right and why — grounded in the rule.</p>
+            </div>
+          </div>
+        </div>
+        <div class="promise__cta">
+          <button class="btn btn--primary btn--block">Continue</button>
+        </div>
+      </div>
+      <div class="screen__home-indicator"></div>
+    </div>
+
+    <!-- 02 ASSEMBLY -->
+    <div class="tile__caption"><span class="tile__num">02</span><span class="tile__name">ASSEMBLY · STEP 2 OF 2</span></div>
+    <div class="tile screen">
+      <div class="screen__safe-top"><span>9:41</span><span class="battery"><span class="signal-dot"></span><span class="signal-dot"></span><span class="signal-dot"></span> 100%</span></div>
+      <div class="assembly">
+        <div class="promise__top">
+          <span class="step-indicator">STEP 2 OF 2</span>
+          <span class="step-dots"><span class="step-dot"></span><span class="step-dot step-dot--active"></span></span>
+        </div>
+        <h1 class="assembly__title">Every lesson follows the same rhythm.</h1>
+        <p class="assembly__lede">Three short phases. We move you through them without surprises.</p>
+        <div class="gold-rule gold-rule--short"></div>
+        <div class="stage">
+          <span class="stage__num">01</span>
+          <div>
+            <h3 class="stage__title">Rule</h3>
+            <p class="stage__body">A short, plain-English explanation of one grammar point — meaning, form, the contrast you should notice.</p>
+          </div>
+        </div>
+        <div class="stage">
+          <span class="stage__num">02</span>
+          <div>
+            <h3 class="stage__title">Practice</h3>
+            <p class="stage__body">Around 10 exercises — choose, complete, repair, or listen. One decision at a time.</p>
+          </div>
+        </div>
+        <div class="stage">
+          <span class="stage__num">03</span>
+          <div>
+            <h3 class="stage__title">Review</h3>
+            <p class="stage__body">A coach\u2019s note on what landed and what to watch out for. So the next session has a target.</p>
+          </div>
+        </div>
+        <div style="margin-top:auto; display:flex; flex-direction:column; gap:12px;">
+          <button class="btn btn--primary btn--block">Open my dashboard</button>
+        </div>
+      </div>
+      <div class="screen__home-indicator"></div>
+    </div>
+
+    <!-- 03 DASHBOARD -->
+    <div class="tile__caption"><span class="tile__num">03</span><span class="tile__name">DASHBOARD · HOME</span></div>
+    <div class="tile screen">
+      <div class="screen__safe-top"><span>9:41</span><span class="battery"><span class="signal-dot"></span><span class="signal-dot"></span><span class="signal-dot"></span> 100%</span></div>
+      <div class="dash">
+        <div class="dash__hello">
+          <h1 class="dash__title">Welcome back.</h1>
+          <p class="dash__sub">Right where you left off.</p>
+        </div>
+        <div class="gold-rule gold-rule--short"></div>
+        <div>
+          <div class="dash__section-label"><span>Level</span></div>
+          <div class="level-row">
+            <span class="lvl lvl--locked">A2</span>
+            <span class="lvl lvl--locked">B1</span>
+            <span class="lvl lvl--active">B2</span>
+            <span class="lvl lvl--locked">C1</span>
+          </div>
+        </div>
+        <div>
+          <div class="dash__section-label"><span>Today\u2019s lesson</span></div>
+          <div class="lesson-card">
+            <span class="lesson-card__eyebrow">B2 · Unit 01 · Lesson 01</span>
+            <h2 class="lesson-card__title">Verbs Followed by -ing</h2>
+            <p class="lesson-card__meta"><span class="mono-num">3</span> of <span class="mono-num">10</span> exercises · about 5 min</p>
+            <div class="progress" style="margin-top:4px"><div class="progress__fill" style="width:30%"></div></div>
+          </div>
+        </div>
+        <div style="margin-top:auto; display:flex; flex-direction:column; gap:10px;">
+          <button class="btn btn--primary btn--block">Start lesson</button>
+        </div>
+      </div>
+      <div class="screen__home-indicator"></div>
+    </div>
+
+    <!-- 04 FIRST EXERCISE -->
+    <div class="tile__caption"><span class="tile__num">04</span><span class="tile__name">FIRST EXERCISE · QUIETER CHROME</span></div>
+    <div class="tile screen">
+      <div class="screen__safe-top"><span>9:41</span><span class="battery"><span class="signal-dot"></span><span class="signal-dot"></span><span class="signal-dot"></span> 100%</span></div>
+      <div class="ex">
+        <div class="ex__top">
+          <div class="ex__progress">
+            <span class="ex__progress-fill ex__progress-fill--active"></span>
+            <span class="ex__progress-fill"></span>
+            <span class="ex__progress-fill"></span>
+            <span class="ex__progress-fill"></span>
+            <span class="ex__progress-fill"></span>
+            <span class="ex__progress-fill"></span>
+            <span class="ex__progress-fill"></span>
+            <span class="ex__progress-fill"></span>
+            <span class="ex__progress-fill"></span>
+            <span class="ex__progress-fill"></span>
+          </div>
+          <span class="ex__counter">01 / 10</span>
+        </div>
+        <span class="ex__instruction">Choose the correct option</span>
+        <h2 class="ex__prompt">Look — I ___ all the dishes. The kitchen is clean now.</h2>
+        <div class="ex__options">
+          <div class="ex__opt"><span class="ex__opt-letter">A</span>have washed</div>
+          <div class="ex__opt"><span class="ex__opt-letter">B</span>have been washing</div>
+          <div class="ex__opt"><span class="ex__opt-letter">C</span>am washing</div>
+          <div class="ex__opt"><span class="ex__opt-letter">D</span>wash</div>
+        </div>
+        <div style="margin-top:auto;">
+          <button class="btn btn--primary btn--block">Check answer</button>
+        </div>
+      </div>
+      <div class="screen__home-indicator"></div>
+    </div>
+
+  </div>
+</body>
+</html>

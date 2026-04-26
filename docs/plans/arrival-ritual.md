@@ -5,7 +5,7 @@
 | Wave | Status |
 |---|---|
 | 3-step onboarding ritual (original Brief A) | **Superseded 2026-04-26** — first version shipped in `cea886f..bd0f021` but is being replaced by a 2-step direction. The new contract is below. |
-| 2-step onboarding + dashboard-as-home (current direction) | **Spec locked 2026-04-26**, design-shotgun in flight, implementation pending |
+| 2-step onboarding + dashboard-as-home (current direction) | **Spec locked 2026-04-26.** Three visual directions explored as hand-written HTML mockups in `docs/design-mockups/onboarding-2step/` (open `onboarding-2step/index.html` for the side-by-side comparison). Awaiting direction pick before implementation. |
 | First-exercise V2 hierarchy (original Brief B) | Pending |
 | Motion polish (Brief C) | Onboarding step transitions shipped (shared-axis fade + slide, reduced-motion fallback). Lesson-intro / first-exercise motion pending. |
 | QA / design review (Brief D) | Pending |

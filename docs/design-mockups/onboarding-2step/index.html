@@ -1,0 +1,236 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mastery — Onboarding (2-step) · 3 Directions</title>
+  <link rel="stylesheet" href="../tokens.css" />
+  <style>
+    body {
+      background: var(--bg-app);
+      min-height: 100vh;
+      padding: 48px 24px 96px;
+    }
+    .container {
+      max-width: 1480px;
+      margin: 0 auto;
+    }
+    .hero {
+      max-width: 880px;
+      margin-bottom: 36px;
+    }
+    .hero__crumb {
+      display: flex; align-items: center; gap: 10px;
+      font: var(--t-label-sm); color: var(--text-tertiary);
+      margin-bottom: 16px;
+    }
+    .hero__crumb a {
+      color: var(--text-secondary); text-decoration: none;
+      border-bottom: 1px solid var(--border-strong);
+    }
+    .hero__title {
+      font-family: var(--ff-display); font-weight: 600;
+      font-size: 44px; line-height: 1.1;
+      letter-spacing: -0.022em; color: var(--text-primary);
+      font-style: italic; margin: 0 0 14px;
+    }
+    .hero__title em { color: var(--action-primary-pressed); font-style: italic; }
+    .hero__sub {
+      font: var(--t-body-lg); color: var(--text-secondary);
+      line-height: 1.55; margin: 0 0 16px; max-width: 640px;
+    }
+    .hero__pills {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px;
+    }
+    .pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 6px 12px; border-radius: var(--r-pill);
+      background: var(--bg-surface); border: 1px solid var(--border-soft);
+      font: var(--t-label-sm); font-weight: 600; color: var(--text-secondary);
+    }
+    .pill .swatch {
+      width: 10px; height: 10px; border-radius: 50%;
+    }
+
+    .columns {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 28px;
+      margin-top: 32px;
+      align-items: start;
+    }
+    .col {
+      display: flex; flex-direction: column; gap: 20px;
+      min-width: 0;
+    }
+    .col__head {
+      display: flex; flex-direction: column; gap: 8px;
+      padding: 0 4px;
+    }
+    .col__eyebrow {
+      font-family: var(--ff-mono); font-size: 11px;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--text-tertiary); font-weight: 600;
+    }
+    .col__title {
+      font-family: var(--ff-display); font-weight: 600;
+      font-size: 26px; letter-spacing: -0.014em;
+      line-height: 1.15; color: var(--text-primary); margin: 0;
+    }
+    .col__sub {
+      font: var(--t-body-sm); color: var(--text-secondary);
+      margin: 0; line-height: 1.55; max-width: 320px;
+    }
+    .col__open {
+      align-self: flex-start;
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 8px 14px; border-radius: 999px;
+      background: var(--bg-surface); border: 1px solid var(--border-soft);
+      font: var(--t-label-sm); font-weight: 600;
+      color: var(--text-secondary); text-decoration: none;
+    }
+    .col__open:hover { color: var(--action-primary-pressed); border-color: var(--action-primary); }
+
+    .frame {
+      width: 100%;
+      max-width: 410px;
+      aspect-ratio: 410 / 3760;
+      background: var(--bg-app);
+      border: 1px solid var(--border-soft);
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: var(--shadow-card);
+    }
+    .frame iframe {
+      width: 410px; height: 3760px;
+      border: 0; transform-origin: top left;
+      transform: scale(1);
+    }
+
+    /* Mobile fallback: stack columns */
+    @media (max-width: 1100px) {
+      .columns { grid-template-columns: 1fr; }
+      .col { align-items: center; }
+    }
+
+    .footer {
+      margin-top: 56px;
+      padding-top: 24px;
+      border-top: 1px solid var(--border-soft);
+      display: flex; flex-wrap: wrap; gap: 32px;
+      max-width: 1080px;
+    }
+    .footer__col { max-width: 320px; }
+    .footer__col h4 {
+      margin: 0 0 8px;
+      font: var(--t-label-md); font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--text-secondary);
+    }
+    .footer__col p {
+      margin: 0; font: var(--t-body-sm);
+      color: var(--text-secondary); line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="hero">
+      <div class="hero__crumb">
+        <a href="../index.html">Mastery design mockups</a>
+        <span>›</span>
+        <span>Onboarding 2-step exploration</span>
+      </div>
+      <h1 class="hero__title">Onboarding · <em>3 directions</em></h1>
+      <p class="hero__sub">
+        Three takes on the locked 2-step onboarding (Promise → Assembly) plus the dashboard-as-home
+        and quieter first exercise. All three sit inside the existing Quiet Premium Coach aesthetic
+        — same dusty-rose anchor, same Fraunces + Manrope, same paper background. They differ in
+        density, ornamentation, and pacing.
+      </p>
+      <p class="hero__sub" style="font-style: italic; color: var(--text-tertiary); font-size: 14px;">
+        Source spec: <code>docs/plans/arrival-ritual.md</code>. Tokens:
+        <code>docs/design-mockups/tokens.css</code>. Pick a direction, then we
+        replace <code>app/lib/screens/onboarding_arrival_ritual_screen.dart</code> and the
+        dashboard-as-home contract.
+      </p>
+      <div class="hero__pills">
+        <span class="pill"><span class="swatch" style="background:#B07A84"></span>Dusty rose anchor</span>
+        <span class="pill">Fraunces · Manrope · IBM Plex Mono</span>
+        <span class="pill">390 × 844 mobile · 4 screens stacked per direction</span>
+      </div>
+    </header>
+
+    <div class="columns">
+
+      <!-- A -->
+      <div class="col">
+        <div class="col__head">
+          <span class="col__eyebrow">Direction A</span>
+          <h2 class="col__title">Editorial Notebook</h2>
+          <p class="col__sub">
+            Strict typography, gold hairline section dividers, numbered everything.
+            Dense but breathing. Reads like a teacher\u2019s notebook page. Most serious.
+          </p>
+          <a class="col__open" href="direction-a-editorial.html" target="_blank">Open full size ↗</a>
+        </div>
+        <div class="frame">
+          <iframe src="direction-a-editorial.html" loading="lazy" title="Direction A — Editorial Notebook"></iframe>
+        </div>
+      </div>
+
+      <!-- B -->
+      <div class="col">
+        <div class="col__head">
+          <span class="col__eyebrow">Direction B</span>
+          <h2 class="col__title">Atelier</h2>
+          <p class="col__sub">
+            Same editorial bones as A, plus a small figurative linework still-life on every screen
+            (notebook, espresso, books, pen). Premium but warmer, more inhabited.
+          </p>
+          <a class="col__open" href="direction-b-atelier.html" target="_blank">Open full size ↗</a>
+        </div>
+        <div class="frame">
+          <iframe src="direction-b-atelier.html" loading="lazy" title="Direction B — Atelier"></iframe>
+        </div>
+      </div>
+
+      <!-- C -->
+      <div class="col">
+        <div class="col__head">
+          <span class="col__eyebrow">Direction C</span>
+          <h2 class="col__title">Clinical Calm</h2>
+          <p class="col__sub">
+            Generous whitespace, single bold sentence per screen, no card containers. Indicators
+            collapse to dots only. Most modern, most reductive. Feels like museum signage.
+          </p>
+          <a class="col__open" href="direction-c-clinical-calm.html" target="_blank">Open full size ↗</a>
+        </div>
+        <div class="frame">
+          <iframe src="direction-c-clinical-calm.html" loading="lazy" title="Direction C — Clinical Calm"></iframe>
+        </div>
+      </div>
+
+    </div>
+
+    <footer class="footer">
+      <div class="footer__col">
+        <h4>What\u2019s the same across all three</h4>
+        <p>Tokens, fonts, palette, copy. Each direction shows the same 4 screens with the same
+        content — the difference is purely visual hierarchy and ornamentation density.</p>
+      </div>
+      <div class="footer__col">
+        <h4>What\u2019s different</h4>
+        <p><strong>A</strong> = editorial restraint. <strong>B</strong> = editorial + linework warmth.
+        <strong>C</strong> = reductive whitespace and modern signage.</p>
+      </div>
+      <div class="footer__col">
+        <h4>How to evaluate</h4>
+        <p>On mobile, scroll all four tiles in each direction. Ask: which one would I want to see
+        every time I open the app? Which dashboard feels like \u201chome\u201d? Which first exercise
+        feels least like a quiz and most like work?</p>
+      </div>
+    </footer>
+  </div>
+</body>
+</html>
