@@ -6,6 +6,7 @@ import '../config.dart';
 import '../progress/local_progress_store.dart';
 import '../theme/mastery_theme.dart';
 import '../widgets/mastery_widgets.dart';
+import '../widgets/mastery_route.dart';
 import 'lesson_intro_screen.dart';
 import 'onboarding_arrival_ritual_screen.dart';
 
@@ -92,7 +93,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _startLesson() async {
     await Navigator.of(context).push(
-      MaterialPageRoute(
+      MasteryFadeRoute(
         builder: (_) =>
             const LessonIntroScreen(lessonId: AppConfig.defaultLessonId),
       ),

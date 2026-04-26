@@ -5,9 +5,30 @@
 | Wave | Status |
 |---|---|
 | 2-step onboarding + dashboard-as-home (Direction A · Editorial Notebook) | **Shipped 2026-04-26.** Visual reference: `docs/design-mockups/onboarding-2step/direction-a-editorial.html`. Implementation: `app/lib/screens/onboarding_arrival_ritual_screen.dart`, `app/lib/screens/home_screen.dart`. |
-| First-exercise V2 quieter chrome (Brief B) | **Pending.** A first attempt landed in 317a70c bundled with the onboarding commit and was reverted in f59599d — the change had not been explicitly approved per-screen. Spec still valid; awaiting explicit go before another implementation pass. |
-| Motion polish (Brief C) | Onboarding step transitions shipped (shared-axis fade + slide, reduced-motion fallback). Lesson-intro / exercise-result-reveal motion still pending. |
-| QA / design review (Brief D) | Pending |
+| First-exercise V2 quieter chrome (Brief B) | **Declined 2026-04-26 by product owner.** A first attempt landed in 317a70c bundled with the onboarding commit and was reverted in f59599d. Direction explicitly closed — the current shipped exercise chrome stays as the long-term contract. Re-open only if the product owner reverses this. |
+| Motion polish (Brief C) | **Partial — shipped 2026-04-26.** Onboarding step transitions (shared-axis fade + slide, reduced-motion fallback) plus calm route transitions for HomeScreen → LessonIntroScreen and LessonIntroScreen → ExerciseScreen via `MasteryFadeRoute` (`app/lib/widgets/mastery_route.dart`). Exercise result-reveal motion is intentionally not done — would touch the exercise screen, which Brief B closure now protects. |
+| QA / design review (Brief D) | **Code-level conformance audit shipped 2026-04-26** — see Audit log below. Live visual QA in a real browser is still pending; requires a user-driven session. |
+
+## Audit Log — 2026-04-26 (Brief D, code-level pass)
+
+Confirmed against shipped code (`app/lib/screens/{home_screen,onboarding_arrival_ritual_screen,lesson_intro_screen,summary_screen,exercise_screen}.dart`):
+
+- Onboarding 2 steps with single text-only `STEP N OF 2` indicator — matches spec.
+- CTA labels exactly `Continue` / `Open my dashboard` — matches spec.
+- Final-step CTA never `Navigator.push`es a lesson — `_completeOnboarding()` only marks the seen-flag and reveals the dashboard via `setState`. Hard rule satisfied.
+- `LocalProgressStore.markOnboardingSeen()` writes the v2 key (`onboarding_arrival_ritual_seen_v2`) so old v1 flags from the transitional 3-step onboarding are invalidated.
+- `SummaryScreen.Done` calls `Navigator.pop()`. Stack at summary is `[HomeScreen, SummaryScreen]` because `LessonIntroScreen` and `ExerciseScreen` both `pushReplacement`. Pop lands on the dashboard state — matches spec.
+- Onboarding step transitions use shared-axis fade + 4% rise; collapse to opacity when `MediaQuery.disableAnimations` is on. `MasteryFadeRoute` follows the same contract. Motion language consistent across product.
+- 42/42 Flutter widget tests green; 195/195 backend tests green; analyzer clean of new regressions.
+
+Soft observations (not bugs, recorded for future passes):
+
+- Dashboard CTA copy switches from `Start lesson` to `Continue lesson` when `_completedExercises > 0`. Not in spec, kept as natural copy.
+- `_ComingNext` on the dashboard renders hardcoded U02 / U03 placeholders even though the backend ships only U01. Known stub; future content waves (`codex/b2-content` branch) will replace.
+
+What this audit did NOT do:
+
+- Live visual QA in a real browser. Requires either a user-driven session or a screenshot-capable MCP browser run; flag here so a future Brief D pass picks it up.
 
 ## History (2026-04-26)
 
@@ -369,13 +390,13 @@ Deliver:
 
 ## Implementation Order
 
-1. lock design intent against this document and `DESIGN.md`
-2. implement onboarding flow
-3. implement first exercise V2 hierarchy
-4. add motion pass
-5. run QA-only
-6. run design review
-7. update docs again after shipped UI
+1. ✅ lock design intent against this document and `DESIGN.md`
+2. ✅ implement onboarding flow (Direction A · Editorial Notebook)
+3. ❌ first exercise V2 hierarchy — declined 2026-04-26 by product owner
+4. ✅ add motion pass — onboarding step transitions + calm route transitions
+5. ✅ code-level conformance audit (see Audit Log above)
+6. ⏸ live visual QA in a real browser — pending user-driven session
+7. ✅ docs swept across all .md files
 
 ## Not In Scope For This Wave
 

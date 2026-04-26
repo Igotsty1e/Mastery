@@ -5,6 +5,7 @@ import '../api/api_client.dart';
 import '../session/session_controller.dart';
 import '../session/session_state.dart';
 import '../theme/mastery_theme.dart';
+import '../widgets/mastery_route.dart';
 import '../widgets/mastery_widgets.dart';
 import 'exercise_screen.dart';
 
@@ -37,7 +38,7 @@ class _LessonIntroScreenState extends State<LessonIntroScreen> {
   void _start() {
     _controllerHandedOff = true;
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
+      MasteryFadeRoute(
         builder: (_) => ChangeNotifierProvider.value(
           value: _controller,
           child: const ExerciseScreen(),

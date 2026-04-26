@@ -34,7 +34,7 @@ When adding a new doc, ask: *which of those buckets is this?* If it doesn't fit,
 | Document | Purpose |
 |---|---|
 | [`plans/roadmap.md`](plans/roadmap.md) | Next-step roadmap for audio, exercise expansion, screens, and tooling |
-| [`plans/arrival-ritual.md`](plans/arrival-ritual.md) | Onboarding (Direction A · Editorial Notebook) shipped 2026-04-26: 2-step + dashboard-as-home. First-exercise V2 chrome (Brief B), lesson-intro motion, and design QA still pending. |
+| [`plans/arrival-ritual.md`](plans/arrival-ritual.md) | Onboarding (Direction A · Editorial Notebook) shipped 2026-04-26: 2-step + dashboard-as-home, calm route transitions, code-level conformance audit. Brief B (first-exercise V2 chrome) declined by the product owner — current exercise chrome is the long-term contract. Live visual QA in a real browser still pending. |
 
 ### Content authoring (`docs/content/`)
 

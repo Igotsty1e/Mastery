@@ -333,17 +333,16 @@ Method note: this list uses public Android install bands from Google Play as the
 - Put the learner in a tunnel: progress up top, task in center, result below.
 - No side quests, no floating secondary widgets.
 - The exercise surface should occupy emotional focus.
-- Submission and “Next” controls should stay visually consistent to reduce friction.
-- The first exercise should feel like the lesson has fully arrived: quieter chrome, stronger prompt hierarchy, less visual competition.
-- The prompt must outrank the chrome. Progress is visible but infrastructural.
-- Required first-exercise state coverage:
+- Submission and "Next" controls should stay visually consistent to reduce friction.
+- Required state coverage:
   - `idle`
   - `focused`
   - `answer selected / input entered`
   - `correct result revealed`
   - `incorrect result revealed`
-- The instruction band should stay present but feel more distilled and premium than a generic helper box.
 - Result reveal should feel teacher-like and decisive, never game-like or punitive.
+
+> Note: an earlier "first-exercise V2" direction (Brief B in `docs/plans/arrival-ritual.md`) proposed quieter chrome, no instruction band, and a Fraunces serif hero prompt. That brief was declined 2026-04-26 by the product owner. The current shipped chrome — rose-tinted `InstructionBand`, `MasteryCard` wrapper, single thin progress bar, body-text prompt — is the long-term contract.
 
 #### Listening exercise variant (`listening_discrimination`)
 - The exercise card shows the instruction band, then the Audio Player (component §14) where the prompt would normally sit.

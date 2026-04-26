@@ -39,9 +39,13 @@ Status: shipped 2026-04-26. Source of truth: `docs/plans/arrival-ritual.md`. Vis
 - Step transitions: shared-axis fade + slight rise; collapses to opacity-only when `MediaQuery.disableAnimations` is true.
 - Back link appears from Step 2 onward.
 
-#### First exercise — quieter chrome (Brief B, pending)
+#### First exercise — quieter chrome (Brief B, declined)
 
-Status: spec exists in `docs/plans/arrival-ritual.md` Brief B, not yet shipped. A first attempt landed in 317a70c (bundled with the onboarding commit) and was reverted in f59599d — the change had not been explicitly approved per-screen. The exercise screen and per-type widgets are back to the pre-2026-04-26 chrome (rose-tinted `InstructionBand`, `MasteryCard` wrapper, single `LinearProgressIndicator` + chevron-back top bar, body-text prompts). Future implementation requires an explicit go from the product owner.
+Status: declined 2026-04-26 by the product owner. A first attempt landed in 317a70c (bundled with the onboarding commit) and was reverted in f59599d. The current shipped exercise chrome — rose-tinted `InstructionBand`, `MasteryCard` wrapper, single `LinearProgressIndicator` + chevron-back top bar, body-text prompts — is the **long-term contract**, not a pre-V2 placeholder. Re-open the brief only if the decision is reversed.
+
+#### Route transitions (Brief C, partial)
+
+Status: shipped 2026-04-26. `MasteryFadeRoute` (`app/lib/widgets/mastery_route.dart`) renders a calm fade-through plus a 4% rise; collapses to opacity-only when `MediaQuery.disableAnimations` is on. Used for HomeScreen → LessonIntroScreen and LessonIntroScreen → ExerciseScreen, replacing the default sliding `MaterialPageRoute`. Onboarding step transitions already use the same motion contract. Exercise result-reveal motion is intentionally not done — the Brief B closure protects the exercise screen as the long-term contract.
 
 #### Returning launch — Dashboard (shipped)
 
@@ -73,8 +77,7 @@ Renders one exercise at a time. Each exercise card shows an instruction band at 
 | `multiple_choice` | Tappable option list (radio-style); no text input |
 | `sentence_correction` | Multi-line text field; original sentence shown above |
 
-- Instruction is always shown, required, and sourced from the exercise `instruction` field.
-- The first exercise should follow the approved V2 direction in `docs/plans/arrival-ritual.md`: quieter chrome, stronger prompt hierarchy, and a more premium focus tunnel.
+- Instruction is always shown, required, and sourced from the exercise `instruction` field. Rendered as a rose-tinted `InstructionBand` with an icon — the long-term contract after Brief B was declined.
 - Submit button disabled until non-empty input provided.
 - On submit: POST to `/lessons/{lesson_id}/answers`.
 - Show loading indicator during POST.
