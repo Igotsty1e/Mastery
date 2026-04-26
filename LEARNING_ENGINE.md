@@ -586,7 +586,16 @@ Multi-unit items must support response-unit scoring. The aggregate item
 result is derived deterministically from the per-unit results (rule TBD per
 family in `exercise_structure.md`).
 
-Status: **planned**. Today's runtime returns boolean correct/incorrect.
+Status: **shipped (response shape, MVP2 Wave 5)**. The
+`POST /lessons/{lesson_id}/answers` endpoint emits `result`,
+`response_units`, and `evaluation_version` per `docs/backend-contract.md`.
+The legacy `correct: bool` field is preserved for backwards compat.
+Single-decision families shipped today (`fill_blank`, `multiple_choice`,
+`sentence_correction`, `listening_discrimination`) emit `result` of
+`"correct"` or `"wrong"` and an empty `response_units` array. The
+`"partial"` value and populated `response_units` are reserved for the
+Wave 6 multi-unit families (`multi_blank`, `multi_error_correction`,
+`multi_select`).
 
 ---
 

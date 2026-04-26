@@ -62,12 +62,19 @@ Submit one answer. Backend evaluates and returns result.
   "attempt_id": "uuid",
   "exercise_id": "uuid",
   "correct": true|false,
+  "result": "correct|partial|wrong",
+  "response_units": [],
+  "evaluation_version": 1,
   "evaluation_source": "deterministic|ai_fallback",
   "explanation": "string|null",
   "canonical_answer": "string"
 }
 ```
 
+- `correct`: legacy boolean field, preserved for backwards compat. Mirrors `result === "correct"`.
+- `result` (Wave 5): forward-looking three-valued evaluation outcome per `LEARNING_ENGINE.md §8.7`. Single-decision items shipped today emit only `"correct"` or `"wrong"`; the `"partial"` value is reserved for the multi-unit families introduced in Wave 6 (`multi_blank`, `multi_error_correction`, `multi_select`).
+- `response_units` (Wave 5): per-unit results for multi-unit items. Always `[]` for the single-decision families shipped today; populated for Wave 6 multi-unit families with one entry per `response_unit_id`.
+- `evaluation_version` (Wave 5): integer that gets bumped when the evaluator's contract changes in a way clients should re-route on. Initial release = `1`. The Mastery Model uses this to invalidate per-skill production-gate state when the evaluator semantics move under it (`LEARNING_ENGINE.md §12.3`).
 - `explanation`: curated rule-specific explanation from the exercise's `feedback.explanation`.
 - `canonical_answer`: first entry from `accepted_answers` or `accepted_corrections`.
 - `evaluation_source`: always `deterministic` when AI not called; `ai_fallback` when AI decided outcome.

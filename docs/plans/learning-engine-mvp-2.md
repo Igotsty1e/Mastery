@@ -271,21 +271,34 @@ Exit criteria:
 **Goal:** make the evaluator emit the per-unit and partial-credit shape
 that the new families need.
 
+**Status (shape only):** shipped on branch
+`codex/learning-engine-wave5-evaluator-shape`. Backend response from
+`POST /lessons/:lessonId/answers` now carries `result`, `response_units`,
+and `evaluation_version` per `docs/backend-contract.md`. Single-decision
+families emit `"correct"` or `"wrong"` with an empty `response_units` and
+`evaluation_version: 1`. The Wave 5 contract is **plumbing only** — the
+`"partial"` value and populated `response_units` cannot fire until Wave 6
+ships a multi-unit family that produces them.
+
 Tasks:
 
-- extend the attempt response shape in `docs/backend-contract.md` to
+- ✅ extend the attempt response shape in `docs/backend-contract.md` to
   include `result: wrong | partial | correct` (in addition to the existing
   `correct: bool`, kept for backwards compat during migration)
-- add `response_units[]` with per-unit results when the item declares
+- ✅ add `response_units[]` with per-unit results when the item declares
   multiple units (`multi_blank`, `multi_error_correction`, `multi_select`)
-- introduce `evaluation_version` field on responses
-- update `docs/content-contract.md` and `docs/backend-contract.md` together
+  — schema only; pilot multi-unit item lands in Wave 6
+- ✅ introduce `evaluation_version` field on responses (initial value `1`)
+- ✅ update `docs/content-contract.md` and `docs/backend-contract.md`
+  together (backend contract documents the new fields; content contract
+  unchanged because no exercise families changed in this wave)
 
 Exit criteria:
-- existing single-decision items emit `result` plus the legacy `correct`
-  field
-- the evaluator returns coherent per-unit results on a pilot multi-unit
-  item
+- ✅ existing single-decision items emit `result` plus the legacy `correct`
+  field (covered by 4 new `evaluate.route.test.ts` cases; 224/224 backend
+  tests passing)
+- ⏳ the evaluator returns coherent per-unit results on a pilot multi-unit
+  item — gated on Wave 6 family ship
 
 ### Wave 6 — New Exercise Families (one at a time)
 
