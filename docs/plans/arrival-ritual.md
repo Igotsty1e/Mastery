@@ -5,7 +5,7 @@
 | Wave | Status |
 |---|---|
 | 2-step onboarding + dashboard-as-home (Direction A · Editorial Notebook) | **Shipped 2026-04-26.** Visual reference: `docs/design-mockups/onboarding-2step/direction-a-editorial.html`. Implementation: `app/lib/screens/onboarding_arrival_ritual_screen.dart`, `app/lib/screens/home_screen.dart`. |
-| First-exercise V2 quieter chrome (Brief B) | **Shipped 2026-04-26.** Implementation: `app/lib/screens/exercise_screen.dart` plus per-type prompt typography in `multiple_choice_widget.dart`, `fill_blank_widget.dart`, `sentence_correction_widget.dart`. |
+| First-exercise V2 quieter chrome (Brief B) | **Pending.** A first attempt landed in 317a70c bundled with the onboarding commit and was reverted in f59599d — the change had not been explicitly approved per-screen. Spec still valid; awaiting explicit go before another implementation pass. |
 | Motion polish (Brief C) | Onboarding step transitions shipped (shared-axis fade + slide, reduced-motion fallback). Lesson-intro / exercise-result-reveal motion still pending. |
 | QA / design review (Brief D) | Pending |
 

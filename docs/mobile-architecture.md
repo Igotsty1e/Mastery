@@ -35,19 +35,13 @@ Status: shipped 2026-04-26. Source of truth: `docs/plans/arrival-ritual.md`. Vis
 - Single text-only step indicator (`STEP N OF 2`) at the top — no duplicate dot row.
 - Editorial typography: Fraunces wordmark in Promise, Fraunces headline in Assembly, gold hairline as a section anchor, numbered ordinals on proof points and stage cards.
 - Final CTA copy: `Continue` on Step 1, `Open my dashboard` on Step 2.
-- Final CTA writes `onboarding_arrival_ritual_seen_v1=true` to `LocalProgressStore`, then reveals the dashboard inside the same `HomeScreen` (no `Navigator.push`). The dashboard is the single Home — it is also the destination of `Done` from `SummaryScreen`.
+- Final CTA writes `onboarding_arrival_ritual_seen_v2=true` to `LocalProgressStore`, then reveals the dashboard inside the same `HomeScreen` (no `Navigator.push`). The dashboard is the single Home — it is also the destination of `Done` from `SummaryScreen`. (The `_v2` suffix exists so an earlier `_v1` flag from the transitional 3-step onboarding is invalidated; existing users see the new ritual once.)
 - Step transitions: shared-axis fade + slight rise; collapses to opacity-only when `MediaQuery.disableAnimations` is true.
 - Back link appears from Step 2 onward.
 
-#### First exercise — quieter chrome (shipped, Direction A · Brief B)
+#### First exercise — quieter chrome (Brief B, pending)
 
-Status: shipped 2026-04-26. Implementation: `app/lib/screens/exercise_screen.dart` plus per-type prompt typography in `multiple_choice_widget.dart`, `fill_blank_widget.dart`, `sentence_correction_widget.dart`.
-
-- Top bar: a row of segmented progress pills (one per exercise) + zero-padded mono counter (`01 / 10`) + small close. No chevron-back, no heavy `LinearProgressIndicator`.
-- Instruction renders as a quiet mono-caps line — replaces the rose-tinted `InstructionBand`.
-- Exercise body sits directly on the page (no `MasteryCard` wrapper).
-- Prompt is rendered as a Fraunces serif hero in each per-type widget so the question outranks the chrome.
-- Listening exercise variant unchanged — the audio player is still the prompt.
+Status: spec exists in `docs/plans/arrival-ritual.md` Brief B, not yet shipped. A first attempt landed in 317a70c (bundled with the onboarding commit) and was reverted in f59599d — the change had not been explicitly approved per-screen. The exercise screen and per-type widgets are back to the pre-2026-04-26 chrome (rose-tinted `InstructionBand`, `MasteryCard` wrapper, single `LinearProgressIndicator` + chevron-back top bar, body-text prompts). Future implementation requires an explicit go from the product owner.
 
 #### Returning launch — Dashboard (shipped)
 
