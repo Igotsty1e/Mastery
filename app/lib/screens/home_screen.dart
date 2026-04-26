@@ -119,6 +119,7 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_showOnboarding) {
       return OnboardingArrivalRitualScreen(
         onComplete: _completeOnboardingAndStartLesson,
+        lessonId: AppConfig.defaultLessonId,
       );
     }
     return _buildDashboard();
