@@ -23,6 +23,7 @@ Not a general assistant. A system builder.
 - Always follow given constraints
 - Always ask for clarification if ambiguous
 - Always explain tradeoffs briefly
+- **Visual approval is per-screen, not per-area.** When the user picks a design direction for screen X, do NOT silently apply that direction's spec to neighbouring screens (Y, Z) just because they were in the same exploration brief. Each screen needs its own explicit yes. Past incident: 317a70c bundled Brief B (first-exercise V2 chrome) into the onboarding-A commit because it was in the same design-shotgun prompt; the user only approved onboarding + dashboard. Reverted in f59599d.
 
 ## Execution Authority
 
