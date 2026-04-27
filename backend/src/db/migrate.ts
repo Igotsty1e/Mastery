@@ -214,6 +214,23 @@ CREATE INDEX IF NOT EXISTS learner_review_schedule_due_idx
   ON learner_review_schedule(user_id, due_at);
 `;
 
+// Wave 11.2 — dynamic sessions (V1 spec). Rather than make `lesson_id`
+// nullable (which cascades type changes through every consumer), the
+// runtime writes a sentinel UUID (`DYNAMIC_SESSION_LESSON_ID`) on
+// dynamic-mode sessions. We update the partial unique index so the
+// "at most one in_progress per (user, lesson)" rule still holds for
+// authoring-bound sessions but multiple in-flight dynamic sessions
+// (sentinel id) per user are allowed — concurrent dynamic sessions
+// are guarded by the service layer instead.
+const DYNAMIC_SESSIONS_SQL = `
+DROP INDEX IF EXISTS lesson_sessions_active_idx;
+
+CREATE UNIQUE INDEX IF NOT EXISTS lesson_sessions_active_idx
+  ON lesson_sessions(user_id, lesson_id)
+  WHERE status = 'in_progress'
+        AND lesson_id <> '00000000-0000-0000-0000-000000000000';
+`;
+
 // Wave 10 — Mastery V1 inputs (rule-based gate per V1 spec §10).
 // Adds the four counters the new gate reads: total attempts, set of
 // exercise types seen, last-attempt outcome, repeated-conceptual count.
@@ -286,6 +303,7 @@ const MIGRATIONS: Migration[] = [
   { id: '0005_learner_state', sql: LEARNER_STATE_SQL },
   { id: '0006_observability_v1', sql: OBSERVABILITY_V1_SQL },
   { id: '0007_mastery_v1', sql: MASTERY_V1_SQL },
+  { id: '0008_dynamic_sessions', sql: DYNAMIC_SESSIONS_SQL },
 ];
 
 export async function runMigrations(database: Database): Promise<void> {

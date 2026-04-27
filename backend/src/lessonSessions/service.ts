@@ -148,6 +148,38 @@ async function loadOwnedSession(
   if (session.userId !== userId) {
     throw new LessonSessionError(404, 'session_not_found');
   }
+  // Wave 11.2 — dynamic sessions carry the sentinel `DYNAMIC_SESSION_LESSON_ID`
+  // and are not bound to a single lesson fixture. Their exercise lookups go
+  // through the bank instead; surface a synthetic Lesson + Meta so the
+  // existing call-sites (submitAnswer, getResult, etc.) keep working.
+  if (session.lessonId === '00000000-0000-0000-0000-000000000000') {
+    return {
+      session,
+      lesson: {
+        lesson_id: session.lessonId,
+        title: 'Today\u2019s session',
+        language: 'en',
+        level: 'B2',
+        intro_rule: '',
+        intro_examples: [],
+        exercises: [],
+      } as unknown as Lesson,
+      meta: {
+        lesson_id: session.lessonId,
+        title: 'Today\u2019s session',
+        slug: 'todays-session',
+        level: 'B2',
+        language: 'en',
+        exercise_count: session.exerciseCount,
+        unit_id: session.unitId,
+        rule_tag: session.ruleTag,
+        micro_rule_tag: session.microRuleTag,
+        content_hash: session.contentHash,
+        lesson_version: session.lessonVersion,
+        order: 0,
+      } as LessonMeta,
+    };
+  }
   const lesson = getLessonById(session.lessonId);
   const meta = getLessonMeta(session.lessonId);
   if (!lesson || !meta) {
@@ -228,9 +260,16 @@ export async function submitAnswer(
   if (session.status !== 'in_progress') {
     throw new LessonSessionError(409, 'session_not_in_progress');
   }
-  const exercise = lesson.exercises.find(
+  // Wave 11.2 — dynamic sessions look up the exercise in the bank
+  // because the synthetic lesson DTO has an empty `exercises` array.
+  let exercise = lesson.exercises.find(
     (e) => e.exercise_id === input.exerciseId
   );
+  if (!exercise) {
+    const { getBankEntry } = await import('../data/exerciseBank');
+    const entry = getBankEntry(input.exerciseId);
+    if (entry) exercise = entry.exercise;
+  }
   if (!exercise) {
     throw new LessonSessionError(404, 'exercise_not_found');
   }

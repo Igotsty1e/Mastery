@@ -14,6 +14,10 @@ import { isUniqueViolation } from '../db/errors';
 export interface LessonSessionRow {
   id: string;
   userId: string;
+  /// For Wave 11.2 dynamic sessions this carries
+  /// `DYNAMIC_SESSION_LESSON_ID` (the all-zero sentinel UUID) so the
+  /// column stays NOT NULL while the row is not bound to a specific
+  /// lesson fixture.
   lessonId: string;
   lessonVersion: string;
   contentHash: string;
@@ -105,6 +109,8 @@ export async function findSessionById(
 
 export interface CreateSessionInput {
   userId: string;
+  /// `DYNAMIC_SESSION_LESSON_ID` (sentinel UUID) for Wave 11.2 dynamic
+  /// sessions; otherwise the source lesson fixture's UUID.
   lessonId: string;
   lessonVersion: string;
   contentHash: string;

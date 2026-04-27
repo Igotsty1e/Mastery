@@ -161,10 +161,11 @@ export const lessonSessions = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     lessonId: uuid('lesson_id').notNull(),
-    // `lesson_version` mirrors the content fingerprint of the lesson fixture
-    // at session-start. Stored independently from `content_hash` so a
-    // future authoring system can promote opaque versions ("v3") without
-    // needing to rehash. For Wave 2 the two are equal.
+    // `lesson_version` mirrors the content fingerprint of the lesson
+    // fixture at session-start. For Wave 11.2 dynamic sessions
+    // (assembled from the bank) the runtime writes a sentinel UUID
+    // (DYNAMIC_SESSION_LESSON_ID) so the column stays NOT NULL across
+    // every shipped row.
     lessonVersion: text('lesson_version').notNull(),
     contentHash: text('content_hash').notNull(),
     unitId: text('unit_id'),
