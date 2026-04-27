@@ -3,6 +3,8 @@ import { eq } from 'drizzle-orm';
 import { inject } from './helpers/inject';
 import { makeTestApp, type TestApp } from './helpers/db';
 import { exerciseAttempts, lessonProgress, lessonSessions } from '../src/db/schema';
+import { resetAiRateLimitStore } from '../src/middleware/aiRateLimit';
+import { getLessonById } from '../src/data/lessons';
 import type { AiProvider } from '../src/ai/interface';
 
 const LESSON_ONE = 'a1b2c3d4-0001-4000-8000-000000000001';
@@ -30,6 +32,7 @@ const stubAi: AiProvider = {
 
 beforeEach(async () => {
   h = await makeTestApp({ ai: stubAi });
+  resetAiRateLimitStore();
 });
 
 afterEach(async () => {
@@ -800,5 +803,173 @@ describe('GET /dashboard', () => {
     expect(body.last_lesson_report).toBeTruthy();
     expect(body.last_lesson_report.lesson_id).toBe(LESSON_ONE);
     expect(body.last_lesson_report.session_id).toBe(sid);
+  });
+});
+
+// Wave 7.1.1 hardening: regression tests for the four Codex CLI findings
+// closed before Wave 7 lessons-session endpoints get wired into Flutter.
+describe('lesson-sessions Wave 7.1.1 Codex regressions', () => {
+  const EX_SC_1 = 'a1b2c3d4-0001-4000-8000-000000000038';
+
+  describe('Codex P1 — rate-limit budget consumed only on actual AI calls', () => {
+    it('11 deterministic-correct sentence_correction submissions all succeed (no 429)', async () => {
+      const { headers } = await login('p1-deterministic-rate');
+      const start = await startSession(headers, LESSON_ONE);
+      const sid = (start.json as any).session_id;
+      // The accepted correction is in the lesson fixture, so every call
+      // resolves deterministically. Pre-fix this would 429 on the 11th
+      // call because the route pre-charged the rate limiter on every
+      // sentence_correction submission, regardless of whether AI ran.
+      for (let i = 0; i < 11; i++) {
+        const res = await submit(headers, sid, {
+          exercise_id: EX_SC_1,
+          exercise_type: 'sentence_correction',
+          user_answer: 'She suggested taking a taxi because it was late.',
+        });
+        expect(res.status).toBe(200);
+        expect((res.json as any).correct).toBe(true);
+        expect((res.json as any).evaluation_source).toBe('deterministic');
+      }
+    });
+  });
+
+  describe('Codex P2.1 — content drift on in-progress result reads', () => {
+    it('returns 409 lesson_content_changed on /result for an in-progress session whose lesson moved', async () => {
+      const { headers } = await login('p21-inprogress-drift');
+      const start = await startSession(headers, LESSON_ONE);
+      const sid = (start.json as any).session_id;
+      // Mutate the persisted content_hash so the in-process lesson hash
+      // differs. Pre-fix: GET /result returned 200 against the stale
+      // fixture, while the next /answers + /complete correctly rejected
+      // with `lesson_content_changed`. Post-fix: /result on an in-progress
+      // session enforces drift consistently.
+      await h.database.orm
+        .update(lessonSessions)
+        .set({ contentHash: 'stale' })
+        .where(eq(lessonSessions.id, sid));
+      const res = await inject(h.app, {
+        method: 'GET',
+        path: `/lesson-sessions/${sid}/result`,
+        headers,
+      });
+      expect(res.status).toBe(409);
+      expect((res.json as any).error).toBe('lesson_content_changed');
+    });
+
+    it('returns 200 on /result for a completed session whose lesson moved', async () => {
+      const { headers } = await login('p21-completed-tolerates');
+      const start = await startSession(headers, LESSON_ONE);
+      const sid = (start.json as any).session_id;
+      await submit(headers, sid, {
+        exercise_id: EX_FB_1,
+        exercise_type: 'fill_blank',
+        user_answer: 'trying',
+      });
+      await inject(h.app, {
+        method: 'POST',
+        path: `/lesson-sessions/${sid}/complete`,
+        headers,
+      });
+      // Drift the content_hash AFTER completion. Completed reads must
+      // still succeed — refusing them would block the learner from ever
+      // seeing their own report after a fixture edit.
+      await h.database.orm
+        .update(lessonSessions)
+        .set({ contentHash: 'stale' })
+        .where(eq(lessonSessions.id, sid));
+      const res = await inject(h.app, {
+        method: 'GET',
+        path: `/lesson-sessions/${sid}/result`,
+        headers,
+      });
+      expect(res.status).toBe(200);
+      expect((res.json as any).status).toBe('completed');
+    });
+  });
+
+  describe('Codex P2.2 — completed review copy frozen at attempt time', () => {
+    it('serves the snapshot prompt + explanation, not the live lesson, after completion', async () => {
+      const { headers } = await login('p22-snapshot-frozen');
+      const start = await startSession(headers, LESSON_ONE);
+      const sid = (start.json as any).session_id;
+      // Wrong answer so explanation is non-null in the response.
+      await submit(headers, sid, {
+        exercise_id: EX_FB_1,
+        exercise_type: 'fill_blank',
+        user_answer: 'tries',
+      });
+      await inject(h.app, {
+        method: 'POST',
+        path: `/lesson-sessions/${sid}/complete`,
+        headers,
+      });
+      const before = await inject(h.app, {
+        method: 'GET',
+        path: `/lesson-sessions/${sid}/result`,
+        headers,
+      });
+      const beforeAnswer = (before.json as any).answers.find(
+        (a: any) => a.exercise_id === EX_FB_1
+      );
+      expect(beforeAnswer.prompt).toBeTruthy();
+      expect(beforeAnswer.explanation).toBeTruthy();
+      const promptAtAttempt: string = beforeAnswer.prompt;
+      const explanationAtAttempt: string = beforeAnswer.explanation;
+
+      // Simulate an author edit: mutate the in-memory cached lesson
+      // shape. Pre-fix the route re-read live `prompt` and
+      // `feedback.explanation` so the already-completed report changed
+      // silently.
+      const lesson = getLessonById(LESSON_ONE)!;
+      const ex = lesson.exercises.find(
+        (e: any) => e.exercise_id === EX_FB_1
+      ) as any;
+      const originalPrompt = ex.prompt;
+      const originalFeedback = ex.feedback;
+      ex.prompt = 'CHANGED PROMPT';
+      ex.feedback = { explanation: 'CHANGED EXPLANATION' };
+
+      try {
+        const after = await inject(h.app, {
+          method: 'GET',
+          path: `/lesson-sessions/${sid}/result`,
+          headers,
+        });
+        const afterAnswer = (after.json as any).answers.find(
+          (a: any) => a.exercise_id === EX_FB_1
+        );
+        expect(afterAnswer.prompt).toBe(promptAtAttempt);
+        expect(afterAnswer.explanation).toBe(explanationAtAttempt);
+      } finally {
+        // Restore the in-memory lesson so other tests aren't poisoned.
+        ex.prompt = originalPrompt;
+        ex.feedback = originalFeedback;
+      }
+    });
+  });
+
+  describe('Codex P3 — /sessions/current validates lesson_id', () => {
+    it('returns 404 lesson_not_found for an unknown lesson UUID, not no_active_session', async () => {
+      const { headers } = await login('p3-unknown-lesson');
+      const unknownLessonId = 'a1b2c3d4-9999-4000-8000-000000000001';
+      const res = await inject(h.app, {
+        method: 'GET',
+        path: `/lessons/${unknownLessonId}/sessions/current`,
+        headers,
+      });
+      expect(res.status).toBe(404);
+      expect((res.json as any).error).toBe('lesson_not_found');
+    });
+
+    it('returns 404 no_active_session for a known lesson with no in-progress session', async () => {
+      const { headers } = await login('p3-known-lesson-empty');
+      const res = await inject(h.app, {
+        method: 'GET',
+        path: `/lessons/${LESSON_ONE}/sessions/current`,
+        headers,
+      });
+      expect(res.status).toBe(404);
+      expect((res.json as any).error).toBe('no_active_session');
+    });
   });
 });

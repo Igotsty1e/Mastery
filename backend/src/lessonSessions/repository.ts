@@ -43,6 +43,14 @@ export interface ExerciseAttemptRow {
   canonicalAnswer: string;
   evaluationSource: string;
   explanation: string | null;
+  /// Wave 7.1.1 Codex P2.2 fix: snapshot of the exercise's prompt at
+  /// attempt time. For listening_discrimination items this stores the
+  /// audio transcript. Null for rows inserted before the migration.
+  promptSnapshot: string | null;
+  /// Wave 7.1.1 Codex P2.2 fix: snapshot of the curated explanation at
+  /// attempt time. Null when the exercise had no `feedback.explanation`
+  /// or the row pre-dates the migration.
+  explanationSnapshot: string | null;
   clientAttemptId: string | null;
   submittedAt: Date;
   createdAt: Date;
@@ -155,6 +163,11 @@ export interface InsertAttemptInput {
   canonicalAnswer: string;
   evaluationSource: string;
   explanation: string | null;
+  /// Wave 7.1.1 Codex P2.2: snapshot at insert time so completed-session
+  /// review reads stay stable across content edits. Null when caller has
+  /// no relevant text (e.g. cached attempt replays).
+  promptSnapshot: string | null;
+  explanationSnapshot: string | null;
   clientAttemptId: string | null;
   submittedAt: Date;
 }
@@ -206,6 +219,8 @@ export async function insertAttempt(
         canonicalAnswer: input.canonicalAnswer,
         evaluationSource: input.evaluationSource,
         explanation: input.explanation,
+        promptSnapshot: input.promptSnapshot,
+        explanationSnapshot: input.explanationSnapshot,
         clientAttemptId: input.clientAttemptId,
         submittedAt: input.submittedAt,
       })

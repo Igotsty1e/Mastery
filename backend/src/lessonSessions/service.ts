@@ -9,6 +9,7 @@ import {
   type SentenceCorrectionResult,
 } from '../evaluators/sentenceCorrection';
 import { normalize } from '../evaluators/normalize';
+import { checkAiRateLimit } from '../middleware/aiRateLimit';
 import {
   getAiResult,
   getDebriefResult,
@@ -172,10 +173,12 @@ export interface AnswerInput {
   // the same session, the original attempt row is returned — no new
   // evaluator run, no duplicate row in `exercise_attempts`.
   clientAttemptId: string;
-  // Set true when the route is allowed to call AI (cache miss + rate limit
-  // available). False short-circuits a borderline `sentence_correction`
-  // submission to `ai_error` without consuming a remote call.
-  aiAllowed: boolean;
+  // Resolved client IP for the AI rate-limiter. Consumed only when the
+  // submission actually needs an AI call (deterministic miss + cache
+  // miss). Null disables rate-limit gating (e.g. internal callers /
+  // tests with no client context); the service still calls AI in that
+  // path, useful for unit tests.
+  clientIp: string | null;
 }
 
 export interface AnswerResult {
@@ -183,7 +186,6 @@ export interface AnswerResult {
   evaluation: SentenceCorrectionResult;
   exercise: Exercise;
   explanation: string | null;
-  rateLimited: boolean;
   // Set when `clientAttemptId` matched an existing row and we returned it
   // verbatim instead of running the evaluator again.
   idempotentReplay: boolean;
@@ -246,13 +248,11 @@ export async function submitAnswer(
       evaluation: attemptRowToEvaluation(replay),
       exercise,
       explanation: replay.explanation,
-      rateLimited: false,
       idempotentReplay: true,
     };
   }
 
   let evaluation: SentenceCorrectionResult;
-  let rateLimited = false;
 
   if (exercise.type === 'fill_blank') {
     evaluation = evaluateFillBlank(input.userAnswer, exercise.accepted_answers);
@@ -281,19 +281,15 @@ export async function submitAnswer(
       const cached = getAiResult(sessionId, input.exerciseId, normAnswer);
       if (cached) {
         evaluation = cached;
-      } else if (!input.aiAllowed) {
-        // The route surfaces a 429 separately; the service is only called
-        // when the rate limiter has space, so reaching this branch means
-        // the route opted out (currently impossible). Surface as ai_error
-        // rather than block the answer entirely.
-        evaluation = {
-          correct: false,
-          evaluation_source: 'ai_error',
-          feedback: null,
-          canonical_answer: exercise.accepted_corrections[0],
-        };
-        rateLimited = true;
       } else {
+        // Rate-limit consumption is lazy: only fires when AI is actually
+        // about to be called. Deterministic-correct submissions don't
+        // burn quota (Codex P1 fix). When the limiter rejects the call,
+        // surface as a typed error so the route can return 429 — the
+        // attempt is NOT inserted; learner can retry once budget frees.
+        if (input.clientIp !== null && !checkAiRateLimit(input.clientIp)) {
+          throw new LessonSessionError(429, 'rate_limit_exceeded');
+        }
         const aiResult = await evaluateSentenceCorrection(
           input.userAnswer,
           exercise.accepted_corrections,
@@ -308,6 +304,17 @@ export async function submitAnswer(
 
   const explanation =
     !evaluation.correct && exercise.feedback ? exercise.feedback.explanation : null;
+
+  // Wave 7.1.1 Codex P2.2: snapshot the review-time copy at insert. For
+  // listening_discrimination items the prompt-equivalent is the audio
+  // transcript. For everything else, the exercise prompt directly.
+  const promptSnapshot =
+    exercise.type === 'listening_discrimination'
+      ? exercise.audio.transcript
+      : 'prompt' in exercise
+        ? exercise.prompt
+        : null;
+  const explanationSnapshot = exercise.feedback?.explanation ?? null;
 
   const inserted = await insertAttempt(db, {
     sessionId,
@@ -325,6 +332,8 @@ export async function submitAnswer(
     canonicalAnswer: evaluation.canonical_answer,
     evaluationSource: evaluation.evaluation_source,
     explanation,
+    promptSnapshot,
+    explanationSnapshot,
     clientAttemptId: input.clientAttemptId,
     submittedAt: input.submittedAt,
   });
@@ -337,7 +346,6 @@ export async function submitAnswer(
       evaluation: attemptRowToEvaluation(inserted.row),
       exercise,
       explanation: inserted.row.explanation,
-      rateLimited: false,
       idempotentReplay: true,
     };
   }
@@ -349,7 +357,6 @@ export async function submitAnswer(
     evaluation,
     exercise,
     explanation,
-    rateLimited,
     idempotentReplay: false,
   };
 }
@@ -405,16 +412,24 @@ function buildAnswers(
     const exercise = lesson.exercises.find(
       (e) => e.exercise_id === attempt.exerciseId
     );
+    // Wave 7.1.1 Codex P2.2: prefer the at-attempt snapshots so
+    // completed-session reads stay stable across content edits. Fall
+    // back to the live lesson only for legacy rows that pre-date the
+    // migration (snapshot is null).
     let explanation: string | null = null;
     if (!attempt.correct) {
-      explanation = exercise?.feedback?.explanation ?? attempt.explanation ?? null;
+      explanation = attempt.explanationSnapshot
+        ?? attempt.explanation
+        ?? exercise?.feedback?.explanation
+        ?? null;
     }
     const promptForReview =
-      exercise?.type === 'listening_discrimination'
-        ? exercise.audio.transcript
-        : exercise && 'prompt' in exercise
-          ? exercise.prompt
-          : null;
+      attempt.promptSnapshot
+        ?? (exercise?.type === 'listening_discrimination'
+              ? exercise.audio.transcript
+              : exercise && 'prompt' in exercise
+                ? exercise.prompt
+                : null);
     return {
       exercise_id: attempt.exerciseId,
       correct: attempt.correct,
@@ -438,13 +453,20 @@ export async function getResult(
   sessionId: string,
   ai: AiProvider
 ): Promise<ResultPayload> {
-  // For completed sessions we tolerate content drift: the persisted
-  // snapshot + frozen `correct_count` carry the original outcome, and
-  // refusing the read here would block the learner from ever seeing
-  // their own report after a fixture edit.
-  const { session, lesson } = await loadOwnedSession(db, userId, sessionId, {
+  // Codex P2.1 fix: drift handling is status-aware. Completed sessions
+  // tolerate content drift (the persisted debrief + frozen counts carry
+  // the original outcome — refusing the read would block the learner
+  // from ever seeing their own report after a fixture edit). For
+  // in-progress sessions, drift must still 409 — otherwise GET /result
+  // returns 200 against a stale fixture while the next /answers + /complete
+  // correctly reject with `lesson_content_changed`. Two-step load so the
+  // status-aware second pass runs the same hash check the write paths use.
+  let { session, lesson } = await loadOwnedSession(db, userId, sessionId, {
     enforceContentHash: false,
   });
+  if (session.status === 'in_progress') {
+    ({ session, lesson } = await loadOwnedSession(db, userId, sessionId));
+  }
 
   // Sort attempts by exercise position in the lesson so the result list
   // mirrors the lesson order, not insertion order.

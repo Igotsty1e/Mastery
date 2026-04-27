@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { AppDatabase } from '../db/client';
 import { requireAuth, type AuthedRequest } from '../auth/middleware';
 import type { AiProvider } from '../ai/interface';
+import { getLessonById } from '../data/lessons';
 import {
   completeSession,
   getCurrentSession,
@@ -12,7 +13,6 @@ import {
   submitAnswer,
 } from './service';
 import {
-  checkAiRateLimit,
   resolveRateLimitIp,
 } from '../middleware/aiRateLimit';
 import {
@@ -132,6 +132,15 @@ export function makeLessonSessionsRouter(
         res.status(404).json({ error: 'lesson_not_found' });
         return;
       }
+      // Codex P3 fix: validate the lesson exists in the manifest before
+      // saying "no active session". A bad lesson id used to fall through
+      // to `no_active_session`, which made callers treat a content miss
+      // as an empty resume state. The /start route already does this;
+      // /current now matches.
+      if (!getLessonById(lessonId)) {
+        res.status(404).json({ error: 'lesson_not_found' });
+        return;
+      }
       const result = await getCurrentSession(db, userId, lessonId);
       if (!result) {
         res.status(404).json({ error: 'no_active_session' });
@@ -160,21 +169,20 @@ export function makeLessonSessionsRouter(
         return;
       }
 
-      // For sentence_correction borderline cases the rate limiter must run
-      // before any DB write. The simplest way to keep parity with the
-      // legacy /lessons/:id/answers route is to consult the limiter here
-      // and block at the route boundary; if the limiter rejects the call
-      // we don't even start the service.
+      // Rate-limit consumption is now lazy inside the service: it only
+      // fires when AI is actually about to be called (deterministic miss
+      // + cache miss). Resolving the IP here just hands the limiter
+      // context to the service so it can consume the budget at the
+      // right moment. Codex P1 fix: deterministic-correct
+      // sentence_correction submissions no longer burn quota.
+      let clientIp: string | null = null;
       if (parsed.data.exercise_type === 'sentence_correction') {
         const ip = resolveRateLimitIp(req);
         if (!ip) {
           res.status(400).json({ error: 'invalid_request' });
           return;
         }
-        if (!checkAiRateLimit(ip)) {
-          res.status(429).json({ error: 'rate_limit_exceeded' });
-          return;
-        }
+        clientIp = ip;
       }
 
       const result = await submitAnswer(db, userId, sessionId, ai, {
@@ -183,7 +191,7 @@ export function makeLessonSessionsRouter(
         userAnswer: parsed.data.user_answer,
         submittedAt,
         clientAttemptId: parsed.data.attempt_id,
-        aiAllowed: true,
+        clientIp,
       });
 
       res.json({
