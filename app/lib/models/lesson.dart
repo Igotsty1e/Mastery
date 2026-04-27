@@ -106,15 +106,14 @@ class ExerciseImage {
 }
 
 /// Engine-side classification of the error an exercise primarily probes,
-/// per `LEARNING_ENGINE.md §5`. Used by the Mastery Model to populate
-/// `recent_errors[]` when the learner answers incorrectly.
+/// per the V1 spec (§5). Wave 10 (2026-04-26) dropped `transfer` and
+/// `pragmatic` — neither was referenced by shipped lesson JSON, so the
+/// drop is a clean break with no content rewrite.
 enum TargetError {
   conceptual,
   form,
   contrast,
   careless,
-  transfer,
-  pragmatic,
 }
 
 TargetError? _parseTargetError(String? s) => switch (s) {
@@ -122,8 +121,8 @@ TargetError? _parseTargetError(String? s) => switch (s) {
       'form_error' => TargetError.form,
       'contrast_error' => TargetError.contrast,
       'careless_error' => TargetError.careless,
-      'transfer_error' => TargetError.transfer,
-      'pragmatic_error' => TargetError.pragmatic,
+      // Old codes from any persisted state pre-Wave 10 silently
+      // become null so the parser stays tolerant.
       _ => null,
     };
 
@@ -132,8 +131,6 @@ String targetErrorToString(TargetError e) => switch (e) {
       TargetError.form => 'form_error',
       TargetError.contrast => 'contrast_error',
       TargetError.careless => 'careless_error',
-      TargetError.transfer => 'transfer_error',
-      TargetError.pragmatic => 'pragmatic_error',
     };
 
 /// Evidence tier per `LEARNING_ENGINE.md §6.1`. Higher tiers count for more

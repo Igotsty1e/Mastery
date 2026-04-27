@@ -223,8 +223,9 @@ TargetError? _parseError(String? s) => switch (s) {
       'form_error' => TargetError.form,
       'contrast_error' => TargetError.contrast,
       'careless_error' => TargetError.careless,
-      'transfer_error' => TargetError.transfer,
-      'pragmatic_error' => TargetError.pragmatic,
+      // Wave 10 dropped transfer_error / pragmatic_error. Persisted
+      // state from earlier waves silently parses to null and is dropped
+      // by the recent-errors FIFO on the next attempt.
       _ => null,
     };
 

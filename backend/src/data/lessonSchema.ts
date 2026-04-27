@@ -11,13 +11,14 @@ const ExerciseFeedbackSchema = z.object({
 // "strongest" (LEARNING_ENGINE.md §6.5). Runtime ignores these fields beyond
 // validation; GET /lessons/:lessonId passes them through unchanged so the
 // future Mastery Model + Decision Engine waves can consume them.
+// Wave 10: error model 6→4. `transfer_error` and `pragmatic_error`
+// removed; neither was referenced by any shipped lesson JSON, so the
+// drop is a clean break with no content rewrite.
 export const TargetErrorSchema = z.enum([
   'conceptual_error',
   'form_error',
   'contrast_error',
   'careless_error',
-  'transfer_error',
-  'pragmatic_error',
 ]);
 
 export const EvidenceTierSchema = z.enum(['weak', 'medium', 'strong', 'strongest']);

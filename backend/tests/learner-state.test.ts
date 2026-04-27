@@ -224,7 +224,7 @@ describe('Wave 7.3 — derived status (§7.2)', () => {
     expect((read.json as any).status).toBe('started');
   });
 
-  it('"practicing" requires score ≥ 30', async () => {
+  it('Wave 10 V1 — 4 correct attempts without correction/production caps at "getting_there"', async () => {
     const { headers } = await login('status-prac');
     for (let i = 0; i < 4; i++) {
       await inject(h.app, {
@@ -239,8 +239,12 @@ describe('Wave 7.3 — derived status (§7.2)', () => {
       path: `/me/skills/${SKILL_A}`,
       headers,
     });
-    // 40 mastery, no strong evidence
-    expect((read.json as any).status).toBe('practicing');
+    // V1 gate (`docs/plans/learning-engine-v1.md`): the attempts arm
+    // requires ≥6 attempts OR ≥4 with at least one correction/production
+    // exercise type. 4 medium attempts without an `exercise_type`
+    // payload meet neither, so the status caps at `getting_there`
+    // (accuracy 1.0 ≥ 0.7) per `mastery.ts` quick-exit branch.
+    expect((read.json as any).status).toBe('getting_there');
   });
 });
 

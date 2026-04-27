@@ -2,6 +2,7 @@ import { eq, and, lte } from 'drizzle-orm';
 import type { AppDatabase } from '../db/client';
 import { learnerSkills, learnerReviewSchedule } from '../db/schema';
 import { recordDecision } from '../observability/decisionLog';
+import { evaluateMasteryV1, evidenceWeight } from './mastery';
 import type {
   EvidenceTier,
   LearnerSkillRecord,
@@ -32,33 +33,16 @@ function scoreDelta(tier: EvidenceTier, correct: boolean): number {
   return correct ? base : -base;
 }
 
-/// Status derivation per §7.2. Labels are the contract; thresholds are
-/// V0 and tunable. Mirrors Flutter LearnerSkillRecord.statusAt.
+/// Status derivation per V1 spec §10. Wave 10 replaced the V0 score-based
+/// thresholds with the rule-based gate that lives in `mastery.ts`; this
+/// shim keeps the existing `deriveStatus(record, now)` callsites stable
+/// while the route layer migrates to the richer `MasteryEvaluation`
+/// shape.
 export function deriveStatus(
   record: LearnerSkillRecord,
   now: Date
 ): SkillStatus {
-  const strongOrStronger =
-    (record.evidenceSummary.strong ?? 0) +
-    (record.evidenceSummary.strongest ?? 0);
-
-  if (
-    record.productionGateCleared &&
-    strongOrStronger > 0 &&
-    record.masteryScore >= 80
-  ) {
-    if (
-      record.lastAttemptAt &&
-      now.getTime() - record.lastAttemptAt.getTime() > 21 * 24 * 60 * 60 * 1000
-    ) {
-      return 'review_due';
-    }
-    return 'mastered';
-  }
-  if (record.masteryScore >= 70 && strongOrStronger > 0) return 'almost_mastered';
-  if (record.masteryScore >= 50 && strongOrStronger > 0) return 'getting_there';
-  if (record.masteryScore >= 30) return 'practicing';
-  return 'started';
+  return evaluateMasteryV1(record, now).status;
 }
 
 /// Cadence intervals per §9.3.
@@ -80,6 +64,12 @@ function emptyRecord(skillId: string): LearnerSkillRecord {
     recentErrors: [],
     productionGateCleared: false,
     gateClearedAtVersion: null,
+    attemptsCount: 0,
+    exerciseTypesSeen: [],
+    lastOutcome: null,
+    repeatedConceptualCount: 0,
+    weightedCorrectSum: 0,
+    weightedTotalSum: 0,
   };
 }
 
@@ -102,6 +92,19 @@ function rowToRecord(row: any): LearnerSkillRecord {
       if (TARGET_ERROR_CODES.includes(e)) errors.push(e as TargetError);
     }
   }
+  const types: string[] = Array.isArray(row.exerciseTypesSeen)
+    ? row.exerciseTypesSeen.filter((t: unknown) => typeof t === 'string')
+    : [];
+  // numeric(10,2) columns come back as strings via node-postgres; PGlite
+  // returns numbers. Coerce both to a plain JS number for the gate.
+  const toNum = (v: unknown): number => {
+    if (typeof v === 'number') return v;
+    if (typeof v === 'string') {
+      const n = Number(v);
+      return Number.isFinite(n) ? n : 0;
+    }
+    return 0;
+  };
   return {
     skillId: row.skillId,
     masteryScore: row.masteryScore ?? 0,
@@ -110,6 +113,17 @@ function rowToRecord(row: any): LearnerSkillRecord {
     recentErrors: errors,
     productionGateCleared: row.productionGateCleared ?? false,
     gateClearedAtVersion: row.gateClearedAtVersion ?? null,
+    attemptsCount: row.attemptsCount ?? 0,
+    exerciseTypesSeen: types,
+    lastOutcome:
+      row.lastOutcome === 'correct' ||
+      row.lastOutcome === 'partial' ||
+      row.lastOutcome === 'wrong'
+        ? row.lastOutcome
+        : null,
+    repeatedConceptualCount: row.repeatedConceptualCount ?? 0,
+    weightedCorrectSum: toNum(row.weightedCorrectSum),
+    weightedTotalSum: toNum(row.weightedTotalSum),
   };
 }
 
@@ -131,6 +145,14 @@ export interface RecordAttemptInput {
   meaningFrame?: string;
   evaluationVersion?: number;
   occurredAt?: Date;
+  /// Wave 10 — exercise-type code (`fill_blank`, `sentence_correction`,
+  /// etc). Used to grow `exerciseTypesSeen` and to weight the attempt
+  /// in the V1 accuracy sum. Optional so legacy callsites still work;
+  /// the V1 gate falls through to "weight 1" when missing.
+  exerciseType?: string;
+  /// Wave 5 partial credit shape. Defaults to `'correct'` when
+  /// `correct=true` and `'wrong'` when `correct=false`.
+  outcome?: 'correct' | 'partial' | 'wrong';
 }
 
 /// Records one attempt for one skill. Mirrors Flutter
@@ -206,6 +228,23 @@ export async function recordAttempt(
       ? input.evaluationVersion ?? existing.gateClearedAtVersion
       : existing.gateClearedAtVersion;
 
+  // Wave 10 — V1 mastery gate inputs.
+  const outcome: 'correct' | 'partial' | 'wrong' =
+    input.outcome ?? (input.correct ? 'correct' : 'wrong');
+  const types = new Set(existing.exerciseTypesSeen);
+  if (input.exerciseType) types.add(input.exerciseType);
+  const repeatedConceptual = errors.filter(
+    (e) => e === 'conceptual_error'
+  ).length;
+  const weight = evidenceWeight(input.exerciseType);
+  const correctIncrement = outcome === 'correct' ? weight : 0;
+  // Partial outcomes count as half-credit toward weighted accuracy so
+  // the gate sees real signal rather than treating partial as wrong.
+  const partialIncrement = outcome === 'partial' ? weight / 2 : 0;
+  const newWeightedCorrect =
+    existing.weightedCorrectSum + correctIncrement + partialIncrement;
+  const newWeightedTotal = existing.weightedTotalSum + weight;
+
   const next: LearnerSkillRecord = {
     skillId,
     masteryScore: score,
@@ -214,6 +253,12 @@ export async function recordAttempt(
     recentErrors: errors,
     productionGateCleared: gate,
     gateClearedAtVersion: gateVersion,
+    attemptsCount: existing.attemptsCount + 1,
+    exerciseTypesSeen: Array.from(types),
+    lastOutcome: outcome,
+    repeatedConceptualCount: repeatedConceptual,
+    weightedCorrectSum: newWeightedCorrect,
+    weightedTotalSum: newWeightedTotal,
   };
 
   await db
@@ -227,6 +272,12 @@ export async function recordAttempt(
       recentErrors: next.recentErrors as string[],
       productionGateCleared: next.productionGateCleared,
       gateClearedAtVersion: next.gateClearedAtVersion,
+      attemptsCount: next.attemptsCount,
+      exerciseTypesSeen: next.exerciseTypesSeen,
+      lastOutcome: next.lastOutcome,
+      repeatedConceptualCount: next.repeatedConceptualCount,
+      weightedCorrectSum: next.weightedCorrectSum.toFixed(2),
+      weightedTotalSum: next.weightedTotalSum.toFixed(2),
       updatedAt: now,
     })
     .onConflictDoUpdate({
@@ -238,9 +289,41 @@ export async function recordAttempt(
         recentErrors: next.recentErrors as string[],
         productionGateCleared: next.productionGateCleared,
         gateClearedAtVersion: next.gateClearedAtVersion,
+        attemptsCount: next.attemptsCount,
+        exerciseTypesSeen: next.exerciseTypesSeen,
+        lastOutcome: next.lastOutcome,
+        repeatedConceptualCount: next.repeatedConceptualCount,
+        weightedCorrectSum: next.weightedCorrectSum.toFixed(2),
+        weightedTotalSum: next.weightedTotalSum.toFixed(2),
         updatedAt: now,
       },
     });
+
+  // Wave 10 — Decision Log: mastery_promoted when the V1 gate cleared
+  // for the first time on this attempt. We compare evaluations rather
+  // than counters so a transient flap (last attempt wrong → correct)
+  // doesn't relog the promotion every time the learner returns.
+  const prevEval = evaluateMasteryV1(existing, now);
+  const nextEval = evaluateMasteryV1(next, now);
+  if (!prevEval.gateCleared && nextEval.gateCleared) {
+    void recordDecision(db, {
+      userId,
+      skillId,
+      decision: 'mastery_promoted',
+      reason: 'v1_gate_cleared',
+      previousState: {
+        prev_status: prevEval.status,
+        prev_blocked_by: prevEval.blockedBy,
+        attempts: next.attemptsCount,
+        weighted_accuracy:
+          next.weightedTotalSum === 0
+            ? 0
+            : Number(
+                (next.weightedCorrectSum / next.weightedTotalSum).toFixed(3)
+              ),
+      },
+    });
+  }
 
   // Wave 9 — Decision Log per `LEARNING_ENGINE.md §18`. Two mastery
   // events fire at this layer today: a freshly-cleared production gate
