@@ -5,6 +5,7 @@ import '../models/lesson.dart';
 import '../session/session_controller.dart';
 import '../session/session_state.dart';
 import '../theme/mastery_theme.dart';
+import '../widgets/decision_reason_line.dart';
 import '../widgets/fill_blank_widget.dart';
 import '../widgets/listening_discrimination_widget.dart';
 import '../widgets/mastery_exercise_image.dart';
@@ -40,12 +41,21 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
         if (state.phase == SessionPhase.summary) {
           controller.removeListener(onChange);
           if (!mounted) return;
+          // Wave 4 §11.2: pass the skill IDs this lesson touched so the
+          // SummaryScreen panel filters its store query to this session
+          // and does not pollute with stale skills from earlier lessons.
+          final touched = state.lesson?.exercises
+                  .map((e) => e.skillId)
+                  .whereType<String>()
+                  .toSet() ??
+              const <String>{};
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(
               builder: (_) => SummaryScreen(
                 correctCount: state.correctCount,
                 totalCount: state.totalCount,
                 summary: state.summary,
+                touchedSkillIds: touched.isEmpty ? null : touched,
               ),
             ),
           );
@@ -128,6 +138,19 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // §11.3 per-routing reason: describes WHY this
+                        // next item, so it must render only on the new
+                        // exercise (phase == ready), not above the
+                        // just-answered question during the result
+                        // panel. The DecisionEngine sets the reason in
+                        // submitAnswer; advance() carries it forward
+                        // into the ready phase, then the next attempt's
+                        // submitAnswer either replaces it or clears it.
+                        DecisionReasonLine(
+                          text: state.phase == SessionPhase.ready
+                              ? state.lastDecisionReason
+                              : null,
+                        ),
                         InstructionBand(
                           text: exercise.instruction,
                           icon: switch (exercise.type) {

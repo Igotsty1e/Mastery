@@ -251,20 +251,50 @@ Exit criteria:
 
 **Goal:** make every routing and grading decision legible to the learner.
 
+**Status:** shipped on branch `codex/learning-engine-wave4-transparency`.
+Three new surfaces render the engine state from Waves 1–5; per-screen
+visual approval per `CLAUDE.md` cleared via the design call recorded in
+`docs/plans/wave4-transparency-layer.md` (option B + small A teaser).
+
 Tasks:
 
-- add a per-skill panel surface (dashboard or post-lesson summary): status,
-  one-line reason, recent error pattern
-- render a "why this next" string at lesson intro / item intro when the
-  Decision Engine substituted the item
-- preserve the existing per-attempt result + curated explanation + AI
-  debrief surface unchanged
-- update `docs/mobile-architecture.md` to describe the new panel and the
-  new strings on the existing screens
+- ✅ add a per-skill panel surface — `SkillStateCard`
+  (`app/lib/widgets/skill_state_card.dart`) on the post-lesson summary
+  screen, between the debrief and the mistakes list. Renders status copy
+  per §7.2, a one-line reason rule per §11.2, and a recurring-error row
+  when the same target-error code has appeared twice in the last five
+  attempts on that skill. Filtered to the skills the just-finished
+  lesson touched.
+- ✅ render a "why this next" string — `DecisionReasonLine`
+  (`app/lib/widgets/decision_reason_line.dart`) on the exercise screen,
+  visible only on `SessionPhase.ready` so the reason describes the next
+  item, not the just-answered question. Reads
+  `SessionState.lastDecisionReason` set by Wave 3's `DecisionEngine`.
+- ✅ preserve the existing per-attempt result + curated explanation + AI
+  debrief surface unchanged (no edits on `_DebriefCard`, `ResultPanel`,
+  or `_MistakeCard`)
+- ✅ update `docs/mobile-architecture.md` (next bullet) and
+  `LEARNING_ENGINE.md §§11.2, 11.3` to flip "planned" → shipped
+
+**Plus the small A teaser per `wave4-transparency-layer.md` §2.3:**
+`ReviewDueSection` (`app/lib/widgets/review_due_section.dart`) on the
+dashboard, between the Last lesson report and the current unit block.
+Collapses to nothing when `ReviewScheduler.dueAt(now)` is empty per the
+§11.4 calm-silence rule.
 
 Exit criteria:
-- a learner who finishes a session can see which skills moved and why
-- the next-up review is labelled with its triggering reason
+- ✅ a learner who finishes a session can see which skills moved and why
+  (covered by `app/test/skill_state_card_test.dart` —
+  17 cases including all six SkillStatus labels, recurring-error
+  thresholds, and the V0 reason rule)
+- ✅ the next-up review is labelled with its triggering reason
+  (covered by `app/test/review_due_section_test.dart` — 4 cases including
+  empty state, overdue copy, singular-day grammar)
+- ✅ the per-routing reason renders at the right moment, not the wrong
+  one (covered by `app/test/decision_reason_line_test.dart` and the
+  `phase == SessionPhase.ready` guard in `exercise_screen.dart`)
+- ✅ Codex CLI adversarial review found three P2 issues (panel filter,
+  reason-line phase, started-status copy); all closed before merge.
 
 ### Wave 5 — Evaluation Upgrades (partial credit + response units)
 

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../learner/learner_skill_store.dart';
 import '../models/evaluation.dart';
 import '../theme/mastery_theme.dart';
 import '../widgets/mastery_widgets.dart';
+import '../widgets/skill_state_card.dart';
 
 class SummaryScreen extends StatefulWidget {
   final int correctCount;
@@ -14,12 +16,20 @@ class SummaryScreen extends StatefulWidget {
   /// its `Review mistakes` button lands directly at the relevant content.
   final bool initialScrollToMistakes;
 
+  /// Wave 4 §11.2: skill IDs that this just-finished lesson touched. The
+  /// per-skill panel filters its records by this set so the panel agrees
+  /// with the lesson's score/debrief instead of polluting with skills
+  /// from earlier lessons. Null = no filter (legacy dashboard re-open
+  /// path that does not know which skills this lesson touched).
+  final Set<String>? touchedSkillIds;
+
   const SummaryScreen({
     super.key,
     required this.correctCount,
     required this.totalCount,
     this.summary,
     this.initialScrollToMistakes = false,
+    this.touchedSkillIds,
   });
 
   @override
@@ -29,9 +39,16 @@ class SummaryScreen extends StatefulWidget {
 class _SummaryScreenState extends State<SummaryScreen> {
   final GlobalKey _mistakesKey = GlobalKey();
 
+  /// Wave 4 §11.2 panel data. Loaded once at screen mount; reads from
+  /// SharedPreferences so the per-skill state visible here always
+  /// reflects what `SessionController.submitAnswer` just wrote on the
+  /// last attempt of this session. Empty until the future resolves.
+  List<LearnerSkillRecord> _skillRecords = const [];
+
   @override
   void initState() {
     super.initState();
+    _loadSkillRecords();
     if (widget.initialScrollToMistakes) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         final ctx = _mistakesKey.currentContext;
@@ -44,6 +61,16 @@ class _SummaryScreenState extends State<SummaryScreen> {
         );
       });
     }
+  }
+
+  Future<void> _loadSkillRecords() async {
+    final all = await LearnerSkillStore.allRecords();
+    if (!mounted) return;
+    final filter = widget.touchedSkillIds;
+    final filtered = filter == null
+        ? all
+        : all.where((r) => filter.contains(r.skillId)).toList();
+    setState(() => _skillRecords = filtered);
   }
 
   @override
@@ -101,6 +128,10 @@ class _SummaryScreenState extends State<SummaryScreen> {
                     ),
                   ),
                 ),
+              ],
+              if (_skillRecords.isNotEmpty) ...[
+                const SizedBox(height: 18),
+                SkillStateCard(records: _skillRecords, now: DateTime.now()),
               ],
               if (mistakes.isNotEmpty) ...[
                 const SizedBox(height: 28),
