@@ -40,19 +40,34 @@ class DecisionEngine {
 
     final mistakesOnSkill = mistakesBySkill[skillId] ?? 0;
 
-    // §9.1, 3rd mistake: stop repeating. Drop every remaining item that
-    // probes this same skill — we will revisit it in a later session via
-    // the ReviewScheduler cadence.
+    // §9.1, 3rd mistake: stop repeating. The rule's intent is "move on
+    // to other skills you can still progress on". When the lesson is
+    // single-skill (or every remaining item happens to share the just-
+    // missed skill), there is nothing to move on to — the right
+    // behaviour is to fall through to the linear default and let the
+    // learner finish the planned sequence. Truncating the queue here
+    // would silently cut the lesson short, which is what the bug report
+    // showed: a 10-item single-skill lesson ending after the 3rd wrong
+    // attempt as if every exercise had been completed.
     if (mistakesOnSkill >= 3) {
+      // "Other" includes both differently-tagged items AND untagged
+      // items: the §9.1 intent is "show something other than the skill
+      // you just hammered". An untagged item has unknown identity but
+      // is by definition not the just-missed skill, so a mixed
+      // tagged/untagged lesson can still legitimately move on to the
+      // untagged slot.
+      final hasOther =
+          remaining.any((i) => lesson.exercises[i].skillId != skillId);
+      if (!hasOther) {
+        // Single-skill (or otherwise no escape) — fall through to
+        // linear rather than truncate. Truncating here was the prod
+        // bug where 10-exercise single-skill lessons closed at the
+        // 3rd mistake.
+        return DecisionResult.advance(remaining);
+      }
       final filtered = remaining
           .where((i) => lesson.exercises[i].skillId != skillId)
           .toList();
-      if (filtered.isEmpty) {
-        return const DecisionResult.endSession(
-          reason:
-              'Three misses on this rule — moving on for now. We will come back later.',
-        );
-      }
       return DecisionResult.advance(
         filtered,
         reason:

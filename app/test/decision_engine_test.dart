@@ -162,6 +162,90 @@ void main() {
     });
   });
 
+  group('DecisionEngine — §9.1 3rd mistake regression: single-skill lesson must NOT truncate', () {
+    // Reported via prod testing 2026-04-27: a 10-exercise single-skill
+    // lesson ended after the 3rd wrong attempt as if every exercise had
+    // been completed, because the §9.1 same-skill filter wiped the
+    // remaining queue. The §9.1 rule says "move on to other skills" —
+    // which is meaningless when every remaining item is the same skill.
+    test('3rd mistake on single-skill lesson falls through to linear default', () {
+      final lesson = _lesson([
+        _ex('e1', skillId: _skillA),
+        _ex('e2', skillId: _skillA),
+        _ex('e3', skillId: _skillA),
+        _ex('e4', skillId: _skillA),
+        _ex('e5', skillId: _skillA),
+      ]);
+      final r = DecisionEngine.decideAfterAttempt(
+        lesson: lesson,
+        remainingQueue: const [0, 1, 2, 3, 4],
+        mistakesBySkill: const {_skillA: 3},
+        justAttempted: lesson.exercises[0],
+        justCorrect: false,
+      );
+      // Linear default: drop just-attempted head, keep the rest in order,
+      // do NOT truncate. No surprising "moving on" reason because there
+      // is nowhere else to move on to.
+      expect(r.endSession, isFalse);
+      expect(r.remainingQueue, [1, 2, 3, 4]);
+      expect(r.reason, isNull);
+    });
+
+    test('3rd mistake mid-lesson with no other skill keeps the full remaining queue', () {
+      // 10-exercise single-skill lesson, learner is at idx 4 (5th exercise),
+      // has accumulated 3 mistakes. Before the fix this would have ended
+      // the session as if all 10 were complete — the production bug.
+      final lesson = _lesson(List.generate(
+          10, (i) => _ex('e${i + 1}', skillId: _skillA)));
+      final r = DecisionEngine.decideAfterAttempt(
+        lesson: lesson,
+        remainingQueue: const [4, 5, 6, 7, 8, 9],
+        mistakesBySkill: const {_skillA: 3},
+        justAttempted: lesson.exercises[4],
+        justCorrect: false,
+      );
+      expect(r.endSession, isFalse);
+      expect(r.remainingQueue, [5, 6, 7, 8, 9]);
+      expect(r.reason, isNull);
+    });
+
+    test('3rd mistake correct attempt on single-skill lesson also keeps the full queue', () {
+      final lesson = _lesson(List.generate(
+          5, (i) => _ex('e${i + 1}', skillId: _skillA)));
+      final r = DecisionEngine.decideAfterAttempt(
+        lesson: lesson,
+        remainingQueue: const [0, 1, 2, 3, 4],
+        mistakesBySkill: const {_skillA: 3},
+        justAttempted: lesson.exercises[0],
+        justCorrect: true,
+      );
+      expect(r.remainingQueue, [1, 2, 3, 4]);
+      expect(r.reason, isNull);
+    });
+
+    test('3rd mistake on mixed tagged/untagged lesson — untagged counts as "other"', () {
+      // Codex P2 catch on the regression fix: when a lesson has
+      // skillA + untagged + skillA, the untagged slot is a legitimate
+      // "move on" target — it has different (unknown) identity, not
+      // the just-missed skill. Drop the same-skill items, keep the
+      // untagged one.
+      final lesson = _lesson([
+        _ex('e1', skillId: _skillA),
+        _ex('e2'), // untagged
+        _ex('e3', skillId: _skillA),
+      ]);
+      final r = DecisionEngine.decideAfterAttempt(
+        lesson: lesson,
+        remainingQueue: const [0, 1, 2],
+        mistakesBySkill: const {_skillA: 3},
+        justAttempted: lesson.exercises[0],
+        justCorrect: false,
+      );
+      expect(r.remainingQueue, [1]); // skillA at idx 2 dropped
+      expect(r.reason, contains('moving on'));
+    });
+  });
+
   group('DecisionEngine — §9.1 3rd mistake (skip remaining same-skill)', () {
     test('3rd mistake on skill A drops every remaining skill-A item', () {
       final lesson = _lesson([
@@ -184,7 +268,13 @@ void main() {
       expect(r.reason, contains('moving on'));
     });
 
-    test('3rd mistake when every remaining item is skill A → endSession', () {
+    test('3rd mistake when every remaining item is skill A → linear default (NOT endSession)', () {
+      // Updated 2026-04-27: previously this asserted endSession — that
+      // turned out to be the production bug where a single-skill lesson
+      // would close after the 3rd mistake. The §9.1 rule's intent is
+      // "move on to other skills", which is meaningless when every
+      // remaining item shares the just-missed skill, so we fall through
+      // to the linear default and let the lesson finish.
       final lesson = _lesson([
         _ex('e1', skillId: _skillA),
         _ex('e2', skillId: _skillA),
@@ -197,8 +287,9 @@ void main() {
         justAttempted: lesson.exercises[0],
         justCorrect: false,
       );
-      expect(r.endSession, isTrue);
-      expect(r.reason, contains('moving on'));
+      expect(r.endSession, isFalse);
+      expect(r.remainingQueue, [1, 2]);
+      expect(r.reason, isNull);
     });
 
     test('3rd mistake also fires on a correct-but-already-3-mistakes attempt', () {
