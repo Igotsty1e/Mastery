@@ -994,3 +994,17 @@ V1 cleanup. Production telemetry from Wave 11.3 (`/sessions/start` + `/lesson-se
 V1 MVP cleanup remaining (V1.5 backlog):
 - Drop the dead service functions and the `_startLesson` / curriculum scaffolding once we are sure nothing else depends on them.
 - Skill-progress UI (skill graph + per-skill cards on dashboard).
+
+### Wave 13 status (2026-04-26) — pacing profiles + max-new-skill cap
+
+Activates the V1 spec §12 pacing splits and §9 mixing rule on top of the dynamic Decision Engine shipped in Wave 11.
+
+- **`backend/src/decision/pacing.ts`** — pure `derivePacingTarget(masteryStatusBySkill) → { target, profile, signal }` returns one of three V1 profiles:
+  - `default` 60/30/10 when neither threshold fires.
+  - `weak` 40/40/20 when `≥3` skills sit at `started` / `practicing`.
+  - `strong` 70/20/10 when `≥3` skills sit at `mastered`.
+  Strong wins when both thresholds fire — biases toward new ground when the learner has both old skills warm and new room to grow. `WEAK_THRESHOLD`, `STRONG_THRESHOLD` live in the constants block at the top of the module.
+- **`backend/src/decision/engine.ts`** — `MAX_NEW_SKILLS_PER_SESSION = 1` cap (V1 spec §12). Once a session has surfaced one brand-new skill (no mastery record or `status='started'`), every additional new-skill candidate is filtered out so the run can settle on practising the one new rule.
+- **`backend/src/sessions/dynamicService.ts`** — `startDynamicSession` and `pickNextForSession` both call `derivePacingTarget` on the learner's snapshot and pass the result via `DecisionContext.pacingTarget`. The chosen profile lands in the Decision Log `previousState` payload (`pacing_profile`, `pacing_signal`) so a regression can be traced back to the input distribution.
+- **Tests**: 6 new cases in `tests/pacing.test.ts`. 293/293 active backend tests passing (+ 29 skipped).
+- **Skill mixing** — already covered by the `variety_switch` boost in the Decision Engine score (Wave 11.1); no separate constant needed.

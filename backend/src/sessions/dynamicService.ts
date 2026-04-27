@@ -28,6 +28,7 @@ import {
   SESSION_LENGTH,
   type DecisionContext,
 } from '../decision/engine';
+import { derivePacingTarget } from '../decision/pacing';
 import { recordDecision } from '../observability/decisionLog';
 import {
   insertSession,
@@ -72,10 +73,12 @@ export async function startDynamicSession(
     masteryStatusBySkill[record.skillId] = deriveStatus(record, now);
   }
 
+  const pacing = derivePacingTarget(masteryStatusBySkill);
   const ctx: DecisionContext = {
     shownExerciseIds: [],
     mistakesBySkill: {},
     masteryStatusBySkill,
+    pacingTarget: pacing.target,
   };
   const result = pickNext(ctx);
   if (!result.next) {
@@ -100,7 +103,11 @@ export async function startDynamicSession(
     decision: 'next_exercise',
     reason: result.reason,
     nextExerciseId: result.next.exercise.exercise_id,
-    previousState: { position: 0 },
+    previousState: {
+      position: 0,
+      pacing_profile: pacing.profile,
+      pacing_signal: pacing.signal,
+    },
   });
 
   return { session, firstExercise: result.next, reason: result.reason ?? '' };
@@ -158,10 +165,12 @@ export async function pickNextForSession(
     masteryStatusBySkill[record.skillId] = deriveStatus(record, now);
   }
 
+  const pacing = derivePacingTarget(masteryStatusBySkill);
   const ctx: DecisionContext = {
     shownExerciseIds,
     mistakesBySkill,
     masteryStatusBySkill,
+    pacingTarget: pacing.target,
   };
   const result = pickNext(ctx);
   const position = shownExerciseIds.length;
