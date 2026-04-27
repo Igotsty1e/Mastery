@@ -28,7 +28,8 @@ export type DecisionCode =
   | 'schedule_review'
   | 'mastery_promoted'
   | 'mastery_invalidated'
-  | 'production_gate_cleared';
+  | 'production_gate_cleared'
+  | 'session_complete';
 
 export interface DecisionLogInput {
   userId: string;

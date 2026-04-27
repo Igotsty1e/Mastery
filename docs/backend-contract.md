@@ -948,3 +948,26 @@ First half of the V1 plan's Wave 11 step (`docs/plans/learning-engine-v1.md`). L
 - **`backend/src/decision/engine.ts`** — pure `pickNext(ctx)` returns `{ next: BankEntry | null, reason: string | null }`. Implements §9 priorities (mastery → variety → past errors), §9.1 third-mistake skill drop-out, §14 last-N-repeat avoidance, and the V1 default pacing 60/30/10 baked in via `DEFAULT_PACING`. Reason codes match the §11.3 vocabulary (`linear_default`, `same_rule_different_angle`, `same_rule_simpler_ask`, `review_due_lift`, `variety_switch`, `session_complete`, `no_candidates`, `bank_empty`).
 - **Tests** — 9 new cases in `tests/decision-engine.test.ts` covering bank load, replay traceability, never-repeat rule, third-mistake drop-out, mastery-aware ordering, reason-code vocabulary. 308/308 backend tests passing (+ 4 skipped from Wave 8).
 - **Out of scope (lands in Wave 11.2)**: new `/sessions/...` routes, `lesson_id` nullable on `lesson_sessions`, deletion of `/lessons/:id/sessions/...` endpoints, Flutter `ApiClient` rewire to `startSession()` + `nextExercise()`.
+
+### Wave 11.2 status (2026-04-26) — dynamic session routes (server side)
+
+Server-side activation of the Wave 11.1 modules. **No Flutter changes yet** — the rewire of `ApiClient` + `SessionController` is Wave 11.3. Two new endpoints sit alongside the legacy lesson-bound ones:
+
+- **`POST /sessions/start`** — auth. Creates a dynamic session via `startDynamicSession`. Response: `{ reason, session_id, title: "Today's session", level: "B2", exercise_count: SESSION_LENGTH, started_at, first_exercise }` where `first_exercise` is the same projection shape `GET /lessons/:id` returned for fixture-bound sessions.
+- **`POST /lesson-sessions/:sessionId/next`** — auth. Reads the session's attempt history, asks the Decision Engine for the next pick. Response: `{ reason, position, next_exercise }`. `next_exercise` is null when the session has reached `SESSION_LENGTH` or no candidate fits; the client should call `/complete` instead. Rejects 409 `session_not_dynamic` if the session id belongs to a fixture-bound (legacy) session.
+
+Implementation:
+
+- **Sentinel `lesson_id`** — dynamic sessions write `00000000-0000-0000-0000-000000000000` to `lesson_sessions.lesson_id` so the column stays NOT NULL across every shipped row. The partial unique index on `(user_id, lesson_id) WHERE status = 'in_progress'` was rewritten in migration `0008_dynamic_sessions` to skip the sentinel id, allowing concurrent dynamic runs (the runtime ensures at-most-one via the service layer).
+- **`loadOwnedSession`** — recognises the sentinel id and returns a synthetic Lesson DTO (empty `exercises` array) + LessonMeta. Existing answer / result / complete paths keep working unchanged.
+- **`submitAnswer`** — when the synthetic lesson has no matching exercise, falls through to `getBankEntry(exerciseId)` so the dynamic flow can record attempts the same way fixture-bound flow does.
+- **Decision Log** — every `pickNextForSession` call writes a `next_exercise` (or `session_complete`) row, indexed by `(user_id, created_at desc)` and `session_id`.
+
+Tests:
+- 4 new cases in `tests/dynamic-sessions.test.ts` covering auth gate, first-pick shape, second-pick differs from first, cross-user 404. 312/312 backend tests passing (+ 4 skipped from Wave 8).
+
+Out of scope (Wave 11.3):
+- Flutter `ApiClient.startSession()` + `nextExercise(sessionId)` rewire.
+- `SessionController` shift from queue-walking to next-on-demand.
+- Dashboard hero "Today's session" copy update.
+- Removal of `POST /lessons/:id/sessions/start` and `GET /lessons/:id/sessions/current` once Flutter has cut over.
