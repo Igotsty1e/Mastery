@@ -1,0 +1,161 @@
+{
+  "lesson_id": "a1b2c3d4-0004-4000-8000-000000000001",
+  "title": "Verbs with a Change in Meaning: -ing vs to + Infinitive",
+  "language": "en",
+  "level": "B2",
+  "intro_rule": "Use\n\nSome verbs can be followed by both **to + infinitive** and **-ing**, but the meaning changes depending on which form you choose. In this lesson, focus on remember, forget, stop, try, regret and go on.\n\nForm\n\n**to + infinitive** → forward-looking duty, new action, or purpose\n**verb-ing** → past memory, ongoing action, or method experimented with\n\nremember **to lock** = don't forget this future duty\nremember **locking** = recall this past event\n\nstop **to talk** = pause in order to talk\nstop **talking** = cease an ongoing action\n\nImportant\n\nThe trigger verb alone does not decide the form — the **meaning** does. Read the context carefully before choosing.",
+  "intro_examples": [
+    "Please remember **to lock** the door before you leave tonight.",
+    "I clearly remember **locking** the door this morning.",
+    "On the way home, we stopped **to have** a coffee at a small café."
+  ],
+  "exercises": [
+    {
+      "exercise_id": "a1b2c3d4-0004-4000-8000-000000000031",
+      "type": "fill_blank",
+      "skill_id": "verb-both-forms-meaning-change",
+      "primary_target_error": "conceptual_error",
+      "evidence_tier": "medium",
+      "instruction": "Complete the gap with the correct form of the verb in brackets.",
+      "prompt": "Please remember ___ (lock) the door before you leave tonight.",
+      "accepted_answers": ["to lock"],
+      "feedback": {
+        "explanation": "You wrote 'locking', but the correct answer is 'to lock' because remember + to + infinitive means 'don't forget this future duty'. If 'remember' is followed by an action that has not happened yet → use to + infinitive."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0004-4000-8000-000000000032",
+      "type": "fill_blank",
+      "skill_id": "verb-both-forms-meaning-change",
+      "primary_target_error": "conceptual_error",
+      "evidence_tier": "medium",
+      "instruction": "Complete the gap with the correct form of the verb in brackets.",
+      "prompt": "I clearly remember ___ (lock) the door this morning, so it cannot be open now.",
+      "accepted_answers": ["locking"],
+      "feedback": {
+        "explanation": "You wrote 'to lock', but the correct answer is 'locking' because remember + verb-ing means 'recall a past event from memory'. If 'remember' is followed by an action that already happened → use the -ing form."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0004-4000-8000-000000000033",
+      "type": "multiple_choice",
+      "skill_id": "verb-both-forms-meaning-change",
+      "primary_target_error": "conceptual_error",
+      "evidence_tier": "weak",
+      "instruction": "Choose the correct option.",
+      "prompt": "I'm sorry — I completely forgot ___ you about the change in schedule.",
+      "options": [
+        { "id": "a", "text": "telling" },
+        { "id": "b", "text": "tell" },
+        { "id": "c", "text": "to tell" },
+        { "id": "d", "text": "told" }
+      ],
+      "correct_option_id": "c",
+      "feedback": {
+        "explanation": "You chose 'telling', but the correct answer is 'to tell' because forget + to + infinitive means 'fail to do a duty you should have done'. If 'forget' is followed by an obligation that was missed → use to + infinitive."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0004-4000-8000-000000000034",
+      "type": "fill_blank",
+      "skill_id": "verb-both-forms-meaning-change",
+      "primary_target_error": "conceptual_error",
+      "evidence_tier": "medium",
+      "instruction": "Complete the gap with the correct form of the verb in brackets.",
+      "prompt": "I'll never forget ___ (meet) my mentor at that conference five years ago.",
+      "accepted_answers": ["meeting"],
+      "feedback": {
+        "explanation": "You wrote 'to meet', but the correct answer is 'meeting' because forget + verb-ing refers to a memorable past event — typically with 'never forget'. If 'forget' is followed by a vivid past memory → use the -ing form."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0004-4000-8000-000000000035",
+      "type": "fill_blank",
+      "skill_id": "verb-both-forms-meaning-change",
+      "primary_target_error": "conceptual_error",
+      "evidence_tier": "medium",
+      "instruction": "Complete the gap with the correct form of the verb in brackets.",
+      "prompt": "On the way home, we stopped ___ (have) a coffee at a small café.",
+      "accepted_answers": ["to have"],
+      "feedback": {
+        "explanation": "You wrote 'having', but the correct answer is 'to have' because stop + to + infinitive means 'pause one activity in order to do another'. If 'stop' is followed by the *purpose* of the pause → use to + infinitive."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0004-4000-8000-000000000036",
+      "type": "fill_blank",
+      "skill_id": "verb-both-forms-meaning-change",
+      "primary_target_error": "conceptual_error",
+      "evidence_tier": "medium",
+      "instruction": "Complete the gap with the correct form of the verb in brackets.",
+      "prompt": "Please stop ___ (interrupt) me — I cannot finish my thought.",
+      "accepted_answers": ["interrupting"],
+      "feedback": {
+        "explanation": "You wrote 'to interrupt', but the correct answer is 'interrupting' because stop + verb-ing means 'cease an ongoing action'. If 'stop' is followed by the action that should end → use the -ing form."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0004-4000-8000-000000000037",
+      "type": "multiple_choice",
+      "skill_id": "verb-both-forms-meaning-change",
+      "primary_target_error": "conceptual_error",
+      "evidence_tier": "weak",
+      "instruction": "Choose the correct option.",
+      "prompt": "He tried ___ the door, but his hands were too cold to grip the handle.",
+      "options": [
+        { "id": "a", "text": "opening" },
+        { "id": "b", "text": "to open" },
+        { "id": "c", "text": "open" },
+        { "id": "d", "text": "opens" }
+      ],
+      "correct_option_id": "b",
+      "feedback": {
+        "explanation": "You chose 'opening', but the correct answer is 'to open' because try + to + infinitive means 'make an effort to do something difficult'. If 'try' is followed by an action the speaker attempted with effort → use to + infinitive."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0004-4000-8000-000000000038",
+      "type": "fill_blank",
+      "skill_id": "verb-both-forms-meaning-change",
+      "primary_target_error": "conceptual_error",
+      "evidence_tier": "medium",
+      "instruction": "Complete the gap with the correct form of the verb in brackets.",
+      "prompt": "If your laptop is slow, try ___ (restart) it before calling support.",
+      "accepted_answers": ["restarting"],
+      "feedback": {
+        "explanation": "You wrote 'to restart', but the correct answer is 'restarting' because try + verb-ing means 'experiment with this method to see if it works'. If 'try' is followed by a suggested method or trick → use the -ing form."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0004-4000-8000-000000000039",
+      "type": "sentence_correction",
+      "skill_id": "verb-both-forms-meaning-change",
+      "primary_target_error": "conceptual_error",
+      "evidence_tier": "strong",
+      "instruction": "Rewrite the sentence correctly.",
+      "prompt": "She regrets to lend him her car last summer because he never returned it.",
+      "accepted_corrections": [
+        "She regrets lending him her car last summer because he never returned it."
+      ],
+      "feedback": {
+        "explanation": "You kept 'regrets to lend', but the correct form is 'regrets lending' because regret + verb-ing means 'feel sorry about a past action'. If 'regret' is followed by an action that already happened → use the -ing form. (Regret + to + infinitive is reserved for formal announcements like 'I regret to inform you'.)"
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0004-4000-8000-00000000003a",
+      "type": "sentence_correction",
+      "skill_id": "verb-both-forms-meaning-change",
+      "primary_target_error": "conceptual_error",
+      "evidence_tier": "strongest",
+      "meaning_frame": "moving on to a new action in a sequence",
+      "instruction": "Rewrite the sentence correctly.",
+      "prompt": "After finishing his master's degree, he went on studying law at Cambridge.",
+      "accepted_corrections": [
+        "After finishing his master's degree, he went on to study law at Cambridge."
+      ],
+      "feedback": {
+        "explanation": "You kept 'went on studying', but the correct form is 'went on to study' because go on + to + infinitive means 'move on to a new, different action after finishing one'. The sentence describes a sequence — master's first, then law — and that 'next step' meaning is what locks in the to-infinitive. If 'go on' is followed by a *new* action that comes after the previous one → use to + infinitive (go on + verb-ing would mean 'continue the same action', which is the opposite reading)."
+      }
+    }
+  ]
+}

@@ -103,6 +103,20 @@ Captured here so they are not silently re-added to V1:
 
 ### Wave 10.5 — Authoring sprint (between Wave 10 and Wave 11)
 
+**Status (2026-04-27): shipped.** Bank grew from 20 → 50 exercises across
+5 skills. Three new B2 lessons authored via
+`english-grammar-methodologist` to close out Unit U01 (Infinitive vs -ing):
+
+- `backend/data/lessons/b2-lesson-003.json` — Verbs Followed by to + Infinitive (skill `verb-to-inf-after-aspirational-verbs`).
+- `backend/data/lessons/b2-lesson-004.json` — Verbs with a Change in Meaning (skill `verb-both-forms-meaning-change`).
+- `backend/data/lessons/b2-lesson-005.json` — Verbs with Both Forms / Little Change (skill `verb-both-forms-little-change`).
+
+Skills registry (`backend/data/skills.json`) bumped to version 2 with
+contrast / prerequisite edges between the four U01 sibling skills.
+Manifest (`backend/data/manifest.json`) bumped to version 2; every entry
+now carries `unit_id` / `rule_tag` / `micro_rule_tag` so the bank index
+can use them.
+
 **Goal.** Hand-curate a bank of ~50–100 exercises so Wave 11's dynamic selection has something to pick from. Without this Wave 11 ships an empty engine.
 
 **Process.**
@@ -115,7 +129,22 @@ Captured here so they are not silently re-added to V1:
 - Open-answer types (`sentence_rewrite`, `short_free_sentence`) skipped per V1.5 deferral.
 - Coverage: every skill in `skills.json` should have at least 4 exercises (so the `attempts ≥ 4` gate is reachable).
 
-**Output.** `backend/data/exercise_bank.json` (or per-skill files if size demands it). Strict schema enforced by Zod on backend boot.
+**Output.** Lessons under `backend/data/lessons/` flattened into the bank
+by `backend/src/data/exerciseBank.ts` at boot. Strict schema enforced by
+Zod on backend boot. (The standalone `backend/data/exercise_bank.json` of
+the original plan was superseded by the Wave 11 decision to keep
+authoring in lesson JSON files and let the bank loader index them.)
+
+**Diagnostic-tagged items deferred.** The 5% `is_diagnostic = true` slice
+is owned by Wave 12 (Diagnostic Mode); the schema gains the field there.
+The bank loader already supports the field and falls back to the first
+five flat entries until then.
+
+**Acceptance shipped.**
+- 50 exercises live; coverage ≥ 4 per skill on every shipped skill (10 each on the four U01 skills, 10 on the existing PPC-vs-PP skill).
+- Three new strongest-tier items (one per new lesson) — bank now has its first reachable production-gate items per `LEARNING_ENGINE.md §6.4`.
+- Distribution: 25 fill_blank (50%), 14 multiple_choice (28%), 10 sentence_correction (20%), 1 listening_discrimination (2%) — within target tolerance for the V1 MVP.
+- 293 backend + 136 Flutter tests green.
 
 **Risk.** Low — content work, isolated from runtime. Bottlenecked on product-owner review time, not engineering.
 
@@ -211,12 +240,12 @@ Captured here so they are not silently re-added to V1:
 
 | Wave | Days | Cumulative | Status after |
 |---|---|---|---|
-| 9 — Observability infra | 2–3 | 3 | Decision Log, friction events, exercise_stats live |
-| 10 — Mastery V1 + Error model 6→4 | 3–4 | 7 | New gate enforced; 4-error model |
-| 10.5 — Authoring sprint (overlaps Wave 11 prep) | 2–3 | 9 | ~50–100 exercises in bank |
-| 11 — Exercise bank + dynamic DE | 5–7 | 16 | Lessons-as-bank live |
+| 9 — Observability infra | 2–3 | 3 | ✅ Decision Log, friction events, exercise_stats live |
+| 10 — Mastery V1 + Error model 6→4 | 3–4 | 7 | ✅ New gate enforced; 4-error model |
+| 10.5 — Authoring sprint (overlaps Wave 11 prep) | 2–3 | 9 | ✅ Bank at 50 exercises across 5 skills |
+| 11 — Exercise bank + dynamic DE | 5–7 | 16 | ✅ Lessons-as-bank live |
 | 12 — Diagnostic Mode | 4–5 | 21 | Onboarding hook live |
-| 13 — Session pacing + mixing | 2–3 | 24 | Adaptive pacing live |
+| 13 — Session pacing + mixing | 2–3 | 24 | ✅ Adaptive pacing live |
 
 **V1 MVP done = ~3.5 weeks of engineering** (plus authoring time in 10.5).
 

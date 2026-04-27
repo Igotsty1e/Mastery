@@ -123,6 +123,9 @@ Shippable as current MVP lesson:
 
 ## U01_L02 — Verbs followed by `to + infinitive`
 
+**Status:** shipped 2026-04-27 as `backend/data/lessons/b2-lesson-003.json`
+under skill `verb-to-inf-after-aspirational-verbs` (Wave 10.5).
+
 **Type:** controlled practice  
 **Objective:** identify and produce the infinitive after common verbs
 
@@ -155,6 +158,9 @@ Shippable as current MVP lesson:
 - yes
 
 ## U01_L03 — Verbs that take both with little or no change in meaning
+
+**Status:** shipped 2026-04-27 as `backend/data/lessons/b2-lesson-005.json`
+under skill `verb-both-forms-little-change` (Wave 10.5).
 
 **Type:** semi-controlled  
 **Objective:** recognise verbs that allow both forms in common usage
@@ -191,6 +197,9 @@ Shippable as current MVP lesson:
 - yes, but must remain tightly authored
 
 ## U01_L04 — Verbs that take both with a change in meaning
+
+**Status:** shipped 2026-04-27 as `backend/data/lessons/b2-lesson-004.json`
+under skill `verb-both-forms-meaning-change` (Wave 10.5).
 
 **Type:** semi-controlled / high-value B2 rule lesson  
 **Objective:** distinguish meaning changes with `remember`, `forget`, `stop`, `try`, `regret`, `go on`
@@ -265,21 +274,23 @@ Reason:
 
 ## Current Product Decision
 
-The next lesson we should build for the app is:
+U01_L01, L02, L03 and L04 are shipped (2026-04-26 + 2026-04-27). The
+remaining lesson in Unit U01 is the consolidation review:
 
 ```json
 {
   "unit_id": "U01",
-  "lesson_id": "U01_L01",
-  "title": "Verbs followed by -ing",
+  "lesson_id": "U01_L05",
+  "title": "Mixed Review",
   "status": "next_to_author"
 }
 ```
 
 Why:
-- clearest first grammar target
-- best fit for current runtime exercise types
-- easiest to make fair, deterministic, and textbook-like
+- closes Unit U01 with a mixed-skills review
+- exercises the four U01 sibling skills together so the Decision Engine
+  can see real cross-skill mistakes-by-skill data
+- last item on the unit blueprint before moving to Unit U02
 
 ---
 

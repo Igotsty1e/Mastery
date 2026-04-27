@@ -1,7 +1,7 @@
 {
-  "version": "1",
+  "version": "2",
   "engine_spec_ref": "LEARNING_ENGINE.md §4 Skill Model",
-  "notes": "Initial skill registry covering only the two shipped B2 lessons. Skills are deliberately narrow: each one is a single rule decision, defensible in one sentence, and supported by ≥10 items of evidence in the shipped bank. Do not extend by adding broad vague skills — extend by adding the skill the next shipped lesson actually teaches.",
+  "notes": "Skill registry covering shipped B2 lessons. Wave 10.5 (2026-04-27) added the three U01 sibling skills (to-inf after aspirational verbs; both forms with meaning change; both forms with little change) so the bank covers Unit 01 (Infinitive vs -ing) end-to-end. Skills are deliberately narrow: each one is a single rule decision, defensible in one sentence, and supported by ≥10 items of evidence in the shipped bank. Do not extend by adding broad vague skills — extend by adding the skill the next shipped lesson actually teaches.",
   "skills": [
     {
       "skill_id": "verb-ing-after-gerund-verbs",
@@ -9,7 +9,11 @@
       "description": "After enjoy, avoid, suggest, mind, keep, finish (and consider in this cluster), the next verb takes the -ing form, not to + infinitive.",
       "cefr_level": "B2",
       "prerequisites": [],
-      "contrasts_with": [],
+      "contrasts_with": [
+        "verb-to-inf-after-aspirational-verbs",
+        "verb-both-forms-meaning-change",
+        "verb-both-forms-little-change"
+      ],
       "target_errors": [
         "contrast_error",
         "form_error",
@@ -23,6 +27,83 @@
       ],
       "lesson_refs": [
         "a1b2c3d4-0001-4000-8000-000000000001"
+      ]
+    },
+    {
+      "skill_id": "verb-to-inf-after-aspirational-verbs",
+      "title": "Verb + to + infinitive after aspirational verbs",
+      "description": "After decide, hope, plan, want, agree, refuse and learn, the next verb takes to + infinitive, not the -ing form. The -ing form is the red-flag carryover error from the gerund-verb rule.",
+      "cefr_level": "B2",
+      "prerequisites": [],
+      "contrasts_with": [
+        "verb-ing-after-gerund-verbs",
+        "verb-both-forms-meaning-change",
+        "verb-both-forms-little-change"
+      ],
+      "target_errors": [
+        "contrast_error",
+        "form_error"
+      ],
+      "mastery_signals": [
+        "weak",
+        "medium",
+        "strong",
+        "strongest"
+      ],
+      "lesson_refs": [
+        "a1b2c3d4-0003-4000-8000-000000000001"
+      ]
+    },
+    {
+      "skill_id": "verb-both-forms-meaning-change",
+      "title": "Verbs with a change in meaning: -ing vs to + infinitive",
+      "description": "After remember, forget, stop, try, regret and go on, both forms are grammatically possible, but each carries a different meaning. The trigger verb does not decide the form; the meaning context does.",
+      "cefr_level": "B2",
+      "prerequisites": [
+        "verb-ing-after-gerund-verbs",
+        "verb-to-inf-after-aspirational-verbs"
+      ],
+      "contrasts_with": [
+        "verb-both-forms-little-change"
+      ],
+      "target_errors": [
+        "conceptual_error"
+      ],
+      "mastery_signals": [
+        "weak",
+        "medium",
+        "strong",
+        "strongest"
+      ],
+      "lesson_refs": [
+        "a1b2c3d4-0004-4000-8000-000000000001"
+      ]
+    },
+    {
+      "skill_id": "verb-both-forms-little-change",
+      "title": "Verbs with both forms and little or no change in meaning",
+      "description": "After like, love, hate, prefer, start and begin, both -ing and to + infinitive are accepted in standard B2 English with little or no change in meaning, except (a) after 'would' (only to + infinitive) and (b) when start/begin is in a continuous tense (only to + infinitive, to avoid double -ing).",
+      "cefr_level": "B2",
+      "prerequisites": [
+        "verb-ing-after-gerund-verbs",
+        "verb-to-inf-after-aspirational-verbs"
+      ],
+      "contrasts_with": [
+        "verb-both-forms-meaning-change"
+      ],
+      "target_errors": [
+        "conceptual_error",
+        "contrast_error",
+        "form_error"
+      ],
+      "mastery_signals": [
+        "weak",
+        "medium",
+        "strong",
+        "strongest"
+      ],
+      "lesson_refs": [
+        "a1b2c3d4-0005-4000-8000-000000000001"
       ]
     },
     {

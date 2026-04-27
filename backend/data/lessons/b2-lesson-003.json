@@ -1,0 +1,161 @@
+{
+  "lesson_id": "a1b2c3d4-0003-4000-8000-000000000001",
+  "title": "Verbs Followed by to + Infinitive",
+  "language": "en",
+  "level": "B2",
+  "intro_rule": "Use\n\nSome verbs are followed by **to + infinitive**, not by the -ing form. In this lesson, focus on common verbs such as decide, hope, plan, want, agree, refuse and learn.\n\nForm\n\nverb + **to + infinitive**\n\ndecide **to move**\nhope **to finish**\nplan **to open**\nwant **to ask**\nagree **to sign**\nrefuse **to answer**\nlearn **to drive**\n\nImportant\n\nAfter these verbs, do not use the -ing form. For example, say 'I decided **to move**', not 'I decided moving'.",
+  "intro_examples": [
+    "After two long meetings, we decided **to postpone** the launch.",
+    "She hopes **to finish** the report before the weekend.",
+    "He refused **to answer** any questions about his previous job."
+  ],
+  "exercises": [
+    {
+      "exercise_id": "a1b2c3d4-0003-4000-8000-000000000031",
+      "type": "fill_blank",
+      "skill_id": "verb-to-inf-after-aspirational-verbs",
+      "primary_target_error": "contrast_error",
+      "evidence_tier": "medium",
+      "instruction": "Complete the gap with the correct form of the verb in brackets.",
+      "prompt": "I decided ___ (move) to a new flat after my promotion.",
+      "accepted_answers": ["to move"],
+      "feedback": {
+        "explanation": "You wrote a different form, but the correct answer is 'to move' because decide is followed by to + infinitive when another verb comes next. If you see 'decide' followed by another verb → use to + infinitive."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0003-4000-8000-000000000032",
+      "type": "multiple_choice",
+      "skill_id": "verb-to-inf-after-aspirational-verbs",
+      "primary_target_error": "contrast_error",
+      "evidence_tier": "weak",
+      "instruction": "Choose the correct option.",
+      "prompt": "After a long discussion, the team decided ___ the launch until Q3.",
+      "options": [
+        { "id": "a", "text": "postponing" },
+        { "id": "b", "text": "to postpone" },
+        { "id": "c", "text": "postpone" },
+        { "id": "d", "text": "postponed" }
+      ],
+      "correct_option_id": "b",
+      "feedback": {
+        "explanation": "You chose 'postponing', but the correct answer is 'to postpone' because decide takes to + infinitive, not the -ing form. If you see 'decide' followed by another verb → use to + infinitive."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0003-4000-8000-000000000033",
+      "type": "fill_blank",
+      "skill_id": "verb-to-inf-after-aspirational-verbs",
+      "primary_target_error": "contrast_error",
+      "evidence_tier": "medium",
+      "instruction": "Complete the gap with the correct form of the verb in brackets.",
+      "prompt": "She hopes ___ (finish) the project before the holidays.",
+      "accepted_answers": ["to finish"],
+      "feedback": {
+        "explanation": "You wrote a different form, but the correct answer is 'to finish' because hope is followed by to + infinitive when describing a wish about the future. If you see 'hope' followed by another verb → use to + infinitive."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0003-4000-8000-000000000034",
+      "type": "fill_blank",
+      "skill_id": "verb-to-inf-after-aspirational-verbs",
+      "primary_target_error": "contrast_error",
+      "evidence_tier": "medium",
+      "instruction": "Complete the gap with the correct form of the verb in brackets.",
+      "prompt": "They are planning ___ (open) a second office in Berlin next year.",
+      "accepted_answers": ["to open"],
+      "feedback": {
+        "explanation": "You wrote a different form, but the correct answer is 'to open' because plan is followed by to + infinitive when describing a future intention. If you see 'plan' followed by another verb → use to + infinitive."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0003-4000-8000-000000000035",
+      "type": "multiple_choice",
+      "skill_id": "verb-to-inf-after-aspirational-verbs",
+      "primary_target_error": "form_error",
+      "evidence_tier": "weak",
+      "instruction": "Choose the correct option.",
+      "prompt": "I want ___ a few more questions before we finish the interview.",
+      "options": [
+        { "id": "a", "text": "ask" },
+        { "id": "b", "text": "to ask" },
+        { "id": "c", "text": "asking" },
+        { "id": "d", "text": "asked" }
+      ],
+      "correct_option_id": "b",
+      "feedback": {
+        "explanation": "You chose 'ask', but the correct answer is 'to ask' because want needs the full to + infinitive, not the bare verb. If you see 'want' followed by another verb → always include 'to' before it."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0003-4000-8000-000000000036",
+      "type": "fill_blank",
+      "skill_id": "verb-to-inf-after-aspirational-verbs",
+      "primary_target_error": "form_error",
+      "evidence_tier": "medium",
+      "instruction": "Complete the gap with the correct form of the verb in brackets.",
+      "prompt": "He wants ___ (improve) his presentation skills before the conference.",
+      "accepted_answers": ["to improve"],
+      "feedback": {
+        "explanation": "You wrote 'improve' or a similar form, but the correct answer is 'to improve' because want takes the full to + infinitive. If you see 'want' followed by another verb → always include 'to' before it."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0003-4000-8000-000000000037",
+      "type": "fill_blank",
+      "skill_id": "verb-to-inf-after-aspirational-verbs",
+      "primary_target_error": "contrast_error",
+      "evidence_tier": "medium",
+      "instruction": "Complete the gap with the correct form of the verb in brackets.",
+      "prompt": "After a short break, she agreed ___ (sign) the new contract.",
+      "accepted_answers": ["to sign"],
+      "feedback": {
+        "explanation": "You wrote a different form, but the correct answer is 'to sign' because agree is followed by to + infinitive when accepting an action. If you see 'agree' followed by another verb → use to + infinitive."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0003-4000-8000-000000000038",
+      "type": "fill_blank",
+      "skill_id": "verb-to-inf-after-aspirational-verbs",
+      "primary_target_error": "contrast_error",
+      "evidence_tier": "medium",
+      "instruction": "Complete the gap with the correct form of the verb in brackets.",
+      "prompt": "He refused ___ (answer) any questions about his previous job.",
+      "accepted_answers": ["to answer"],
+      "feedback": {
+        "explanation": "You wrote a different form, but the correct answer is 'to answer' because refuse is followed by to + infinitive when declining an action. If you see 'refuse' followed by another verb → use to + infinitive."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0003-4000-8000-000000000039",
+      "type": "sentence_correction",
+      "skill_id": "verb-to-inf-after-aspirational-verbs",
+      "primary_target_error": "contrast_error",
+      "evidence_tier": "strong",
+      "instruction": "Rewrite the sentence correctly.",
+      "prompt": "He is learning driving so he can commute to the new office.",
+      "accepted_corrections": [
+        "He is learning to drive so he can commute to the new office."
+      ],
+      "feedback": {
+        "explanation": "You kept 'learning driving', but the correct form is 'learning to drive' because learn is followed by to + infinitive when describing a skill being acquired. If you see 'learn' followed by another verb → use to + infinitive, not the -ing form."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0003-4000-8000-00000000003a",
+      "type": "sentence_correction",
+      "skill_id": "verb-to-inf-after-aspirational-verbs",
+      "primary_target_error": "contrast_error",
+      "evidence_tier": "strongest",
+      "meaning_frame": "future plan / intention to act",
+      "instruction": "Rewrite the sentence correctly.",
+      "prompt": "She is planning meeting the new client at the conference next month.",
+      "accepted_corrections": [
+        "She is planning to meet the new client at the conference next month."
+      ],
+      "feedback": {
+        "explanation": "You kept 'planning meeting', but the correct form is 'planning to meet' because plan + to + infinitive is what expresses a forward-looking intention — and that meaning is what the sentence requires here. If you see 'plan' followed by another verb that names the intended future action → use to + infinitive, not the -ing form."
+      }
+    }
+  ]
+}
