@@ -26,6 +26,12 @@ import {
   type BankEntry,
 } from '../data/exerciseBank';
 
+/// Wave 13 — V1 spec §12 cap on new (mastery=`started` / unknown)
+/// skills introduced per session. The Decision Engine excludes any
+/// new-skill candidate once the running session has already shown
+/// `MAX_NEW_SKILLS_PER_SESSION` distinct new skills.
+export const MAX_NEW_SKILLS_PER_SESSION = 1;
+
 export interface DecisionContext {
   /// Exercises already shown in this session, in display order. Used
   /// for last-N-repeat avoidance (§14) and to detect "session full".
@@ -108,6 +114,24 @@ export function pickNext(ctx: DecisionContext): DecisionResult {
       .map(([skillId]) => skillId)
   );
 
+  // Wave 13 — Max-new-skills-per-session cap (§12). Count distinct
+  // skills already shown that are still considered "new"
+  // (no mastery status) and stop surfacing brand-new skills once the
+  // cap is reached. Same-skill follow-ups are unaffected — only
+  // brand-new skills past the cap are blocked.
+  const shownNewSkillIds = new Set<string>();
+  for (const id of ctx.shownExerciseIds) {
+    const entry = getBankEntry(id);
+    const skillId = entry?.exercise.skill_id ?? null;
+    if (!skillId) continue;
+    const status = ctx.masteryStatusBySkill[skillId];
+    if (status === undefined || status === 'started') {
+      shownNewSkillIds.add(skillId);
+    }
+  }
+  const newSkillCapReached =
+    shownNewSkillIds.size >= MAX_NEW_SKILLS_PER_SESSION;
+
   const flat = getAllBankEntries();
   if (flat.length === 0) {
     return { next: null, reason: 'bank_empty' };
@@ -122,6 +146,16 @@ export function pickNext(ctx: DecisionContext): DecisionResult {
     if (shownSet.has(entry.exercise.exercise_id)) continue;
     const skillId = entry.exercise.skill_id ?? null;
     if (skillId && dropoutSkills.has(skillId)) continue;
+
+    // Wave 13 — block brand-new skills past the cap. A "new" skill is
+    // one with no prior mastery record (or status `started`); once the
+    // session has already introduced one, every additional new skill
+    // candidate is filtered out so the run can settle on practising
+    // that one new rule instead of fragmenting attention.
+    if (skillId && newSkillCapReached && !shownNewSkillIds.has(skillId)) {
+      const status = ctx.masteryStatusBySkill[skillId];
+      if (status === undefined || status === 'started') continue;
+    }
 
     let score = 0;
 
