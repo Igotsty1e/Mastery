@@ -309,3 +309,97 @@ export const lessonProgress = pgTable(
     ),
   })
 );
+
+
+// Wave 7.3 — engine state migration. The Flutter LearnerSkillStore +
+// ReviewScheduler already encode this state per LEARNING_ENGINE.md §§7,
+// 9.3 in SharedPreferences; this is the server-side mirror so state
+// follows the learner across devices instead of resetting on
+// reinstall. Same field shape as the Dart model on purpose, so the
+// Wave 7.4 client rewrite is a thin API transport.
+
+/// Per-learner per-skill mastery state per LEARNING_ENGINE.md §7.1.
+export const learnerSkills = pgTable(
+  'learner_skills',
+  {
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    skillId: text('skill_id').notNull(),
+    /// Internal 0–100 score per §7.1. V0 deltas weighted by evidence
+    /// tier (weak 5, medium 10, strong 15, strongest 20).
+    masteryScore: integer('mastery_score').notNull().default(0),
+    /// Recency for §9.3 review scheduling. Null until the first attempt
+    /// is recorded for this skill.
+    lastAttemptAt: timestamp('last_attempt_at', {
+      withTimezone: true,
+      mode: 'date',
+    }),
+    /// Counts of attempts at each evidence tier per §6.1. Stored as a
+    /// JSON object keyed by tier ("weak"|"medium"|"strong"|"strongest")
+    /// so additive tier extensions don't require a schema change.
+    evidenceSummary: jsonb('evidence_summary')
+      .$type<Record<string, number>>()
+      .notNull()
+      .default({}),
+    /// Last N target-error codes seen on this skill per §7.1. Stored
+    /// as a stringly array; `LearnerSkillStore.recentErrorsCap` (5)
+    /// applied at write time.
+    recentErrors: jsonb('recent_errors')
+      .$type<string[]>()
+      .notNull()
+      .default([]),
+    /// Sticky per §6.4. Set to true the first time the learner records
+    /// a strongest-tier correct attempt that satisfies §6.3 (meaning +
+    /// form). Invalidated only by an evaluation_version bump per §12.3.
+    productionGateCleared: boolean('production_gate_cleared')
+      .notNull()
+      .default(false),
+    /// `evaluation_version` at which the gate cleared. Null when never
+    /// cleared. Used to invalidate the gate when the evaluator
+    /// semantics move under a previously-cleared learner.
+    gateClearedAtVersion: integer('gate_cleared_at_version'),
+    updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({
+    pk: uniqueIndex('learner_skills_pk').on(t.userId, t.skillId),
+  })
+);
+
+/// Per-learner per-skill review cadence per LEARNING_ENGINE.md §§9.3, 9.4.
+export const learnerReviewSchedule = pgTable(
+  'learner_review_schedule',
+  {
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    skillId: text('skill_id').notNull(),
+    /// Cadence step. 1=1d, 2=3d, 3=7d, 4+=21d capped. Step 5 = graduated.
+    step: integer('step').notNull().default(1),
+    /// UTC timestamp when this skill is next due for review.
+    dueAt: timestamp('due_at', { withTimezone: true, mode: 'date' })
+      .notNull(),
+    /// Most recent session that touched this skill.
+    lastOutcomeAt: timestamp('last_outcome_at', {
+      withTimezone: true,
+      mode: 'date',
+    }).notNull(),
+    /// Mistakes recorded on this skill during the most recent session.
+    lastOutcomeMistakes: integer('last_outcome_mistakes')
+      .notNull()
+      .default(0),
+    /// §9.4 graduated flag. Soft signal — a graduated skill that fails
+    /// in mixed review or contrast loses the flag and drops back into
+    /// the cadence at step 1.
+    graduated: boolean('graduated').notNull().default(false),
+    updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({
+    pk: uniqueIndex('learner_review_schedule_pk').on(t.userId, t.skillId),
+    dueIdx: index('learner_review_schedule_due_idx').on(t.userId, t.dueAt),
+  })
+);

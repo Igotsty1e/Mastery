@@ -1,9 +1,13 @@
 # Wave 7 — Auth + Server-Side Engine State
 
-> Status: **planned, foundation work parked on `codex/auth-backend-foundation`.**
-> Implementation has not started on `main`. The branch
-> `codex/auth-backend-foundation` is preserved as the basis to rebase
-> on top of current `main`; do not delete it.
+> Status (2026-04-27): **7.1 + 7.2 + 7.3 shipped on `main`.**
+> Wave 7.4 (Flutter client wire-up) is the only remaining piece. The
+> `codex/auth-backend-foundation` branch was rebased + merged via PR #13;
+> the source branch was deleted afterwards because the same content now
+> lives on main. Wave 7.1.1 (PR #14) closed four Codex deferred bugs in
+> the lesson-sessions endpoints. Wave 7.3 (PR #15) shipped the engine
+> state migration (new `learner_skills` + `learner_review_schedule`
+> tables and six `/me/skills/*` + `/me/reviews/due` endpoints).
 
 ## Why this is the next wave
 

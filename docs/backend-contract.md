@@ -811,3 +811,113 @@ audit trail and the deletion can never disagree.
     lesson report, in-flow resume UX).
   - Removing the transitional anonymous routes once the client has
     cut over.
+
+## Engine state (Wave 7.3)
+
+Per-learner per-skill mastery + cross-session review cadence — server
+mirror of the device-scoped `LearnerSkillStore` and `ReviewScheduler`
+in Flutter. All endpoints require auth. Schema lives in migration
+`0005_learner_state` (tables `learner_skills` + `learner_review_schedule`).
+
+### POST /me/skills/{skill_id}/attempts
+
+Records one attempt for one skill. Mirrors the Flutter `LearnerSkillStore.recordAttempt` semantics per `LEARNING_ENGINE.md §§7.1, 6.4, 12.3`.
+
+**Request body:**
+```json
+{
+  "evidence_tier": "weak | medium | strong | strongest",
+  "correct": true,
+  "primary_target_error": "conceptual_error | form_error | contrast_error | careless_error | transfer_error | pragmatic_error",
+  "meaning_frame": "string (≤500 chars, optional)",
+  "evaluation_version": 1
+}
+```
+
+`primary_target_error`, `meaning_frame`, `evaluation_version` are optional.
+
+**Response 200** — derived state per §7.2 included on the wire:
+```json
+{
+  "skill_id": "verb-ing-after-gerund-verbs",
+  "mastery_score": 10,
+  "last_attempt_at": "2026-04-27T13:57:00.000Z",
+  "evidence_summary": { "weak": 0, "medium": 1, "strong": 0, "strongest": 0 },
+  "recent_errors": [],
+  "production_gate_cleared": false,
+  "gate_cleared_at_version": null,
+  "status": "started"
+}
+```
+
+Score deltas are V0 and tunable: weak ±5, medium ±10, strong ±15, strongest ±20. Score is clamped to `[0, 100]`.
+
+**Production gate (§6.4)** flips to `true` on the first strongest-tier correct attempt that carries a non-empty `meaning_frame` (the §6.3 meaning+form proof). Sticky thereafter, with one exception: when `evaluation_version` is greater than the version recorded on the existing gate (`gate_cleared_at_version`), the gate is invalidated before this attempt is applied — §12.3 invalidation pivot.
+
+**Recent errors** are FIFO-bounded at 5 per `LearnerSkillStore.recentErrorsCap`. Wrong attempts with no `primary_target_error` field do not push.
+
+**Response 400:** `{ "error": "invalid_skill_id" }` (skill_id outside `[a-zA-Z0-9._-]{1,120}`) or `{ "error": "invalid_payload" }` (missing fields, unknown enum).
+
+### GET /me/skills/{skill_id}
+
+Returns the same DTO as the POST above — the current persisted state for one skill plus the §7.2 status derived from it. Returns the empty record (mastery_score 0, status `started`) when no attempts have been recorded yet.
+
+### GET /me/skills
+
+Returns every skill the caller has touched.
+
+**Response 200:**
+```json
+{ "skills": [ /* DTOs as above */ ] }
+```
+
+### POST /me/skills/{skill_id}/review-cadence
+
+Records the in-session outcome for one skill at session end. Mirrors `ReviewScheduler.recordSessionEnd` per `LEARNING_ENGINE.md §§9.3, 9.4`.
+
+**Request body:**
+```json
+{ "mistakes_in_session": 0 }
+```
+
+**Response 200:**
+```json
+{
+  "skill_id": "verb-ing-after-gerund-verbs",
+  "step": 1,
+  "due_at": "2026-04-28T13:57:00.000Z",
+  "last_outcome_at": "2026-04-27T13:57:00.000Z",
+  "last_outcome_mistakes": 0,
+  "graduated": false
+}
+```
+
+Step rules (V0 — over-conservative on the §9.3 "wrong review attempt resets" rule because Wave 7 does not yet differentiate review-session vs first-lesson):
+- 0 mistakes → step advances by 1 (capped at 5)
+- 1+ mistakes → cadence resets to step 1
+- Step 5 reached without resetting → `graduated: true` per §9.4
+
+Intervals: 1 = 1d, 2 = 3d, 3 = 7d, 4+ = 21d (capped).
+
+### GET /me/skills/{skill_id}/review-cadence
+
+Returns the schedule entry for one skill, or 404 `no_schedule` when never recorded.
+
+### GET /me/reviews/due?at=&lt;ISO8601&gt;
+
+Returns every non-graduated skill whose `due_at <= at`, sorted oldest-first. `at` defaults to current server time when the query parameter is omitted.
+
+**Response 200:**
+```json
+{
+  "at": "2026-04-28T13:57:00.000Z",
+  "reviews": [ /* schedule DTOs */ ]
+}
+```
+
+**Response 400:** `{ "error": "invalid_at" }` (unparseable ISO timestamp).
+
+### Wave 7.3 status (2026-04-27)
+
+- **Shipped**: `learner_skills`, `learner_review_schedule` tables (migration `0005_learner_state`); the six engine state endpoints above. All auth-protected. 18 new test cases in `tests/learner-state.test.ts` covering recordAttempt + status derivation + cadence + dueAt + user isolation + §12.3 invalidation.
+- **Wave 7.4 / not yet shipped**: Flutter `LearnerSkillStore` + `ReviewScheduler` rewritten as thin API clients against these endpoints. Apple Sign In gate before onboarding. Render Postgres provisioning so the persisted state survives redeploys.
