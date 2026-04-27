@@ -6,6 +6,8 @@ import {
   jsonb,
   integer,
   boolean,
+  bigint,
+  date,
   index,
   uniqueIndex,
 } from 'drizzle-orm/pg-core';
@@ -238,6 +240,12 @@ export const exerciseAttempts = pgTable(
     // falls back to the live lesson for those.
     promptSnapshot: text('prompt_snapshot'),
     explanationSnapshot: text('explanation_snapshot'),
+    // Wave 9 — `LEARNING_ENGINE.md §17` friction event tag. Null when
+    // the attempt was unremarkable; one of `repeated_error`,
+    // `abandon_after_error`, `retry_loop`, `time_spike` when the
+    // service detected a friction signal worth surfacing in retention
+    // analytics.
+    frictionEvent: text('friction_event'),
     // Client-supplied idempotency key. When provided, a partial unique index
     // on (session_id, client_attempt_id) makes resubmits of the same
     // attempt_id return the original row rather than insert a duplicate.
@@ -401,5 +409,93 @@ export const learnerReviewSchedule = pgTable(
   (t) => ({
     pk: uniqueIndex('learner_review_schedule_pk').on(t.userId, t.skillId),
     dueIdx: index('learner_review_schedule_due_idx').on(t.userId, t.dueAt),
+  })
+);
+
+/// Wave 9 — append-only Decision Log per `LEARNING_ENGINE.md §18`.
+/// One row per Decision Engine call. Lets us replay why the engine
+/// chose the next exercise / promoted a skill / scheduled a review,
+/// post-hoc. `previous_state` is the small jsonb snapshot of the inputs
+/// the engine read (mastery, recent_errors, in-session mistakes); we
+/// keep it tight so the table stays cheap.
+export const decisionLog = pgTable(
+  'decision_log',
+  {
+    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    /// Nullable so diagnostic-mode decisions (no lesson_session row) still
+    /// log under the same table.
+    sessionId: uuid('session_id').references(() => lessonSessions.id, {
+      onDelete: 'set null',
+    }),
+    /// Nullable so session-level decisions (e.g. session-end summary)
+    /// can log without a single dominant skill.
+    skillId: text('skill_id'),
+    /// Decision code. One of: `next_exercise`, `reorder_queue`,
+    /// `mark_weak`, `schedule_review`, `mastery_promoted`,
+    /// `mastery_invalidated`, `production_gate_cleared`. Open-ended on
+    /// purpose so new decision types can be added without a migration.
+    decision: text('decision').notNull(),
+    /// Short reason code matching `LEARNING_ENGINE.md §11.3` strings
+    /// when the decision feeds the transparency layer; free-form
+    /// otherwise.
+    reason: text('reason'),
+    /// Small jsonb snapshot of the inputs read by the engine. Designed
+    /// to be small — we do not dump the whole learner_skill record.
+    previousState: jsonb('previous_state').notNull().default(sql`'{}'::jsonb`),
+    /// Set when the decision picked an exercise. Null otherwise.
+    nextExerciseId: uuid('next_exercise_id'),
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({
+    userIdx: index('decision_log_user_idx').on(t.userId, t.createdAt),
+    sessionIdx: index('decision_log_session_idx').on(t.sessionId),
+    skillIdx: index('decision_log_skill_idx').on(t.skillId),
+  })
+);
+
+/// Wave 9 — daily exercise health counters. Per
+/// `LEARNING_ENGINE.md §17`, an exercise needs ≥30 attempts before
+/// metric-driven decisions can be made on it. We aggregate by date so
+/// the time series is readable and rotating older buckets is cheap.
+/// `qa_review_pending` lives here (and not on a fixture file) so the
+/// flag-flip can be done via SQL when Wave 11 lands the bad-exercise
+/// detector — no JSON edits required.
+export const exerciseStats = pgTable(
+  'exercise_stats',
+  {
+    exerciseId: uuid('exercise_id').notNull(),
+    statDate: date('stat_date').notNull(),
+    attemptsCount: integer('attempts_count').notNull().default(0),
+    correctCount: integer('correct_count').notNull().default(0),
+    partialCount: integer('partial_count').notNull().default(0),
+    wrongCount: integer('wrong_count').notNull().default(0),
+    /// Sum of (submitted_at - exercise_started_at) in ms for every
+    /// attempt that landed in this bucket. Average is computed at
+    /// read-time to avoid the float-precision drift of a running mean.
+    totalTimeToAnswerMs: bigint('total_time_to_answer_ms', {
+      mode: 'number',
+    })
+      .notNull()
+      .default(0),
+    /// Wave 11+ will flip this when the bad-exercise detector fires;
+    /// Wave 9 only ships the column.
+    qaReviewPending: boolean('qa_review_pending').notNull().default(false),
+    /// Pinned to the exercise version the bucket aggregates. When the
+    /// exercise is rewritten (`exercise_version` bumps), older buckets
+    /// stay tied to the old version for replay; new buckets start
+    /// fresh under the new version.
+    exerciseVersion: integer('exercise_version').notNull().default(1),
+    updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({
+    pk: uniqueIndex('exercise_stats_pk').on(t.exerciseId, t.statDate),
+    pendingIdx: index('exercise_stats_pending_idx').on(t.qaReviewPending),
   })
 );

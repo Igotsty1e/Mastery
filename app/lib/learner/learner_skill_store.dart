@@ -121,29 +121,41 @@ class LearnerSkillRecord {
             : (gateClearedAtVersion ?? this.gateClearedAtVersion),
       );
 
-  /// Status derivation per `LEARNING_ENGINE.md §7.2`. Labels are part of
-  /// the contract; thresholds are tunable. Wave 2 ships the V0 set
-  /// described in `docs/plans/learning-engine-mvp-2.md` Wave 2.
+  /// Status derivation per `LEARNING_ENGINE.md §10` (Mastery Model V1).
+  /// Labels are part of the contract; thresholds finalised during the
+  /// V1 review on 2026-04-26 — `docs/plans/learning-engine-v1.md`
+  /// Decisions log #8.
+  ///
+  /// V1 boundaries:
+  ///   0–20  → started
+  ///   21–45 → practicing
+  ///   46–70 → getting_there
+  ///   71–84 → almost_mastered
+  ///   85–100 → mastered
+  ///
+  /// `productionGateCleared + hasStrongOrStronger + masteryScore ≥ 85`
+  /// is the gate for `mastered` (down from ≥80 in V0). `review_due`
+  /// fires when a mastered skill's `lastAttemptAt` is more than 21
+  /// days stale per §13.
   SkillStatus statusAt(DateTime now) {
     final hasStrongOrStronger = (evidenceSummary[EvidenceTier.strong] ?? 0) +
             (evidenceSummary[EvidenceTier.strongest] ?? 0) >
         0;
 
-    if (productionGateCleared && hasStrongOrStronger && masteryScore >= 80) {
-      // §7.2: mastered + 21d recency window expired → review_due
+    if (productionGateCleared && hasStrongOrStronger && masteryScore >= 85) {
       if (lastAttemptAt != null &&
           now.difference(lastAttemptAt!) > const Duration(days: 21)) {
         return SkillStatus.reviewDue;
       }
       return SkillStatus.mastered;
     }
-    if (masteryScore >= 70 && hasStrongOrStronger) {
+    if (masteryScore >= 71 && hasStrongOrStronger) {
       return SkillStatus.almostMastered;
     }
-    if (masteryScore >= 50 && hasStrongOrStronger) {
+    if (masteryScore >= 46 && hasStrongOrStronger) {
       return SkillStatus.gettingThere;
     }
-    if (masteryScore >= 30) {
+    if (masteryScore >= 21) {
       return SkillStatus.practicing;
     }
     return SkillStatus.started;

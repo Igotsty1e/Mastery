@@ -1,6 +1,7 @@
 import { eq, and, lte } from 'drizzle-orm';
 import type { AppDatabase } from '../db/client';
 import { learnerSkills, learnerReviewSchedule } from '../db/schema';
+import { recordDecision } from '../observability/decisionLog';
 import type {
   EvidenceTier,
   LearnerSkillRecord,
@@ -157,13 +158,16 @@ export async function recordAttempt(
 
   // §12.3 invalidation. If the gate was previously cleared at a lower
   // evaluator version than what just shipped, drop it before applying
-  // this attempt's effect.
+  // this attempt's effect. `gateInvalidatedThisAttempt` is the local
+  // flag the Wave 9 Decision Log uses below to record the event.
+  let gateInvalidatedThisAttempt = false;
   if (
     existing.productionGateCleared &&
     input.evaluationVersion !== undefined &&
     existing.gateClearedAtVersion !== null &&
     input.evaluationVersion > existing.gateClearedAtVersion
   ) {
+    gateInvalidatedThisAttempt = true;
     existing = {
       ...existing,
       productionGateCleared: false,
@@ -238,6 +242,35 @@ export async function recordAttempt(
       },
     });
 
+  // Wave 9 — Decision Log per `LEARNING_ENGINE.md §18`. Two mastery
+  // events fire at this layer today: a freshly-cleared production gate
+  // and a §12.3 evaluator-bump invalidation. Status promotions are
+  // derived, so the V1 rule-based gate (Wave 10) will add explicit
+  // `mastery_promoted` events on top.
+  if (gateClearedThisAttempt) {
+    void recordDecision(db, {
+      userId,
+      skillId,
+      decision: 'production_gate_cleared',
+      reason: 'strongest_correct_with_meaning_frame',
+      previousState: {
+        prior_score: existing.masteryScore,
+        new_score: next.masteryScore,
+        evaluation_version: input.evaluationVersion ?? null,
+      },
+    });
+  }
+  if (gateInvalidatedThisAttempt) {
+    void recordDecision(db, {
+      userId,
+      skillId,
+      decision: 'mastery_invalidated',
+      reason: 'evaluator_version_bump',
+      previousState: {
+        evaluation_version: input.evaluationVersion ?? null,
+      },
+    });
+  }
   return next;
 }
 

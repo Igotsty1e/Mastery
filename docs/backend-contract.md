@@ -905,3 +905,24 @@ Wave 7.4 part 2A — first-sign-in migration of device-scoped learner state. Aut
 - **Shipped (server)**: legacy unauthenticated `POST /lessons/:id/answers` and `GET /lessons/:id/result` removed. Three legacy test files (`evaluate.route.test.ts`, `result.route.test.ts`, `evaluate-summary.integration.test.ts`) deleted. Two rate-limiter integration `describe` blocks in `backend-hardening.test.ts` skipped (equivalent coverage on `/lesson-sessions/.../answers` already exists in `lesson-sessions.test.ts`). 281/281 backend tests passing (4 skipped).
 - **Shipped (client)**: Flutter `ApiClient` rewired through `AuthClient` for every mutation. New methods `startLessonSession`, `submitAnswer(sessionId, ...)`, `completeLessonSession`, `getResult(sessionId)`. `SessionController.loadLesson` now starts a server-owned session in parallel with the lesson content fetch. The build-time `MASTERY_AUTH_ENABLED` flag is gone — auth is mandatory in every shipped build. `SignInScreen.Skip-for-now` performs a silent Apple-stub sign-in under a stable per-install subject (`mastery_stub_subject_v1` in SharedPreferences) so a Skip + later Sign-in lands on the same backend user.
 - **Tests**: `session_controller_test.dart` rewired through `mountAuthedApiClient` helper (`app/test/helpers/api_test_helpers.dart`) — 24/24 passing. `widget_test.dart`, `happy_path_lesson_flow_test.dart`, `cross_wave_integration_test.dart` are disabled at runtime with explicit TODOs pending the same rewire (the underlying coverage moved to `session_controller_test.dart` for the SessionController paths). 133/133 active Flutter tests passing.
+
+### Wave 9 status (2026-04-26) — observability infra
+
+Implements the V1 plan's Wave 9 step (`docs/plans/learning-engine-v1.md`). No user-visible behaviour change; pure observability infra so subsequent V1 waves can be measured rather than guessed.
+
+- **Shipped (schema, migration `0006_observability_v1`)**:
+  - `decision_log` table — append-only Decision Log per `LEARNING_ENGINE.md §18`. One row per Decision Engine call: `(user_id, session_id?, skill_id?, decision, reason, previous_state jsonb, next_exercise_id?, created_at)`. Indexed by `(user_id, created_at desc)`, `session_id`, `skill_id`.
+  - `exercise_attempts.friction_event text` column — null on unremarkable attempts; one of `repeated_error | abandon_after_error | retry_loop | time_spike` once Wave 11 lands the detector. Wave 9 only ships the column.
+  - `exercise_stats` table — daily counters per `(exercise_id, stat_date)`: `attempts_count`, `correct_count`, `partial_count`, `wrong_count`, `total_time_to_answer_ms` (bigint), `qa_review_pending` bool, `exercise_version` int. Updated by `recordAttemptStats` on every `submitAnswer` call.
+- **Shipped (writers)**:
+  - `recordDecision` (`backend/src/observability/decisionLog.ts`) — narrow API: `recordDecision(db, { userId, decision, reason?, previousState?, sessionId?, skillId?, nextExerciseId? })`. Never throws on the happy path; returns the new row id or `null` on a transient error so observability writes never break the lesson flow.
+  - `recordAttemptStats` (`backend/src/observability/exerciseStats.ts`) — atomic upsert on `(exercise_id, stat_date)` with `INSERT ... ON CONFLICT ... DO UPDATE`. Time-to-answer is clamped to `[0, 10 min]` so a misbehaving client cannot poison the average.
+- **Wired callsites**:
+  - `lessonSessions/service.submitAnswer` calls `recordAttemptStats` after every successful insert.
+  - `learner/service.recordAttempt` writes `decision_log` rows for `production_gate_cleared` (§6.4) and `mastery_invalidated` (§12.3 evaluator-version bump).
+- **Versioning**:
+  - `exercise_stats.exercise_version` defaults to 1 — a future exercise rewrite bumps the version so old buckets stay tied to the old content.
+  - `skills.json` entries can carry `skill_version` (default 1) — ships as a documented field; not yet read by the runtime.
+- **Status thresholds** (Flutter `LearnerSkillRecord.statusAt`):
+  - `0–20 → started`, `21–45 → practicing`, `46–70 → getting_there`, `71–84 → almost_mastered`, `85–100 → mastered`. Final per `docs/plans/learning-engine-v1.md` Decisions log #8.
+- **Tests**: 8 new cases in `tests/observability.test.ts` covering Decision Log writes (happy path, null fields, error tolerance), exercise-stats counters (insert + upsert + outcome routing + time-to-answer clamp), and the two `recordAttempt` integration paths. 289/289 backend tests passing (4 skipped).

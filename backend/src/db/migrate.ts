@@ -214,12 +214,57 @@ CREATE INDEX IF NOT EXISTS learner_review_schedule_due_idx
   ON learner_review_schedule(user_id, due_at);
 `;
 
+// Wave 9 — observability infra. Append-only Decision Log per
+// `LEARNING_ENGINE.md §18` so every Decision Engine call is replayable
+// from the audit trail. `friction_event` enum on attempts so we can
+// derive D1/D7 retention drivers without instrumenting the client.
+// `exercise_stats` rolls up daily counters per exercise so the
+// bad-exercise gate (Wave 11+) has data to flag on. Versioning columns
+// land here so future schema changes can pivot off them without a new
+// migration.
+const OBSERVABILITY_V1_SQL = `
+CREATE TABLE IF NOT EXISTS decision_log (
+  id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id         uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  session_id      uuid REFERENCES lesson_sessions(id) ON DELETE SET NULL,
+  skill_id        text,
+  decision        text NOT NULL,
+  reason          text,
+  previous_state  jsonb NOT NULL DEFAULT '{}'::jsonb,
+  next_exercise_id uuid,
+  created_at      timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS decision_log_user_idx ON decision_log(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS decision_log_session_idx ON decision_log(session_id) WHERE session_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS decision_log_skill_idx ON decision_log(skill_id) WHERE skill_id IS NOT NULL;
+
+ALTER TABLE exercise_attempts
+  ADD COLUMN IF NOT EXISTS friction_event text;
+
+CREATE TABLE IF NOT EXISTS exercise_stats (
+  exercise_id          uuid NOT NULL,
+  stat_date            date NOT NULL,
+  attempts_count       integer NOT NULL DEFAULT 0,
+  correct_count        integer NOT NULL DEFAULT 0,
+  partial_count        integer NOT NULL DEFAULT 0,
+  wrong_count          integer NOT NULL DEFAULT 0,
+  total_time_to_answer_ms bigint NOT NULL DEFAULT 0,
+  qa_review_pending    boolean NOT NULL DEFAULT false,
+  exercise_version     integer NOT NULL DEFAULT 1,
+  updated_at           timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (exercise_id, stat_date)
+);
+CREATE INDEX IF NOT EXISTS exercise_stats_pending_idx
+  ON exercise_stats(qa_review_pending) WHERE qa_review_pending = true;
+`;
+
 const MIGRATIONS: Migration[] = [
   { id: '0001_init', sql: INIT_SQL },
   { id: '0002_lesson_sessions', sql: LESSON_SESSIONS_SQL },
   { id: '0003_attempt_idempotency', sql: ATTEMPT_IDEMPOTENCY_SQL },
   { id: '0004_attempt_review_snapshot', sql: ATTEMPT_REVIEW_SNAPSHOT_SQL },
   { id: '0005_learner_state', sql: LEARNER_STATE_SQL },
+  { id: '0006_observability_v1', sql: OBSERVABILITY_V1_SQL },
 ];
 
 export async function runMigrations(database: Database): Promise<void> {
