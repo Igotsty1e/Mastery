@@ -66,9 +66,9 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoadingDashboard = false;
   String _selectedLevel = 'B2';
 
-  /// Created lazily on first launch when `AppConfig.authEnabled` is true.
-  /// Null when the auth gate is off — the rest of the screen falls back
-  /// to the legacy unauthenticated flow.
+  /// Created on first launch. Wave 8 (legacy drop) made auth mandatory
+  /// — every shipped build constructs an AuthClient and routes through
+  /// the sign-in gate or its silent stub-login Skip path.
   AuthClient? _authClient;
 
   /// Curriculum the dashboard renders. Built from the `/lessons` list
@@ -115,42 +115,31 @@ class _HomeScreenState extends State<HomeScreen> {
     _resolveInitialView();
   }
 
-  // First-launch detection per docs/plans/arrival-ritual.md: if the learner
-  // has already completed the Arrival Ritual onboarding, drop them into the
-  // dashboard. Otherwise show the onboarding flow.
-  //
-  // Wave 7.4 part 2: when `AppConfig.authEnabled` is true, the sign-in gate
-  // runs first. Returning users with a valid refresh-token in secure
-  // storage bypass the gate transparently. Skip enters guest mode (existing
-  // device-scoped state, no server session) — onboarding still runs once
-  // for new installs regardless of which auth path was taken.
+  // Wave 8 (legacy drop): auth is mandatory — every build constructs an
+  // AuthClient, hydrates from secure storage, and either bypasses the
+  // sign-in gate (returning user with a live refresh token) or shows it.
+  // Skip-for-now still lands the learner on the dashboard but does so
+  // through a silent stub-login under a stable per-install subject, so
+  // every subsequent request — including server-owned lesson sessions —
+  // carries an Authorization header.
   Future<void> _resolveInitialView() async {
     final seen = await LocalProgressStore.hasSeenOnboarding();
-    if (AppConfig.authEnabled) {
-      _authClient ??= AuthClient(baseUrl: AppConfig.apiBaseUrl);
-      final tokens = await _authClient!.hydrateFromStorage();
-      if (!mounted) return;
-      if (tokens == null) {
-        setState(() {
-          _showSignIn = true;
-          _showOnboarding = !seen;
-          _resolving = false;
-        });
-        return;
-      }
-      // Returning user with a live refresh token — point the engine
-      // facades at the remote backend before the dashboard reads from
-      // them. No bulk-import here: that only fires on the
-      // `signedIn` outcome of a fresh sign-in below.
-      LearnerSkillStore.useRemote(
-        authClient: _authClient!,
-        baseUrl: AppConfig.apiBaseUrl,
-      );
-      ReviewScheduler.useRemote(
-        authClient: _authClient!,
-        baseUrl: AppConfig.apiBaseUrl,
-      );
+    _authClient ??= AuthClient(baseUrl: AppConfig.apiBaseUrl);
+    final tokens = await _authClient!.hydrateFromStorage();
+    if (!mounted) return;
+    if (tokens == null) {
+      setState(() {
+        _showSignIn = true;
+        _showOnboarding = !seen;
+        _resolving = false;
+      });
+      return;
     }
+    // Returning user with a live refresh token — point the engine
+    // facades and the ApiClient at the remote backend before the
+    // dashboard reads from them. No bulk-import here: that only fires
+    // on the `signedIn` outcome of a fresh sign-in below.
+    _activateAuthenticatedClients();
     if (!mounted) return;
     setState(() {
       _showOnboarding = !seen;
@@ -161,27 +150,61 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  /// Wave 7.4 part 2.4 — handles the SignInScreen outcome. On
-  /// `signedIn` we run the bulk-migration of any device-scoped state
+  void _activateAuthenticatedClients() {
+    final auth = _authClient;
+    if (auth == null) return;
+    LearnerSkillStore.useRemote(
+      authClient: auth,
+      baseUrl: AppConfig.apiBaseUrl,
+    );
+    ReviewScheduler.useRemote(
+      authClient: auth,
+      baseUrl: AppConfig.apiBaseUrl,
+    );
+    // ApiClient also gets the AuthClient injected so server-owned
+    // lesson sessions (Wave 7.2) and authenticated answer / result
+    // endpoints work end-to-end.
+    context.read<ApiClient>().attachAuth(auth);
+  }
+
+  /// Wave 7.4 part 2.4 + Wave 8 — handles the SignInScreen outcome.
+  ///
+  /// On the explicit `signedIn` outcome (Apple stub or real Apple
+  /// later) we run the bulk-migration of any device-scoped state
   /// (idempotent server-side) and switch the engine facades to the
-  /// remote backend. On `skipped` we leave the facades local so guest
-  /// mode keeps working. Either way the screen advances to
-  /// onboarding-or-dashboard per the existing `seen` flag.
+  /// remote backend. The migrator already calls `useRemote(...)` for
+  /// both stores; we additionally attach the AuthClient to the
+  /// `ApiClient` so server-owned lesson sessions work.
+  ///
+  /// On `skipped` (now a silent stub-login per Wave 8 — see
+  /// SignInScreen._skip) we still want the same authenticated
+  /// connection, but we skip the migrator: the learner explicitly
+  /// declined the merge, so any device-scoped progress stays local
+  /// (and inert once the facades flip). Engine writes from this point
+  /// on hit the server.
   Future<void> _onSignInResolved(SignInOutcome outcome) async {
-    if (outcome == SignInOutcome.signedIn && _authClient != null) {
-      final migrator = LearnerStateMigrator(
-        authClient: _authClient!,
-        baseUrl: AppConfig.apiBaseUrl,
-      );
-      // Result discarded in V0 — failureReason is logged via the audit
-      // event the server writes on every successful import. The
-      // dashboard will pull from the server next, so a transient
-      // migration failure surfaces naturally as "no progress yet" until
-      // the next attempt.
-      await migrator.migrate();
-    } else if (outcome == SignInOutcome.skipped) {
-      LearnerSkillStore.useLocal();
-      ReviewScheduler.useLocal();
+    final auth = _authClient;
+    if (auth != null) {
+      if (outcome == SignInOutcome.signedIn) {
+        final migrator = LearnerStateMigrator(
+          authClient: auth,
+          baseUrl: AppConfig.apiBaseUrl,
+        );
+        await migrator.migrate();
+      } else {
+        // Skipped: still flip facades to remote so subsequent writes
+        // target the server. The local rows from earlier guest sessions
+        // become inert.
+        LearnerSkillStore.useRemote(
+          authClient: auth,
+          baseUrl: AppConfig.apiBaseUrl,
+        );
+        ReviewScheduler.useRemote(
+          authClient: auth,
+          baseUrl: AppConfig.apiBaseUrl,
+        );
+      }
+      _activateAuthenticatedClients();
     }
     final seen = await LocalProgressStore.hasSeenOnboarding();
     if (!mounted) return;

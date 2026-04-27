@@ -1,4 +1,9 @@
 class EvaluateRequest {
+  /// Wave 8 (legacy drop): the session id is now part of the URL
+  /// (`POST /lesson-sessions/:sessionId/answers`), not the body. Kept on
+  /// the model so SessionController can still thread the value end-to-end
+  /// without a breaking signature shift, but no longer serialised by
+  /// `toJson` and ignored by the server-side Wave2AnswerSchema.
   final String sessionId;
   final String attemptId;
   final String exerciseId;
@@ -16,7 +21,6 @@ class EvaluateRequest {
   });
 
   Map<String, dynamic> toJson() => {
-        'session_id': sessionId,
         'attempt_id': attemptId,
         'exercise_id': exerciseId,
         'exercise_type': exerciseType,
