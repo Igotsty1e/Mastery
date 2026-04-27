@@ -745,7 +745,13 @@ In the target state, the learner can see, for each skill they have touched:
 - a one-line reason for that status (e.g. "two strong correct in a row")
 - the most recent error pattern on this skill, if any
 
-Status: **planned**.
+Status: **shipped (MVP2 Wave 4)**. The Flutter `SkillStateCard`
+(`app/lib/widgets/skill_state_card.dart`) renders one row per skill on
+the post-lesson summary screen, filtered to the skills the just-finished
+lesson touched. Status copy and reason-line rule live in the same file;
+the recurring-error row appears when the same target-error code has
+been observed twice in the last five attempts on that skill. V0
+thresholds; tunable.
 
 ### 11.3 Per-Routing Surface
 
@@ -757,7 +763,16 @@ see a one-line **why this next** explanation:
 - "You're close to mastering the present perfect contrast — one more strong
   item."
 
-Status: **planned**.
+Status: **shipped (MVP2 Wave 4)**. The Flutter `DecisionReasonLine`
+(`app/lib/widgets/decision_reason_line.dart`) renders the §11.3 reason
+on the next exercise (`SessionPhase.ready`), not above the
+just-answered question. The reason source is
+`SessionState.lastDecisionReason`, set by the `DecisionEngine` in Wave 3
+and surviving the `advance()` transition exactly once. The dashboard
+review-due teaser (`app/lib/widgets/review_due_section.dart`) renders
+every non-graduated skill returned by `ReviewScheduler.dueAt(now)`; the
+section collapses to nothing when the list is empty per §11.4 calm
+silence.
 
 ### 11.4 Tone
 

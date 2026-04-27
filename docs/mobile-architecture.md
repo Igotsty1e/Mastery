@@ -217,6 +217,38 @@ Cadence intervals (§9.3): step 1 = 1 day, step 2 = 3 days, step 3 =
 every non-graduated skill due at or before `now`, sorted oldest-first
 — Wave 4 reads this on dashboard load to surface "review due" prompts.
 
+### Wave 4 transparency surfaces — three new widgets
+
+Wave 4 renders the engine state from Waves 1–5 onto the existing
+screens. Per-screen visual approval cleared via the design call
+recorded in `docs/plans/wave4-transparency-layer.md` (option B + small
+A teaser).
+
+- **`DecisionReasonLine`** (`app/lib/widgets/decision_reason_line.dart`)
+  — exercise screen, between the top bar and `InstructionBand`. Reads
+  `SessionState.lastDecisionReason` and renders only when
+  `SessionPhase.ready` so the §11.3 reason describes the *next* item,
+  not the just-answered question. Collapses to zero height on the linear
+  default per §11.4 calm silence.
+- **`SkillStateCard`** (`app/lib/widgets/skill_state_card.dart`) —
+  summary screen, between the debrief card and the mistakes list. Loads
+  `LearnerSkillStore.allRecords()` in `initState` and filters by the
+  current lesson's `touchedSkillIds` (passed in by the exercise screen
+  on push-replace) so the panel agrees with the score/debrief.
+  Renders status per §7.2, the one-line reason rule per §11.2, and a
+  recurring-error row when the same `TargetError` code has appeared
+  twice in the last five attempts on that skill.
+- **`ReviewDueSection`** (`app/lib/widgets/review_due_section.dart`) —
+  dashboard, between the last-lesson report and the current-unit block.
+  Reads `ReviewScheduler.dueAt(now)` in `_loadDashboard`. Collapses to
+  nothing when the list is empty per §11.4.
+
+Skill titles are resolved through
+`app/lib/learner/skill_titles.dart` — a V0 embedded map for the two
+shipped B2 skills, with a `skill_id` fallback when an entry is missing.
+Replace this with a `GET /skills` endpoint when the bank exceeds a few
+skills (deferred from Wave 4 per the plan §2.2 trade-off).
+
 ## Navigation
 
 Linear push-based navigation. No tabs. No drawer. No back stack access after exercise submission.

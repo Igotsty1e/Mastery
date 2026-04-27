@@ -16,11 +16,13 @@ import 'package:provider/provider.dart';
 
 import '../api/api_client.dart';
 import '../config.dart';
+import '../learner/review_scheduler.dart';
 import '../progress/local_progress_store.dart';
 import '../session/last_lesson_store.dart';
 import '../theme/mastery_theme.dart';
 import '../widgets/mastery_route.dart';
 import '../widgets/mastery_widgets.dart';
+import '../widgets/review_due_section.dart';
 import 'lesson_intro_screen.dart';
 import 'onboarding_arrival_ritual_screen.dart';
 import 'summary_screen.dart';
@@ -40,6 +42,11 @@ class _HomeScreenState extends State<HomeScreen> {
   int _totalExercises = 10;
   String _lessonTitle = 'Verbs Followed by -ing';
   String _selectedLevel = 'B2';
+
+  /// Wave 4 §11.3 review-due teaser. Loaded on dashboard mount and
+  /// after every dashboard reload so a freshly-finished session shows
+  /// up here when its due time arrives.
+  List<ReviewSchedule> _dueReviews = const [];
 
   @override
   void initState() {
@@ -78,17 +85,23 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_isLoadingDashboard) return;
     setState(() => _isLoadingDashboard = true);
 
+    // Wave 4 review-due lookup runs in parallel with the lesson fetch
+    // so the dashboard isn't gated on the network for engine state.
+    final dueFuture = ReviewScheduler.dueAt(DateTime.now().toUtc());
+
     try {
       final lesson =
           await context.read<ApiClient>().getLesson(AppConfig.defaultLessonId);
       final completed =
           await LocalProgressStore.getCompletedExercises(lesson.lessonId);
+      final due = await dueFuture;
       if (!mounted) return;
       setState(() {
         _selectedLevel = lesson.level;
         _lessonTitle = lesson.title;
         _totalExercises = lesson.exercises.length;
         _completedExercises = completed.clamp(0, lesson.exercises.length);
+        _dueReviews = due;
         _isLoadingDashboard = false;
       });
     } catch (_) {
@@ -96,11 +109,13 @@ class _HomeScreenState extends State<HomeScreen> {
       final localCompleted = await LocalProgressStore.getCompletedExercises(
         AppConfig.defaultLessonId,
       );
+      final due = await dueFuture;
       if (!mounted) return;
       setState(() {
         _selectedLevel = 'B2';
         _totalExercises = 10;
         _completedExercises = localCompleted.clamp(0, 10);
+        _dueReviews = due;
         _isLoadingDashboard = false;
       });
     }
@@ -190,6 +205,13 @@ class _HomeScreenState extends State<HomeScreen> {
                   onReviewMistakes: () =>
                       _openLastLessonSummary(toMistakes: true),
                   onOpenFullSummary: () => _openLastLessonSummary(),
+                ),
+              ],
+              if (_dueReviews.isNotEmpty) ...[
+                const SizedBox(height: 22),
+                ReviewDueSection(
+                  dueReviews: _dueReviews,
+                  now: DateTime.now().toUtc(),
                 ),
               ],
               const SizedBox(height: 22),
