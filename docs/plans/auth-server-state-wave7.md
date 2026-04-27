@@ -1,16 +1,17 @@
 # Wave 7 — Auth + Server-Side Engine State
 
-> Status (2026-04-26): **7.1 + 7.2 + 7.3 + 7.4 part 1 + 7.4 part 2A shipped on `main`.**
-> Wave 7.4 part 2B (dual-mode storage refactor + bulk-migration trigger
-> + flipping `MASTERY_AUTH_ENABLED=true` in the prod build) is the only
-> remaining piece. The `codex/auth-backend-foundation` branch was rebased
-> + merged via PR #13; the source branch was deleted afterwards. Wave
-> 7.1.1 (PR #14) closed four Codex deferred bugs in the lesson-sessions
-> endpoints. Wave 7.3 (PR #15) shipped the engine state migration. Wave
-> 7.4 part 1 shipped the AuthClient infra (no UI gate). Wave 7.4 part 2A
-> shipped the sign-in surface (`SignInScreen`, auth gate routing in
-> `HomeScreen`) + `POST /me/state/bulk-import` endpoint, all dormant in
-> default builds because `MASTERY_AUTH_ENABLED` defaults to false.
+> Status (2026-04-26): **Wave 7 fully shipped on `main`.** 7.1 + 7.2 +
+> 7.3 + 7.4 (parts 1, 2A, 2B) all live. The `codex/auth-backend-foundation`
+> branch was rebased + merged via PR #13; the source branch was deleted
+> afterwards. Wave 7.1.1 (PR #14) closed four Codex deferred bugs in the
+> lesson-sessions endpoints. Wave 7.3 (PR #15) shipped the engine state
+> migration. Wave 7.4 part 1 shipped the AuthClient infra (no UI gate).
+> Wave 7.4 part 2A (PR #17) shipped the sign-in surface (`SignInScreen`,
+> auth gate routing in `HomeScreen`) + `POST /me/state/bulk-import`.
+> Wave 7.4 part 2B shipped the dual-mode `LearnerSkillStore` +
+> `ReviewScheduler` facades, the bulk-migration trigger on signed-in
+> transition, and `MASTERY_AUTH_ENABLED=true` in
+> `scripts/render-build-web.sh` so production sees the sign-in gate.
 
 ## Why this is the next wave
 
@@ -188,7 +189,7 @@ The shipped device-scoped state needs to either be:
 4. **Wave 7.3 — engine state migration.** New tables `learner_skills` and `learner_review_schedule` + `/me/skills/...` + `/me/reviews/due` endpoints. Flutter `LearnerSkillStore` and `ReviewScheduler` rewritten as thin API clients. Discard the SharedPreferences keys (option A above).
 5. **Wave 7.4 part 1 — AuthClient infra.** `AuthTokens` + `AuthStorage` (flutter_secure_storage 9.2.2) + `AuthClient` with refresh-on-401 retry-once. No UI gate yet. Build flag `MASTERY_AUTH_ENABLED` defaults to false.
 6. **Wave 7.4 part 2A — Sign-in surface + bulk-import endpoint.** `SignInScreen` (Apple stub + Skip), `HomeScreen` routes through it when `authEnabled && no token`, server `POST /me/state/bulk-import` with idempotent skip-if-server-row-exists semantics. `APPLE_STUB_ENABLED=1` set on Render. All dormant in default builds.
-7. **Wave 7.4 part 2B — Dual-mode storage + migration trigger.** `LearnerSkillStore` + `ReviewScheduler` abstract over local + remote backends. On signed-in transition, push the local snapshot through `/me/state/bulk-import` then switch to the remote backend. Flip `MASTERY_AUTH_ENABLED=true` in `scripts/render-build-web.sh`. Drop the legacy unauthenticated routes from the backend.
+7. **Wave 7.4 part 2B — Dual-mode storage + migration trigger (shipped 2026-04-26).** `LearnerSkillStore` + `ReviewScheduler` are now static facades over `LocalLearnerSkillBackend` / `RemoteLearnerSkillBackend` and `LocalReviewSchedulerBackend` / `RemoteReviewSchedulerBackend` respectively. On the `signedIn` outcome of `SignInScreen`, `LearnerStateMigrator` collects the local snapshot via the local backend, POSTs it through `/me/state/bulk-import`, then flips both facades to remote (idempotent — second device's import is reported in the `skipped_*` arrays). On the `skipped` outcome the facades stay local so guest mode keeps working. `scripts/render-build-web.sh` now bakes `MASTERY_AUTH_ENABLED=true` into the prod build. Legacy unauthenticated routes still live alongside as the engine waves 1–5 evaluator + dashboard wire-up; dropping them is tracked as a follow-up cleanup once production telemetry confirms zero unauthenticated traffic.
 
 ## Out of scope (explicit)
 

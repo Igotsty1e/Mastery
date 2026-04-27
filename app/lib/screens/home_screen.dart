@@ -17,6 +17,8 @@ import 'package:provider/provider.dart';
 import '../api/api_client.dart';
 import '../auth/auth_client.dart';
 import '../config.dart';
+import '../learner/learner_skill_store.dart';
+import '../learner/learner_state_migrator.dart';
 import '../learner/review_scheduler.dart';
 import '../progress/local_progress_store.dart';
 import '../session/last_lesson_store.dart';
@@ -136,6 +138,18 @@ class _HomeScreenState extends State<HomeScreen> {
         });
         return;
       }
+      // Returning user with a live refresh token — point the engine
+      // facades at the remote backend before the dashboard reads from
+      // them. No bulk-import here: that only fires on the
+      // `signedIn` outcome of a fresh sign-in below.
+      LearnerSkillStore.useRemote(
+        authClient: _authClient!,
+        baseUrl: AppConfig.apiBaseUrl,
+      );
+      ReviewScheduler.useRemote(
+        authClient: _authClient!,
+        baseUrl: AppConfig.apiBaseUrl,
+      );
     }
     if (!mounted) return;
     setState(() {
@@ -147,11 +161,28 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  /// Wave 7.4 part 2.3 — handles the SignInScreen outcome. After
-  /// signed-in we will (in part 2.4) bulk-upload device state to the
-  /// server. For now the screen simply advances to onboarding-or-dashboard
-  /// per the existing `seen` flag.
+  /// Wave 7.4 part 2.4 — handles the SignInScreen outcome. On
+  /// `signedIn` we run the bulk-migration of any device-scoped state
+  /// (idempotent server-side) and switch the engine facades to the
+  /// remote backend. On `skipped` we leave the facades local so guest
+  /// mode keeps working. Either way the screen advances to
+  /// onboarding-or-dashboard per the existing `seen` flag.
   Future<void> _onSignInResolved(SignInOutcome outcome) async {
+    if (outcome == SignInOutcome.signedIn && _authClient != null) {
+      final migrator = LearnerStateMigrator(
+        authClient: _authClient!,
+        baseUrl: AppConfig.apiBaseUrl,
+      );
+      // Result discarded in V0 — failureReason is logged via the audit
+      // event the server writes on every successful import. The
+      // dashboard will pull from the server next, so a transient
+      // migration failure surfaces naturally as "no progress yet" until
+      // the next attempt.
+      await migrator.migrate();
+    } else if (outcome == SignInOutcome.skipped) {
+      LearnerSkillStore.useLocal();
+      ReviewScheduler.useLocal();
+    }
     final seen = await LocalProgressStore.hasSeenOnboarding();
     if (!mounted) return;
     setState(() {

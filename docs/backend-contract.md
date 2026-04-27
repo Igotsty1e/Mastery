@@ -971,5 +971,11 @@ Wave 7.4 part 2A — first-sign-in migration of device-scoped learner state. Aut
 ### Wave 7.4 part 2A status (2026-04-26)
 
 - **Shipped (server)**: `POST /me/state/bulk-import` with idempotent skip-if-server-row-exists semantics, full Zod validation, audit log of counts only, max 500 entries per array. 6 new test cases in `tests/learner-state.test.ts` covering auth, fresh import, idempotent skip, schedule-clobber prevention, oversized rejection, malformed payload rejection.
-- **Shipped (client)**: `SignInScreen` (Apple Sign-in stub + Skip), `AuthClient` token storage, `HomeScreen` routes through sign-in gate when `MASTERY_AUTH_ENABLED=true`. Default builds remain dormant (`MASTERY_AUTH_ENABLED=false`).
-- **Wave 7.4 part 2B / not yet shipped**: Dual-mode `LearnerSkillStore` + `ReviewScheduler` (local + remote backends), bulk-migration trigger on signed-in transition, enabling `MASTERY_AUTH_ENABLED=true` in the prod build script.
+- **Shipped (client)**: `SignInScreen` (Apple Sign-in stub + Skip), `AuthClient` token storage, `HomeScreen` routes through sign-in gate when `MASTERY_AUTH_ENABLED=true`.
+
+### Wave 7.4 part 2B status (2026-04-26)
+
+- **Shipped (client)**: `LearnerSkillStore` and `ReviewScheduler` rewritten as static facades over a pluggable `LearnerSkillBackend` / `ReviewSchedulerBackend` interface. Two implementations: local (the original SharedPreferences keys; used in unauth'd builds and guest mode) and remote (calls the auth-protected `/me/skills/...` and `/me/reviews/due` endpoints). Existing call-sites stay on the static facade — no DI rewrite.
+- **Shipped (client)**: `LearnerStateMigrator` (`app/lib/learner/learner_state_migrator.dart`) collects the local snapshot through fresh local backend instances, POSTs it through `/me/state/bulk-import`, then flips both facades to remote. Returning users with a live refresh token also point the facades at remote on app start. Skip-for-now keeps the facades local so guest mode is unchanged. Failures (network or 4xx) still flip the facades — signed-in writes hit the server next.
+- **Shipped (build)**: `scripts/render-build-web.sh` now bakes `--dart-define=MASTERY_AUTH_ENABLED=true` into prod web builds, so the sign-in gate is live in production.
+- **Tests**: 9 new cases in `app/test/learner_state_migrator_test.dart` covering facade swap, remote backend HTTP shape, empty / non-empty snapshot, 4xx + network error paths, snake_case payload keys.
