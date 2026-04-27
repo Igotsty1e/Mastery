@@ -231,10 +231,17 @@ class LessonSummary {
   final String title;
   final String? description;
 
+  /// Number of exercises this lesson contains. Optional for
+  /// backwards-compat with older backends that don't emit the field;
+  /// the Flutter dashboard treats null as "unknown" and falls back to
+  /// the per-lesson `getLesson` fetch when it needs the exact count.
+  final int? totalExercises;
+
   const LessonSummary({
     required this.id,
     required this.title,
     this.description,
+    this.totalExercises,
   });
 
   factory LessonSummary.fromJson(Map<String, dynamic> j) {
@@ -252,6 +259,7 @@ class LessonSummary {
       id: id,
       title: title,
       description: j['description'] as String?,
+      totalExercises: (j['total_exercises'] as num?)?.toInt(),
     );
   }
 }

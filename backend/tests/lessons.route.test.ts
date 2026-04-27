@@ -24,12 +24,14 @@ describe('GET /lessons', () => {
         title: 'Verbs Followed by -ing',
         slug: 'verbs-followed-by-ing',
         order: 1,
+        total_exercises: 10,
       },
       {
         id: LESSON_ID_2,
         title: 'Present Perfect: Continuous vs Simple',
         slug: 'present-perfect-continuous-vs-simple',
         order: 2,
+        total_exercises: 10,
       },
     ]);
   });
@@ -43,8 +45,10 @@ describe('GET /lessons', () => {
         title: expect.any(String),
         slug: expect.any(String),
         order: expect.any(Number),
+        total_exercises: expect.any(Number),
       });
-      expect(Object.keys(lesson).sort()).toEqual(['id', 'order', 'slug', 'title']);
+      expect(Object.keys(lesson).sort()).toEqual(
+          ['id', 'order', 'slug', 'title', 'total_exercises']);
       expect(lesson).not.toHaveProperty('lesson_id');
       expect(lesson).not.toHaveProperty('language');
       expect(lesson).not.toHaveProperty('level');

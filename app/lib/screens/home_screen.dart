@@ -27,6 +27,27 @@ import 'lesson_intro_screen.dart';
 import 'onboarding_arrival_ritual_screen.dart';
 import 'summary_screen.dart';
 
+/// One row of the curriculum the dashboard tracks. Built from
+/// `GET /lessons` (server order) plus the per-lesson completion count
+/// from `LocalProgressStore`. Rendered into the next-lesson hero +
+/// the current-unit block.
+class _CurriculumEntry {
+  final String id;
+  final String title;
+  final int totalExercises;
+  final int completedExercises;
+
+  const _CurriculumEntry({
+    required this.id,
+    required this.title,
+    required this.totalExercises,
+    required this.completedExercises,
+  });
+
+  bool get isDone =>
+      totalExercises > 0 && completedExercises >= totalExercises;
+}
+
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
@@ -38,15 +59,45 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _resolving = true;
   bool _showOnboarding = true;
   bool _isLoadingDashboard = false;
-  int _completedExercises = 0;
-  int _totalExercises = 10;
-  String _lessonTitle = 'Verbs Followed by -ing';
   String _selectedLevel = 'B2';
+
+  /// Curriculum the dashboard renders. Built from the `/lessons` list
+  /// in `_loadDashboard`. Empty until the network call resolves; the
+  /// fallback path keeps a stub so the dashboard never goes blank.
+  List<_CurriculumEntry> _curriculum = const [];
 
   /// Wave 4 §11.3 review-due teaser. Loaded on dashboard mount and
   /// after every dashboard reload so a freshly-finished session shows
   /// up here when its due time arrives.
   List<ReviewSchedule> _dueReviews = const [];
+
+  /// Lesson the learner should land on — prefers a lesson they have
+  /// already started over the manifest-order first-unfinished. Without
+  /// this preference, an existing learner who had partial progress on
+  /// the previous default lesson would get rewound to lesson 01 the
+  /// first time the curriculum-aware dashboard ships.
+  _CurriculumEntry? get _currentLesson {
+    // Prefer an in-progress lesson (started but not finished).
+    for (final e in _curriculum) {
+      if (!e.isDone && e.completedExercises > 0) return e;
+    }
+    // Else the first un-started lesson in manifest order.
+    for (final e in _curriculum) {
+      if (!e.isDone) return e;
+    }
+    return null;
+  }
+
+  /// Lesson directly after the current one in the curriculum order, or
+  /// `null` if the current lesson is the last one. Drives the
+  /// "Coming next: …" hero copy when the current lesson is finished.
+  _CurriculumEntry? get _nextAfterCurrent {
+    final cur = _currentLesson;
+    if (cur == null) return null;
+    final i = _curriculum.indexWhere((e) => e.id == cur.id);
+    if (i < 0 || i >= _curriculum.length - 1) return null;
+    return _curriculum[i + 1];
+  }
 
   @override
   void initState() {
@@ -85,47 +136,79 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_isLoadingDashboard) return;
     setState(() => _isLoadingDashboard = true);
 
-    // Wave 4 review-due lookup runs in parallel with the lesson fetch
-    // so the dashboard isn't gated on the network for engine state.
+    // Wave 4 review-due lookup runs in parallel with the lesson list
+    // fetch so the dashboard isn't gated on the network for engine state.
     final dueFuture = ReviewScheduler.dueAt(DateTime.now().toUtc());
+    final api = context.read<ApiClient>();
 
     try {
-      final lesson =
-          await context.read<ApiClient>().getLesson(AppConfig.defaultLessonId);
-      final completed =
-          await LocalProgressStore.getCompletedExercises(lesson.lessonId);
+      final summaries = await api.fetchLessons();
+      final entries = <_CurriculumEntry>[];
+      for (final s in summaries) {
+        final total = s.totalExercises ??
+            // Older backend that doesn't yet emit total_exercises:
+            // fall back to the per-lesson detail fetch so we still
+            // know the right denominator. After the Wave-list backend
+            // ships everywhere this branch is dead.
+            (await api.getLesson(s.id)).exercises.length;
+        final completed = await LocalProgressStore.getCompletedExercises(s.id);
+        entries.add(_CurriculumEntry(
+          id: s.id,
+          title: s.title,
+          totalExercises: total,
+          completedExercises: completed.clamp(0, total),
+        ));
+      }
       final due = await dueFuture;
       if (!mounted) return;
       setState(() {
-        _selectedLevel = lesson.level;
-        _lessonTitle = lesson.title;
-        _totalExercises = lesson.exercises.length;
-        _completedExercises = completed.clamp(0, lesson.exercises.length);
+        _curriculum = entries;
         _dueReviews = due;
         _isLoadingDashboard = false;
       });
+      // Level lookup is best-effort — a transient detail-endpoint
+      // failure must not wipe the multi-lesson curriculum we just
+      // loaded successfully. Default `_selectedLevel` ("B2") covers
+      // every shipped lesson today; mixed-level units pick up their
+      // own level when this resolves.
+      if (entries.isNotEmpty) {
+        try {
+          final first = await api.getLesson(entries.first.id);
+          if (!mounted) return;
+          setState(() => _selectedLevel = first.level);
+        } catch (_) {
+          // keep the existing default
+        }
+      }
     } catch (_) {
-      if (!mounted) return;
+      // Network unavailable: fall back to whatever local progress we
+      // have for the legacy default lesson so the dashboard still
+      // renders something sensible. The API will rebuild the list on
+      // the next reload.
       final localCompleted = await LocalProgressStore.getCompletedExercises(
         AppConfig.defaultLessonId,
       );
       final due = await dueFuture;
       if (!mounted) return;
       setState(() {
-        _selectedLevel = 'B2';
-        _totalExercises = 10;
-        _completedExercises = localCompleted.clamp(0, 10);
+        _curriculum = [
+          _CurriculumEntry(
+            id: AppConfig.defaultLessonId,
+            title: 'Lesson',
+            totalExercises: 10,
+            completedExercises: localCompleted.clamp(0, 10),
+          ),
+        ];
         _dueReviews = due;
         _isLoadingDashboard = false;
       });
     }
   }
 
-  Future<void> _startLesson() async {
+  Future<void> _startLesson(String lessonId) async {
     await Navigator.of(context).push(
       MasteryFadeRoute(
-        builder: (_) =>
-            const LessonIntroScreen(lessonId: AppConfig.defaultLessonId),
+        builder: (_) => LessonIntroScreen(lessonId: lessonId),
       ),
     );
     if (!mounted) return;
@@ -190,13 +273,34 @@ class _HomeScreenState extends State<HomeScreen> {
               const _DashboardHeader(),
               const SizedBox(height: 18),
               _NextLessonHero(
-                lessonTitle: _lessonTitle,
+                // When at least one lesson is unfinished, the hero
+                // points at it. When everything shipped is done, the
+                // hero falls back to the "Coming next" placeholder
+                // copy with `lessonHasNext: false` and a disabled CTA.
+                lessonTitle: (_currentLesson ??
+                        (_curriculum.isNotEmpty
+                            ? _curriculum.last
+                            : null))
+                    ?.title ??
+                    'Lesson',
                 level: _selectedLevel,
-                totalExercises: _totalExercises,
-                completedExercises: _completedExercises,
+                totalExercises: _currentLesson?.totalExercises ??
+                    (_curriculum.isNotEmpty
+                        ? _curriculum.last.totalExercises
+                        : 10),
+                completedExercises: _currentLesson?.completedExercises ??
+                    (_curriculum.isNotEmpty
+                        ? _curriculum.last.completedExercises
+                        : 0),
                 isLoading: _isLoadingDashboard,
-                lessonHasNext: false,
-                onStart: _startLesson,
+                // `lessonHasNext` controls the "Coming next: …" hero
+                // copy. True when the current lesson is finished AND
+                // another lesson exists after it; the CTA in that
+                // state should advance to the next lesson.
+                lessonHasNext: _nextAfterCurrent != null,
+                onStart: _currentLesson == null
+                    ? null
+                    : () => _startLesson(_currentLesson!.id),
               ),
               if (lastRecord != null) ...[
                 const SizedBox(height: 22),
@@ -216,9 +320,8 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
               const SizedBox(height: 22),
               _CurrentUnitBlock(
-                lessonTitle: _lessonTitle,
-                completed: _completedExercises >= _totalExercises &&
-                    _totalExercises > 0,
+                curriculum: _curriculum,
+                currentLessonId: _currentLesson?.id,
               ),
               const SizedBox(height: 22),
               const _PremiumBlock(),
@@ -475,12 +578,15 @@ class _NextLessonHero extends StatelessWidget {
   final int completedExercises;
   final bool isLoading;
 
-  /// True only when there is a real next lesson to launch after the current
-  /// one is finished. The MVP backend ships a single lesson, so this stays
-  /// `false` until more lessons land (`codex/b2-content` worktree). See
-  /// `docs/plans/roadmap.md` "Multi-lesson units".
+  /// True when there is a real next lesson to launch after the current
+  /// one is finished. The dashboard now reads this from the live
+  /// `/lessons` curriculum, so the CTA enables itself the moment the
+  /// backend ships another lesson — no client redeploy needed.
   final bool lessonHasNext;
-  final VoidCallback onStart;
+
+  /// Null when no shipped lesson is ready to start (full curriculum
+  /// finished). The CTA becomes inactive in that branch.
+  final VoidCallback? onStart;
 
   const _NextLessonHero({
     required this.lessonTitle,
@@ -519,7 +625,8 @@ class _NextLessonHero extends StatelessWidget {
     final progress = totalExercises == 0
         ? 0.0
         : (completedExercises / totalExercises).clamp(0.0, 1.0);
-    final canStart = !isLoading && (!_isFinished || lessonHasNext);
+    final canStart =
+        !isLoading && onStart != null && (!_isFinished || lessonHasNext);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -552,7 +659,12 @@ class _NextLessonHero extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           Text(
-            _isFinished ? 'Coming next: Lesson 02' : lessonTitle,
+            // _isFinished only fires here when the entire shipped
+            // curriculum is done — `_currentLesson` is null and the
+            // hero fell back to the last lesson. The copy stays
+            // agnostic about the lesson number because we have N
+            // lessons now, not exactly two.
+            _isFinished ? 'Coming next: more on the way' : lessonTitle,
             style: TextStyle(
               fontFamily: 'Fraunces',
               fontSize: 28,
@@ -993,17 +1105,50 @@ class _ScorePill extends StatelessWidget {
 // ─────────────────────────────────────────────────────────────────────────
 
 class _CurrentUnitBlock extends StatelessWidget {
-  final String lessonTitle;
-  final bool completed;
+  /// Curriculum to render — one row per lesson, in `/lessons` order.
+  final List<_CurriculumEntry> curriculum;
+
+  /// `id` of the lesson the hero is currently pointing at (the first
+  /// un-finished). The matching row gets the `current` badge; rows
+  /// before it are `done`, rows after are `locked`.
+  final String? currentLessonId;
 
   const _CurrentUnitBlock({
-    required this.lessonTitle,
-    required this.completed,
+    required this.curriculum,
+    required this.currentLessonId,
   });
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.masteryTokens;
+    final rows = <Widget>[];
+    var currentReached = false;
+    for (var i = 0; i < curriculum.length; i++) {
+      final entry = curriculum[i];
+      final isCurrent =
+          currentLessonId != null && entry.id == currentLessonId;
+      final state = entry.isDone
+          ? StatusBadgeVariant.done
+          : isCurrent
+              ? StatusBadgeVariant.current
+              : currentReached
+                  ? StatusBadgeVariant.locked
+                  : StatusBadgeVariant.current;
+      final meta = entry.isDone
+          ? 'Completed · ${entry.totalExercises} exercises'
+          : isCurrent
+              ? 'Current lesson · ${entry.totalExercises} exercises'
+              : currentReached
+                  ? 'Coming up · ${entry.totalExercises} exercises'
+                  : '${entry.totalExercises} exercises';
+      if (isCurrent) currentReached = true;
+      rows.add(_UnitRow(
+        ordinal: (i + 1).toString().padLeft(2, '0'),
+        title: entry.title,
+        meta: meta,
+        state: state,
+      ));
+    }
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1057,20 +1202,15 @@ class _CurrentUnitBlock extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              _UnitRow(
-                ordinal: '01',
-                title: lessonTitle,
-                meta:
-                    completed ? 'Completed · 10 exercises' : 'Current lesson · 10 exercises',
-                state:
-                    completed ? StatusBadgeVariant.done : StatusBadgeVariant.current,
-              ),
-              _UnitRow(
-                ordinal: '02',
-                title: 'Verbs Followed by to + infinitive',
-                meta: 'Coming soon',
-                state: StatusBadgeVariant.locked,
-              ),
+              if (rows.isEmpty)
+                _UnitRow(
+                  ordinal: '01',
+                  title: 'Lessons loading…',
+                  meta: '—',
+                  state: StatusBadgeVariant.locked,
+                )
+              else
+                ...rows,
             ],
           ),
         ),

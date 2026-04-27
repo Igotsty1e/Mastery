@@ -57,6 +57,7 @@ export function makeLessonsRouter(ai: AiProvider): Router {
         title: lesson.title,
         slug: slugifyLessonTitle(lesson.title),
         order: index + 1,
+        total_exercises: lesson.exercises.length,
       }))
     );
   });
