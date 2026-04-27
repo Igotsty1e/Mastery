@@ -917,7 +917,59 @@ Returns every non-graduated skill whose `due_at <= at`, sorted oldest-first. `at
 
 **Response 400:** `{ "error": "invalid_at" }` (unparseable ISO timestamp).
 
+### POST /me/state/bulk-import
+
+Wave 7.4 part 2A — first-sign-in migration of device-scoped learner state. Auth required. Idempotent: any `(user, skill)` row that already exists on the server is preserved and reported back as skipped. Designed to be safe to call again on a follow-up sign-in from a different device.
+
+**Request body** (max 500 entries per array):
+```json
+{
+  "learner_skills": [
+    {
+      "skill_id": "g.tense.past_simple",
+      "mastery_score": 72,
+      "last_attempt_at": "2026-04-26T14:30:00.000Z",
+      "evidence_summary": { "weak": 0, "medium": 2, "strong": 4, "strongest": 1 },
+      "recent_errors": ["wrong_form"],
+      "production_gate_cleared": true,
+      "gate_cleared_at_version": 3
+    }
+  ],
+  "review_schedules": [
+    {
+      "skill_id": "g.tense.past_simple",
+      "step": 2,
+      "due_at": "2026-04-30T00:00:00.000Z",
+      "last_outcome_at": "2026-04-27T14:30:00.000Z",
+      "last_outcome_mistakes": 1,
+      "graduated": false
+    }
+  ]
+}
+```
+
+**Response 200:**
+```json
+{
+  "imported_skill_ids": ["g.tense.past_simple"],
+  "skipped_skill_ids": [],
+  "imported_schedule_skill_ids": ["g.tense.past_simple"],
+  "skipped_schedule_skill_ids": []
+}
+```
+
+`imported_*` are the IDs the server adopted; `skipped_*` are IDs where the server already had a row (the inbound payload was discarded for those skills only — others still imported).
+
+**Response 400:** `{ "error": "invalid_payload" }` for any Zod validation failure (oversized array, malformed timestamp, unknown evidence tier, etc.).
+
+**Audit:** writes one `learner_state.bulk_import` event per call with counts only (`imported_skills`, `skipped_skills`, `imported_schedules`, `skipped_schedules`) — never the raw payload. Used for "I lost my progress" investigations.
+
 ### Wave 7.3 status (2026-04-27)
 
 - **Shipped**: `learner_skills`, `learner_review_schedule` tables (migration `0005_learner_state`); the six engine state endpoints above. All auth-protected. 18 new test cases in `tests/learner-state.test.ts` covering recordAttempt + status derivation + cadence + dueAt + user isolation + §12.3 invalidation.
-- **Wave 7.4 / not yet shipped**: Flutter `LearnerSkillStore` + `ReviewScheduler` rewritten as thin API clients against these endpoints. Apple Sign In gate before onboarding. Render Postgres provisioning so the persisted state survives redeploys.
+
+### Wave 7.4 part 2A status (2026-04-26)
+
+- **Shipped (server)**: `POST /me/state/bulk-import` with idempotent skip-if-server-row-exists semantics, full Zod validation, audit log of counts only, max 500 entries per array. 6 new test cases in `tests/learner-state.test.ts` covering auth, fresh import, idempotent skip, schedule-clobber prevention, oversized rejection, malformed payload rejection.
+- **Shipped (client)**: `SignInScreen` (Apple Sign-in stub + Skip), `AuthClient` token storage, `HomeScreen` routes through sign-in gate when `MASTERY_AUTH_ENABLED=true`. Default builds remain dormant (`MASTERY_AUTH_ENABLED=false`).
+- **Wave 7.4 part 2B / not yet shipped**: Dual-mode `LearnerSkillStore` + `ReviewScheduler` (local + remote backends), bulk-migration trigger on signed-in transition, enabling `MASTERY_AUTH_ENABLED=true` in the prod build script.

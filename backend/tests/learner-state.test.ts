@@ -425,3 +425,192 @@ describe('Wave 7.3 — GET /me/reviews/due', () => {
     expect((r.json as any).reviews).toEqual([]);
   });
 });
+
+describe('Wave 7.4 part 2.4 — POST /me/state/bulk-import', () => {
+  it('rejects unauthenticated callers with 401', async () => {
+    const res = await inject(h.app, {
+      method: 'POST',
+      path: '/me/state/bulk-import',
+      json: { learner_skills: [], review_schedules: [] },
+    });
+    expect(res.status).toBe(401);
+  });
+
+  it('imports a fresh device payload into empty server state', async () => {
+    const { headers } = await login('bulk-fresh');
+    const lastAt = new Date('2026-04-26T12:00:00.000Z').toISOString();
+    const dueAt = new Date('2026-04-28T12:00:00.000Z').toISOString();
+    const res = await inject(h.app, {
+      method: 'POST',
+      path: '/me/state/bulk-import',
+      headers,
+      json: {
+        learner_skills: [
+          {
+            skill_id: SKILL_A,
+            mastery_score: 35,
+            last_attempt_at: lastAt,
+            evidence_summary: { medium: 3, weak: 1 },
+            recent_errors: ['contrast_error', 'form_error'],
+            production_gate_cleared: false,
+          },
+          {
+            skill_id: SKILL_B,
+            mastery_score: 80,
+            last_attempt_at: lastAt,
+            evidence_summary: { strong: 4, strongest: 1 },
+            production_gate_cleared: true,
+            gate_cleared_at_version: 1,
+          },
+        ],
+        review_schedules: [
+          {
+            skill_id: SKILL_A,
+            step: 2,
+            due_at: dueAt,
+            last_outcome_at: lastAt,
+            last_outcome_mistakes: 0,
+          },
+        ],
+      },
+    });
+    expect(res.status).toBe(200);
+    const body = res.json as any;
+    expect(body.imported_skill_ids.sort()).toEqual([SKILL_A, SKILL_B].sort());
+    expect(body.skipped_skill_ids).toEqual([]);
+    expect(body.imported_schedule_skill_ids).toEqual([SKILL_A]);
+
+    // Verify server state reflects the import.
+    const all = await inject(h.app, {
+      method: 'GET',
+      path: '/me/skills',
+      headers,
+    });
+    const skillA = ((all.json as any).skills as any[]).find(
+      (s) => s.skill_id === SKILL_A
+    );
+    expect(skillA.mastery_score).toBe(35);
+    expect(skillA.evidence_summary.medium).toBe(3);
+    expect(skillA.recent_errors).toEqual(['contrast_error', 'form_error']);
+
+    const skillB = ((all.json as any).skills as any[]).find(
+      (s) => s.skill_id === SKILL_B
+    );
+    expect(skillB.production_gate_cleared).toBe(true);
+    expect(skillB.gate_cleared_at_version).toBe(1);
+  });
+
+  it('skips skills already present on the server (idempotent)', async () => {
+    const { headers } = await login('bulk-idempotent');
+    // Pre-seed the server with one attempt on SKILL_A.
+    await inject(h.app, {
+      method: 'POST',
+      path: `/me/skills/${SKILL_A}/attempts`,
+      headers,
+      json: { evidence_tier: 'strong', correct: true },
+    });
+    // Now try to bulk-import a different (lower) state for SKILL_A.
+    const res = await inject(h.app, {
+      method: 'POST',
+      path: '/me/state/bulk-import',
+      headers,
+      json: {
+        learner_skills: [
+          {
+            skill_id: SKILL_A,
+            mastery_score: 5,
+            evidence_summary: { weak: 1 },
+          },
+          {
+            skill_id: SKILL_B,
+            mastery_score: 20,
+            evidence_summary: { medium: 2 },
+          },
+        ],
+        review_schedules: [],
+      },
+    });
+    const body = res.json as any;
+    expect(body.skipped_skill_ids).toEqual([SKILL_A]);
+    expect(body.imported_skill_ids).toEqual([SKILL_B]);
+
+    // Verify SKILL_A still has the server's higher state.
+    const a = await inject(h.app, {
+      method: 'GET',
+      path: `/me/skills/${SKILL_A}`,
+      headers,
+    });
+    expect((a.json as any).mastery_score).toBe(15); // strong correct = +15
+  });
+
+  it('skipped schedules do not clobber server cadence', async () => {
+    const { headers } = await login('bulk-sched-skip');
+    // Pre-seed cadence for SKILL_A at step 1.
+    await inject(h.app, {
+      method: 'POST',
+      path: `/me/skills/${SKILL_A}/review-cadence`,
+      headers,
+      json: { mistakes_in_session: 0 },
+    });
+    const oldDue = new Date('2026-01-01T00:00:00.000Z').toISOString();
+    const res = await inject(h.app, {
+      method: 'POST',
+      path: '/me/state/bulk-import',
+      headers,
+      json: {
+        learner_skills: [],
+        review_schedules: [
+          {
+            skill_id: SKILL_A,
+            step: 5,
+            due_at: oldDue,
+            last_outcome_at: oldDue,
+            last_outcome_mistakes: 0,
+            graduated: true,
+          },
+        ],
+      },
+    });
+    expect((res.json as any).skipped_schedule_skill_ids).toEqual([SKILL_A]);
+    const sched = await inject(h.app, {
+      method: 'GET',
+      path: `/me/skills/${SKILL_A}/review-cadence`,
+      headers,
+    });
+    // Server's pre-existing step=1 entry preserved, NOT clobbered by
+    // the inbound step=5 graduated entry.
+    expect((sched.json as any).step).toBe(1);
+    expect((sched.json as any).graduated).toBe(false);
+  });
+
+  it('rejects oversized payloads (>500 entries)', async () => {
+    const { headers } = await login('bulk-big');
+    const skills = Array.from({ length: 501 }, (_, i) => ({
+      skill_id: `skill_${i}`,
+      mastery_score: 0,
+    }));
+    const res = await inject(h.app, {
+      method: 'POST',
+      path: '/me/state/bulk-import',
+      headers,
+      json: { learner_skills: skills, review_schedules: [] },
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects malformed entries', async () => {
+    const { headers } = await login('bulk-bad');
+    const res = await inject(h.app, {
+      method: 'POST',
+      path: '/me/state/bulk-import',
+      headers,
+      json: {
+        learner_skills: [
+          { skill_id: 'has spaces', mastery_score: 50 },
+        ],
+        review_schedules: [],
+      },
+    });
+    expect(res.status).toBe(400);
+  });
+});

@@ -1,13 +1,16 @@
 # Wave 7 — Auth + Server-Side Engine State
 
-> Status (2026-04-27): **7.1 + 7.2 + 7.3 shipped on `main`.**
-> Wave 7.4 (Flutter client wire-up) is the only remaining piece. The
-> `codex/auth-backend-foundation` branch was rebased + merged via PR #13;
-> the source branch was deleted afterwards because the same content now
-> lives on main. Wave 7.1.1 (PR #14) closed four Codex deferred bugs in
-> the lesson-sessions endpoints. Wave 7.3 (PR #15) shipped the engine
-> state migration (new `learner_skills` + `learner_review_schedule`
-> tables and six `/me/skills/*` + `/me/reviews/due` endpoints).
+> Status (2026-04-26): **7.1 + 7.2 + 7.3 + 7.4 part 1 + 7.4 part 2A shipped on `main`.**
+> Wave 7.4 part 2B (dual-mode storage refactor + bulk-migration trigger
+> + flipping `MASTERY_AUTH_ENABLED=true` in the prod build) is the only
+> remaining piece. The `codex/auth-backend-foundation` branch was rebased
+> + merged via PR #13; the source branch was deleted afterwards. Wave
+> 7.1.1 (PR #14) closed four Codex deferred bugs in the lesson-sessions
+> endpoints. Wave 7.3 (PR #15) shipped the engine state migration. Wave
+> 7.4 part 1 shipped the AuthClient infra (no UI gate). Wave 7.4 part 2A
+> shipped the sign-in surface (`SignInScreen`, auth gate routing in
+> `HomeScreen`) + `POST /me/state/bulk-import` endpoint, all dormant in
+> default builds because `MASTERY_AUTH_ENABLED` defaults to false.
 
 ## Why this is the next wave
 
@@ -183,7 +186,9 @@ The shipped device-scoped state needs to either be:
 2. **Wave 7.1 — auth surface only.** Apple stub + refresh + `/me` + `/me/profile` + hard-delete. No engine state yet. Flutter not wired (just like the foundation branch's Wave 1).
 3. **Wave 7.2 — lesson sessions.** Server-owned `lesson_sessions` + `exercise_attempts` + `lesson_progress`. Migrate the legacy `/lessons/:id/answers` and `/lessons/:id/result` routes to the new auth-protected paths. Flutter still not wired here either; legacy routes stay alongside until 7.3.
 4. **Wave 7.3 — engine state migration.** New tables `learner_skills` and `learner_review_schedule` + `/me/skills/...` + `/me/reviews/due` endpoints. Flutter `LearnerSkillStore` and `ReviewScheduler` rewritten as thin API clients. Discard the SharedPreferences keys (option A above).
-5. **Wave 7.4 — Flutter auth flow.** Apple Sign In gate before onboarding. `AuthClient` with refresh-on-401. Drop the legacy unauthenticated routes from the backend.
+5. **Wave 7.4 part 1 — AuthClient infra.** `AuthTokens` + `AuthStorage` (flutter_secure_storage 9.2.2) + `AuthClient` with refresh-on-401 retry-once. No UI gate yet. Build flag `MASTERY_AUTH_ENABLED` defaults to false.
+6. **Wave 7.4 part 2A — Sign-in surface + bulk-import endpoint.** `SignInScreen` (Apple stub + Skip), `HomeScreen` routes through it when `authEnabled && no token`, server `POST /me/state/bulk-import` with idempotent skip-if-server-row-exists semantics. `APPLE_STUB_ENABLED=1` set on Render. All dormant in default builds.
+7. **Wave 7.4 part 2B — Dual-mode storage + migration trigger.** `LearnerSkillStore` + `ReviewScheduler` abstract over local + remote backends. On signed-in transition, push the local snapshot through `/me/state/bulk-import` then switch to the remote backend. Flip `MASTERY_AUTH_ENABLED=true` in `scripts/render-build-web.sh`. Drop the legacy unauthenticated routes from the backend.
 
 ## Out of scope (explicit)
 

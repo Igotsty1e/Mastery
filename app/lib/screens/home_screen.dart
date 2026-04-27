@@ -15,6 +15,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../api/api_client.dart';
+import '../auth/auth_client.dart';
 import '../config.dart';
 import '../learner/review_scheduler.dart';
 import '../progress/local_progress_store.dart';
@@ -25,6 +26,7 @@ import '../widgets/mastery_widgets.dart';
 import '../widgets/review_due_section.dart';
 import 'lesson_intro_screen.dart';
 import 'onboarding_arrival_ritual_screen.dart';
+import 'sign_in_screen.dart';
 import 'summary_screen.dart';
 
 /// One row of the curriculum the dashboard tracks. Built from
@@ -58,8 +60,14 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   bool _resolving = true;
   bool _showOnboarding = true;
+  bool _showSignIn = false;
   bool _isLoadingDashboard = false;
   String _selectedLevel = 'B2';
+
+  /// Created lazily on first launch when `AppConfig.authEnabled` is true.
+  /// Null when the auth gate is off — the rest of the screen falls back
+  /// to the legacy unauthenticated flow.
+  AuthClient? _authClient;
 
   /// Curriculum the dashboard renders. Built from the `/lessons` list
   /// in `_loadDashboard`. Empty until the network call resolves; the
@@ -108,12 +116,47 @@ class _HomeScreenState extends State<HomeScreen> {
   // First-launch detection per docs/plans/arrival-ritual.md: if the learner
   // has already completed the Arrival Ritual onboarding, drop them into the
   // dashboard. Otherwise show the onboarding flow.
+  //
+  // Wave 7.4 part 2: when `AppConfig.authEnabled` is true, the sign-in gate
+  // runs first. Returning users with a valid refresh-token in secure
+  // storage bypass the gate transparently. Skip enters guest mode (existing
+  // device-scoped state, no server session) — onboarding still runs once
+  // for new installs regardless of which auth path was taken.
   Future<void> _resolveInitialView() async {
     final seen = await LocalProgressStore.hasSeenOnboarding();
+    if (AppConfig.authEnabled) {
+      _authClient ??= AuthClient(baseUrl: AppConfig.apiBaseUrl);
+      final tokens = await _authClient!.hydrateFromStorage();
+      if (!mounted) return;
+      if (tokens == null) {
+        setState(() {
+          _showSignIn = true;
+          _showOnboarding = !seen;
+          _resolving = false;
+        });
+        return;
+      }
+    }
     if (!mounted) return;
     setState(() {
       _showOnboarding = !seen;
       _resolving = false;
+    });
+    if (seen) {
+      await _loadDashboard();
+    }
+  }
+
+  /// Wave 7.4 part 2.3 — handles the SignInScreen outcome. After
+  /// signed-in we will (in part 2.4) bulk-upload device state to the
+  /// server. For now the screen simply advances to onboarding-or-dashboard
+  /// per the existing `seen` flag.
+  Future<void> _onSignInResolved(SignInOutcome outcome) async {
+    final seen = await LocalProgressStore.hasSeenOnboarding();
+    if (!mounted) return;
+    setState(() {
+      _showSignIn = false;
+      _showOnboarding = !seen;
     });
     if (seen) {
       await _loadDashboard();
@@ -240,6 +283,15 @@ class _HomeScreenState extends State<HomeScreen> {
       return Scaffold(
         backgroundColor: context.masteryTokens.bgApp,
         body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+    // Wave 7.4 part 2.3 — sign-in gate runs before onboarding when
+    // AppConfig.authEnabled is on and the device has no valid refresh
+    // token. Bypassed for the legacy unauthenticated build.
+    if (_showSignIn && _authClient != null) {
+      return SignInScreen(
+        authClient: _authClient!,
+        onResolved: _onSignInResolved,
       );
     }
     if (_showOnboarding) {

@@ -361,6 +361,132 @@ export async function getReviewSchedule(
   return rowToSchedule(rows[0]);
 }
 
+export interface BulkImportInput {
+  /// Inbound learner_skills payload from a device that's about to clear
+  /// its local LearnerSkillStore. Each entry is a snapshot of the
+  /// device's record at a moment in time. Server keeps its own row for
+  /// the (user, skill) when one already exists — the migration is
+  /// idempotent and never clobbers server progress.
+  learnerSkills: Array<{
+    skillId: string;
+    masteryScore: number;
+    lastAttemptAt?: Date;
+    evidenceSummary?: Partial<Record<EvidenceTier, number>>;
+    recentErrors?: TargetError[];
+    productionGateCleared?: boolean;
+    gateClearedAtVersion?: number;
+  }>;
+  reviewSchedules: Array<{
+    skillId: string;
+    step: number;
+    dueAt: Date;
+    lastOutcomeAt: Date;
+    lastOutcomeMistakes: number;
+    graduated?: boolean;
+  }>;
+}
+
+export interface BulkImportResult {
+  /// Skill IDs from the inbound payload that the server adopted (no
+  /// pre-existing row).
+  importedSkills: string[];
+  /// Skill IDs the server already had — skipped to avoid clobbering
+  /// progress accumulated by other devices on the same account.
+  skippedSkills: string[];
+  importedSchedules: string[];
+  skippedSchedules: string[];
+}
+
+/// Wave 7.4 part 2.4 — bulk migration from device-scoped state on first
+/// sign-in. Designed to be safe to call multiple times: if the user has
+/// already signed in on another device, that device's progress wins and
+/// the inbound payload is discarded for the conflicting skill.
+export async function bulkImportLearnerState(
+  db: AppDatabase,
+  userId: string,
+  input: BulkImportInput
+): Promise<BulkImportResult> {
+  const result: BulkImportResult = {
+    importedSkills: [],
+    skippedSkills: [],
+    importedSchedules: [],
+    skippedSchedules: [],
+  };
+
+  for (const skill of input.learnerSkills) {
+    const existing = await db
+      .select()
+      .from(learnerSkills)
+      .where(
+        and(
+          eq(learnerSkills.userId, userId),
+          eq(learnerSkills.skillId, skill.skillId)
+        )
+      )
+      .limit(1);
+    if (existing.length > 0) {
+      result.skippedSkills.push(skill.skillId);
+      continue;
+    }
+    // Normalise the inbound evidence summary so missing tiers default
+    // to 0 rather than undefined.
+    const ev: Record<EvidenceTier, number> = {
+      weak: 0,
+      medium: 0,
+      strong: 0,
+      strongest: 0,
+    };
+    if (skill.evidenceSummary) {
+      for (const tier of EVIDENCE_TIERS) {
+        const v = skill.evidenceSummary[tier];
+        if (typeof v === 'number') ev[tier] = v;
+      }
+    }
+    await db.insert(learnerSkills).values({
+      userId,
+      skillId: skill.skillId,
+      masteryScore: Math.max(0, Math.min(100, skill.masteryScore)),
+      lastAttemptAt: skill.lastAttemptAt ?? null,
+      evidenceSummary: ev as Record<string, number>,
+      recentErrors: (skill.recentErrors ?? []) as string[],
+      productionGateCleared: skill.productionGateCleared ?? false,
+      gateClearedAtVersion: skill.gateClearedAtVersion ?? null,
+      updatedAt: new Date(),
+    });
+    result.importedSkills.push(skill.skillId);
+  }
+
+  for (const sched of input.reviewSchedules) {
+    const existing = await db
+      .select()
+      .from(learnerReviewSchedule)
+      .where(
+        and(
+          eq(learnerReviewSchedule.userId, userId),
+          eq(learnerReviewSchedule.skillId, sched.skillId)
+        )
+      )
+      .limit(1);
+    if (existing.length > 0) {
+      result.skippedSchedules.push(sched.skillId);
+      continue;
+    }
+    await db.insert(learnerReviewSchedule).values({
+      userId,
+      skillId: sched.skillId,
+      step: sched.step,
+      dueAt: sched.dueAt,
+      lastOutcomeAt: sched.lastOutcomeAt,
+      lastOutcomeMistakes: sched.lastOutcomeMistakes,
+      graduated: sched.graduated ?? false,
+      updatedAt: new Date(),
+    });
+    result.importedSchedules.push(sched.skillId);
+  }
+
+  return result;
+}
+
 export async function listDueReviews(
   db: AppDatabase,
   userId: string,

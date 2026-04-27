@@ -3,6 +3,7 @@ import { z } from 'zod';
 import type { AppDatabase } from '../db/client';
 import { requireAuth, type AuthedRequest } from '../auth/middleware';
 import {
+  bulkImportLearnerState,
   deriveStatus,
   getReviewSchedule,
   getSkillRecord,
@@ -11,6 +12,7 @@ import {
   recordAttempt,
   recordSessionEnd,
 } from './service';
+import { logAuditEvent } from '../auth/events';
 import {
   EVIDENCE_TIERS,
   TARGET_ERROR_CODES,
@@ -30,6 +32,30 @@ const RecordAttemptSchema = z.object({
 
 const RecordCadenceSchema = z.object({
   mistakes_in_session: z.number().int().min(0).max(1000),
+});
+
+const BulkImportSkillSchema = z.object({
+  skill_id: SkillIdSchema,
+  mastery_score: z.number().int().min(0).max(100),
+  last_attempt_at: z.string().datetime().optional(),
+  evidence_summary: z.record(z.enum(['weak', 'medium', 'strong', 'strongest']), z.number().int().nonnegative()).optional(),
+  recent_errors: z.array(z.enum(TARGET_ERROR_CODES as [string, ...string[]])).optional(),
+  production_gate_cleared: z.boolean().optional(),
+  gate_cleared_at_version: z.number().int().nonnegative().optional(),
+});
+
+const BulkImportScheduleSchema = z.object({
+  skill_id: SkillIdSchema,
+  step: z.number().int().min(1).max(5),
+  due_at: z.string().datetime(),
+  last_outcome_at: z.string().datetime(),
+  last_outcome_mistakes: z.number().int().min(0).max(1000),
+  graduated: z.boolean().optional(),
+});
+
+const BulkImportSchema = z.object({
+  learner_skills: z.array(BulkImportSkillSchema).max(500),
+  review_schedules: z.array(BulkImportScheduleSchema).max(500),
 });
 
 function recordToDto(record: LearnerSkillRecord, now: Date) {
@@ -170,6 +196,64 @@ export function makeLearnerRouter(db: AppDatabase): Router {
       }
     }
   );
+
+  // Wave 7.4 part 2.4 — bulk migration from device-scoped state on
+  // first sign-in. Idempotent: already-present (user, skill) rows on
+  // the server are preserved; the response reports which skills were
+  // adopted vs skipped so the client knows what to clear locally.
+  router.post('/me/state/bulk-import', auth, async (req, res, next) => {
+    try {
+      const userId = (req as AuthedRequest).auth.userId;
+      const parsed = BulkImportSchema.safeParse(req.body);
+      if (!parsed.success) {
+        res.status(400).json({ error: 'invalid_payload' });
+        return;
+      }
+      const result = await bulkImportLearnerState(db, userId, {
+        learnerSkills: parsed.data.learner_skills.map((s) => ({
+          skillId: s.skill_id,
+          masteryScore: s.mastery_score,
+          lastAttemptAt: s.last_attempt_at ? new Date(s.last_attempt_at) : undefined,
+          evidenceSummary: s.evidence_summary as
+            | Partial<Record<'weak' | 'medium' | 'strong' | 'strongest', number>>
+            | undefined,
+          recentErrors: s.recent_errors as
+            | (typeof TARGET_ERROR_CODES)[number][]
+            | undefined,
+          productionGateCleared: s.production_gate_cleared,
+          gateClearedAtVersion: s.gate_cleared_at_version,
+        })),
+        reviewSchedules: parsed.data.review_schedules.map((r) => ({
+          skillId: r.skill_id,
+          step: r.step,
+          dueAt: new Date(r.due_at),
+          lastOutcomeAt: new Date(r.last_outcome_at),
+          lastOutcomeMistakes: r.last_outcome_mistakes,
+          graduated: r.graduated,
+        })),
+      });
+      // Audit so we can investigate any future "I lost my progress"
+      // report. Payload kept small — counts only, not the full payload.
+      await logAuditEvent(db, {
+        userId,
+        eventType: 'learner_state.bulk_import',
+        payload: {
+          imported_skills: result.importedSkills.length,
+          skipped_skills: result.skippedSkills.length,
+          imported_schedules: result.importedSchedules.length,
+          skipped_schedules: result.skippedSchedules.length,
+        },
+      });
+      res.json({
+        imported_skill_ids: result.importedSkills,
+        skipped_skill_ids: result.skippedSkills,
+        imported_schedule_skill_ids: result.importedSchedules,
+        skipped_schedule_skill_ids: result.skippedSchedules,
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
 
   router.get('/me/reviews/due', auth, async (req, res, next) => {
     try {
