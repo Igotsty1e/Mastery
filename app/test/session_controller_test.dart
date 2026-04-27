@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
-import 'package:http/testing.dart';
 import 'package:mastery/api/api_client.dart';
 import 'package:mastery/session/session_controller.dart';
 import 'package:mastery/session/session_state.dart';
@@ -11,6 +10,44 @@ import 'package:mastery/learner/review_scheduler.dart';
 import 'package:mastery/progress/local_progress_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
+
+import 'helpers/api_test_helpers.dart';
+
+// Wave 8 (legacy drop): every `submitAnswer` + `getResult` now goes
+// through the auth-protected `/lesson-sessions/...` endpoints. The
+// helper `mountAuthedApiClient` seeds the AuthClient's storage and
+// intercepts `/auth/refresh` so tests only need to mock the lesson
+// content, session-start, and the lesson-session sub-routes.
+ApiClient _authed(http.Response Function(http.Request req) handler) =>
+    mountAuthedApiClient(baseUrl: 'http://test', raw: handler);
+
+http.Response _routedDispatch(
+  http.Request req, {
+  Map<String, dynamic>? lesson,
+  Map<String, dynamic>? sessionStart,
+  http.Response Function(http.Request)? answer,
+  Map<String, dynamic>? complete,
+  Map<String, dynamic>? result,
+}) {
+  final p = req.url.path;
+  if (lesson != null && p.endsWith('/lessons/${lesson['lesson_id']}') &&
+      !p.contains('/sessions/')) {
+    return _jsonResponse(lesson);
+  }
+  if (p.endsWith('/sessions/start') && sessionStart != null) {
+    return _jsonResponse(sessionStart);
+  }
+  if (p.endsWith('/answers') && answer != null) {
+    return answer(req);
+  }
+  if (p.endsWith('/complete') && complete != null) {
+    return _jsonResponse(complete);
+  }
+  if (p.endsWith('/result') && result != null) {
+    return _jsonResponse(result);
+  }
+  return _jsonResponse({'error': 'unmocked', 'path': p}, status: 404);
+}
 
 // ── fixture helpers ──────────────────────────────────────────────────────────
 
@@ -150,9 +187,13 @@ void main() {
   // ── SessionController tests ─────────────────────────────────────────────────
 
   group('SessionController.loadLesson', () {
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+    });
+
     test('success → phase becomes ready, lesson is set', () async {
-      final client = MockClient((_) async => _jsonResponse(_lessonJson()));
-      final api = ApiClient(baseUrl: 'http://test', client: client);
+      final api = _authed((req) => _routedDispatch(req,
+          lesson: _lessonJson(), sessionStart: sessionStartDto(_lessonId)));
       final ctrl = SessionController(api);
 
       final phases = <SessionPhase>[];
@@ -165,8 +206,7 @@ void main() {
     });
 
     test('network failure → phase becomes error', () async {
-      final client = MockClient((_) async => throw Exception('connection refused'));
-      final api = ApiClient(baseUrl: 'http://test', client: client);
+      final api = _authed((_) => throw Exception('connection refused'));
       final ctrl = SessionController(api);
 
       await ctrl.loadLesson(_lessonId);
@@ -176,8 +216,8 @@ void main() {
     });
 
     test('non-200 response → phase becomes error', () async {
-      final client = MockClient((_) async => _jsonResponse({'error': 'lesson_not_found'}, status: 404));
-      final api = ApiClient(baseUrl: 'http://test', client: client);
+      final api = _authed(
+          (_) => _jsonResponse({'error': 'lesson_not_found'}, status: 404));
       final ctrl = SessionController(api);
 
       await ctrl.loadLesson(_lessonId);
@@ -192,13 +232,14 @@ void main() {
     });
 
     Future<SessionController> loadedController() async {
-      int call = 0;
-      final client = MockClient((_) async {
-        call++;
-        if (call == 1) return _jsonResponse(_lessonJson());
-        return _jsonResponse(_evaluateJson());
-      });
-      final api = ApiClient(baseUrl: 'http://test', client: client);
+      final api = _authed((req) => _routedDispatch(
+            req,
+            lesson: _lessonJson(),
+            sessionStart: sessionStartDto(_lessonId),
+            answer: (_) => _jsonResponse(_evaluateJson()),
+            complete: _resultJson(),
+            result: _resultJson(),
+          ));
       final ctrl = SessionController(api);
       await ctrl.loadLesson(_lessonId);
       return ctrl;
@@ -245,13 +286,14 @@ void main() {
         ],
       };
 
-      int call = 0;
-      final client = MockClient((_) async {
-        call++;
-        if (call == 1) return _jsonResponse(tagged);
-        return _jsonResponse(_evaluateJson());
-      });
-      final api = ApiClient(baseUrl: 'http://test', client: client);
+      final api = _authed((req) => _routedDispatch(
+            req,
+            lesson: tagged,
+            sessionStart: sessionStartDto(_lessonId),
+            answer: (_) => _jsonResponse(_evaluateJson()),
+            complete: _resultJson(),
+            result: _resultJson(),
+          ));
       final ctrl = SessionController(api);
       await ctrl.loadLesson(_lessonId);
       await ctrl.submitAnswer('is');
@@ -283,13 +325,42 @@ void main() {
       required Map<String, dynamic> lessonJson,
       required List<Map<String, dynamic>> evalJsonByCallOrder,
     }) async {
-      int call = 0;
-      final client = MockClient((_) async {
-        call++;
-        if (call == 1) return _jsonResponse(lessonJson);
-        return _jsonResponse(evalJsonByCallOrder[call - 2]);
+      // Wave 8: dispatch by exercise_id instead of call counter, since
+      // each loadLesson now triggers two requests (lesson content + the
+      // server-owned session-start) before any answer is submitted.
+      final byExerciseId = <String, Map<String, dynamic>>{};
+      for (final e in evalJsonByCallOrder) {
+        byExerciseId[e['exercise_id'] as String] = e;
+      }
+      int answerCallIdx = 0;
+      final api = _authed((req) {
+        final p = req.url.path;
+        if (p.endsWith('/sessions/start')) {
+          return _jsonResponse(sessionStartDto(lessonJson['lesson_id'] as String,
+              exerciseCount:
+                  (lessonJson['exercises'] as List).length));
+        }
+        if (p.endsWith('/answers')) {
+          final body = jsonDecode(req.body) as Map<String, dynamic>;
+          final exId = body['exercise_id'] as String;
+          final hit = byExerciseId[exId];
+          if (hit != null) return _jsonResponse(hit);
+          // Fall back to positional dispatch when an exercise_id is reused.
+          final fallback = evalJsonByCallOrder[answerCallIdx++];
+          return _jsonResponse(fallback);
+        }
+        if (p.endsWith('/complete') || p.endsWith('/result')) {
+          return _jsonResponse({
+            'lesson_id': lessonJson['lesson_id'],
+            'total_exercises':
+                (lessonJson['exercises'] as List).length,
+            'correct_count': 0,
+            'answers': const <Map<String, dynamic>>[],
+          });
+        }
+        // GET /lessons/:id (read-only public route).
+        return _jsonResponse(lessonJson);
       });
-      final api = ApiClient(baseUrl: 'http://test', client: client);
       final ctrl = SessionController(api);
       await ctrl.loadLesson(_lessonId);
       return ctrl;
@@ -507,31 +578,36 @@ void main() {
           {'exercise_id': 'b1', 'correct': true},
         ],
       };
-      int call = 0;
-      final client = MockClient((_) async {
-        call++;
-        if (call == 1) return _jsonResponse(lesson);
-        if (call == 2) {
-          return _jsonResponse({
-            'attempt_id': 'a1',
-            'exercise_id': 'a1',
-            'correct': true,
-            'evaluation_source': 'deterministic',
-            'canonical_answer': 'enjoying',
-          });
+      final answersByExId = <String, Map<String, dynamic>>{
+        'a1': {
+          'attempt_id': 'a1',
+          'exercise_id': 'a1',
+          'correct': true,
+          'evaluation_source': 'deterministic',
+          'canonical_answer': 'enjoying',
+        },
+        'b1': {
+          'attempt_id': 'b1',
+          'exercise_id': 'b1',
+          'correct': true,
+          'evaluation_source': 'deterministic',
+          'canonical_answer': 'have been',
+        },
+      };
+      final api = _authed((req) {
+        final p = req.url.path;
+        if (p.endsWith('/sessions/start')) {
+          return _jsonResponse(sessionStartDto(_lessonId, exerciseCount: 2));
         }
-        if (call == 3) {
-          return _jsonResponse({
-            'attempt_id': 'b1',
-            'exercise_id': 'b1',
-            'correct': true,
-            'evaluation_source': 'deterministic',
-            'canonical_answer': 'have been',
-          });
+        if (p.endsWith('/answers')) {
+          final body = jsonDecode(req.body) as Map<String, dynamic>;
+          return _jsonResponse(answersByExId[body['exercise_id']]!);
         }
-        return _jsonResponse(summary);
+        if (p.endsWith('/complete') || p.endsWith('/result')) {
+          return _jsonResponse(summary);
+        }
+        return _jsonResponse(lesson);
       });
-      final api = ApiClient(baseUrl: 'http://test', client: client);
       final ctrl = SessionController(api);
       await ctrl.loadLesson(_lessonId);
       await ctrl.submitAnswer('enjoying');
@@ -555,13 +631,14 @@ void main() {
     });
 
     test('network failure during submit → phase becomes error', () async {
-      int call = 0;
-      final client = MockClient((_) async {
-        call++;
-        if (call == 1) return _jsonResponse(_lessonJson());
-        throw Exception('timeout');
+      final api = _authed((req) {
+        final p = req.url.path;
+        if (p.endsWith('/sessions/start')) {
+          return _jsonResponse(sessionStartDto(_lessonId));
+        }
+        if (p.endsWith('/answers')) throw Exception('timeout');
+        return _jsonResponse(_lessonJson());
       });
-      final api = ApiClient(baseUrl: 'http://test', client: client);
       final ctrl = SessionController(api);
       await ctrl.loadLesson(_lessonId);
       await ctrl.submitAnswer('is');
@@ -571,95 +648,108 @@ void main() {
 
   group('SessionController.retry', () {
     test('retry after submit error replays last answer', () async {
-      int call = 0;
-      final client = MockClient((_) async {
-        call++;
-        if (call == 1) return _jsonResponse(_lessonJson());    // loadLesson
-        if (call == 2) throw Exception('first submit fails');  // submitAnswer
-        return _jsonResponse(_evaluateJson());                  // retry
+      int answerHits = 0;
+      final api = _authed((req) {
+        final p = req.url.path;
+        if (p.endsWith('/sessions/start')) {
+          return _jsonResponse(sessionStartDto(_lessonId));
+        }
+        if (p.endsWith('/answers')) {
+          answerHits += 1;
+          if (answerHits == 1) throw Exception('first submit fails');
+          return _jsonResponse(_evaluateJson());
+        }
+        return _jsonResponse(_lessonJson());
       });
-      final api = ApiClient(baseUrl: 'http://test', client: client);
       final ctrl = SessionController(api);
 
       await ctrl.loadLesson(_lessonId);
-      await ctrl.submitAnswer('is');          // fails → error state, _lastAnswer = 'is'
+      await ctrl.submitAnswer('is');
       expect(ctrl.state.phase, equals(SessionPhase.error));
 
-      await ctrl.retry();                     // retries with same answer
+      await ctrl.retry();
 
       expect(ctrl.state.phase, equals(SessionPhase.result));
       expect(ctrl.state.lastResult?.correct, isTrue);
-      expect(call, equals(3));
+      expect(answerHits, equals(2));
     });
 
     test('retry after load error re-fetches lesson', () async {
-      int call = 0;
-      final client = MockClient((_) async {
-        call++;
-        if (call == 1) throw Exception('first load fails');
+      int lessonHits = 0;
+      final api = _authed((req) {
+        final p = req.url.path;
+        if (p.endsWith('/sessions/start')) {
+          return _jsonResponse(sessionStartDto(_lessonId));
+        }
+        // GET /lessons/:id is the public read-only route the helper
+        // dispatches via the raw http.Client in ApiClient.fetch.
+        if (p == '/lessons/$_lessonId') {
+          lessonHits += 1;
+          if (lessonHits == 1) throw Exception('first load fails');
+          return _jsonResponse(_lessonJson());
+        }
         return _jsonResponse(_lessonJson());
       });
-      final api = ApiClient(baseUrl: 'http://test', client: client);
       final ctrl = SessionController(api);
 
-      await ctrl.loadLesson(_lessonId);       // fails → error
+      await ctrl.loadLesson(_lessonId);
       expect(ctrl.state.phase, equals(SessionPhase.error));
 
-      await ctrl.retry();                     // re-fetches
+      await ctrl.retry();
 
       expect(ctrl.state.phase, equals(SessionPhase.ready));
       expect(ctrl.state.lesson?.lessonId, equals(_lessonId));
-      expect(call, equals(2));
+      expect(lessonHits, equals(2));
     });
 
     test('retry with no prior state is a no-op', () async {
-      final client = MockClient((_) async => _jsonResponse(_lessonJson()));
-      final api = ApiClient(baseUrl: 'http://test', client: client);
+      final api = _authed((_) => _jsonResponse(_lessonJson()));
       final ctrl = SessionController(api);
 
-      // No loadLesson called, no _lastAnswer or _lastLessonId set
       await ctrl.retry();
 
-      // Should remain in initial loading phase without crashing
       expect(ctrl.state.phase, equals(SessionPhase.loading));
     });
   });
 
   group('SessionController.advance', () {
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+    });
+
     test('advance on single-exercise lesson → fetches summary', () async {
-      int call = 0;
-      final client = MockClient((_) async {
-        call++;
-        if (call == 1) return _jsonResponse(_lessonJson());
-        if (call == 2) return _jsonResponse(_evaluateJson());
-        return _jsonResponse(_resultJson());
-      });
-      final api = ApiClient(baseUrl: 'http://test', client: client);
+      final api = _authed((req) => _routedDispatch(
+            req,
+            lesson: _lessonJson(),
+            sessionStart: sessionStartDto(_lessonId),
+            answer: (_) => _jsonResponse(_evaluateJson()),
+            complete: _resultJson(),
+            result: _resultJson(),
+          ));
       final ctrl = SessionController(api);
 
       await ctrl.loadLesson(_lessonId);
       await ctrl.submitAnswer('is');
-      ctrl.advance();           // last exercise → triggers _fetchSummary
+      ctrl.advance();
 
-      // give async summary call time to complete
+      await Future.delayed(Duration.zero);
       await Future.delayed(Duration.zero);
 
       expect(ctrl.state.phase, equals(SessionPhase.summary));
     });
 
     test('advance on first of two exercises → index=1, phase=ready, lastResult cleared', () async {
-      int call = 0;
-      final client = MockClient((_) async {
-        call++;
-        if (call == 1) return _jsonResponse(_lessonJson2());
-        return _jsonResponse(_evaluateJson());
-      });
-      final api = ApiClient(baseUrl: 'http://test', client: client);
+      final api = _authed((req) => _routedDispatch(
+            req,
+            lesson: _lessonJson2(),
+            sessionStart: sessionStartDto(_lessonId, exerciseCount: 2),
+            answer: (_) => _jsonResponse(_evaluateJson()),
+          ));
       final ctrl = SessionController(api);
 
       await ctrl.loadLesson(_lessonId);
-      await ctrl.submitAnswer('is');         // ex1 evaluated
-      ctrl.advance();                        // not last → move to ex2
+      await ctrl.submitAnswer('is');
+      ctrl.advance();
 
       expect(ctrl.state.currentIndex, equals(1));
       expect(ctrl.state.phase, equals(SessionPhase.ready));
@@ -668,8 +758,10 @@ void main() {
     });
 
     test('isLastExercise false at index 0 in two-exercise lesson', () async {
-      final client = MockClient((_) async => _jsonResponse(_lessonJson2()));
-      final api = ApiClient(baseUrl: 'http://test', client: client);
+      final api = _authed((req) => _routedDispatch(req,
+          lesson: _lessonJson2(),
+          sessionStart:
+              sessionStartDto(_lessonId, exerciseCount: 2)));
       final ctrl = SessionController(api);
 
       await ctrl.loadLesson(_lessonId);
@@ -678,29 +770,37 @@ void main() {
     });
 
     test('full two-exercise flow → results accumulate, summary reached', () async {
-      int call = 0;
-      final client = MockClient((_) async {
-        call++;
-        if (call == 1) return _jsonResponse(_lessonJson2());   // loadLesson
-        if (call == 2) return _jsonResponse(_evaluateJson(correct: true));   // submit ex1
-        if (call == 3) return _jsonResponse(_evaluateJson2(correct: false));  // submit ex2
-        return _jsonResponse(_resultJson2());                  // result
+      final answersByExId = <String, Map<String, dynamic>>{
+        _exId: _evaluateJson(correct: true),
+        _exId2: _evaluateJson2(correct: false),
+      };
+      final api = _authed((req) {
+        final p = req.url.path;
+        if (p.endsWith('/sessions/start')) {
+          return _jsonResponse(sessionStartDto(_lessonId, exerciseCount: 2));
+        }
+        if (p.endsWith('/answers')) {
+          final body = jsonDecode(req.body) as Map<String, dynamic>;
+          return _jsonResponse(answersByExId[body['exercise_id']]!);
+        }
+        if (p.endsWith('/complete') || p.endsWith('/result')) {
+          return _jsonResponse(_resultJson2());
+        }
+        return _jsonResponse(_lessonJson2());
       });
-      final api = ApiClient(baseUrl: 'http://test', client: client);
       final ctrl = SessionController(api);
 
       await ctrl.loadLesson(_lessonId);
 
-      // exercise 1
       await ctrl.submitAnswer('is');
       expect(ctrl.state.results, equals([true]));
-      ctrl.advance();                         // → ex2
+      ctrl.advance();
 
-      // exercise 2
       await ctrl.submitAnswer('wrong');
       expect(ctrl.state.results, equals([true, false]));
-      ctrl.advance();                         // last → fetch summary
+      ctrl.advance();
 
+      await Future.delayed(Duration.zero);
       await Future.delayed(Duration.zero);
 
       expect(ctrl.state.phase, equals(SessionPhase.summary));
