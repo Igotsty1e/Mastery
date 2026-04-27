@@ -156,12 +156,35 @@ four. Older fixtures or item types without metadata leave the fields
 attempt for them. No UI surface yet — Wave 4 (Transparency Layer)
 introduces the per-skill panel.
 
-### Wave 2 mastery state — `LearnerSkillStore` (device-scoped)
+### Wave 2 mastery state — `LearnerSkillStore` (dual-mode since Wave 7.4 part 2B)
 
 Per-learner per-skill state per `LEARNING_ENGINE.md §7.1` is held by
-`LearnerSkillStore` (`app/lib/learner/learner_skill_store.dart`),
-SharedPreferences-backed and device-scoped. Server-side learner storage
-is a follow-up wave once accounts exist.
+`LearnerSkillStore` (`app/lib/learner/learner_skill_store.dart`). Wave 2
+shipped a SharedPreferences-only store; Wave 7.4 part 2B turned it into
+a static facade over a pluggable `LearnerSkillBackend` interface with
+two implementations:
+
+- `LocalLearnerSkillBackend` — SharedPreferences-backed (the original
+  Wave 2 keys), used in unauth'd builds and in guest mode after the
+  Skip-for-now button on `SignInScreen`.
+- `RemoteLearnerSkillBackend` — calls the auth-protected
+  `/me/skills/...` endpoints via `AuthClient`, used after a learner
+  signs in (or on app start when a refresh token is already in secure
+  storage).
+
+`LearnerStateMigrator` (`app/lib/learner/learner_state_migrator.dart`)
+flips the facade on the `signedIn` outcome of `SignInScreen`: it
+collects the local snapshot via fresh local-backend instances, POSTs
+through `/me/state/bulk-import` (idempotent server-side — second
+device's import is reported in the `skipped_*` arrays), and then calls
+`LearnerSkillStore.useRemote(...)` and `ReviewScheduler.useRemote(...)`.
+Even on hard failures (network drop, 4xx) the facades flip so the next
+write hits the server.
+
+The original SharedPreferences keys are not deleted on migration — the
+local rows simply become inert once the facade is pointed at the remote
+backend. Deletion is a follow-up cleanup once we are confident the
+migration path is robust in production.
 
 `LearnerSkillRecord` carries:
 
@@ -216,9 +239,13 @@ decision after every `submitAnswer`, and applies the reordered queue on
 the next `advance()`.
 
 `ReviewScheduler` (`app/lib/learner/review_scheduler.dart`) is the
-cross-session cadence per §§9.2, 9.3, 9.4. SharedPreferences-backed,
-device-scoped. On session end (in `_fetchSummary`), every skill the
-session touched gets a `recordSessionEnd` call:
+cross-session cadence per §§9.2, 9.3, 9.4. Wave 7.4 part 2B made it
+dual-mode through the same facade pattern as `LearnerSkillStore`:
+`LocalReviewSchedulerBackend` writes to the original SharedPreferences
+keys; `RemoteReviewSchedulerBackend` calls
+`/me/skills/.../review-cadence` and `/me/reviews/due`. The migrator
+flips both facades together. On session end (in `_fetchSummary`), every
+skill the session touched gets a `recordSessionEnd` call:
 
 - 0 mistakes → step advances by 1 (capped at 5; step 5 with no resets
   flags `graduated` per §9.4)

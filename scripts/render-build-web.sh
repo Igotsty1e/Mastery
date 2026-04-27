@@ -67,9 +67,15 @@ if [ -d ../backend/public/images ]; then
   cp -R ../backend/public/images/. web/images/
 fi
 
+# Wave 7.4 part 2B: enable the auth surface in production builds. Sign-in
+# screen runs before onboarding when the device has no refresh token; the
+# learner state facades point at the auth-protected /me/skills/... and
+# /me/reviews/due endpoints once a session exists. Skip-for-now keeps the
+# original device-scoped flow.
 flutter pub get
 flutter build web \
   --dart-define=API_BASE_URL="$BACKEND_URL" \
+  --dart-define=MASTERY_AUTH_ENABLED=true \
   --release
 
 echo "[render-build] Done. Output: app/build/web"
