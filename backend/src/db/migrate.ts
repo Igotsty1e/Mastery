@@ -214,6 +214,26 @@ CREATE INDEX IF NOT EXISTS learner_review_schedule_due_idx
   ON learner_review_schedule(user_id, due_at);
 `;
 
+// Wave 10 — Mastery V1 inputs (rule-based gate per V1 spec §10).
+// Adds the four counters the new gate reads: total attempts, set of
+// exercise types seen, last-attempt outcome, repeated-conceptual count.
+// `mastery_score` stays in the row for now (used only by status
+// derivation as a coarse hint); Wave 11 cleanup may remove it.
+const MASTERY_V1_SQL = `
+ALTER TABLE learner_skills
+  ADD COLUMN IF NOT EXISTS attempts_count integer NOT NULL DEFAULT 0;
+ALTER TABLE learner_skills
+  ADD COLUMN IF NOT EXISTS exercise_types_seen jsonb NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE learner_skills
+  ADD COLUMN IF NOT EXISTS last_outcome text;
+ALTER TABLE learner_skills
+  ADD COLUMN IF NOT EXISTS repeated_conceptual_count integer NOT NULL DEFAULT 0;
+ALTER TABLE learner_skills
+  ADD COLUMN IF NOT EXISTS weighted_correct_sum numeric(10,2) NOT NULL DEFAULT 0;
+ALTER TABLE learner_skills
+  ADD COLUMN IF NOT EXISTS weighted_total_sum numeric(10,2) NOT NULL DEFAULT 0;
+`;
+
 // Wave 9 — observability infra. Append-only Decision Log per
 // `LEARNING_ENGINE.md §18` so every Decision Engine call is replayable
 // from the audit trail. `friction_event` enum on attempts so we can
@@ -265,6 +285,7 @@ const MIGRATIONS: Migration[] = [
   { id: '0004_attempt_review_snapshot', sql: ATTEMPT_REVIEW_SNAPSHOT_SQL },
   { id: '0005_learner_state', sql: LEARNER_STATE_SQL },
   { id: '0006_observability_v1', sql: OBSERVABILITY_V1_SQL },
+  { id: '0007_mastery_v1', sql: MASTERY_V1_SQL },
 ];
 
 export async function runMigrations(database: Database): Promise<void> {

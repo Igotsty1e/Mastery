@@ -8,6 +8,7 @@ import {
   boolean,
   bigint,
   date,
+  numeric,
   index,
   uniqueIndex,
 } from 'drizzle-orm/pg-core';
@@ -367,6 +368,47 @@ export const learnerSkills = pgTable(
     /// cleared. Used to invalidate the gate when the evaluator
     /// semantics move under a previously-cleared learner.
     gateClearedAtVersion: integer('gate_cleared_at_version'),
+
+    /// Wave 10 — Mastery V1 inputs per V1 spec §10.
+    /// Total attempts on this skill, ever. The V1 gate reads `≥6` (or
+    /// `≥4` with at least one correction/production type seen).
+    attemptsCount: integer('attempts_count').notNull().default(0),
+    /// Distinct exercise-type codes the learner has attempted on this
+    /// skill. Stored as a JSON array of strings (e.g.
+    /// `["fill_blank", "sentence_correction"]`). The V1 gate reads
+    /// `length ≥ 2` and "≥1 correction or production".
+    exerciseTypesSeen: jsonb('exercise_types_seen')
+      .$type<string[]>()
+      .notNull()
+      .default([]),
+    /// Outcome of the most recent attempt: `'correct' | 'partial' |
+    /// 'wrong'`. The V1 gate refuses promotion when the last attempt
+    /// was wrong, so this column is checked on every read.
+    lastOutcome: text('last_outcome'),
+    /// Count of repeated `conceptual_error` events in the rolling
+    /// last-5 window of `recent_errors`. The V1 gate refuses promotion
+    /// when this is ≥ 2.
+    repeatedConceptualCount: integer('repeated_conceptual_count')
+      .notNull()
+      .default(0),
+    /// Sum of evidence-weighted correct outcomes for this skill.
+    /// `weighted_correct_sum / weighted_total_sum` is the "weighted
+    /// accuracy" the V1 gate compares against the 80% threshold.
+    /// `numeric(10,2)` is overkill but keeps Postgres + PGlite arithmetic
+    /// stable across drivers.
+    weightedCorrectSum: numeric('weighted_correct_sum', {
+      precision: 10,
+      scale: 2,
+    })
+      .notNull()
+      .default('0'),
+    weightedTotalSum: numeric('weighted_total_sum', {
+      precision: 10,
+      scale: 2,
+    })
+      .notNull()
+      .default('0'),
+
     updatedAt: timestamp('updated_at', { withTimezone: true, mode: 'date' })
       .defaultNow()
       .notNull(),

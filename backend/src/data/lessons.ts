@@ -12,13 +12,12 @@ export interface ExerciseFeedback {
 // when evidence_tier is "strongest". The runtime ignores the fields beyond
 // validation; they reach the client unchanged so future engine waves can
 // use them.
+// Wave 10: error model 6→4 per V1 spec.
 export type TargetError =
   | 'conceptual_error'
   | 'form_error'
   | 'contrast_error'
-  | 'careless_error'
-  | 'transfer_error'
-  | 'pragmatic_error';
+  | 'careless_error';
 
 export type EvidenceTier = 'weak' | 'medium' | 'strong' | 'strongest';
 

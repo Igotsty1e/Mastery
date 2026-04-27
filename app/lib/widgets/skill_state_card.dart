@@ -203,8 +203,4 @@ String recurringCopyFor(TargetError error) => switch (error) {
         'Recurring concept slip — the underlying rule needs a re-read.',
       TargetError.careless =>
         'Recurring careless slip — slow down for one beat before submitting.',
-      TargetError.transfer =>
-        'Recurring L1-transfer slip — English wants a different shape here.',
-      TargetError.pragmatic =>
-        'Recurring register slip — the form fits, the situation does not.',
     };

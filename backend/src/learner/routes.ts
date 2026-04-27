@@ -28,6 +28,9 @@ const RecordAttemptSchema = z.object({
   primary_target_error: z.enum(TARGET_ERROR_CODES as [string, ...string[]]).optional(),
   meaning_frame: z.string().min(1).max(500).optional(),
   evaluation_version: z.number().int().nonnegative().optional(),
+  // Wave 10 — V1 mastery gate inputs.
+  exercise_type: z.string().min(1).max(64).optional(),
+  outcome: z.enum(['correct', 'partial', 'wrong']).optional(),
 });
 
 const RecordCadenceSchema = z.object({
@@ -113,6 +116,8 @@ export function makeLearnerRouter(db: AppDatabase): Router {
           | undefined,
         meaningFrame: parsed.data.meaning_frame,
         evaluationVersion: parsed.data.evaluation_version,
+        exerciseType: parsed.data.exercise_type,
+        outcome: parsed.data.outcome,
       });
       res.json(recordToDto(updated, new Date()));
     } catch (err) {
