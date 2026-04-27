@@ -163,10 +163,26 @@ CREATE UNIQUE INDEX IF NOT EXISTS exercise_attempts_attempt_id_idx
   WHERE client_attempt_id IS NOT NULL;
 `;
 
+// Wave 7.1.1 Codex P2.2 fix: snapshot the prompt + curated explanation at
+// attempt insert time so completed-session result reads stay stable when
+// the lesson fixture is edited later. For listening_discrimination items
+// the snapshot stores the audio transcript (the only review-friendly text
+// we have). Old rows pre-dating the migration carry NULL — buildAnswers
+// falls back to the live lesson for those, which is both safe (no real
+// in-progress drift in practice on shipped data) and the previous
+// behaviour.
+const ATTEMPT_REVIEW_SNAPSHOT_SQL = `
+ALTER TABLE exercise_attempts
+  ADD COLUMN IF NOT EXISTS prompt_snapshot text;
+ALTER TABLE exercise_attempts
+  ADD COLUMN IF NOT EXISTS explanation_snapshot text;
+`;
+
 const MIGRATIONS: Migration[] = [
   { id: '0001_init', sql: INIT_SQL },
   { id: '0002_lesson_sessions', sql: LESSON_SESSIONS_SQL },
   { id: '0003_attempt_idempotency', sql: ATTEMPT_IDEMPOTENCY_SQL },
+  { id: '0004_attempt_review_snapshot', sql: ATTEMPT_REVIEW_SNAPSHOT_SQL },
 ];
 
 export async function runMigrations(database: Database): Promise<void> {

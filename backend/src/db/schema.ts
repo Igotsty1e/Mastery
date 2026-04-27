@@ -231,6 +231,13 @@ export const exerciseAttempts = pgTable(
     canonicalAnswer: text('canonical_answer').notNull(),
     evaluationSource: text('evaluation_source').notNull(),
     explanation: text('explanation'),
+    // Wave 7.1.1 Codex P2.2: snapshot of the exercise's prompt + curated
+    // explanation at attempt time so completed-session result reads
+    // remain stable when the lesson fixture is edited later. Nullable —
+    // legacy rows that pre-date the migration carry NULL and the service
+    // falls back to the live lesson for those.
+    promptSnapshot: text('prompt_snapshot'),
+    explanationSnapshot: text('explanation_snapshot'),
     // Client-supplied idempotency key. When provided, a partial unique index
     // on (session_id, client_attempt_id) makes resubmits of the same
     // attempt_id return the original row rather than insert a duplicate.
