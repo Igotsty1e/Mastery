@@ -1,0 +1,804 @@
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { eq } from 'drizzle-orm';
+import { inject } from './helpers/inject';
+import { makeTestApp, type TestApp } from './helpers/db';
+import { exerciseAttempts, lessonProgress, lessonSessions } from '../src/db/schema';
+import type { AiProvider } from '../src/ai/interface';
+
+const LESSON_ONE = 'a1b2c3d4-0001-4000-8000-000000000001';
+const LESSON_TWO = 'a1b2c3d4-0002-4000-8000-000000000001';
+
+const EX_FB_1 = 'a1b2c3d4-0001-4000-8000-000000000031'; // fill_blank, expected "trying"
+const EX_FB_2 = 'a1b2c3d4-0001-4000-8000-000000000032'; // fill_blank, expected "making"
+const EX_MC_1 = 'a1b2c3d4-0001-4000-8000-000000000035'; // multiple_choice, B-level
+
+const SUBMITTED = '2026-04-26T12:00:00.000Z';
+
+let h: TestApp;
+
+const stubAi: AiProvider = {
+  evaluateSentenceCorrection: () =>
+    Promise.resolve({ correct: false, feedback: '' }),
+  generateDebrief: () =>
+    Promise.resolve({
+      headline: 'Watch the contrast cues.',
+      body: 'You picked the wrong form on a few items. Reread the rule and redo the missed items.',
+      watch_out: 'Cue word first, form second.',
+      next_step: 'Redo the missed items below.',
+    }),
+};
+
+beforeEach(async () => {
+  h = await makeTestApp({ ai: stubAi });
+});
+
+afterEach(async () => {
+  await h.close();
+});
+
+async function login(subject: string) {
+  const res = await inject(h.app, {
+    method: 'POST',
+    path: '/auth/apple/stub/login',
+    json: { subject },
+  });
+  if (res.status !== 200) {
+    throw new Error(`login failed: ${res.status} ${res.text}`);
+  }
+  const body = res.json as { accessToken: string; user: { id: string } };
+  return {
+    accessToken: body.accessToken,
+    userId: body.user.id,
+    headers: { authorization: `Bearer ${body.accessToken}` },
+  };
+}
+
+async function startSession(
+  headers: Record<string, string>,
+  lessonId: string
+) {
+  return inject(h.app, {
+    method: 'POST',
+    path: `/lessons/${lessonId}/sessions/start`,
+    headers,
+  });
+}
+
+interface AnswerOpts {
+  attempt_id?: string;
+  exercise_id: string;
+  exercise_type: string;
+  user_answer: string;
+  submitted_at?: string;
+}
+
+async function submit(
+  headers: Record<string, string>,
+  sessionId: string,
+  opts: AnswerOpts
+) {
+  const attempt_id = opts.attempt_id ?? randomUuid();
+  return inject(h.app, {
+    method: 'POST',
+    path: `/lesson-sessions/${sessionId}/answers`,
+    headers,
+    json: {
+      attempt_id,
+      exercise_id: opts.exercise_id,
+      exercise_type: opts.exercise_type,
+      user_answer: opts.user_answer,
+      submitted_at: opts.submitted_at ?? SUBMITTED,
+    },
+  });
+}
+
+let attemptCounter = 0;
+function randomUuid(): string {
+  attemptCounter += 1;
+  const hex = attemptCounter.toString(16).padStart(12, '0');
+  return `cccccccc-0001-4000-8000-${hex}`;
+}
+
+describe('POST /lessons/:lessonId/sessions/start', () => {
+  it('rejects unauthenticated callers with 401', async () => {
+    const res = await inject(h.app, {
+      method: 'POST',
+      path: `/lessons/${LESSON_ONE}/sessions/start`,
+    });
+    expect(res.status).toBe(401);
+  });
+
+  it('returns 404 for an unknown lesson', async () => {
+    const { headers } = await login('start-unknown');
+    const res = await startSession(
+      headers,
+      '00000000-0000-4000-8000-000000000099'
+    );
+    expect(res.status).toBe(404);
+    expect((res.json as any).error).toBe('lesson_not_found');
+  });
+
+  it('creates a fresh in_progress session on first call', async () => {
+    const { headers, userId } = await login('start-create');
+    const res = await startSession(headers, LESSON_ONE);
+    expect(res.status).toBe(200);
+    const body = res.json as any;
+    expect(body.reason).toBe('created');
+    expect(body.lesson_id).toBe(LESSON_ONE);
+    expect(body.status).toBe('in_progress');
+    expect(typeof body.lesson_version).toBe('string');
+    expect(body.lesson_version.length).toBeGreaterThan(8);
+    expect(body.exercise_count).toBe(10);
+    expect(body.answers_so_far).toEqual([]);
+
+    const rows = await h.database.orm
+      .select()
+      .from(lessonSessions)
+      .where(eq(lessonSessions.userId, userId));
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.status).toBe('in_progress');
+    expect(rows[0]?.contentHash).toBe(body.lesson_version);
+  });
+
+  it('resumes the existing session on a repeat call', async () => {
+    const { headers } = await login('start-resume');
+    const first = await startSession(headers, LESSON_ONE);
+    const second = await startSession(headers, LESSON_ONE);
+    expect(second.status).toBe(200);
+    expect((second.json as any).reason).toBe('resumed');
+    expect((second.json as any).session_id).toBe(
+      (first.json as any).session_id
+    );
+  });
+
+  it('different users get independent sessions on the same lesson', async () => {
+    const a = await login('start-userA');
+    const b = await login('start-userB');
+    const sa = await startSession(a.headers, LESSON_ONE);
+    const sb = await startSession(b.headers, LESSON_ONE);
+    expect((sa.json as any).session_id).not.toBe((sb.json as any).session_id);
+  });
+
+  it('different lessons for the same user produce separate sessions', async () => {
+    const { headers } = await login('start-multi-lesson');
+    const a = await startSession(headers, LESSON_ONE);
+    const b = await startSession(headers, LESSON_TWO);
+    expect(a.status).toBe(200);
+    expect(b.status).toBe(200);
+    expect((a.json as any).session_id).not.toBe((b.json as any).session_id);
+  });
+
+  it('resuming returns the prior answers_so_far', async () => {
+    const { headers } = await login('start-resume-with-answers');
+    const start = await startSession(headers, LESSON_ONE);
+    const sid = (start.json as any).session_id;
+    await submit(headers, sid, {
+      exercise_id: EX_FB_1,
+      exercise_type: 'fill_blank',
+      user_answer: 'trying',
+    });
+    const resumed = await startSession(headers, LESSON_ONE);
+    expect((resumed.json as any).reason).toBe('resumed');
+    expect((resumed.json as any).answers_so_far).toHaveLength(1);
+    expect((resumed.json as any).answers_so_far[0]).toMatchObject({
+      exercise_id: EX_FB_1,
+      correct: true,
+    });
+  });
+});
+
+describe('GET /lessons/:lessonId/sessions/current', () => {
+  it('returns 404 when no active session exists', async () => {
+    const { headers } = await login('current-empty');
+    const res = await inject(h.app, {
+      method: 'GET',
+      path: `/lessons/${LESSON_ONE}/sessions/current`,
+      headers,
+    });
+    expect(res.status).toBe(404);
+    expect((res.json as any).error).toBe('no_active_session');
+  });
+
+  it('returns the active session with prior answers', async () => {
+    const { headers } = await login('current-active');
+    const start = await startSession(headers, LESSON_ONE);
+    const sid = (start.json as any).session_id;
+    await submit(headers, sid, {
+      exercise_id: EX_FB_2,
+      exercise_type: 'fill_blank',
+      user_answer: 'making',
+    });
+    const res = await inject(h.app, {
+      method: 'GET',
+      path: `/lessons/${LESSON_ONE}/sessions/current`,
+      headers,
+    });
+    expect(res.status).toBe(200);
+    expect((res.json as any).session_id).toBe(sid);
+    expect((res.json as any).answers_so_far).toHaveLength(1);
+  });
+});
+
+describe('POST /lesson-sessions/:sessionId/answers', () => {
+  it('persists every submission as immutable history', async () => {
+    const { headers, userId } = await login('answers-history');
+    const start = await startSession(headers, LESSON_ONE);
+    const sid = (start.json as any).session_id;
+
+    const wrong = await submit(headers, sid, {
+      exercise_id: EX_FB_1,
+      exercise_type: 'fill_blank',
+      user_answer: 'try',
+    });
+    expect(wrong.status).toBe(200);
+    expect((wrong.json as any).correct).toBe(false);
+
+    const right = await submit(headers, sid, {
+      exercise_id: EX_FB_1,
+      exercise_type: 'fill_blank',
+      user_answer: 'trying',
+    });
+    expect((right.json as any).correct).toBe(true);
+
+    const rows = await h.database.orm
+      .select()
+      .from(exerciseAttempts)
+      .where(eq(exerciseAttempts.userId, userId));
+    expect(rows).toHaveLength(2);
+    const corrects = rows.map((r) => r.correct).sort();
+    expect(corrects).toEqual([false, true]);
+  });
+
+  it('rejects a foreign session with 404 (no leak across users)', async () => {
+    const { headers: a } = await login('answers-foreignA');
+    const { headers: b } = await login('answers-foreignB');
+    const start = await startSession(a, LESSON_ONE);
+    const sid = (start.json as any).session_id;
+
+    const res = await submit(b, sid, {
+      exercise_id: EX_FB_1,
+      exercise_type: 'fill_blank',
+      user_answer: 'trying',
+    });
+    expect(res.status).toBe(404);
+    expect((res.json as any).error).toBe('session_not_found');
+  });
+
+  it('rejects an unknown exercise with 404', async () => {
+    const { headers } = await login('answers-bad-exercise');
+    const start = await startSession(headers, LESSON_ONE);
+    const sid = (start.json as any).session_id;
+    const res = await submit(headers, sid, {
+      exercise_id: '00000000-0000-4000-8000-000000000099',
+      exercise_type: 'fill_blank',
+      user_answer: 'trying',
+    });
+    expect(res.status).toBe(404);
+    expect((res.json as any).error).toBe('exercise_not_found');
+  });
+
+  it('rejects a type/exercise mismatch with 400', async () => {
+    const { headers } = await login('answers-type-mismatch');
+    const start = await startSession(headers, LESSON_ONE);
+    const sid = (start.json as any).session_id;
+    const res = await submit(headers, sid, {
+      exercise_id: EX_FB_1,
+      exercise_type: 'multiple_choice',
+      user_answer: 'a',
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects further answers once the session is completed', async () => {
+    const { headers } = await login('answers-after-complete');
+    const start = await startSession(headers, LESSON_ONE);
+    const sid = (start.json as any).session_id;
+    await submit(headers, sid, {
+      exercise_id: EX_FB_1,
+      exercise_type: 'fill_blank',
+      user_answer: 'trying',
+    });
+    await inject(h.app, {
+      method: 'POST',
+      path: `/lesson-sessions/${sid}/complete`,
+      headers,
+    });
+    const res = await submit(headers, sid, {
+      exercise_id: EX_FB_2,
+      exercise_type: 'fill_blank',
+      user_answer: 'making',
+    });
+    expect(res.status).toBe(409);
+    expect((res.json as any).error).toBe('session_not_in_progress');
+  });
+});
+
+describe('GET /lesson-sessions/:sessionId/result', () => {
+  it('returns the live result while the session is in_progress', async () => {
+    const { headers } = await login('result-live');
+    const start = await startSession(headers, LESSON_ONE);
+    const sid = (start.json as any).session_id;
+    await submit(headers, sid, {
+      exercise_id: EX_FB_1,
+      exercise_type: 'fill_blank',
+      user_answer: 'trying',
+    });
+    await submit(headers, sid, {
+      exercise_id: EX_MC_1,
+      exercise_type: 'multiple_choice',
+      user_answer: 'a',
+    });
+    const res = await inject(h.app, {
+      method: 'GET',
+      path: `/lesson-sessions/${sid}/result`,
+      headers,
+    });
+    expect(res.status).toBe(200);
+    const body = res.json as any;
+    expect(body.lesson_id).toBe(LESSON_ONE);
+    expect(body.total_exercises).toBe(10);
+    expect(body.correct_count).toBe(1);
+    expect(body.status).toBe('in_progress');
+    expect(body.completed_at).toBeNull();
+    expect(body.answers).toHaveLength(2);
+    expect(body.debrief).toBeTruthy();
+  });
+
+  it('latest-attempt-wins for scoring', async () => {
+    const { headers } = await login('result-latest-wins');
+    const start = await startSession(headers, LESSON_ONE);
+    const sid = (start.json as any).session_id;
+    await submit(headers, sid, {
+      exercise_id: EX_FB_1,
+      exercise_type: 'fill_blank',
+      user_answer: 'try',
+      submitted_at: '2026-04-26T12:00:00.000Z',
+    });
+    await submit(headers, sid, {
+      exercise_id: EX_FB_1,
+      exercise_type: 'fill_blank',
+      user_answer: 'trying',
+      submitted_at: '2026-04-26T12:01:00.000Z',
+    });
+    const res = await inject(h.app, {
+      method: 'GET',
+      path: `/lesson-sessions/${sid}/result`,
+      headers,
+    });
+    const body = res.json as any;
+    expect(body.correct_count).toBe(1);
+    expect(body.answers).toHaveLength(1);
+    expect(body.answers[0]).toMatchObject({ exercise_id: EX_FB_1, correct: true });
+  });
+});
+
+describe('POST /lesson-sessions/:sessionId/complete', () => {
+  it('persists a debrief snapshot and updates lesson_progress', async () => {
+    const { headers, userId } = await login('complete-progress');
+    const start = await startSession(headers, LESSON_ONE);
+    const sid = (start.json as any).session_id;
+    await submit(headers, sid, {
+      exercise_id: EX_FB_1,
+      exercise_type: 'fill_blank',
+      user_answer: 'trying',
+    });
+    await submit(headers, sid, {
+      exercise_id: EX_FB_2,
+      exercise_type: 'fill_blank',
+      user_answer: 'wrong',
+    });
+
+    const done = await inject(h.app, {
+      method: 'POST',
+      path: `/lesson-sessions/${sid}/complete`,
+      headers,
+    });
+    expect(done.status).toBe(200);
+    const body = done.json as any;
+    expect(body.status).toBe('completed');
+    expect(body.completed_at).toBeTruthy();
+    expect(body.correct_count).toBe(1);
+    expect(body.debrief).toBeTruthy();
+
+    const sessionRows = await h.database.orm
+      .select()
+      .from(lessonSessions)
+      .where(eq(lessonSessions.id, sid));
+    expect(sessionRows[0]?.status).toBe('completed');
+    expect(sessionRows[0]?.debriefSnapshot).toBeTruthy();
+    expect(sessionRows[0]?.correctCount).toBe(1);
+
+    const progressRows = await h.database.orm
+      .select()
+      .from(lessonProgress)
+      .where(eq(lessonProgress.userId, userId));
+    expect(progressRows).toHaveLength(1);
+    expect(progressRows[0]).toMatchObject({
+      lessonId: LESSON_ONE,
+      attemptsCount: 1,
+      completed: true,
+      latestCorrect: 1,
+      latestTotal: 10,
+      bestCorrect: 1,
+      bestTotal: 10,
+    });
+  });
+
+  it('is idempotent — replaying returns the same payload', async () => {
+    const { headers } = await login('complete-idempotent');
+    const start = await startSession(headers, LESSON_ONE);
+    const sid = (start.json as any).session_id;
+    await submit(headers, sid, {
+      exercise_id: EX_FB_1,
+      exercise_type: 'fill_blank',
+      user_answer: 'trying',
+    });
+    const first = await inject(h.app, {
+      method: 'POST',
+      path: `/lesson-sessions/${sid}/complete`,
+      headers,
+    });
+    const second = await inject(h.app, {
+      method: 'POST',
+      path: `/lesson-sessions/${sid}/complete`,
+      headers,
+    });
+    expect(first.status).toBe(200);
+    expect(second.status).toBe(200);
+    expect((second.json as any).completed_at).toBe(
+      (first.json as any).completed_at
+    );
+    expect((second.json as any).debrief).toEqual((first.json as any).debrief);
+  });
+
+  it('keeps best score across multiple completions of the same lesson', async () => {
+    const { headers, userId } = await login('complete-best');
+
+    // First run — one correct.
+    const a = await startSession(headers, LESSON_ONE);
+    const sidA = (a.json as any).session_id;
+    await submit(headers, sidA, {
+      exercise_id: EX_FB_1,
+      exercise_type: 'fill_blank',
+      user_answer: 'trying',
+    });
+    await inject(h.app, {
+      method: 'POST',
+      path: `/lesson-sessions/${sidA}/complete`,
+      headers,
+    });
+
+    // Second run — two correct.
+    const b = await startSession(headers, LESSON_ONE);
+    const sidB = (b.json as any).session_id;
+    await submit(headers, sidB, {
+      exercise_id: EX_FB_1,
+      exercise_type: 'fill_blank',
+      user_answer: 'trying',
+    });
+    await submit(headers, sidB, {
+      exercise_id: EX_FB_2,
+      exercise_type: 'fill_blank',
+      user_answer: 'making',
+    });
+    await inject(h.app, {
+      method: 'POST',
+      path: `/lesson-sessions/${sidB}/complete`,
+      headers,
+    });
+
+    // Third run — drops back to one correct; "best" must hold the run-2 score.
+    const c = await startSession(headers, LESSON_ONE);
+    const sidC = (c.json as any).session_id;
+    await submit(headers, sidC, {
+      exercise_id: EX_FB_1,
+      exercise_type: 'fill_blank',
+      user_answer: 'trying',
+    });
+    await inject(h.app, {
+      method: 'POST',
+      path: `/lesson-sessions/${sidC}/complete`,
+      headers,
+    });
+
+    const progressRows = await h.database.orm
+      .select()
+      .from(lessonProgress)
+      .where(eq(lessonProgress.userId, userId));
+    expect(progressRows).toHaveLength(1);
+    expect(progressRows[0]).toMatchObject({
+      attemptsCount: 3,
+      latestCorrect: 1,
+      bestCorrect: 2,
+      bestTotal: 10,
+    });
+  });
+});
+
+describe('non-UUID :sessionId is rejected at the route', () => {
+  it.each([
+    ['answers', 'POST', '/lesson-sessions/not-a-uuid/answers'],
+    ['complete', 'POST', '/lesson-sessions/not-a-uuid/complete'],
+    ['result', 'GET', '/lesson-sessions/not-a-uuid/result'],
+  ])('%s returns 404 session_not_found, no 500', async (_label, method, path) => {
+    const { headers } = await login(`bad-uuid-${path}`);
+    const res = await inject(h.app, {
+      method,
+      path,
+      headers,
+      json: method === 'POST' && path.endsWith('/answers')
+        ? {
+            attempt_id: 'cccccccc-0001-4000-8000-000000000777',
+            exercise_id: EX_FB_1,
+            exercise_type: 'fill_blank',
+            user_answer: 'trying',
+            submitted_at: SUBMITTED,
+          }
+        : undefined,
+    });
+    expect(res.status).toBe(404);
+    expect((res.json as any).error).toBe('session_not_found');
+  });
+});
+
+describe('attempt_id idempotency', () => {
+  it('replaying the same attempt_id returns the original verdict and writes one row', async () => {
+    const { headers, userId } = await login('idempotent-replay');
+    const start = await startSession(headers, LESSON_ONE);
+    const sid = (start.json as any).session_id;
+    const attemptId = 'cccccccc-0001-4000-8000-000000aaa001';
+
+    const first = await submit(headers, sid, {
+      attempt_id: attemptId,
+      exercise_id: EX_FB_1,
+      exercise_type: 'fill_blank',
+      user_answer: 'trying',
+    });
+    expect(first.status).toBe(200);
+    expect((first.json as any).correct).toBe(true);
+
+    // Same attempt_id, different user_answer — must NOT overwrite the
+    // original verdict; must NOT create a second exercise_attempts row.
+    const replay = await submit(headers, sid, {
+      attempt_id: attemptId,
+      exercise_id: EX_FB_1,
+      exercise_type: 'fill_blank',
+      user_answer: 'completely-different',
+    });
+    expect(replay.status).toBe(200);
+    expect((replay.json as any).correct).toBe(true);
+    expect((replay.json as any).canonical_answer).toBe(
+      (first.json as any).canonical_answer
+    );
+
+    const rows = await h.database.orm
+      .select()
+      .from(exerciseAttempts)
+      .where(eq(exerciseAttempts.userId, userId));
+    expect(rows).toHaveLength(1);
+  });
+
+  it('different attempt_ids on the same exercise produce two rows (history)', async () => {
+    const { headers, userId } = await login('idempotent-distinct');
+    const start = await startSession(headers, LESSON_ONE);
+    const sid = (start.json as any).session_id;
+
+    await submit(headers, sid, {
+      attempt_id: 'cccccccc-0001-4000-8000-000000bbb001',
+      exercise_id: EX_FB_1,
+      exercise_type: 'fill_blank',
+      user_answer: 'try',
+    });
+    await submit(headers, sid, {
+      attempt_id: 'cccccccc-0001-4000-8000-000000bbb002',
+      exercise_id: EX_FB_1,
+      exercise_type: 'fill_blank',
+      user_answer: 'trying',
+    });
+
+    const rows = await h.database.orm
+      .select()
+      .from(exerciseAttempts)
+      .where(eq(exerciseAttempts.userId, userId));
+    expect(rows).toHaveLength(2);
+  });
+});
+
+describe('stale lesson content vs session.contentHash', () => {
+  it('refuses /answers with 409 lesson_content_changed when fixture has drifted', async () => {
+    const { headers } = await login('stale-content-answers');
+    const start = await startSession(headers, LESSON_ONE);
+    const sid = (start.json as any).session_id;
+
+    // Simulate a fixture edit by rewriting the session's stored hash to a
+    // value that no longer matches the live lesson manifest.
+    await h.database.orm
+      .update(lessonSessions)
+      .set({ contentHash: 'stale-hash-mismatch' })
+      .where(eq(lessonSessions.id, sid));
+
+    const res = await submit(headers, sid, {
+      exercise_id: EX_FB_1,
+      exercise_type: 'fill_blank',
+      user_answer: 'trying',
+    });
+    expect(res.status).toBe(409);
+    expect((res.json as any).error).toBe('lesson_content_changed');
+  });
+
+  it('still serves /result for completed sessions even if content drifts', async () => {
+    const { headers } = await login('stale-content-tolerant-result');
+    const start = await startSession(headers, LESSON_ONE);
+    const sid = (start.json as any).session_id;
+    await submit(headers, sid, {
+      exercise_id: EX_FB_1,
+      exercise_type: 'fill_blank',
+      user_answer: 'trying',
+    });
+    await inject(h.app, {
+      method: 'POST',
+      path: `/lesson-sessions/${sid}/complete`,
+      headers,
+    });
+    await h.database.orm
+      .update(lessonSessions)
+      .set({ contentHash: 'stale-after-completion' })
+      .where(eq(lessonSessions.id, sid));
+
+    const res = await inject(h.app, {
+      method: 'GET',
+      path: `/lesson-sessions/${sid}/result`,
+      headers,
+    });
+    expect(res.status).toBe(200);
+    expect((res.json as any).status).toBe('completed');
+    expect((res.json as any).debrief).toBeTruthy();
+  });
+});
+
+describe('result/dashboard agree on total_exercises', () => {
+  it('total_exercises in /result matches session.exercise_count and dashboard report', async () => {
+    const { headers } = await login('total-exercises-consistency');
+    const start = await startSession(headers, LESSON_ONE);
+    const sid = (start.json as any).session_id;
+    await submit(headers, sid, {
+      exercise_id: EX_FB_1,
+      exercise_type: 'fill_blank',
+      user_answer: 'trying',
+    });
+    await inject(h.app, {
+      method: 'POST',
+      path: `/lesson-sessions/${sid}/complete`,
+      headers,
+    });
+    const result = await inject(h.app, {
+      method: 'GET',
+      path: `/lesson-sessions/${sid}/result`,
+      headers,
+    });
+    const dashboard = await inject(h.app, {
+      method: 'GET',
+      path: '/dashboard',
+      headers,
+    });
+    expect((result.json as any).total_exercises).toBe(
+      (dashboard.json as any).last_lesson_report.total_exercises
+    );
+    expect((result.json as any).total_exercises).toBe(10);
+  });
+});
+
+describe('GET /dashboard', () => {
+  it('rejects unauthenticated callers with 401', async () => {
+    const res = await inject(h.app, { method: 'GET', path: '/dashboard' });
+    expect(res.status).toBe(401);
+  });
+
+  it('returns the lesson list with default statuses for a fresh user', async () => {
+    const { headers } = await login('dashboard-fresh');
+    const res = await inject(h.app, {
+      method: 'GET',
+      path: '/dashboard',
+      headers,
+    });
+    expect(res.status).toBe(200);
+    const body = res.json as any;
+    expect(body.lessons.length).toBeGreaterThanOrEqual(2);
+    for (const l of body.lessons) {
+      expect(l.status).toBe('available');
+      expect(l.completed).toBe(false);
+    }
+    expect(body.recommended_next_lesson_id).toBe(body.lessons[0].lesson_id);
+    expect(body.active_sessions).toEqual([]);
+    expect(body.last_lesson_report).toBeNull();
+  });
+
+  it('marks an active session as in_progress and recommends it', async () => {
+    const { headers } = await login('dashboard-in-progress');
+    const start = await startSession(headers, LESSON_TWO);
+    const sid = (start.json as any).session_id;
+    const res = await inject(h.app, {
+      method: 'GET',
+      path: '/dashboard',
+      headers,
+    });
+    const body = res.json as any;
+    const lessonTwo = body.lessons.find(
+      (l: any) => l.lesson_id === LESSON_TWO
+    );
+    expect(lessonTwo.status).toBe('in_progress');
+    expect(lessonTwo.active_session_id).toBe(sid);
+    expect(body.recommended_next_lesson_id).toBe(LESSON_TWO);
+    expect(body.active_sessions).toHaveLength(1);
+    // Fresh session, no answers yet — answered_count must be 0 (not the
+    // session row's frozen `correct_count`).
+    expect(body.active_sessions[0].answered_count).toBe(0);
+  });
+
+  it('answered_count tracks distinct answered exercises, not correct_count', async () => {
+    const { headers } = await login('dashboard-answered-count');
+    const start = await startSession(headers, LESSON_ONE);
+    const sid = (start.json as any).session_id;
+    // One correct, one incorrect — answered_count should be 2 even
+    // though only one was correct, and correct_count on the session row
+    // is still 0 (only set on completion).
+    await submit(headers, sid, {
+      exercise_id: EX_FB_1,
+      exercise_type: 'fill_blank',
+      user_answer: 'trying',
+    });
+    await submit(headers, sid, {
+      exercise_id: EX_FB_2,
+      exercise_type: 'fill_blank',
+      user_answer: 'definitely-wrong',
+    });
+    // A repeat submission on the same exercise must not double-count.
+    await submit(headers, sid, {
+      exercise_id: EX_FB_1,
+      exercise_type: 'fill_blank',
+      user_answer: 'trying',
+    });
+    const res = await inject(h.app, {
+      method: 'GET',
+      path: '/dashboard',
+      headers,
+    });
+    const body = res.json as any;
+    expect(body.active_sessions).toHaveLength(1);
+    expect(body.active_sessions[0].answered_count).toBe(2);
+  });
+
+  it('marks completed lessons as done and surfaces last_lesson_report', async () => {
+    const { headers } = await login('dashboard-done');
+    const start = await startSession(headers, LESSON_ONE);
+    const sid = (start.json as any).session_id;
+    await submit(headers, sid, {
+      exercise_id: EX_FB_1,
+      exercise_type: 'fill_blank',
+      user_answer: 'trying',
+    });
+    await inject(h.app, {
+      method: 'POST',
+      path: `/lesson-sessions/${sid}/complete`,
+      headers,
+    });
+    const res = await inject(h.app, {
+      method: 'GET',
+      path: '/dashboard',
+      headers,
+    });
+    const body = res.json as any;
+    const lessonOne = body.lessons.find(
+      (l: any) => l.lesson_id === LESSON_ONE
+    );
+    expect(lessonOne.status).toBe('done');
+    expect(lessonOne.completed).toBe(true);
+    expect(lessonOne.latest_correct).toBe(1);
+    // Recommended-next must skip the completed lesson and fall through to
+    // the next incomplete one.
+    expect(body.recommended_next_lesson_id).toBe(LESSON_TWO);
+    expect(body.last_lesson_report).toBeTruthy();
+    expect(body.last_lesson_report.lesson_id).toBe(LESSON_ONE);
+    expect(body.last_lesson_report.session_id).toBe(sid);
+  });
+});

@@ -4,7 +4,9 @@ Flutter app for structured English practice (web runnable locally; iOS/Android p
 
 ## What it is
 
-Users complete lessons composed of exercises. The backend decides correctness. AI is used only for borderline `sentence_correction` cases and a short post-lesson debrief. No accounts, no server-side persistence, no gamification. Exercise progress (completed count) is stored locally on-device via SharedPreferences.
+Users complete lessons composed of exercises. The backend decides correctness. AI is used only for borderline `sentence_correction` cases and a short post-lesson debrief. The shipped UX is anonymous; exercise progress (completed count) is stored locally on-device via SharedPreferences.
+
+The backend ships an auth & identity foundation (Drizzle ORM, opaque refresh-token sessions, hard-delete) staged for a future client wave — see [`docs/plans/auth-foundation.md`](docs/plans/auth-foundation.md). The Flutter client is **not** wired to it yet.
 
 ## Key constraints
 
@@ -13,7 +15,8 @@ Users complete lessons composed of exercises. The backend decides correctness. A
 - 4 exercise types: `fill_blank`, `multiple_choice`, `sentence_correction`, `listening_discrimination` (multi-unit families gated on Wave 6)
 - Deterministic evaluation for all types; AI fallback only for `sentence_correction` borderline cases
 - Default linear lesson flow with the `LEARNING_ENGINE.md §9.1` 1/2/3 in-session loop layered on top — the Decision Engine may pull a same-skill item to the head after a wrong answer; on the third miss it ends the loop on that skill for the session
-- No auth, no resume, no chat UI; per-skill mastery state + cross-session review cadence are device-scoped (`LearnerSkillStore` + `ReviewScheduler` shipped in Waves 2–3)
+- Per-skill mastery state + cross-session review cadence are device-scoped today (`LearnerSkillStore` + `ReviewScheduler` shipped in Waves 2–3); server-side migration lives in `docs/plans/auth-server-state-wave7.md` Wave 7
+- Backend auth + server-owned lesson sessions (Apple stub login, refresh tokens, immutable `exercise_attempts`, `lesson_progress`, `/dashboard`) shipped server-side. No chat UI, no resume mid-session yet — Flutter client wire-up is Wave 7.4.
 
 ## Stack
 

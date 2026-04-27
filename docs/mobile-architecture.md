@@ -118,6 +118,18 @@ Renders one exercise at a time. Each exercise card shows an instruction band at 
 
 Session state (current exercise, results, score) is in-memory and discarded when the lesson exits. Exercise progress (completed count per lesson) is persisted locally via `LocalProgressStore` (`app/lib/progress/local_progress_store.dart`) using `SharedPreferences`. This allows the dashboard progress card to survive app restarts.
 
+> **Wave 2 backend (2026-04-26).** The backend now owns persistent
+> `lesson_sessions`, `exercise_attempts`, and `lesson_progress` tables
+> behind the `/lessons/:id/sessions/start`, `/lessons/:id/sessions/current`,
+> `/lesson-sessions/:id/answers`, `/lesson-sessions/:id/complete`,
+> `/lesson-sessions/:id/result`, and `/dashboard` endpoints — see
+> `docs/backend-contract.md §Lesson Sessions (Wave 2)`. The Flutter client
+> is **not** rewired against this surface yet; `LocalProgressStore` and the
+> in-memory `LastLessonStore` remain authoritative on-device until the
+> client wave lands. The persistent backend obsoletes the
+> `LocalProgressStore` indirection and the in-memory `LastLessonStore`
+> singleton — both will retire when the client cuts over.
+
 Key data classes (see `app/lib/models/`):
 
 - `EvaluateResponse` — result of one answer submission: `{correct, explanation?, canonicalAnswer}`. The wire payload also carries `evaluation_source` (`deterministic | ai_fallback`), but the client does not parse or use it — the server alone reasons about evaluator routing.
