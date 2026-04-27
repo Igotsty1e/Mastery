@@ -981,3 +981,16 @@ Wires the Wave 11.2 server endpoints into the Flutter client. **Safety mode: leg
 - **`HomeScreen`**: hero copy is now "Today's session", level "B2", with the dashboard CTA always enabled (no more "content kончился"-style disabled CTA). The CTA pushes `LessonIntroScreen` with `lessonId == null`, which routes the controller to `loadDynamicSession`.
 - **`LessonIntroScreen`**: `lessonId` is now optional; null selects the V1 dynamic flow.
 - **Tests**: 3 new cases in `app/test/session_controller_test.dart` covering `loadDynamicSession` happy path, dynamic-mode `submitAnswer + advance` appending the next pick, and `/next` returning null ending the session. 136/136 Flutter tests passing. 312/312 backend (+ 4 skipped) — server-side untouched in this PR.
+
+### Wave 11.4 status (2026-04-26) — drop legacy lesson-bound session paths
+
+V1 cleanup. Production telemetry from Wave 11.3 (`/sessions/start` + `/lesson-sessions/.../next` live, smoke green) cleared the way to delete the lesson-bound entry points.
+
+- **Removed**: `POST /lessons/:lessonId/sessions/start`, `GET /lessons/:lessonId/sessions/current` from `lessonSessions/routes.ts`. The two service functions `startSession` and `getCurrentSession` are kept in the file as dead code — no callers — until a tidier sweep.
+- **Removed (UI)**: `_CurrentUnitBlock` (curriculum / units listing) is no longer rendered on the dashboard; the V1 dynamic flow makes a fixed unit listing meaningless. Skill-progress UI is V1.5 per `docs/plans/learning-engine-v1.md` decision #12. `_startLesson(lessonId)`, `_currentLesson`, `_nextAfterCurrent`, `_CurriculumEntry` are warned as unused but stay in the file as a one-line roll-back path.
+- **Tests**: five `describe` blocks in `tests/lesson-sessions.test.ts` are now `describe.skip` with explicit Wave 11.4 markers — they assert lesson-bound semantics that no longer apply. Equivalent dynamic-flow coverage is in `tests/dynamic-sessions.test.ts` (Wave 11.2) and `app/test/session_controller_test.dart` (Wave 11.3).
+- **Counts**: 287 passing / 29 skipped backend tests; 136/136 Flutter tests passing.
+
+V1 MVP cleanup remaining (V1.5 backlog):
+- Drop the dead service functions and the `_startLesson` / curriculum scaffolding once we are sure nothing else depends on them.
+- Skill-progress UI (skill graph + per-skill cards on dashboard).

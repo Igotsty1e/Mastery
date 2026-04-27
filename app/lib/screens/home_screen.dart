@@ -428,11 +428,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   now: DateTime.now().toUtc(),
                 ),
               ],
-              const SizedBox(height: 22),
-              _CurrentUnitBlock(
-                curriculum: _curriculum,
-                currentLessonId: _currentLesson?.id,
-              ),
+              // Wave 11.4 — the curriculum / lessons-list block is gone.
+              // The V1 dynamic flow assembles each session from the bank,
+              // so a fixed unit listing no longer reflects what the
+              // learner will see. Skill-progress UI is V1.5
+              // (`docs/plans/learning-engine-v1.md` decision #12).
               const SizedBox(height: 22),
               const _PremiumBlock(),
             ],
