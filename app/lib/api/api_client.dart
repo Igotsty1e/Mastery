@@ -102,6 +102,40 @@ class ApiClient {
         jsonDecode(res.body) as Map<String, dynamic>);
   }
 
+  /// Wave 11.3 — `POST /sessions/start` (dynamic). Creates a server-
+  /// owned session NOT bound to a single lesson fixture; the Decision
+  /// Engine assembles each exercise from the bank.
+  ///
+  /// Returns the session id, frame metadata ("Today's session", level),
+  /// and the first picked exercise. SessionController uses it as the
+  /// new entry point in place of `startLessonSession + getLesson`.
+  Future<DynamicSessionStart> startSession() async {
+    final auth = _requireAuth();
+    final res = await auth.send(
+      'POST',
+      Uri.parse('$baseUrl/sessions/start'),
+    );
+    _assertOk(res);
+    return DynamicSessionStart.fromJson(
+        jsonDecode(res.body) as Map<String, dynamic>);
+  }
+
+  /// Wave 11.3 — `POST /lesson-sessions/:sessionId/next`. After an
+  /// answer is recorded, the client polls this endpoint to get the
+  /// next exercise the Decision Engine picked. `next` is null when
+  /// the session has reached its target length; the client should
+  /// then call `completeLessonSession` + `getResult`.
+  Future<DynamicNextResult> nextExercise(String sessionId) async {
+    final auth = _requireAuth();
+    final res = await auth.send(
+      'POST',
+      Uri.parse('$baseUrl/lesson-sessions/$sessionId/next'),
+    );
+    _assertOk(res);
+    return DynamicNextResult.fromJson(
+        jsonDecode(res.body) as Map<String, dynamic>);
+  }
+
   /// Wave 8 — `POST /lesson-sessions/:sessionId/answers`. The body shape
   /// matches Wave 7.2 `Wave2AnswerSchema`; the `sessionId` from
   /// `startLessonSession` replaces the legacy lesson-scoped route.
@@ -190,6 +224,61 @@ class LessonSessionStart {
       lessonVersion: j['lesson_version'] as String? ?? '',
       status: j['status'] as String? ?? 'in_progress',
       exerciseCount: (j['exercise_count'] as num?)?.toInt() ?? 0,
+    );
+  }
+}
+
+/// Wave 11.3 — response of `POST /sessions/start`. Carries the server's
+/// session id, the "Today's session" framing copy, and the first
+/// picked exercise. SessionController consumes the exercise directly
+/// (no separate `getLesson` round-trip needed).
+class DynamicSessionStart {
+  final String sessionId;
+  final String title;
+  final String level;
+  final int exerciseCount;
+  final Exercise firstExercise;
+
+  const DynamicSessionStart({
+    required this.sessionId,
+    required this.title,
+    required this.level,
+    required this.exerciseCount,
+    required this.firstExercise,
+  });
+
+  factory DynamicSessionStart.fromJson(Map<String, dynamic> j) {
+    return DynamicSessionStart(
+      sessionId: j['session_id'] as String,
+      title: j['title'] as String? ?? "Today\u2019s session",
+      level: j['level'] as String? ?? 'B2',
+      exerciseCount: (j['exercise_count'] as num?)?.toInt() ?? 10,
+      firstExercise:
+          Exercise.fromJson(j['first_exercise'] as Map<String, dynamic>),
+    );
+  }
+}
+
+/// Wave 11.3 — response of `POST /lesson-sessions/:sid/next`. `next` is
+/// null when the session has reached the engine's target length; the
+/// client should then complete + fetch the result.
+class DynamicNextResult {
+  final String? reason;
+  final int position;
+  final Exercise? next;
+
+  const DynamicNextResult({
+    required this.reason,
+    required this.position,
+    required this.next,
+  });
+
+  factory DynamicNextResult.fromJson(Map<String, dynamic> j) {
+    final raw = j['next_exercise'];
+    return DynamicNextResult(
+      reason: j['reason'] as String?,
+      position: (j['position'] as num?)?.toInt() ?? 0,
+      next: raw is Map<String, dynamic> ? Exercise.fromJson(raw) : null,
     );
   }
 }

@@ -293,4 +293,14 @@ class Lesson {
             .map((e) => Exercise.fromJson(e as Map<String, dynamic>))
             .toList(),
       );
+
+  Lesson copyWith({List<Exercise>? exercises}) => Lesson(
+        lessonId: lessonId,
+        title: title,
+        language: language,
+        level: level,
+        introRule: introRule,
+        introExamples: introExamples,
+        exercises: exercises ?? this.exercises,
+      );
 }

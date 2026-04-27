@@ -809,4 +809,121 @@ void main() {
       expect(ctrl.state.summary?.correctCount, equals(1));
     });
   });
+
+  // ── Wave 11.3 — V1 dynamic-session flow ─────────────────────────────────────
+  group('SessionController.loadDynamicSession', () {
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+    });
+
+    Map<String, dynamic> dynamicStartDto({String? exerciseId}) => {
+          'reason': 'linear_default',
+          'session_id': testSessionId,
+          'title': 'Today\u2019s session',
+          'level': 'B2',
+          'exercise_count': 10,
+          'started_at': '2026-04-26T00:00:00.000Z',
+          'first_exercise': {
+            'exercise_id':
+                exerciseId ?? 'a1b2c3d4-0001-4000-8000-000000000011',
+            'type': 'fill_blank',
+            'instruction': 'Complete the gap.',
+            'prompt': 'She ___ working.',
+          },
+        };
+
+    test(
+        'loadDynamicSession seeds a synthetic lesson with the first picked exercise',
+        () async {
+      final api = _authed((req) {
+        final p = req.url.path;
+        if (p.endsWith('/sessions/start')) {
+          return _jsonResponse(dynamicStartDto());
+        }
+        return _jsonResponse({'error': 'unmocked', 'path': p}, status: 404);
+      });
+      final ctrl = SessionController(api);
+
+      await ctrl.loadDynamicSession();
+
+      expect(ctrl.state.phase, equals(SessionPhase.ready));
+      expect(ctrl.state.lesson?.title, contains('session'));
+      expect(ctrl.state.lesson?.exercises.length, equals(1));
+      expect(ctrl.state.currentExercise?.exerciseId,
+          equals('a1b2c3d4-0001-4000-8000-000000000011'));
+    });
+
+    test(
+        'submitAnswer in dynamic mode appends the next picked exercise on advance',
+        () async {
+      final secondId = 'a1b2c3d4-0001-4000-8000-000000000012';
+      final api = _authed((req) {
+        final p = req.url.path;
+        if (p.endsWith('/sessions/start')) {
+          return _jsonResponse(dynamicStartDto());
+        }
+        if (p.endsWith('/answers')) {
+          return _jsonResponse(_evaluateJson());
+        }
+        if (p.endsWith('/next')) {
+          return _jsonResponse({
+            'reason': 'variety_switch',
+            'position': 1,
+            'next_exercise': {
+              'exercise_id': secondId,
+              'type': 'fill_blank',
+              'instruction': 'Complete the gap.',
+              'prompt': 'They ___ students.',
+            },
+          });
+        }
+        return _jsonResponse({'error': 'unmocked', 'path': p}, status: 404);
+      });
+      final ctrl = SessionController(api);
+
+      await ctrl.loadDynamicSession();
+      await ctrl.submitAnswer('is');
+      // Decision result from /next is now pending; advance() promotes it.
+      ctrl.advance();
+
+      expect(ctrl.state.lesson?.exercises.length, equals(2));
+      expect(ctrl.state.currentExercise?.exerciseId, equals(secondId));
+      expect(ctrl.state.lastDecisionReason, equals('variety_switch'));
+    });
+
+    test(
+        '/next returning null next_exercise ends the dynamic session on advance',
+        () async {
+      final api = _authed((req) {
+        final p = req.url.path;
+        if (p.endsWith('/sessions/start')) {
+          return _jsonResponse(dynamicStartDto());
+        }
+        if (p.endsWith('/answers')) {
+          return _jsonResponse(_evaluateJson());
+        }
+        if (p.endsWith('/next')) {
+          return _jsonResponse({
+            'reason': 'session_complete',
+            'position': 10,
+            'next_exercise': null,
+          });
+        }
+        if (p.endsWith('/complete') || p.endsWith('/result')) {
+          return _jsonResponse(_resultJson());
+        }
+        return _jsonResponse({'error': 'unmocked', 'path': p}, status: 404);
+      });
+      final ctrl = SessionController(api);
+
+      await ctrl.loadDynamicSession();
+      await ctrl.submitAnswer('is');
+      ctrl.advance();
+
+      await Future.delayed(Duration.zero);
+      await Future.delayed(Duration.zero);
+
+      expect(ctrl.state.phase, equals(SessionPhase.summary));
+    });
+  });
 }

@@ -26,6 +26,12 @@ class SessionController extends ChangeNotifier {
   /// server id, the same one `lesson_progress` aggregates against.
   String? _sessionId;
 
+  /// Wave 11.3 — true when the controller was loaded via
+  /// `loadDynamicSession` (V1 dynamic flow). Drives the post-attempt
+  /// `nextExercise(sessionId)` fetch and the synthetic-lesson queue
+  /// growth. False for the legacy `loadLesson(lessonId)` flow.
+  bool _dynamicMode = false;
+
   /// Wave 3 §9.1 in-session mistake counter, per skill, reset on
   /// `loadLesson`. The `DecisionEngine` reads this to decide the 1/2/3
   /// loop; the `ReviewScheduler` reads it on session end to compute the
@@ -38,12 +44,61 @@ class SessionController extends ChangeNotifier {
 
   SessionController(this._api) : _state = const SessionState();
 
+  /// Wave 11.3 — V1 dynamic-session entry point. Calls `POST /sessions/start`,
+  /// receives `{ session_id, first_exercise }`, and seeds a synthetic
+  /// `Lesson` whose `exercises` list grows by one each time `advance()`
+  /// fires. The Decision Engine on the server picks every subsequent
+  /// item via `POST /lesson-sessions/:sid/next`.
+  ///
+  /// Sits next to the legacy `loadLesson(lessonId)` so the rewire of
+  /// HomeScreen's CTA can ship in this PR while older test fixtures
+  /// keep working off the lesson-bound flow.
+  Future<void> loadDynamicSession() async {
+    _lastLessonId = null;
+    _lastAnswer = null;
+    _sessionId = null;
+    _sessionMistakesBySkill = {};
+    _pendingDecision = null;
+    _dynamicMode = true;
+    _emit(_state.copyWith(phase: SessionPhase.loading));
+    try {
+      final start = await _api.startSession();
+      _sessionId = start.sessionId;
+      // Synthetic lesson — the title + level land on UI and are kept
+      // stable for the duration of the session. Exercises grow as the
+      // Decision Engine returns them.
+      final lesson = Lesson(
+        lessonId: start.sessionId,
+        title: start.title,
+        language: 'en',
+        level: start.level,
+        introRule: '',
+        introExamples: const [],
+        exercises: [start.firstExercise],
+      );
+      _emit(_state.copyWith(
+        lesson: lesson,
+        phase: SessionPhase.ready,
+        currentIndex: 0,
+        results: [],
+        remainingIndices: const [0],
+        clearLastDecisionReason: true,
+      ));
+    } catch (e) {
+      _emit(_state.copyWith(
+        phase: SessionPhase.error,
+        errorMessage: e.toString(),
+      ));
+    }
+  }
+
   Future<void> loadLesson(String lessonId) async {
     _lastLessonId = lessonId;
     _lastAnswer = null;
     _sessionId = null;
     _sessionMistakesBySkill = {};
     _pendingDecision = null;
+    _dynamicMode = false;
     _emit(_state.copyWith(phase: SessionPhase.loading));
     try {
       // Wave 8: load lesson content (public route) + start a server-owned
@@ -145,11 +200,53 @@ class SessionController extends ChangeNotifier {
           evaluationVersion: response.evaluationVersion,
         );
       }
+
+      // Wave 11.3 — V1 dynamic flow: ask the server-side Decision
+      // Engine for the next pick. Overrides the local DecisionEngine
+      // result computed above; the server-side queue is authoritative
+      // when the session was loaded via `loadDynamicSession`.
+      if (_dynamicMode) {
+        await _fetchNextDynamic();
+      }
     } catch (e) {
       _emit(_state.copyWith(
         phase: SessionPhase.error,
         errorMessage: e.toString(),
       ));
+    }
+  }
+
+  Future<void> _fetchNextDynamic() async {
+    final sessionId = _sessionId;
+    final lesson = _state.lesson;
+    if (sessionId == null || lesson == null) return;
+    try {
+      final dynamicNext = await _api.nextExercise(sessionId);
+      if (dynamicNext.next == null) {
+        _pendingDecision = const DecisionResult.endSession();
+        return;
+      }
+      // Append the freshly-picked exercise to the synthetic lesson and
+      // queue its index. `advance()` consumes `_pendingDecision` and
+      // transitions to that index on the next tick.
+      final newExercises = [...lesson.exercises, dynamicNext.next!];
+      final newIndex = newExercises.length - 1;
+      final updatedLesson = lesson.copyWith(exercises: newExercises);
+      _pendingDecision = DecisionResult.advance(
+        [newIndex],
+        reason: dynamicNext.reason,
+      );
+      _emit(_state.copyWith(
+        lesson: updatedLesson,
+        lastDecisionReason: dynamicNext.reason,
+        clearLastDecisionReason: dynamicNext.reason == null,
+      ));
+    } catch (_) {
+      // On a transient network failure, end the session so the
+      // learner sees their summary instead of being stuck on the
+      // result phase. The server still has the in-progress row;
+      // they can resume by starting a fresh session.
+      _pendingDecision = const DecisionResult.endSession();
     }
   }
 

@@ -10,9 +10,13 @@ import '../widgets/mastery_widgets.dart';
 import 'exercise_screen.dart';
 
 class LessonIntroScreen extends StatefulWidget {
-  final String lessonId;
+  /// `null` selects the Wave 11.3 V1 dynamic-session flow — the
+  /// Decision Engine on the server picks the items. A non-null
+  /// `lessonId` keeps the legacy `loadLesson(lessonId)` flow alive
+  /// for tests and the (deprecated) lesson-bound CTA.
+  final String? lessonId;
 
-  const LessonIntroScreen({super.key, required this.lessonId});
+  const LessonIntroScreen({super.key, this.lessonId});
 
   @override
   State<LessonIntroScreen> createState() => _LessonIntroScreenState();
@@ -26,7 +30,12 @@ class _LessonIntroScreenState extends State<LessonIntroScreen> {
   void initState() {
     super.initState();
     _controller = SessionController(context.read<ApiClient>());
-    _controller.loadLesson(widget.lessonId);
+    final lessonId = widget.lessonId;
+    if (lessonId != null) {
+      _controller.loadLesson(lessonId);
+    } else {
+      _controller.loadDynamicSession();
+    }
   }
 
   @override

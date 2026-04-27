@@ -312,6 +312,21 @@ class _HomeScreenState extends State<HomeScreen> {
     await _loadDashboard();
   }
 
+  /// Wave 11.3 — V1 dynamic-session entry. The server-side Decision
+  /// Engine assembles the run from the bank, so the dashboard CTA no
+  /// longer threads a `lessonId` through. `LessonIntroScreen` reads
+  /// the null-id branch and calls `loadDynamicSession()` on the
+  /// freshly-constructed controller.
+  Future<void> _startDynamicSession() async {
+    await Navigator.of(context).push(
+      MasteryFadeRoute(
+        builder: (_) => const LessonIntroScreen(),
+      ),
+    );
+    if (!mounted) return;
+    await _loadDashboard();
+  }
+
   void _openLastLessonSummary({bool toMistakes = false}) {
     final record = LastLessonStore.instance.record;
     if (record == null) return;
@@ -379,34 +394,23 @@ class _HomeScreenState extends State<HomeScreen> {
               const _DashboardHeader(),
               const SizedBox(height: 18),
               _NextLessonHero(
-                // When at least one lesson is unfinished, the hero
-                // points at it. When everything shipped is done, the
-                // hero falls back to the "Coming next" placeholder
-                // copy with `lessonHasNext: false` and a disabled CTA.
-                lessonTitle: (_currentLesson ??
-                        (_curriculum.isNotEmpty
-                            ? _curriculum.last
-                            : null))
-                    ?.title ??
-                    'Lesson',
+                // Wave 11.3 — V1 dynamic frame. The hero no longer points
+                // at a single lesson fixture; the Decision Engine
+                // assembles each session from the bank.
+                lessonTitle: 'Today\u2019s session',
                 level: _selectedLevel,
-                totalExercises: _currentLesson?.totalExercises ??
-                    (_curriculum.isNotEmpty
-                        ? _curriculum.last.totalExercises
-                        : 10),
-                completedExercises: _currentLesson?.completedExercises ??
-                    (_curriculum.isNotEmpty
-                        ? _curriculum.last.completedExercises
-                        : 0),
+                totalExercises: 10,
+                completedExercises: 0,
                 isLoading: _isLoadingDashboard,
-                // `lessonHasNext` controls the "Coming next: …" hero
-                // copy. True when the current lesson is finished AND
-                // another lesson exists after it; the CTA in that
-                // state should advance to the next lesson.
-                lessonHasNext: _nextAfterCurrent != null,
-                onStart: _currentLesson == null
-                    ? null
-                    : () => _startLesson(_currentLesson!.id),
+                // Wave 11.3: lessonHasNext is meaningless under dynamic
+                // sessions; the V1 hero copy ignores it. Pass `true` so
+                // the legacy "no next lesson" placeholder never fires.
+                lessonHasNext: true,
+                // Wave 11.3 — CTA always boots a V1 dynamic session. The
+                // legacy `_startLesson(lessonId)` path stays in the codebase
+                // for tests and a possible roll-back, but the dashboard no
+                // longer routes through it.
+                onStart: _startDynamicSession,
               ),
               if (lastRecord != null) ...[
                 const SizedBox(height: 22),
@@ -731,8 +735,11 @@ class _NextLessonHero extends StatelessWidget {
     final progress = totalExercises == 0
         ? 0.0
         : (completedExercises / totalExercises).clamp(0.0, 1.0);
-    final canStart =
-        !isLoading && onStart != null && (!_isFinished || lessonHasNext);
+    // Wave 11.3 — the V1 dynamic CTA never runs out of content (the
+    // Decision Engine always finds something in the bank), so the CTA
+    // is enabled whenever the dashboard is not in its loading state.
+    // The legacy "lesson is finished + no next lesson" gate is dead.
+    final canStart = !isLoading && onStart != null;
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(

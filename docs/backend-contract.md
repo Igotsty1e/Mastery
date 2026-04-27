@@ -971,3 +971,13 @@ Out of scope (Wave 11.3):
 - `SessionController` shift from queue-walking to next-on-demand.
 - Dashboard hero "Today's session" copy update.
 - Removal of `POST /lessons/:id/sessions/start` and `GET /lessons/:id/sessions/current` once Flutter has cut over.
+
+### Wave 11.3 status (2026-04-26) — Flutter on dynamic sessions
+
+Wires the Wave 11.2 server endpoints into the Flutter client. **Safety mode: legacy paths kept alive.** The dashboard CTA now boots a V1 dynamic session, but `SessionController.loadLesson(lessonId)` and the legacy `POST /lessons/:id/sessions/start` route still work — both are reachable from the test harness and a one-line `_startLesson(lessonId)` fallback in `home_screen.dart`. Removal lands in Wave 11.4 once production telemetry confirms the dynamic flow is healthy.
+
+- **`ApiClient`**: new `startSession()` returns `DynamicSessionStart { sessionId, title, level, exerciseCount, firstExercise }`. New `nextExercise(sessionId)` returns `DynamicNextResult { reason, position, next }`.
+- **`SessionController`**: new `loadDynamicSession()` (no `lessonId`). Synthetic `Lesson` seeded with the first picked exercise; `Lesson.copyWith(exercises:)` lets `_fetchNextDynamic` append each subsequent pick. The internal `_dynamicMode` flag drives the post-attempt `nextExercise` fetch; the legacy `loadLesson` path leaves it false so its local DecisionEngine queue still runs.
+- **`HomeScreen`**: hero copy is now "Today's session", level "B2", with the dashboard CTA always enabled (no more "content kончился"-style disabled CTA). The CTA pushes `LessonIntroScreen` with `lessonId == null`, which routes the controller to `loadDynamicSession`.
+- **`LessonIntroScreen`**: `lessonId` is now optional; null selects the V1 dynamic flow.
+- **Tests**: 3 new cases in `app/test/session_controller_test.dart` covering `loadDynamicSession` happy path, dynamic-mode `submitAnswer + advance` appending the next pick, and `/next` returning null ending the session. 136/136 Flutter tests passing. 312/312 backend (+ 4 skipped) — server-side untouched in this PR.
