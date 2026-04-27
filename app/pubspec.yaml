@@ -22,6 +22,11 @@ dependencies:
   # at 3.3.x because 3.4.x bumps minimum Dart SDK above what Render's Flutter
   # 3.22.2 image ships.
   cached_network_image: ^3.3.1
+  # Wave 7.4 — refresh-token storage. iOS Keychain / Android KeyStore /
+  # macOS Keychain / web encrypted-localStorage / Linux libsecret. Pinned
+  # at 9.2.x because 10.x bumps minimum Dart SDK above what Render's
+  # Flutter 3.22.2 image ships.
+  flutter_secure_storage: ^9.2.2
 
 dev_dependencies:
   flutter_test:
