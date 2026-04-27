@@ -3,13 +3,10 @@ import { z } from 'zod';
 import type { AppDatabase } from '../db/client';
 import { requireAuth, type AuthedRequest } from '../auth/middleware';
 import type { AiProvider } from '../ai/interface';
-import { getLessonById } from '../data/lessons';
 import {
   completeSession,
-  getCurrentSession,
   getResult,
   LessonSessionError,
-  startSession,
   submitAnswer,
 } from './service';
 import {
@@ -104,54 +101,10 @@ export function makeLessonSessionsRouter(
   const router = Router();
   const auth = requireAuth(db);
 
-  router.post('/lessons/:lessonId/sessions/start', auth, async (req, res, next) => {
-    try {
-      const userId = (req as AuthedRequest).auth.userId;
-      const lessonId = req.params.lessonId;
-      if (!UuidSchema.safeParse(lessonId).success) {
-        res.status(404).json({ error: 'lesson_not_found' });
-        return;
-      }
-      const { session, latestAttempts, reason } = await startSession(
-        db,
-        userId,
-        lessonId
-      );
-      res.json({ reason, ...sessionToDto(session, latestAttempts) });
-    } catch (err) {
-      if (handleError(err, res)) return;
-      next(err);
-    }
-  });
-
-  router.get('/lessons/:lessonId/sessions/current', auth, async (req, res, next) => {
-    try {
-      const userId = (req as AuthedRequest).auth.userId;
-      const lessonId = req.params.lessonId;
-      if (!UuidSchema.safeParse(lessonId).success) {
-        res.status(404).json({ error: 'lesson_not_found' });
-        return;
-      }
-      // Codex P3 fix: validate the lesson exists in the manifest before
-      // saying "no active session". A bad lesson id used to fall through
-      // to `no_active_session`, which made callers treat a content miss
-      // as an empty resume state. The /start route already does this;
-      // /current now matches.
-      if (!getLessonById(lessonId)) {
-        res.status(404).json({ error: 'lesson_not_found' });
-        return;
-      }
-      const result = await getCurrentSession(db, userId, lessonId);
-      if (!result) {
-        res.status(404).json({ error: 'no_active_session' });
-        return;
-      }
-      res.json(sessionToDto(result.session, result.latestAttempts));
-    } catch (err) {
-      if (handleError(err, res)) return;
-      next(err);
-    }
-  });
+  // Wave 11.4 (2026-04-26): the legacy lesson-bound session-start
+  // endpoints are gone. Every session now boots through the dynamic
+  // `POST /sessions/start` route in `sessions/routes.ts`, which the
+  // Decision Engine drives off the bank.
 
   router.post('/lesson-sessions/:sessionId/answers', auth, async (req, res, next) => {
     try {
