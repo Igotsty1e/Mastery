@@ -1,17 +1,20 @@
 // Wave 7.4 part 2.3 — Sign-in gate before onboarding.
 //
-// First-launch routing: HomeScreen → (auth flag on AND no session) →
-// SignInScreen → (Sign in OR Skip) → OnboardingArrivalRitualScreen →
-// Dashboard. Returning users with a refresh-token in secure storage
-// bypass this screen. Skip enters guest mode (existing device-scoped
-// LearnerSkillStore + ReviewScheduler), with a Sign-in affordance
-// lined up for the dashboard in a follow-up.
+// First-launch routing: HomeScreen → (no live session) → SignInScreen →
+// (Sign in OR Skip) → OnboardingArrivalRitualScreen → Dashboard.
+// Returning users with a refresh-token in secure storage bypass this
+// screen. Wave 8 (legacy drop): Skip is no longer "guest mode" — it
+// performs a silent stub-login under a stable per-install subject so
+// every subsequent request, including server-owned lesson sessions,
+// carries an Authorization header. Real Apple Sign-In replaces the
+// stub later without a contract change.
 //
 // Design tone: Editorial Notebook, matching the shipped onboarding
 // (`docs/plans/arrival-ritual.md`) — mono eyebrow, Fraunces-italic
 // wordmark, calm body, two clear actions stacked.
 
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../auth/auth_client.dart';
 import '../theme/mastery_theme.dart';
@@ -81,18 +84,46 @@ class _SignInScreenState extends State<SignInScreen> {
     }
   }
 
+  static const _stubSubjectKey = 'mastery_stub_subject_v1';
+
   Future<String> _stableStubSubject() async {
-    // Minimal: derive a per-install id from a cheap source — for the
-    // stub, a UUID stored in the same secure storage. Real Apple flow
-    // skips this entirely.
-    // Avoiding a new dependency: synthesise from current time + random.
+    // Wave 8: persisted per-install id so repeat sign-ins on the same
+    // device land on the same backend user. Used by both the explicit
+    // Sign-in path and the silent Skip-for-now path so a learner who
+    // skipped today and signs in tomorrow keeps their progress.
+    final prefs = await SharedPreferences.getInstance();
+    final existing = prefs.getString(_stubSubjectKey);
+    if (existing != null && existing.isNotEmpty) return existing;
     final now = DateTime.now().microsecondsSinceEpoch.toRadixString(36);
-    return 'stub-$now';
+    final fresh = 'stub-$now';
+    await prefs.setString(_stubSubjectKey, fresh);
+    return fresh;
   }
 
-  void _skip() {
+  /// Wave 8 (legacy drop): Skip is now a silent stub-login. The unauth'd
+  /// `/lessons/:id/answers` and `/lessons/:id/result` routes are gone so
+  /// every learner needs a session before submitting answers. Skip uses
+  /// the same persistent subject as Sign in, so the user can re-enter
+  /// "real" sign-in later without losing progress (server idempotency
+  /// merges the records).
+  Future<void> _skip() async {
     if (_busy) return;
-    widget.onResolved(SignInOutcome.skipped);
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      final subject = await _stableStubSubject();
+      await widget.authClient.signInWithAppleStub(subject: subject);
+      if (!mounted) return;
+      widget.onResolved(SignInOutcome.skipped);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = 'Could not start a session. Check your connection and retry.';
+      });
+    }
   }
 
   @override

@@ -19,7 +19,12 @@ class SessionController extends ChangeNotifier {
 
   String? _lastLessonId;
   String? _lastAnswer;
-  late String _sessionId;
+
+  /// Server-owned session id minted by `POST /lessons/:id/sessions/start`
+  /// in `loadLesson`. Wave 8 (legacy drop): the local UUID v4 from
+  /// earlier waves is gone — every answer + result fetch threads this
+  /// server id, the same one `lesson_progress` aggregates against.
+  String? _sessionId;
 
   /// Wave 3 §9.1 in-session mistake counter, per skill, reset on
   /// `loadLesson`. The `DecisionEngine` reads this to decide the 1/2/3
@@ -31,19 +36,27 @@ class SessionController extends ChangeNotifier {
   /// `advance()`. Stored so we don't recompute when `advance()` runs.
   DecisionResult? _pendingDecision;
 
-  SessionController(this._api) : _state = const SessionState() {
-    _sessionId = _uuid.v4();
-  }
+  SessionController(this._api) : _state = const SessionState();
 
   Future<void> loadLesson(String lessonId) async {
     _lastLessonId = lessonId;
     _lastAnswer = null;
-    _sessionId = _uuid.v4();
+    _sessionId = null;
     _sessionMistakesBySkill = {};
     _pendingDecision = null;
     _emit(_state.copyWith(phase: SessionPhase.loading));
     try {
-      final lesson = await _api.getLesson(lessonId);
+      // Wave 8: load lesson content (public route) + start a server-owned
+      // session in parallel. `startLessonSession` requires an attached
+      // AuthClient; HomeScreen wires that during `_resolveInitialView`
+      // and after sign-in / Skip.
+      final results = await Future.wait<Object>([
+        _api.getLesson(lessonId),
+        _api.startLessonSession(lessonId),
+      ]);
+      final lesson = results[0] as Lesson;
+      final session = results[1] as LessonSessionStart;
+      _sessionId = session.sessionId;
       _emit(_state.copyWith(
         lesson: lesson,
         phase: SessionPhase.ready,
@@ -64,18 +77,29 @@ class SessionController extends ChangeNotifier {
   Future<void> submitAnswer(String userAnswer) async {
     final exercise = _state.currentExercise;
     if (exercise == null) return;
+    final sessionId = _sessionId;
+    if (sessionId == null) {
+      _emit(_state.copyWith(
+        phase: SessionPhase.error,
+        errorMessage: 'Session not started — call loadLesson first',
+      ));
+      return;
+    }
 
     _lastAnswer = userAnswer;
     _emit(_state.copyWith(phase: SessionPhase.evaluating));
     try {
-      final response = await _api.submitAnswer(_state.lesson!.lessonId, EvaluateRequest(
-        sessionId: _sessionId,
-        attemptId: _uuid.v4(),
-        exerciseId: exercise.exerciseId,
-        exerciseType: exerciseTypeToString(exercise.type),
-        userAnswer: userAnswer,
-        submittedAt: DateTime.now().toUtc().toIso8601String(),
-      ));
+      final response = await _api.submitAnswer(
+        sessionId,
+        EvaluateRequest(
+          sessionId: sessionId,
+          attemptId: _uuid.v4(),
+          exerciseId: exercise.exerciseId,
+          exerciseType: exerciseTypeToString(exercise.type),
+          userAnswer: userAnswer,
+          submittedAt: DateTime.now().toUtc().toIso8601String(),
+        ),
+      );
 
       // Track per-skill in-session mistake count (§9.1 1/2/3 loop input).
       if (!response.correct && exercise.skillId != null) {
@@ -174,8 +198,21 @@ class SessionController extends ChangeNotifier {
   }
 
   Future<void> _fetchSummary() async {
+    final sessionId = _sessionId;
+    if (sessionId == null) {
+      // Defensive: should never happen — loadLesson always seeds this
+      // before any answers are submitted. Surface a summary phase with
+      // local counts only.
+      _emit(_state.copyWith(phase: SessionPhase.summary));
+      await _scheduleReviews();
+      return;
+    }
     try {
-      final summary = await _api.getResult(_state.lesson!.lessonId, _sessionId);
+      // Wave 8: complete first (idempotent server-side; builds the
+      // debrief snapshot + upserts lesson_progress) then fetch the
+      // result DTO.
+      await _api.completeLessonSession(sessionId);
+      final summary = await _api.getResult(sessionId);
       _emit(_state.copyWith(phase: SessionPhase.summary, summary: summary));
       // Publish to the in-memory cross-screen store so the dashboard's
       // "Last lesson report" block can render once the user pops back.

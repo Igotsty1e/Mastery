@@ -38,16 +38,23 @@ beforeEach(() => {
   resetAiRateLimitStore();
 });
 
-// ──────────────────────────────────────────────────────────────────
-// Proxy trust: X-Forwarded-For is used as the rate-limit key
-// ──────────────────────────────────────────────────────────────────
+// Wave 8 (legacy drop): the integration tests for the rate-limiter that
+// went through `POST /lessons/:id/answers` were removed when that route
+// was dropped. Equivalent coverage exists on the auth-protected
+// `/lesson-sessions/:id/answers` path in `tests/lesson-sessions.test.ts`.
+// Unit-level guards (bounded cleanup, TTL eviction, store cap, AI cache,
+// CORS) stay below.
+
 // Returns a borderline body with a unique session ID per index so each call
 // is a cache miss and counts as a distinct AI call toward the rate limit.
+// Kept for parity in case any unit-level rate-limit test wants it.
+// (Currently unused — left here so the helper doesn't churn.)
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function uniqueSessionBorderlineBody(i: number) {
   return { ...borderlineBody(), session_id: `11111111-${String(i + 1).padStart(4, '0')}-4000-8000-000000000099` };
 }
 
-describe('rate limiter — trust proxy', () => {
+describe.skip('rate limiter — trust proxy (DROPPED with /lessons/:id/answers)', () => {
   it('X-Forwarded-For IP is used as the rate-limit bucket, not socket address', async () => {
     const app = createApp(stubAi);
 
@@ -126,7 +133,7 @@ describe('rate limiter — trust proxy', () => {
 // ──────────────────────────────────────────────────────────────────
 // Unknown IP — 400, not 'unknown' collapse
 // ──────────────────────────────────────────────────────────────────
-describe('rate limiter — unknown IP rejection', () => {
+describe.skip('rate limiter — unknown IP rejection (DROPPED with /lessons/:id/answers)', () => {
   it('returns 400 when req.ip cannot be determined', async () => {
     const app = createApp(stubAi);
     const res = await inject(app, {
