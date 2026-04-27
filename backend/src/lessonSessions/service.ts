@@ -21,6 +21,10 @@ import { buildDebrief, type DebriefDto } from '../debrief/debrief';
 import type { AiProvider } from '../ai/interface';
 import { isUniqueViolation } from '../db/errors';
 import {
+  recordAttemptStats,
+  type AttemptOutcome,
+} from '../observability/exerciseStats';
+import {
   finalizeSessionCompletion,
   findActiveSession,
   findAttemptByClientId,
@@ -351,6 +355,21 @@ export async function submitAnswer(
   }
 
   await touchSession(db, sessionId, input.submittedAt);
+
+  // Wave 9 — daily exercise health counters per `LEARNING_ENGINE.md §17`.
+  // Outcome maps directly from the deterministic boolean today; the
+  // partial outcome is reserved for Wave 6 multi-unit families and
+  // remains 0 in V1 buckets. Time-to-answer is the gap between
+  // session start and submission for now — when Wave 11 surfaces the
+  // per-exercise displayed_at timestamp we'll narrow it.
+  const outcome: AttemptOutcome = evaluation.correct ? 'correct' : 'wrong';
+  const timeToAnswerMs =
+    input.submittedAt.getTime() - session.lastActivityAt.getTime();
+  void recordAttemptStats(db, {
+    exerciseId: input.exerciseId,
+    outcome,
+    timeToAnswerMs,
+  });
 
   return {
     attempt: inserted.row,
