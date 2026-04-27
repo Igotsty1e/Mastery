@@ -11,8 +11,26 @@ FLUTTER_ARCHIVE="flutter_linux_${FLUTTER_VERSION}-stable.tar.xz"
 FLUTTER_URL="https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/${FLUTTER_ARCHIVE}"
 
 # ── Install Flutter (cached) ──────────────────────────────────────────────
-if [ ! -x "$FLUTTER_DIR/bin/flutter" ]; then
-  echo "[render-build] Installing Flutter $FLUTTER_VERSION → $FLUTTER_DIR"
+# Render's incremental-cache layer can restore a partial Flutter SDK where
+# `bin/flutter` exists but the `packages/flutter_tools/` directory doesn't.
+# In that state every build fails with "Unable to 'pub upgrade' flutter tool"
+# x10 retries because shared.sh tries to cd into the missing directory.
+# Treat any missing critical sub-path as cache corruption and re-extract
+# from scratch.
+flutter_sdk_intact() {
+  [ -x "$FLUTTER_DIR/bin/flutter" ] \
+    && [ -d "$FLUTTER_DIR/packages/flutter_tools" ] \
+    && [ -d "$FLUTTER_DIR/bin/cache" ] \
+    && [ -f "$FLUTTER_DIR/version" ]
+}
+
+if ! flutter_sdk_intact; then
+  if [ -d "$FLUTTER_DIR" ]; then
+    echo "[render-build] Cached Flutter at $FLUTTER_DIR is corrupted (missing packages/flutter_tools or bin/cache). Re-extracting."
+    rm -rf "$FLUTTER_DIR"
+  else
+    echo "[render-build] Installing Flutter $FLUTTER_VERSION → $FLUTTER_DIR"
+  fi
   mkdir -p "$CACHE_DIR"
   TMP=$(mktemp -d)
   trap 'rm -rf "$TMP"' EXIT
