@@ -178,11 +178,48 @@ ALTER TABLE exercise_attempts
   ADD COLUMN IF NOT EXISTS explanation_snapshot text;
 `;
 
+// Wave 7.3 — engine state migration. Mirrors the device-scoped Flutter
+// LearnerSkillStore + ReviewScheduler so the same state persists across
+// devices once Wave 7.4 wires the client.
+const LEARNER_STATE_SQL = `
+CREATE TABLE IF NOT EXISTS learner_skills (
+  user_id                  uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  skill_id                 text NOT NULL,
+  mastery_score            integer NOT NULL DEFAULT 0,
+  last_attempt_at          timestamptz,
+  evidence_summary         jsonb NOT NULL DEFAULT '{}'::jsonb,
+  recent_errors            jsonb NOT NULL DEFAULT '[]'::jsonb,
+  production_gate_cleared  boolean NOT NULL DEFAULT false,
+  gate_cleared_at_version  integer,
+  updated_at               timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (user_id, skill_id)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS learner_skills_pk
+  ON learner_skills(user_id, skill_id);
+
+CREATE TABLE IF NOT EXISTS learner_review_schedule (
+  user_id                uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  skill_id               text NOT NULL,
+  step                   integer NOT NULL DEFAULT 1,
+  due_at                 timestamptz NOT NULL,
+  last_outcome_at        timestamptz NOT NULL,
+  last_outcome_mistakes  integer NOT NULL DEFAULT 0,
+  graduated              boolean NOT NULL DEFAULT false,
+  updated_at             timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (user_id, skill_id)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS learner_review_schedule_pk
+  ON learner_review_schedule(user_id, skill_id);
+CREATE INDEX IF NOT EXISTS learner_review_schedule_due_idx
+  ON learner_review_schedule(user_id, due_at);
+`;
+
 const MIGRATIONS: Migration[] = [
   { id: '0001_init', sql: INIT_SQL },
   { id: '0002_lesson_sessions', sql: LESSON_SESSIONS_SQL },
   { id: '0003_attempt_idempotency', sql: ATTEMPT_IDEMPOTENCY_SQL },
   { id: '0004_attempt_review_snapshot', sql: ATTEMPT_REVIEW_SNAPSHOT_SQL },
+  { id: '0005_learner_state', sql: LEARNER_STATE_SQL },
 ];
 
 export async function runMigrations(database: Database): Promise<void> {
