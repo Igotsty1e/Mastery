@@ -162,6 +162,41 @@ client never reads from a lesson endpoint to pick diagnostic items.
 The diagnostic flow lives behind dedicated `/diagnostic/...` routes
 (Wave 12.2) that filter the bank server-side before responding.
 
+### Wave 12.3 — DiagnosticScreen routing gate
+
+`DiagnosticScreen` (`app/lib/screens/diagnostic_screen.dart`) lives
+between `SignInScreen` and `OnboardingArrivalRitualScreen` in the
+`HomeScreen.build()` cascade. Routing detection: after sign-in, if
+`LocalProgressStore.hasSkippedDiagnostic` is `false` AND
+`ApiClient.getMyLevel()` returns `null`, surface the probe.
+
+Three internal phases driven by an enum, not Navigator routes:
+
+1. **Welcome** — editorial headline (`A short read on where you are.`)
+   + proof card (`5 questions / ~2 minutes / Stays on your device`)
+   + `Begin` / `Skip for now` CTAs.
+2. **Probe** — five `multiple_choice` items rendered through the
+   shipped `MultipleChoiceWidget`. **No instant correctness reveal**
+   — picking advances to the next question silently, per V1 spec
+   §10 ("the probe never penalises").
+3. **Completion** — `display-md` headline `Your level: B2.` with a
+   gold accent on the level letters + per-skill panel
+   (`Practicing` / `Just started` `StatusBadge`s) + `Continue` /
+   `Re-take the check` CTAs.
+
+Both Begin→Complete and Skip-for-now land on the
+`OnboardingArrivalRitualScreen` so the Promise → Assembly narrative
+still runs. The skip path additionally writes
+`LocalProgressStore.diagnosticSkipped` (so the same device does not
+re-prompt) and fires `POST /diagnostic/skip` for D1 cohort
+analysis.
+
+Component reuse: `MultipleChoiceWidget`, `MasteryCard`,
+`SectionEyebrow`, `MasteryProgressTrack`, `StatusBadge`, themed
+`FilledButton` / `TextButton`. New widgets:
+`DiagnosticProofCard` (~80 lines) +
+`diagnostic_screen.dart` (~520 lines).
+
 ### Wave 2 mastery state — `LearnerSkillStore` (dual-mode since Wave 7.4 part 2B)
 
 Per-learner per-skill state per `LEARNING_ENGINE.md §7.1` is held by

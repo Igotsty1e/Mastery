@@ -216,7 +216,20 @@ split). 12.1 shipped; 12.2 / 12.3 / 12.4 pending.**
   `diagnostic_abandoned` audit events power the retention cohort
   analysis (Wave 12.4 wires the client signals). 14 new tests; 312/312
   backend green.
-- **12.3 — Flutter `DiagnosticScreen`, route gating, skip-for-now.** ⏳
+- **12.3 — Flutter `DiagnosticScreen`, route gating, skip-for-now.** ✅
+  Three-phase screen (Welcome → Probe → Completion) at
+  `app/lib/screens/diagnostic_screen.dart` (~520 LOC). Routing gate
+  added to `HomeScreen.build()` between sign-in and onboarding,
+  driven by `ApiClient.getMyLevel()` + `LocalProgressStore`
+  diagnostic-skipped flag. Phase 2 reuses the shipped
+  `MultipleChoiceWidget` chrome but never reveals correctness in-line
+  per V1 spec §10. Phase 3 hero uses gold-accented level letters per
+  the `DESIGN.md` completion-moment rule + a per-skill `StatusBadge`
+  panel. New `DiagnosticProofCard` widget (~80 LOC). 5 widget tests
+  cover Welcome surface, Probe no-reveal contract, Completion +
+  Continue path, Skip-for-now writing the local flag, Re-take
+  restart. 141/141 Flutter tests green (was 136). Spec lives in
+  `docs/plans/diagnostic-mode.md`.
 - **12.4 — `audit_events` telemetry for completion vs skip cohorts.** ⏳
 
 **Goal.** Onboarding hook: 5–7 exercises → CEFR + skill map output. Strong retention lever (per spec §15).
