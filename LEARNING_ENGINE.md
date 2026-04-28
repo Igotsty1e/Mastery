@@ -812,6 +812,18 @@ Both roles must record:
 
 A candidate item is accepted into the bank only when both roles sign off.
 
+**Status (2026-04-28).** Tooling for both roles ships in V1.5:
+`backend/scripts/gen-content.ts` (Wave 14.5) is the AI-assisted
+generator, and `backend/scripts/qa-content.ts` (Wave 14.7) is the
+AI reviewer with a different system prompt (= different identity).
+The reviewer's per-type rubric (in `backend/src/content-qa/rubric.ts`)
+records rule alignment, target-error match, evidence-tier
+defensibility, and the per-family safeguards from §8.4.1 — the
+artefacts §12.2 requires. The methodologist remains the
+human-in-the-loop sign-off before items merge from `staging/` into
+`lessons/`; the AI reviewer's job is to filter the obvious failures
+so methodologist time goes to borderline calls.
+
 ### 12.3 Versioning
 
 Three independent version axes are required:
