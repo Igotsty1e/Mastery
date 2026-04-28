@@ -3,6 +3,7 @@
 
 import 'package:flutter/material.dart';
 
+import '../models/evaluation.dart';
 import '../theme/mastery_theme.dart';
 
 /// Soft-bordered card with paper-like shadow. Used everywhere a primary
@@ -313,12 +314,21 @@ class ResultPanel extends StatelessWidget {
   final bool correct;
   final String? canonicalAnswer;
   final String? explanation;
+  /// Wave 12.6 — when non-null, renders a quiet "See full rule →"
+  /// link below the curated explanation. Tapping opens a modal
+  /// bottom sheet with the source lesson's `intro_rule` and
+  /// `intro_examples`. Drives the rule-access trust signal for
+  /// adult B2 learners. Per `docs/plans/wave12.6-rule-access.md`
+  /// the link appears on **any** result (correct or wrong) — adults
+  /// re-read the rule after a correct answer to consolidate.
+  final SkillRuleSnapshot? skillRuleSnapshot;
 
   const ResultPanel({
     super.key,
     required this.correct,
     this.canonicalAnswer,
     this.explanation,
+    this.skillRuleSnapshot,
   });
 
   @override
@@ -392,7 +402,143 @@ class ResultPanel extends StatelessWidget {
               ),
             ),
           ],
+          if (skillRuleSnapshot != null) ...[
+            const SizedBox(height: 8),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton(
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: const Size(0, 32),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                onPressed: () => _showRuleSheet(context, skillRuleSnapshot!),
+                child: Text(
+                  'See full rule \u2192',
+                  style: MasteryTextStyles.labelMd.copyWith(
+                    color: MasteryColors.actionPrimaryPressed,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+              ),
+            ),
+          ],
         ],
+      ),
+    );
+  }
+
+  static void _showRuleSheet(
+    BuildContext context,
+    SkillRuleSnapshot snapshot,
+  ) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: MasteryColors.bgSurface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(MasteryRadii.lg),
+        ),
+      ),
+      builder: (sheetCtx) => SafeArea(
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(sheetCtx).size.height * 0.85,
+          ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(
+              MasterySpacing.lg,
+              MasterySpacing.lg,
+              MasterySpacing.lg,
+              MasterySpacing.xl,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Drag handle.
+                Center(
+                  child: Container(
+                    width: 36,
+                    height: 4,
+                    margin: const EdgeInsets.only(bottom: MasterySpacing.lg),
+                    decoration: BoxDecoration(
+                      color: MasteryColors.borderSoft,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                Text(
+                  'Rule',
+                  style: MasteryTextStyles.eyebrow(
+                    color: MasteryColors.textTertiary,
+                  ),
+                ),
+                const SizedBox(height: MasterySpacing.xs),
+                Text(
+                  snapshot.introRule,
+                  style: MasteryTextStyles.bodyLg.copyWith(
+                    color: MasteryColors.textPrimary,
+                    height: 1.6,
+                  ),
+                ),
+                if (snapshot.introExamples.isNotEmpty) ...[
+                  const SizedBox(height: MasterySpacing.xl),
+                  Text(
+                    'Examples',
+                    style: MasteryTextStyles.eyebrow(
+                      color: MasteryColors.textTertiary,
+                    ),
+                  ),
+                  const SizedBox(height: MasterySpacing.sm),
+                  for (final ex in snapshot.introExamples) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8, right: 10),
+                            child: Container(
+                              width: 5,
+                              height: 5,
+                              decoration: const BoxDecoration(
+                                color: MasteryColors.actionPrimary,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              ex,
+                              style: MasteryTextStyles.bodyMd.copyWith(
+                                color: MasteryColors.textPrimary,
+                                height: 1.55,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
+                const SizedBox(height: MasterySpacing.lg),
+                Center(
+                  child: TextButton(
+                    onPressed: () => Navigator.of(sheetCtx).maybePop(),
+                    child: Text(
+                      'Close',
+                      style: MasteryTextStyles.labelMd.copyWith(
+                        color: MasteryColors.textSecondary,
+                        letterSpacing: 0.4,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }

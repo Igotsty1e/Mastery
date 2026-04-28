@@ -186,6 +186,13 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                             correct: state.lastResult!.correct,
                             canonicalAnswer: state.lastResult!.canonicalAnswer,
                             explanation: state.lastResult!.explanation,
+                            // Wave 12.6 — quiet "See full rule →" link
+                            // visible on any result; opens the source
+                            // lesson's intro_rule + intro_examples in a
+                            // bottom sheet. Non-null only when the
+                            // exercise carries a skill_id.
+                            skillRuleSnapshot:
+                                state.lastResult!.skillRuleSnapshot,
                           ),
                         ],
                       ],

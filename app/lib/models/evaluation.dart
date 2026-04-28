@@ -65,6 +65,14 @@ class EvaluateResponse {
   /// under the previously-cleared gate.
   final int? evaluationVersion;
 
+  /// Wave 12.6 — snapshot of the source lesson's `intro_rule` and
+  /// `intro_examples` for this exercise's skill. Used by the
+  /// `See full rule` bottom sheet on the result panel. Null when the
+  /// exercise has no `skill_id` (legacy / diagnostic items can be
+  /// untagged) or the source lesson is unavailable. The client renders
+  /// the link only when this is non-null.
+  final SkillRuleSnapshot? skillRuleSnapshot;
+
   const EvaluateResponse({
     required this.attemptId,
     required this.exerciseId,
@@ -74,6 +82,7 @@ class EvaluateResponse {
     this.result,
     this.responseUnits,
     this.evaluationVersion,
+    this.skillRuleSnapshot,
   });
 
   factory EvaluateResponse.fromJson(Map<String, dynamic> j) => EvaluateResponse(
@@ -87,6 +96,32 @@ class EvaluateResponse {
             ? List<dynamic>.from(j['response_units'] as List)
             : null,
         evaluationVersion: (j['evaluation_version'] as num?)?.toInt(),
+        skillRuleSnapshot: j['skill_rule_snapshot'] is Map<String, dynamic>
+            ? SkillRuleSnapshot.fromJson(
+                j['skill_rule_snapshot'] as Map<String, dynamic>)
+            : null,
+      );
+}
+
+/// Wave 12.6 — `intro_rule` + `intro_examples` snapshot served on the
+/// `/answers` response. Drives the `See full rule` bottom sheet on
+/// the result panel.
+class SkillRuleSnapshot {
+  final String introRule;
+  final List<String> introExamples;
+
+  const SkillRuleSnapshot({
+    required this.introRule,
+    required this.introExamples,
+  });
+
+  factory SkillRuleSnapshot.fromJson(Map<String, dynamic> j) =>
+      SkillRuleSnapshot(
+        introRule: (j['intro_rule'] as String?) ?? '',
+        introExamples: (j['intro_examples'] as List?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            const <String>[],
       );
 }
 

@@ -144,7 +144,24 @@ Submit one answer to a server-owned session.
 }
 ```
 
-**Response 200:** same shape as the legacy `/lessons/:id/answers` route.
+**Response 200:** same shape as the legacy `/lessons/:id/answers` route, plus the Wave 12.6 `skill_rule_snapshot` field:
+
+```json
+{
+  "attempt_id": "uuid",
+  "exercise_id": "uuid",
+  "correct": true,
+  "evaluation_source": "deterministic|ai_fallback|ai_timeout|ai_error",
+  "explanation": "string|null",
+  "canonical_answer": "string",
+  "skill_rule_snapshot": {
+    "intro_rule": "string",
+    "intro_examples": ["string"]
+  }
+}
+```
+
+`skill_rule_snapshot` is `null` when the exercise has no `skill_id` (legacy or diagnostic items can be untagged) or the source lesson is unavailable. The snapshot is a verbatim copy of the source lesson's `intro_rule` and `intro_examples` at attempt time. Drives the Flutter `See full rule →` bottom sheet on `ResultPanel` per `docs/plans/wave12.6-rule-access.md`.
 
 Behaviour:
 - The session must belong to the authenticated user; foreign sessions

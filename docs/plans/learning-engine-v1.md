@@ -315,6 +315,12 @@ deferred to V1.5 per the Out-of-MVP scope above.
 
 **V1 MVP shipped 2026-04-28.**
 
+### Post-MVP hot-fixes + product follow-ups
+
+- **Wave 12.5 (2026-04-28)** — engine cap-relaxed fallback when §9.1 dropout + Wave 13 cap starve the primary pass. Surfaced in prod after 10.5 expanded the bank.
+- **Wave 12.5b (2026-04-28)** — dynamic-mode `isLastExercise` + `submitAnswer` race fix; sessions no longer end at Q1 on the first wrong answer.
+- **Wave 12.6 (2026-04-28)** — `MAX_SKILLS_PER_SESSION = 2` cap (engine) + post-mistake `See full rule →` bottom sheet (client). Founder-flagged trust signal: theory exists, theory is one tap away, theory is Murphy/Swan grade. Library tab + first-encounter auto-card explicitly **deferred** to V1.6+ pending bank ≥15 skills + skill display names. See `docs/plans/wave12.6-rule-access.md` for the full plan + methodologist + CEO consult summary.
+
 **V1 MVP done = ~3.5 weeks of engineering** (plus authoring time in 10.5).
 
 ## Acceptance for V1 MVP overall

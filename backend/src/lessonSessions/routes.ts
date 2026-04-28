@@ -147,6 +147,31 @@ export function makeLessonSessionsRouter(
         clientIp,
       });
 
+      // Wave 12.6 — skill rule snapshot. The client renders a quiet
+      // "See full rule" link below the curated explanation; tap
+      // opens a bottom sheet with this rule. Source: the exercise's
+      // bank entry → source lesson → intro_rule + intro_examples.
+      // Null when the exercise lacks a skill_id (legacy or
+      // diagnostic items can be untagged), or when the source
+      // lesson is unavailable. The client treats null as "no link".
+      let skillRuleSnapshot:
+        | { intro_rule: string; intro_examples: string[] }
+        | null = null;
+      if ('skill_id' in result.exercise && result.exercise.skill_id) {
+        const { getBankEntry } = await import('../data/exerciseBank');
+        const { getLessonById } = await import('../data/lessons');
+        const bank = getBankEntry(parsed.data.exercise_id);
+        const sourceLesson = bank
+          ? getLessonById(bank.sourceLessonId)
+          : undefined;
+        if (sourceLesson) {
+          skillRuleSnapshot = {
+            intro_rule: sourceLesson.intro_rule,
+            intro_examples: [...sourceLesson.intro_examples],
+          };
+        }
+      }
+
       res.json({
         attempt_id: parsed.data.attempt_id,
         exercise_id: result.attempt.exerciseId,
@@ -154,6 +179,7 @@ export function makeLessonSessionsRouter(
         evaluation_source: result.evaluation.evaluation_source,
         explanation: result.explanation,
         canonical_answer: result.evaluation.canonical_answer,
+        skill_rule_snapshot: skillRuleSnapshot,
       });
     } catch (err) {
       if (handleError(err, res)) return;

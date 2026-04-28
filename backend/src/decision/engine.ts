@@ -32,6 +32,23 @@ import {
 /// `MAX_NEW_SKILLS_PER_SESSION` distinct new skills.
 export const MAX_NEW_SKILLS_PER_SESSION = 1;
 
+/// Wave 12.6 — total cap on distinct skills per session. Counts ALL
+/// skills (new + already-practicing + mastered), not just brand-new
+/// ones. Once the session has surfaced this many distinct skills,
+/// the primary pass blocks candidates from a (cap+1)th skill.
+///
+/// Pedagogy: focused practice on 1–2 skills beats fragmented exposure
+/// to 5 (Ericsson on deliberate practice, supported by methodologist
+/// consult 2026-04-28). Also bounds rule-card volume in any future
+/// Library / auto-card UX.
+///
+/// Interaction with Wave 13's `MAX_NEW_SKILLS_PER_SESSION`: that cap
+/// blocks brand-new skills only; this cap blocks any (cap+1)th
+/// skill regardless of status. They compose — both filters run in
+/// the primary loop. The Wave 12.5 `cap_relaxed_fallback` still
+/// applies if the combined caps + §9.1 dropout starve the engine.
+export const MAX_SKILLS_PER_SESSION = 2;
+
 export interface DecisionContext {
   /// Exercises already shown in this session, in display order. Used
   /// for last-N-repeat avoidance (§14) and to detect "session full".
@@ -120,10 +137,15 @@ export function pickNext(ctx: DecisionContext): DecisionResult {
   // cap is reached. Same-skill follow-ups are unaffected — only
   // brand-new skills past the cap are blocked.
   const shownNewSkillIds = new Set<string>();
+  // Wave 12.6 — total distinct skills shown so far in this session
+  // (any status). The MAX_SKILLS_PER_SESSION cap blocks candidates
+  // from a (cap+1)th skill regardless of status.
+  const shownAllSkillIds = new Set<string>();
   for (const id of ctx.shownExerciseIds) {
     const entry = getBankEntry(id);
     const skillId = entry?.exercise.skill_id ?? null;
     if (!skillId) continue;
+    shownAllSkillIds.add(skillId);
     const status = ctx.masteryStatusBySkill[skillId];
     if (status === undefined || status === 'started') {
       shownNewSkillIds.add(skillId);
@@ -131,6 +153,8 @@ export function pickNext(ctx: DecisionContext): DecisionResult {
   }
   const newSkillCapReached =
     shownNewSkillIds.size >= MAX_NEW_SKILLS_PER_SESSION;
+  const totalSkillCapReached =
+    shownAllSkillIds.size >= MAX_SKILLS_PER_SESSION;
 
   const flat = getAllBankEntries();
   if (flat.length === 0) {
@@ -146,6 +170,15 @@ export function pickNext(ctx: DecisionContext): DecisionResult {
     if (shownSet.has(entry.exercise.exercise_id)) continue;
     const skillId = entry.exercise.skill_id ?? null;
     if (skillId && dropoutSkills.has(skillId)) continue;
+
+    // Wave 12.6 — total-skills cap. Block candidates from a
+    // (cap+1)th distinct skill. Items from already-touched skills
+    // are unaffected. Cap-relaxed fallback below kicks in if this
+    // (combined with the Wave 13 new-skill cap and §9.1 dropouts)
+    // starves the primary pass.
+    if (skillId && totalSkillCapReached && !shownAllSkillIds.has(skillId)) {
+      continue;
+    }
 
     // Wave 13 — block brand-new skills past the cap. A "new" skill is
     // one with no prior mastery record (or status `started`); once the

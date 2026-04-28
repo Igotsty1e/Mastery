@@ -144,4 +144,39 @@ describe('Wave 11.2 — POST /lesson-sessions/:sid/next', () => {
     expect(nextRes.status).toBe(404);
     expect((nextRes.json as any).error).toBe('session_not_found');
   });
+
+  // Wave 12.6 — skill_rule_snapshot on /answers response.
+  it('answers response carries skill_rule_snapshot from source lesson', async () => {
+    const { headers } = await login('rule-snapshot');
+    const start = await inject(h.app, {
+      method: 'POST',
+      path: '/sessions/start',
+      headers,
+    });
+    const sessionId = (start.json as any).session_id as string;
+    const firstExerciseId = (start.json as any).first_exercise.exercise_id as string;
+    const firstExerciseType = (start.json as any).first_exercise.type as string;
+
+    const ansRes = await inject(h.app, {
+      method: 'POST',
+      path: `/lesson-sessions/${sessionId}/answers`,
+      headers,
+      json: {
+        attempt_id: '00000000-0000-4000-8000-000000000bbb',
+        exercise_id: firstExerciseId,
+        exercise_type: firstExerciseType,
+        user_answer: 'placeholder',
+        submitted_at: new Date().toISOString(),
+      },
+    });
+    expect(ansRes.status).toBe(200);
+    const body = ansRes.json as any;
+    // Snapshot is non-null for any tagged exercise (every shipped
+    // bank item has a skill_id).
+    expect(body.skill_rule_snapshot).not.toBeNull();
+    expect(typeof body.skill_rule_snapshot.intro_rule).toBe('string');
+    expect(body.skill_rule_snapshot.intro_rule.length).toBeGreaterThan(0);
+    expect(Array.isArray(body.skill_rule_snapshot.intro_examples)).toBe(true);
+    expect(body.skill_rule_snapshot.intro_examples.length).toBeGreaterThan(0);
+  });
 });
