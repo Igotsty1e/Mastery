@@ -26,7 +26,7 @@ Roundups AI Assistant is a Flutter mobile app for English language practice. Use
 |---|---|---|
 | Client | Flutter (Dart) | Render exercises, collect input, display results |
 | Backend | REST API (deterministic) | Serve lessons, evaluate answers, enforce authority |
-| AI Layer | LLM (server-side only) | (1) Evaluate borderline `sentence_correction`; return internal structured verdict only. (2) Generate the post-lesson **debrief** on `GET /result` from aggregated attempt facts (canonical answer + curated explanation), grounded by deterministic bucket. Never sees student free-text answers. |
+| AI Layer | LLM (server-side only) | (1) Evaluate borderline `sentence_correction`; return internal structured verdict only. (2) Generate the post-lesson **debrief** on `GET /result` from aggregated attempt facts (canonical answer + curated explanation), grounded by deterministic bucket. Never sees student free-text answers. **Post-MVP update:** AI now also evaluates `sentence_rewrite` (Wave 14.2 — same evaluator as sentence_correction) and `short_free_sentence` (Wave 14.4 — new `evaluateFreeSentence` method judging rule conformance instead of match-against-accepted). The "never sees student free-text" guarantee remains for the debrief; per-attempt evaluators do see the student answer for the open-answer family. |
 
 **Hard rules:**
 - AI never runs on the client.
@@ -230,6 +230,7 @@ The following will NOT be built in this MVP. Any request to add them is a scope 
 - Analytics or telemetry
 - AI-generated lesson content
 - More than 4 exercise types (the 4 shipped types are `fill_blank`, `multiple_choice`, `sentence_correction`, `listening_discrimination`)
+  - **Post-MVP update:** Wave 14.2 added `sentence_rewrite` and Wave 14.4 added `short_free_sentence`. The runtime gate (`backend/src/data/exerciseBank.ts#RUNTIME_SUPPORTED_EXERCISE_TYPES`) is the live source of truth. See `docs/plans/learning-engine-v1.md` Wave 14.2 + 14.4 entries.
 - Hints or practical tips shown after an incorrect answer
 
 ---

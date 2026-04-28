@@ -278,11 +278,11 @@ Mastery uses two layers:
 | Multi-blank controlled completion | supply more than one form against the same rule | parallel retrieval | roadmap (engine alias `multi_blank`, see §5.7) |
 | Guided correction | repair wrong sentence | error awareness and repair | supported (`sentence_correction`) |
 | Multi-error correction | repair multiple errors that all roll up to the same primary skill | dense repair drilling | roadmap (engine alias `multi_error_correction`, see §5.8) |
-| Transformation | rewrite into a target pattern | guided production | roadmap (engine alias `sentence_rewrite`, see §5.1) |
+| Transformation | rewrite into a target pattern | guided production | shipped (Wave 14.2 — engine alias `sentence_rewrite`, see §5.1) |
 | Matching / sorting | pair forms, meanings, or triggers | noticing and contrast | roadmap |
 | Ordering / build-a-sentence | construct correct syntax | word order and structure control | roadmap |
 | Dialogue completion | choose or produce a line in context | contextualized grammar choice | roadmap |
-| Constrained short production | produce one short original sentence within limits | bounded transfer | roadmap (engine alias `short_free_sentence`, see §5.5) |
+| Constrained short production | produce one short original sentence within limits | bounded transfer | shipped (Wave 14.4 — engine alias `short_free_sentence`, see §5.5) |
 | Listening discrimination | hear and identify the target form | auditory noticing | shipped — see §5.9 |
 | Speaking production | say the target form aloud | production + transfer | out of scope |
 

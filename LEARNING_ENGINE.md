@@ -520,8 +520,8 @@ Shipped runtime widgets are listed in `exercise_structure.md §3.2`.
 | `multi_blank` | Medium | planned | `exercise_structure.md §5.7` |
 | `sentence_correction` | Strong | shipped | `exercise_structure.md §4.3` |
 | `multi_error_correction` | Strong | planned (same primary skill / target error) | `exercise_structure.md §5.8` |
-| `sentence_rewrite` | Strongest when meaning-coupled per §6.3 (with `meaning_frame`); otherwise Strong | planned | `exercise_structure.md §5.1` |
-| `short_free_sentence` | Strongest when meaning-coupled per §6.3 (with `meaning_frame`); otherwise out of scope | planned | `exercise_structure.md §5.5` |
+| `sentence_rewrite` | Strongest when meaning-coupled per §6.3 (with `meaning_frame`); otherwise Strong | shipped (Wave 14.2) | `exercise_structure.md §5.1` |
+| `short_free_sentence` | Strongest when meaning-coupled per §6.3 (with `meaning_frame`); otherwise out of scope | shipped (Wave 14.4) | `exercise_structure.md §5.5` |
 | `listening_discrimination` | Weak | shipped (auditory recognition variant) | `exercise_structure.md §5.9` |
 
 The shipped families are described in detail in `exercise_structure.md
