@@ -157,6 +157,40 @@
       "feedback": {
         "explanation": "You kept 'went on studying', but the correct form is 'went on to study' because go on + to + infinitive means 'move on to a new, different action after finishing one'. The sentence describes a sequence — master's first, then law — and that 'next step' meaning is what locks in the to-infinitive. If 'go on' is followed by a *new* action that comes after the previous one → use to + infinitive (go on + verb-ing would mean 'continue the same action', which is the opposite reading)."
       }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0004-4000-8000-00000000003b",
+      "type": "sentence_rewrite",
+      "skill_id": "verb-both-forms-meaning-change",
+      "primary_target_error": "conceptual_error",
+      "evidence_tier": "strongest",
+      "meaning_frame": "Pause an activity in order to do something else.",
+      "instruction": "Rewrite using \"stop\" + a to-infinitive.",
+      "prompt": "He paused on the way home in order to buy flowers.",
+      "accepted_answers": [
+        "He stopped on the way home to buy flowers.",
+        "He stopped to buy flowers on the way home."
+      ],
+      "feedback": {
+        "explanation": "Stop + to + infinitive means \"pause in order to do X\"; stop + -ing means \"cease doing X\". The two forms encode different meanings, so the choice carries information beyond grammar."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0004-4000-8000-00000000003c",
+      "type": "sentence_rewrite",
+      "skill_id": "verb-both-forms-meaning-change",
+      "primary_target_error": "conceptual_error",
+      "evidence_tier": "strongest",
+      "meaning_frame": "Recall a past event from one's own experience.",
+      "instruction": "Rephrase using \"I remember\" + -ing form.",
+      "prompt": "I have a clear memory of meeting her at the conference last year.",
+      "accepted_answers": [
+        "I remember meeting her at the conference last year.",
+        "I clearly remember meeting her at the conference last year."
+      ],
+      "feedback": {
+        "explanation": "Remember + -ing reports a memory of a past event you experienced. Remember + to do means \"don't forget to do X in the future\" — a forward-looking action, not a recollection."
+      }
     }
   ]
 }

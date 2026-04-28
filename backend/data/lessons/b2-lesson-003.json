@@ -157,6 +157,38 @@
       "feedback": {
         "explanation": "You kept 'planning meeting', but the correct form is 'planning to meet' because plan + to + infinitive is what expresses a forward-looking intention — and that meaning is what the sentence requires here. If you see 'plan' followed by another verb that names the intended future action → use to + infinitive, not the -ing form."
       }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0003-4000-8000-00000000003b",
+      "type": "sentence_rewrite",
+      "skill_id": "verb-to-inf-after-aspirational-verbs",
+      "primary_target_error": "form_error",
+      "evidence_tier": "strong",
+      "instruction": "Rewrite starting with \"I have decided...\".",
+      "prompt": "I'm leaving the company next month.",
+      "accepted_answers": [
+        "I have decided to leave the company next month.",
+        "I've decided to leave the company next month."
+      ],
+      "feedback": {
+        "explanation": "Decide takes to + infinitive, not -ing. Aspirational verbs (decide, hope, plan, want, agree, refuse, learn) describe a forward-looking choice and always force to + infinitive on the next verb."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0003-4000-8000-00000000003c",
+      "type": "sentence_rewrite",
+      "skill_id": "verb-to-inf-after-aspirational-verbs",
+      "primary_target_error": "contrast_error",
+      "evidence_tier": "strong",
+      "instruction": "Rewrite using \"refuse\".",
+      "prompt": "She won't sign the contract.",
+      "accepted_answers": [
+        "She refuses to sign the contract.",
+        "She refused to sign the contract."
+      ],
+      "feedback": {
+        "explanation": "Refuse takes to + infinitive, not -ing — \"refuse signing\" is a common contrast slip from the gerund group. Refuse is an aspirational verb, so the next verb is always to + infinitive."
+      }
     }
   ]
 }

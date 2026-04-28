@@ -192,6 +192,44 @@
       "feedback": {
         "explanation": "You chose 'has run', but the correct answer is 'has been running' because the visible result (exhaustion) points to a recent ongoing process, not a single finished event. If the present state of someone is the trace of a recent ongoing action → usually use 'have / has been + verb-ing'."
       }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0002-4000-8000-00000000003b",
+      "type": "sentence_rewrite",
+      "skill_id": "present-perfect-continuous-vs-simple",
+      "primary_target_error": "conceptual_error",
+      "evidence_tier": "strongest",
+      "meaning_frame": "Report how long an ongoing activity has lasted from a past start point.",
+      "instruction": "Combine into one sentence using \"for\" + present perfect continuous.",
+      "prompt": "I joined this design studio three years ago. I still work here.",
+      "accepted_answers": [
+        "I have been working at this design studio for three years.",
+        "I've been working at this design studio for three years.",
+        "I have been working in this design studio for three years.",
+        "I've been working in this design studio for three years."
+      ],
+      "feedback": {
+        "explanation": "Present perfect continuous (have been + -ing) reports an activity that started in the past and is still going, typically with for + duration. The simple form would suggest the activity is finished, which the prompt explicitly contradicts."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0002-4000-8000-00000000003c",
+      "type": "sentence_rewrite",
+      "skill_id": "present-perfect-continuous-vs-simple",
+      "primary_target_error": "conceptual_error",
+      "evidence_tier": "strongest",
+      "meaning_frame": "Report a completed quantity accomplished within a current time period.",
+      "instruction": "Report what she has done so far this week using present perfect simple.",
+      "prompt": "She wrote her tenth report this week, and the week is not over.",
+      "accepted_answers": [
+        "She has written ten reports this week.",
+        "She's written ten reports this week.",
+        "She has written ten reports this week so far.",
+        "She's written ten reports this week so far."
+      ],
+      "feedback": {
+        "explanation": "Present perfect simple reports a completed amount within a current period. The continuous form would foreground the ongoing activity rather than the count of finished items, which the cue \"so far this week\" requires."
+      }
     }
   ]
 }
