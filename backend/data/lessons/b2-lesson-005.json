@@ -157,6 +157,36 @@
       "feedback": {
         "explanation": "You kept 'would love visiting', but the correct form is 'would love to visit' because 'would + love / like / prefer / hate' frames the action as a polite or hypothetical wish — and that meaning takes only to + infinitive in standard B2 English. Without 'would', both 'love visiting' and 'love to visit' would be acceptable; the modal 'would' is what locks in the to-infinitive. If you see 'would' before love / like / prefer / hate → use to + infinitive."
       }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0005-4000-8000-00000000003b",
+      "type": "sentence_rewrite",
+      "skill_id": "verb-both-forms-little-change",
+      "primary_target_error": "form_error",
+      "evidence_tier": "strong",
+      "instruction": "Rewrite using the alternative form of the verb \"start\".",
+      "prompt": "I started learning Italian last summer.",
+      "accepted_answers": [
+        "I started to learn Italian last summer."
+      ],
+      "feedback": {
+        "explanation": "After start, both -ing and to + infinitive are correct with no real change in meaning. The same applies to begin, continue, like, love, hate, prefer."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0005-4000-8000-00000000003c",
+      "type": "sentence_rewrite",
+      "skill_id": "verb-both-forms-little-change",
+      "primary_target_error": "form_error",
+      "evidence_tier": "strong",
+      "instruction": "Rewrite using the alternative form of the verb \"continue\".",
+      "prompt": "She continues to volunteer at the shelter every weekend.",
+      "accepted_answers": [
+        "She continues volunteering at the shelter every weekend."
+      ],
+      "feedback": {
+        "explanation": "After continue, both -ing and to + infinitive are correct with no real change in meaning. Continue groups with begin, start, like, love, hate, prefer."
+      }
     }
   ]
 }

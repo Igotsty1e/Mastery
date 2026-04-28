@@ -208,6 +208,36 @@
       "feedback": {
         "explanation": "After avoid, we use the -ing form. The correct structure is 'avoid discussing', not 'avoid to discuss'."
       }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0001-4000-8000-00000000003b",
+      "type": "sentence_rewrite",
+      "skill_id": "verb-ing-after-gerund-verbs",
+      "primary_target_error": "form_error",
+      "evidence_tier": "strong",
+      "instruction": "Rewrite starting with \"I suggest...\".",
+      "prompt": "We should leave early to avoid the traffic.",
+      "accepted_answers": [
+        "I suggest leaving early to avoid the traffic."
+      ],
+      "feedback": {
+        "explanation": "After suggest, the next verb takes -ing, not to + infinitive. Suggest belongs to the gerund-only group (enjoy, avoid, suggest, mind, keep, finish)."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0001-4000-8000-00000000003c",
+      "type": "sentence_rewrite",
+      "skill_id": "verb-ing-after-gerund-verbs",
+      "primary_target_error": "contrast_error",
+      "evidence_tier": "strong",
+      "instruction": "Rewrite using \"avoid\".",
+      "prompt": "I never argue with him at meetings.",
+      "accepted_answers": [
+        "I avoid arguing with him at meetings."
+      ],
+      "feedback": {
+        "explanation": "Avoid takes -ing, not to + infinitive — \"avoid to argue\" is a common slip from the aspirational pattern. Avoid sits in the gerund-only group, so the next verb is always -ing."
+      }
     }
   ]
 }

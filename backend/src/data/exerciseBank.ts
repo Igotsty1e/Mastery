@@ -18,6 +18,28 @@ import { getAllLessons, getAllLessonMeta, type Exercise, type LessonMeta } from 
 
 export type EvidenceTier = 'weak' | 'medium' | 'strong' | 'strongest';
 
+/// Wave 14.2 phase 2 — runtime client-support gate for the bank.
+///
+/// Exercise types listed here are renderable by every shipped Flutter
+/// build. Authored items of any other type are still kept in the
+/// source lesson JSON (and reachable by id via `getBankEntry`) but are
+/// excluded from the per-skill index + the flat list the Decision
+/// Engine reads from. This lets us land authoring (`sentence_rewrite`
+/// items in the bank) before the matching widget ships in phase 3
+/// without the engine handing the client an item it cannot render.
+///
+/// To turn on a new type at runtime: add it here in lockstep with the
+/// Flutter widget that renders it. Removing a type would silently
+/// strand existing learner records — don't do that without a
+/// migration plan.
+export const RUNTIME_SUPPORTED_EXERCISE_TYPES: ReadonlySet<Exercise['type']> =
+  new Set([
+    'fill_blank',
+    'multiple_choice',
+    'sentence_correction',
+    'listening_discrimination',
+  ]);
+
 export interface BankEntry {
   /// Raw exercise object as stored in the source lesson JSON. Routes
   /// `/sessions/:id/next` and `/sessions/:id/answers` already speak
@@ -72,8 +94,13 @@ function buildIndex(): {
         sourceContentHash: meta.content_hash,
         positionInSource: idx,
       };
-      flat.push(entry);
+      // Always index by id — answer / result paths look entries up by
+      // their exercise_id and the lookup must succeed even for items
+      // the engine is not currently allowed to serve. Phase 3 turns
+      // these on by adding the type to RUNTIME_SUPPORTED_EXERCISE_TYPES.
       byExerciseId.set(exercise.exercise_id, entry);
+      if (!RUNTIME_SUPPORTED_EXERCISE_TYPES.has(exercise.type)) return;
+      flat.push(entry);
       const skillId = exercise.skill_id;
       if (skillId) {
         const arr = bySkill.get(skillId) ?? [];
