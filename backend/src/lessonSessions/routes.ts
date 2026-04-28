@@ -24,6 +24,7 @@ const Wave2AnswerSchema = z.object({
     'fill_blank',
     'multiple_choice',
     'sentence_correction',
+    'sentence_rewrite',
     'listening_discrimination',
   ]),
   user_answer: z.string().max(500),
@@ -128,8 +129,13 @@ export function makeLessonSessionsRouter(
       // context to the service so it can consume the budget at the
       // right moment. Codex P1 fix: deterministic-correct
       // sentence_correction submissions no longer burn quota.
+      // Wave 14.2: sentence_rewrite goes through the same evaluator
+      // path so it also needs the IP resolved up-front.
       let clientIp: string | null = null;
-      if (parsed.data.exercise_type === 'sentence_correction') {
+      if (
+        parsed.data.exercise_type === 'sentence_correction' ||
+        parsed.data.exercise_type === 'sentence_rewrite'
+      ) {
         const ip = resolveRateLimitIp(req);
         if (!ip) {
           res.status(400).json({ error: 'invalid_request' });

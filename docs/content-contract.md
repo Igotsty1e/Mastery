@@ -143,6 +143,34 @@ as authored — see `docs/backend-contract.md`.
 - `accepted_corrections`: non-empty list of known-good corrections.
 - `instruction` should clearly tell the learner to rewrite the sentence correctly.
 
+### 2.3a sentence_rewrite (Wave 14.2 phase 1)
+
+```json
+{
+  "exercise_id": "string (uuid)",
+  "type": "sentence_rewrite",
+  "instruction": "string (transformation directive — e.g. \"Rewrite using past perfect.\")",
+  "prompt": "string (correct source sentence to be rewritten)",
+  "accepted_answers": ["string"],
+  "feedback": { "explanation": "string" }
+}
+```
+
+- `prompt`: a **correct** sentence (unlike `sentence_correction`). The
+  learner's job is to transform it under the directive in
+  `instruction`, not fix a mistake.
+- `accepted_answers`: non-empty list of canonical post-rewrite variants.
+  Authors should cover the high-frequency surface variants (full +
+  contracted forms, common synonym swaps); the runtime AI fallback
+  handles borderline submissions that are equivalent but not in the
+  list.
+- Backend reuses the same deterministic-then-AI evaluator as
+  `sentence_correction` (see §7).
+- Phase 1 (this wave) ships the schema + backend wiring; phase 2 will
+  add authored items to the bank; phase 3 will add the Flutter
+  free-text widget. Until phase 2, no shipped lesson contains items of
+  this type.
+
 ### 2.4 listening_discrimination
 
 ```json
@@ -244,7 +272,7 @@ Client → Backend:
 {
   "attempt_id": "string (uuid, client-generated)",
   "exercise_id": "string (uuid)",
-  "exercise_type": "fill_blank|multiple_choice|sentence_correction|listening_discrimination",
+  "exercise_type": "fill_blank|multiple_choice|sentence_correction|sentence_rewrite|listening_discrimination",
   "user_answer": "string",
   "submitted_at": "string (ISO 8601 UTC)"
 }
