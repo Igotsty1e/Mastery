@@ -5,6 +5,7 @@ import {
   timestamp,
   jsonb,
   integer,
+  smallint,
   boolean,
   bigint,
   date,
@@ -603,5 +604,41 @@ export const exerciseStats = pgTable(
   (t) => ({
     pk: uniqueIndex('exercise_stats_pk').on(t.exerciseId, t.statDate),
     pendingIdx: index('exercise_stats_pending_idx').on(t.qaReviewPending),
+  })
+);
+
+/// Wave 14.3 — V1.5 feedback system. Two prompt surfaces (after-summary,
+/// after-friction) write into a single append-only table. The
+/// `outcome` column distinguishes "submitted" (the learner rated /
+/// commented) from "dismissed" (swiped the prompt away) so analytics
+/// can read response rate without conflating disengagement with
+/// negative sentiment. Cooldown is computed from `created_at`
+/// regardless of outcome.
+export const feedbackResponses = pgTable(
+  'feedback_responses',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    /// Which prompt surface fired. V1: 'after_summary' (post-session)
+    /// or 'after_friction' (after a §17 friction event mid-session).
+    promptKind: text('prompt_kind').notNull(),
+    /// 'submitted' = learner rated/commented. 'dismissed' = swiped
+    /// away without responding. Both consume cooldown.
+    outcome: text('outcome').notNull(),
+    /// 1..5 star scale. Null when outcome = 'dismissed' or comment-only.
+    rating: smallint('rating'),
+    /// Optional free-form comment, max 1000 chars (route-level cap).
+    commentText: text('comment_text'),
+    /// Free-form context — session_id, friction_event tag, exercise_id, etc.
+    context: jsonb('context').notNull().default({}),
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({
+    userIdx: index('feedback_responses_user_idx').on(t.userId, t.createdAt),
+    kindIdx: index('feedback_responses_kind_idx').on(t.promptKind, t.createdAt),
   })
 );
