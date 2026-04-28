@@ -63,7 +63,7 @@ Layout, in locked order:
 The original `Coming Next` block from the first ship was removed — future units now live behind an `All units ▾` trigger placed in the Current Unit section header. The trigger opens a popup listing units (`Current` / `Locked` states) and uses the same surface treatment as the level dropdown so the two read as one motion language. No real switching until the multi-unit backend lands.
 
 Lesson data:
-- On mount, fetches the lesson via `GET /lessons/{lesson_id}` (`AppConfig.defaultLessonId`) to populate level, lesson title, and exercise count.
+- On mount, fetches the lesson list via `GET /lessons` to populate the curriculum + level. Wave 11.4 removed the dependence on a single hardcoded lesson id; the dashboard CTA now boots a dynamic session via `POST /sessions/start`.
 - Reads locally stored completed-exercise count from `LocalProgressStore` (SharedPreferences).
 - On return from a completed lesson, re-fetches to refresh the card.
 
@@ -323,11 +323,13 @@ A teaser).
   Reads `ReviewScheduler.dueAt(now)` in `_loadDashboard`. Collapses to
   nothing when the list is empty per §11.4.
 
-Skill titles are resolved through
-`app/lib/learner/skill_titles.dart` — a V0 embedded map for the two
-shipped B2 skills, with a `skill_id` fallback when an entry is missing.
-Replace this with a `GET /skills` endpoint when the bank exceeds a few
-skills (deferred from Wave 4 per the plan §2.2 trade-off).
+Skill titles are resolved through `skillTitleFor(skillId)` in
+`app/lib/learner/skill_titles.dart`. Wave 12.7 made the runtime
+`SkillCatalog` (`app/lib/learner/skill_catalog.dart`) the source of
+truth — it fetches `GET /skills` on dashboard mount and caches the
+result. The hardcoded map in `skill_titles.dart` survives as the
+cold-start / offline fallback so the first frame after a fresh
+launch never flashes raw `skill_id` strings.
 
 ## Navigation
 
@@ -335,12 +337,17 @@ Linear push-based navigation. No tabs. No drawer. No back stack access after exe
 
 ```
 / (root)           → HomeScreen
-                     → LessonIntroScreen (AppConfig.defaultLessonId)
-                       → ExerciseScreen (repeated)
+                     [auth gate]
+                     → SignInScreen (when no refresh token)
+                     → DiagnosticScreen (when level==null + not skipped — Wave 12.3)
+                     → OnboardingArrivalRitualScreen (first launch, Wave 11)
+                     → Dashboard (Study Desk)
+                       → LessonIntroScreen (legacy lesson-bound only)
+                       → ExerciseScreen (Wave 11.x dynamic flow auto-skips intro)
                          → SummaryScreen
 ```
 
-Single hardcoded lesson ID from `AppConfig.defaultLessonId`.
+Wave 11.4 removed the lesson-bound dashboard CTA; the dashboard now boots a dynamic session via `POST /sessions/start` and the Decision Engine assembles items from the bank. `LessonIntroScreen` still mounts for the legacy `loadLesson(lessonId)` flow (kept for tests) and auto-skips itself in dynamic mode (Wave 12.5).
 
 ## Networking
 
@@ -381,6 +388,12 @@ Playwright 1.58.2 + Chromium headless confirmed working against the static-build
 
 - No client-side evaluation of any kind.
 - No caching of lesson definitions across sessions.
-- No local persistence of lesson content, answers, or session history. The only local write is `LocalProgressStore`, which stores the completed-exercise count per lesson via SharedPreferences for the dashboard progress card.
+- No local persistence of lesson content, answers, or session history. The only local writes are `LocalProgressStore` (per-lesson completed count + onboarding-seen flag + diagnostic-skipped flag) via SharedPreferences.
 - No feature flags, no A/B logic.
 - No analytics calls.
+
+## Post-MVP wave additions (Wave 12.5 → 12.7)
+
+- **Wave 12.5 / 12.5b (2026-04-28).** Dynamic-session bug fixes. `SessionState.totalCount` now reads from `sessionTargetLength` (server-declared 10) instead of the lazy queue length, so the post-submit counter renders `1/10 → 2/10 → ...` correctly. `SessionState.isLastExercise` for dynamic mode compares `results.length` to the target. `SessionController.submitAnswer` skips the local `DecisionEngine.decideAfterAttempt` for dynamic mode and awaits `_fetchNextDynamic` before emitting the result phase, so `_pendingDecision` is final by the time the user taps Next/Finish.
+- **Wave 12.6 (2026-04-28).** `ResultPanel` (`app/lib/widgets/mastery_widgets.dart`) gains a quiet `See full rule →` text link below the curated explanation. Visible on any result. Tap opens a modal bottom sheet with the source lesson's `intro_rule` + `intro_examples`. Backed by `EvaluateResponse.skillRuleSnapshot` (set from the new `/answers` response field). Engine-side, `MAX_SKILLS_PER_SESSION = 2` caps total distinct skills per session.
+- **Wave 12.7 (2026-04-28).** `SkillCatalog` (`app/lib/learner/skill_catalog.dart`) — singleton `ChangeNotifier` caching `GET /skills`. Populated on `_loadDashboard`. New "Rules" card on the Study Desk dashboard between the Premium block and the Re-run link; rows for every skill (title + CEFR chip), tap → bottom sheet with the rule. `skillTitleFor` now reads catalog → hardcoded fallback → raw `skill_id`.
