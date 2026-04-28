@@ -94,6 +94,7 @@
       "skill_id": "present-perfect-continuous-vs-simple",
       "primary_target_error": "contrast_error",
       "evidence_tier": "weak",
+      "is_diagnostic": true,
       "instruction": "Choose the correct option.",
       "prompt": "He ___ to play the guitar for ten years.",
       "options": [

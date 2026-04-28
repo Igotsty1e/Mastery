@@ -76,6 +76,7 @@
       "skill_id": "verb-ing-after-gerund-verbs",
       "primary_target_error": "contrast_error",
       "evidence_tier": "weak",
+      "is_diagnostic": true,
       "instruction": "Choose the correct option.",
       "prompt": "He keeps ___ about the same problem.",
       "options": [

@@ -29,6 +29,7 @@
       "skill_id": "verb-both-forms-little-change",
       "primary_target_error": "contrast_error",
       "evidence_tier": "weak",
+      "is_diagnostic": true,
       "instruction": "Choose the correct option.",
       "prompt": "Would you like ___ a cup of tea before the meeting starts?",
       "options": [
