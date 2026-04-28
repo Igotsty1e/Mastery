@@ -173,9 +173,48 @@ class SessionController extends ChangeNotifier {
         _sessionMistakesBySkill[sid] = (_sessionMistakesBySkill[sid] ?? 0) + 1;
       }
 
-      // Compute the next-item decision now so `advance()` is a pure state
-      // transition with no async logic. With Wave 1 metadata absent on
-      // older fixtures, the engine returns the linear default.
+      // Wave 12.5b — for dynamic mode, the server-side Decision
+      // Engine is the only authoritative source for the next-pick
+      // decision. The synthetic Lesson on the dynamic path has a
+      // single-item queue (`remainingIndices = [0]`), which the
+      // local `DecisionEngine.decideAfterAttempt` interprets as
+      // "queue exhausted → endSession". That stale decision used to
+      // race with `_fetchNextDynamic`: if the user tapped Next/Finish
+      // before the server responded, the session ended at Q1
+      // regardless of whether the server had a next pick. We now
+      // skip the local engine entirely on dynamic, await the server
+      // pick, and emit the result phase only once `_pendingDecision`
+      // is final.
+      if (_dynamicMode) {
+        await _fetchNextDynamic();
+        // Local Wave 2 store + per-lesson progress still update.
+        await LocalProgressStore.recordCompletedExercises(
+          _state.lesson!.lessonId,
+          _state.results.length + 1,
+        );
+        if (exercise.skillId != null && exercise.evidenceTier != null) {
+          await LearnerSkillStore.recordAttempt(
+            skillId: exercise.skillId!,
+            evidenceTier: exercise.evidenceTier!,
+            correct: response.correct,
+            primaryTargetError: exercise.primaryTargetError,
+            meaningFrame: exercise.meaningFrame,
+            evaluationVersion: response.evaluationVersion,
+          );
+        }
+        _emit(_state.copyWith(
+          phase: SessionPhase.result,
+          lastResult: response,
+          results: [..._state.results, response.correct],
+          lastDecisionReason: _pendingDecision?.reason,
+          clearLastDecisionReason: _pendingDecision?.reason == null,
+        ));
+        return;
+      }
+
+      // Legacy lesson-bound flow (kept for tests and the (deprecated)
+      // lesson-bound CTA). Local DecisionEngine is authoritative here
+      // because the queue is a finite, locally-known list of indices.
       _pendingDecision = DecisionEngine.decideAfterAttempt(
         lesson: _state.lesson!,
         remainingQueue: _state.remainingIndices,
@@ -210,14 +249,6 @@ class SessionController extends ChangeNotifier {
           meaningFrame: exercise.meaningFrame,
           evaluationVersion: response.evaluationVersion,
         );
-      }
-
-      // Wave 11.3 — V1 dynamic flow: ask the server-side Decision
-      // Engine for the next pick. Overrides the local DecisionEngine
-      // result computed above; the server-side queue is authoritative
-      // when the session was loaded via `loadDynamicSession`.
-      if (_dynamicMode) {
-        await _fetchNextDynamic();
       }
     } catch (e) {
       _emit(_state.copyWith(

@@ -51,10 +51,26 @@ class SessionState {
           ? lesson!.exercises[currentIndex]
           : null;
 
-  /// True when there is no exercise to advance to — either the queue
-  /// has one item left (the current one) or the lesson is missing.
-  bool get isLastExercise =>
-      lesson != null && remainingIndices.length <= 1;
+  /// True when the just-answered item is the last in the session.
+  /// Used to label the post-submit button as "Finish" instead of
+  /// "Next" and as a fallback in `advance()` when `_pendingDecision`
+  /// is null.
+  ///
+  /// Wave 12.5b — dynamic mode no longer fakes the queue. The
+  /// remaining-indices queue starts as `[0]` and grows lazily as
+  /// `/next` returns picks, so `remainingIndices.length <= 1` was
+  /// effectively ALWAYS true on the dynamic path — surfacing
+  /// "Finish" after the first attempt and (combined with a stale
+  /// `_pendingDecision = endSession()` from the local engine) ending
+  /// every dynamic session at Q1. The dynamic path now anchors on
+  /// the server-declared session size: this is the last item iff
+  /// we've answered the full target count.
+  bool get isLastExercise {
+    if (sessionTargetLength != null) {
+      return results.length >= sessionTargetLength!;
+    }
+    return lesson != null && remainingIndices.length <= 1;
+  }
 
   /// Total denominator for the progress counter. For the dynamic flow
   /// returns `sessionTargetLength` (the server-declared session size,

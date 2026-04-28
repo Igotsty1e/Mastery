@@ -925,5 +925,82 @@ void main() {
 
       expect(ctrl.state.phase, equals(SessionPhase.summary));
     });
+
+    // Wave 12.5b regression test. Reproduces the prod bug observed
+    // 2026-04-28: a single wrong answer on a dynamic session ended
+    // the session at Q1 because (a) the synthetic queue
+    // `remainingIndices = [0]` made `isLastExercise` always true and
+    // (b) the local DecisionEngine emitted `endSession()` for the
+    // single-item queue — which won the race against the in-flight
+    // `/next` fetch.
+    //
+    // After 1 wrong answer with the server still having items in
+    // the bank, the session must NOT enter the summary phase. The
+    // post-submit button must read "Next", not "Finish".
+    test(
+        'one wrong answer in dynamic mode advances to the next item, never the summary',
+        () async {
+      final secondId = 'a1b2c3d4-0001-4000-8000-000000000099';
+      final api = _authed((req) {
+        final p = req.url.path;
+        if (p.endsWith('/sessions/start')) {
+          return _jsonResponse(dynamicStartDto());
+        }
+        if (p.endsWith('/answers')) {
+          // Wrong answer — the server-side evaluator returns
+          // correct=false here. The bug being reproduced does not
+          // depend on the evaluator output, but a wrong answer
+          // exercises the "Try again" branch of the result panel.
+          return _jsonResponse(_evaluateJson(correct: false));
+        }
+        if (p.endsWith('/next')) {
+          return _jsonResponse({
+            'reason': 'same_rule_different_angle',
+            'position': 1,
+            'next_exercise': {
+              'exercise_id': secondId,
+              'type': 'fill_blank',
+              'instruction': 'Complete the gap.',
+              'prompt': 'He ___ a teacher.',
+            },
+          });
+        }
+        if (p.endsWith('/complete') || p.endsWith('/result')) {
+          return _jsonResponse(_resultJson());
+        }
+        return _jsonResponse({'error': 'unmocked', 'path': p}, status: 404);
+      });
+      final ctrl = SessionController(api);
+
+      await ctrl.loadDynamicSession();
+      // Sanity: total denominator anchored on the server target,
+      // not the lazy queue length (Wave 12.5 fix #2).
+      expect(ctrl.state.totalCount, equals(10));
+      // After loadDynamicSession the queue has only the first item.
+      // The bug was: isLastExercise returned true here, surfacing
+      // a "Finish" button label after the first attempt. The fix:
+      // dynamic-mode isLastExercise is anchored on
+      // `results.length >= sessionTargetLength`.
+      expect(ctrl.state.isLastExercise, isFalse,
+          reason: 'Q1 must NOT be the last exercise — total is 10');
+
+      await ctrl.submitAnswer('wrong');
+      // Result panel shown. Wave 12.5b — no race: by the time the
+      // user sees the result, /next has resolved and
+      // _pendingDecision is correctly set to advance.
+      expect(ctrl.state.phase, equals(SessionPhase.result));
+      // Still NOT the last exercise — fixes the prod label bug.
+      expect(ctrl.state.isLastExercise, isFalse,
+          reason: 'After Q1 there are 9 more items; button must say Next');
+      ctrl.advance();
+
+      // Advance must transition to the next picked exercise — NOT
+      // bail out to the summary phase (which is what the prod bug
+      // did).
+      expect(ctrl.state.phase, equals(SessionPhase.ready));
+      expect(ctrl.state.currentExercise?.exerciseId, equals(secondId));
+      expect(ctrl.state.lastDecisionReason,
+          equals('same_rule_different_angle'));
+    });
   });
 }
