@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import '../auth/auth_client.dart';
 import '../models/evaluation.dart';
 import '../models/lesson.dart';
+import 'diagnostic_dtos.dart';
 
 class ApiException implements Exception {
   final int statusCode;
@@ -187,6 +188,132 @@ class ApiClient {
     _assertOk(res);
     return LessonResultResponse.fromJson(
         jsonDecode(res.body) as Map<String, dynamic>);
+  }
+
+  /// Wave 12.3 — `GET /me`. Returns `profile.level` (`null` when the
+  /// learner has never finished a diagnostic). The HomeScreen routing
+  /// gate uses this to decide whether to surface the probe between
+  /// sign-in and onboarding. Errors → null so the gate falls through
+  /// to the onboarding ritual rather than blocking the app on a
+  /// transient network failure.
+  Future<String?> getMyLevel() async {
+    try {
+      final auth = _requireAuth();
+      final res = await auth.send(
+        'GET',
+        Uri.parse('$baseUrl/me'),
+      );
+      if (res.statusCode < 200 || res.statusCode >= 300) return null;
+      final body = jsonDecode(res.body) as Map<String, dynamic>;
+      final profile = body['profile'];
+      if (profile is Map<String, dynamic>) {
+        return profile['level'] as String?;
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // ────────────────────────────────────────────────────────────────────
+  // Wave 12.3 — diagnostic-mode endpoints (V1 spec §15). Auth-protected.
+  // The probe is a 5-item multiple_choice run that scores into a CEFR
+  // level + per-skill status map. The client orchestrates one /answers
+  // call per pick, then /complete to land the derivation.
+  // ────────────────────────────────────────────────────────────────────
+
+  /// `POST /diagnostic/start`. Creates a fresh run if none is active;
+  /// resumes the active one otherwise (HTTP 200 vs 201 — both
+  /// accepted). The DTO carries `resumed=true` on the resume path so
+  /// the client can word the welcome screen accordingly.
+  Future<DiagnosticStart> startDiagnostic() async {
+    final auth = _requireAuth();
+    final res = await auth.send(
+      'POST',
+      Uri.parse('$baseUrl/diagnostic/start'),
+    );
+    _assertOk(res);
+    return DiagnosticStart.fromJson(
+        jsonDecode(res.body) as Map<String, dynamic>);
+  }
+
+  /// `POST /diagnostic/:runId/answers`. The diagnostic flow records
+  /// the attempt server-side and returns the next item in the same
+  /// response, so the client never has to call a separate `/next`
+  /// endpoint.
+  Future<DiagnosticAnswerResult> submitDiagnosticAnswer({
+    required String runId,
+    required String exerciseId,
+    required String exerciseType,
+    required String userAnswer,
+    DateTime? submittedAt,
+  }) async {
+    final auth = _requireAuth();
+    final body = <String, dynamic>{
+      'exercise_id': exerciseId,
+      'exercise_type': exerciseType,
+      'user_answer': userAnswer,
+      'submitted_at':
+          (submittedAt ?? DateTime.now().toUtc()).toIso8601String(),
+    };
+    final res = await auth.send(
+      'POST',
+      Uri.parse('$baseUrl/diagnostic/$runId/answers'),
+      body: body,
+    );
+    _assertOk(res);
+    return DiagnosticAnswerResult.fromJson(
+        jsonDecode(res.body) as Map<String, dynamic>);
+  }
+
+  /// `POST /diagnostic/:runId/complete`. Idempotent — a second call
+  /// returns the persisted derivation with `alreadyCompleted=true`.
+  Future<DiagnosticCompletion> completeDiagnostic(String runId) async {
+    final auth = _requireAuth();
+    final res = await auth.send(
+      'POST',
+      Uri.parse('$baseUrl/diagnostic/$runId/complete'),
+    );
+    _assertOk(res);
+    return DiagnosticCompletion.fromJson(
+        jsonDecode(res.body) as Map<String, dynamic>);
+  }
+
+  /// `POST /diagnostic/restart`. Abandons any active run + writes a
+  /// `diagnostic_abandoned` audit event, then starts a fresh run.
+  /// Returns the same DTO shape as `startDiagnostic`.
+  Future<DiagnosticStart> restartDiagnostic() async {
+    final auth = _requireAuth();
+    final res = await auth.send(
+      'POST',
+      Uri.parse('$baseUrl/diagnostic/restart'),
+    );
+    _assertOk(res);
+    return DiagnosticStart.fromJson(
+        jsonDecode(res.body) as Map<String, dynamic>);
+  }
+
+  /// `POST /diagnostic/skip`. Fire-and-forget — records the
+  /// `diagnostic_skipped` audit event for D1 retention cohort
+  /// analysis. Failures are swallowed because telemetry is
+  /// best-effort and must not block the skip path.
+  Future<void> skipDiagnostic() async {
+    try {
+      final auth = _requireAuth();
+      final res = await auth.send(
+        'POST',
+        Uri.parse('$baseUrl/diagnostic/skip'),
+      );
+      // 204 No Content is the success path; 401 is acceptable here
+      // because the skip is best-effort.
+      if (res.statusCode >= 500) {
+        // Still swallow — server outages must not block onboarding.
+      }
+    } on ApiException {
+      // Swallow — see method docstring.
+    } on Exception {
+      // Swallow.
+    }
   }
 
   void _assertOk(http.Response res) {

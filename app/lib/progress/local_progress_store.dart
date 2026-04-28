@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class LocalProgressStore {
   static const _lessonPrefix = 'lesson_progress_';
   static const _onboardingSeenKey = 'onboarding_arrival_ritual_seen_v2';
+  static const _diagnosticSkippedKey = 'diagnostic_skipped_v1';
 
   static Future<int> getCompletedExercises(String lessonId) async {
     try {
@@ -48,6 +49,43 @@ class LocalProgressStore {
     } catch (_) {
       // Tolerate persistence failure: worst case, the user sees onboarding
       // again next launch — not a correctness bug, just a soft regression.
+    }
+  }
+
+  /// Wave 12.3 — diagnostic-mode skip flag. Set when the learner taps
+  /// "Skip for now" on the diagnostic welcome step. The HomeScreen
+  /// routing gate reads this so a skipper does not see the prompt
+  /// again on the same device. Cleared by the future Wave 12.4
+  /// settings re-take affordance.
+  ///
+  /// Defaults to `false` on storage failure so a true intent (skip)
+  /// is never silently turned into a re-prompt; the user is no worse
+  /// off than seeing the diagnostic again.
+  static Future<bool> hasSkippedDiagnostic() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool(_diagnosticSkippedKey) ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static Future<void> markDiagnosticSkipped() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_diagnosticSkippedKey, true);
+    } catch (_) {
+      // Tolerate persistence failure — the server-side audit event
+      // still fires, and the worst case is a re-prompt on next launch.
+    }
+  }
+
+  static Future<void> clearDiagnosticSkipped() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_diagnosticSkippedKey);
+    } catch (_) {
+      // Soft failure.
     }
   }
 }

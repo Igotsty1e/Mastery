@@ -26,6 +26,7 @@ import '../theme/mastery_theme.dart';
 import '../widgets/mastery_route.dart';
 import '../widgets/mastery_widgets.dart';
 import '../widgets/review_due_section.dart';
+import 'diagnostic_screen.dart';
 import 'lesson_intro_screen.dart';
 import 'onboarding_arrival_ritual_screen.dart';
 import 'sign_in_screen.dart';
@@ -63,6 +64,11 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _resolving = true;
   bool _showOnboarding = true;
   bool _showSignIn = false;
+  /// Wave 12.3 — diagnostic-mode gate. Sits between the sign-in gate
+  /// and the onboarding ritual. Detection: after sign-in, if the
+  /// learner has not skipped the diagnostic on this device AND the
+  /// server has no level set for them yet, surface the probe.
+  bool _showDiagnostic = false;
   bool _isLoadingDashboard = false;
   String _selectedLevel = 'B2';
 
@@ -140,13 +146,36 @@ class _HomeScreenState extends State<HomeScreen> {
     // dashboard reads from them. No bulk-import here: that only fires
     // on the `signedIn` outcome of a fresh sign-in below.
     _activateAuthenticatedClients();
+    final showDiagnostic = await _shouldShowDiagnostic();
     if (!mounted) return;
     setState(() {
+      _showDiagnostic = showDiagnostic;
       _showOnboarding = !seen;
       _resolving = false;
     });
-    if (seen) {
+    if (!showDiagnostic && seen) {
       await _loadDashboard();
+    }
+  }
+
+  /// Wave 12.3 — diagnostic gate detection. Surface the probe when:
+  /// 1. the learner has not skipped the diagnostic on this device
+  ///    (`LocalProgressStore.hasSkippedDiagnostic`), AND
+  /// 2. the server has no level set on `user_profiles.level` (the
+  ///    diagnostic /complete stamps it; null means never run).
+  ///
+  /// Both checks tolerate failures by returning `false` — the
+  /// onboarding ritual is still a coherent fallback if the gate
+  /// cannot decide.
+  Future<bool> _shouldShowDiagnostic() async {
+    try {
+      final skipped = await LocalProgressStore.hasSkippedDiagnostic();
+      if (skipped) return false;
+      final api = context.read<ApiClient>();
+      final level = await api.getMyLevel();
+      return level == null || level.isEmpty;
+    } catch (_) {
+      return false;
     }
   }
 
@@ -207,11 +236,31 @@ class _HomeScreenState extends State<HomeScreen> {
       _activateAuthenticatedClients();
     }
     final seen = await LocalProgressStore.hasSeenOnboarding();
+    final showDiagnostic = await _shouldShowDiagnostic();
     if (!mounted) return;
     setState(() {
       _showSignIn = false;
+      _showDiagnostic = showDiagnostic;
       _showOnboarding = !seen;
     });
+    if (!showDiagnostic && seen) {
+      await _loadDashboard();
+    }
+  }
+
+  /// Wave 12.3 — diagnostic CTA contract. Both Begin→Complete and
+  /// Skip-for-now land here; the diagnostic is additive to the
+  /// onboarding ritual, never a replacement, so we flip the gate off
+  /// and let the onboarding flow take over. The skip path has already
+  /// written `LocalProgressStore.diagnosticSkipped` and fired the
+  /// `diagnostic_skipped` audit event by the time this runs; the
+  /// complete path has stamped `user_profiles.level` server-side.
+  Future<void> _completeDiagnostic() async {
+    if (!mounted) return;
+    setState(() => _showDiagnostic = false);
+    final seen = await LocalProgressStore.hasSeenOnboarding();
+    if (!mounted) return;
+    setState(() => _showOnboarding = !seen);
     if (seen) {
       await _loadDashboard();
     }
@@ -361,6 +410,12 @@ class _HomeScreenState extends State<HomeScreen> {
       return SignInScreen(
         authClient: _authClient!,
         onResolved: _onSignInResolved,
+      );
+    }
+    if (_showDiagnostic) {
+      return DiagnosticScreen(
+        apiClient: context.read<ApiClient>(),
+        onComplete: _completeDiagnostic,
       );
     }
     if (_showOnboarding) {
