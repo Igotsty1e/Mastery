@@ -362,6 +362,10 @@ class SessionController extends ChangeNotifier {
         totalExercises: summary.totalExercises,
         correctCount: summary.correctCount,
         debrief: summary.debrief,
+        // Wave 14.9 — carry the full result so the dashboard's
+        // `Review mistakes` / `See full report` CTAs can render the
+        // per-exercise mistake list without a re-fetch.
+        summary: summary,
       ));
     } catch (e, st) {
       debugPrint('_fetchSummary failed – showing local counts. Error: $e\n$st');
