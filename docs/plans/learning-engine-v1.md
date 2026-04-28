@@ -320,6 +320,7 @@ deferred to V1.5 per the Out-of-MVP scope above.
 - **Wave 12.5 (2026-04-28)** — engine cap-relaxed fallback when §9.1 dropout + Wave 13 cap starve the primary pass. Surfaced in prod after 10.5 expanded the bank.
 - **Wave 12.5b (2026-04-28)** — dynamic-mode `isLastExercise` + `submitAnswer` race fix; sessions no longer end at Q1 on the first wrong answer.
 - **Wave 12.6 (2026-04-28)** — `MAX_SKILLS_PER_SESSION = 2` cap (engine) + post-mistake `See full rule →` bottom sheet (client). Founder-flagged trust signal: theory exists, theory is one tap away, theory is Murphy/Swan grade. Library tab + first-encounter auto-card explicitly **deferred** to V1.6+ pending bank ≥15 skills + skill display names. See `docs/plans/wave12.6-rule-access.md` for the full plan + methodologist + CEO consult summary.
+- **Wave 12.7 (2026-04-28)** — V1.6 library entry. New public `GET /skills` route serves the registry + per-skill rule snapshot (title, description, cefr_level, intro_rule, intro_examples). Flutter `SkillCatalog` (`app/lib/learner/skill_catalog.dart`) caches it; `skillTitleFor` reads from the catalog with a hardcoded fallback for cold-start / offline. New "Rules" card on the Study Desk dashboard — every skill rendered as a row with title + CEFR chip; tap → bottom sheet with `intro_rule` + `intro_examples`. Bank ≥15 skills + skill graph search are still V2+; this is the minimal library that earns its place at 5 skills.
 
 **V1 MVP done = ~3.5 weeks of engineering** (plus authoring time in 10.5).
 

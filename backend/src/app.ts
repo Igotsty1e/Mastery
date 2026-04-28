@@ -2,6 +2,7 @@ import express from 'express';
 import path from 'path';
 import healthRouter from './routes/health';
 import { makeLessonsRouter } from './routes/lessons';
+import { makeSkillsRouter } from './routes/skills';
 import type { AiProvider } from './ai/interface';
 import type { AppDatabase } from './db/client';
 import { makeAuthRouter } from './auth/routes';
@@ -87,6 +88,7 @@ export function createApp(ai: AiProvider, opts: CreateAppOptions = {}): express.
     app.use(makeDiagnosticRouter(opts.db));
   }
   app.use(makeLessonsRouter(ai));
+  app.use(makeSkillsRouter());
 
   app.use((_req, res) => {
     res.status(404).json({ error: 'not_found' });
