@@ -461,9 +461,21 @@ class RemoteLearnerSkillBackend implements LearnerSkillBackend {
         Uri.parse('$baseUrl/me/skills/$skillId/attempts'),
         body: body,
       );
-      if (resp.statusCode != 200) return null;
+      if (resp.statusCode != 200) {
+        // Wave 14.6 — silent drop made bug #2 (no SkillStatusBadge
+        // post-session) invisible until prod QA. Print the status +
+        // body so the next breakage is caught from the browser console.
+        // ignore: avoid_print
+        print(
+          'LearnerSkillStore.recordAttempt: POST /me/skills/$skillId/attempts '
+          'returned ${resp.statusCode}: ${resp.body}',
+        );
+        return null;
+      }
       return _parseRecordDto(skillId, jsonDecode(resp.body));
-    } catch (_) {
+    } catch (e) {
+      // ignore: avoid_print
+      print('LearnerSkillStore.recordAttempt: exception $e');
       return null;
     }
   }
@@ -490,7 +502,18 @@ class RemoteLearnerSkillBackend implements LearnerSkillBackend {
         'GET',
         Uri.parse('$baseUrl/me/skills'),
       );
-      if (resp.statusCode != 200) return const [];
+      if (resp.statusCode != 200) {
+        // Wave 14.6 — surfaced in QA when the dashboard SkillStatusBadge
+        // wasn't appearing post-session. Silent empty made it impossible
+        // to distinguish "user has no records" from "the call failed."
+        // Print stays off the user's screen but lands in the JS console
+        // for next-time debug.
+        // ignore: avoid_print
+        print(
+          'LearnerSkillStore.allRecords: GET /me/skills returned ${resp.statusCode}',
+        );
+        return const [];
+      }
       final j = jsonDecode(resp.body);
       if (j is! Map<String, dynamic>) return const [];
       final list = j['skills'];
@@ -506,7 +529,9 @@ class RemoteLearnerSkillBackend implements LearnerSkillBackend {
         }
       }
       return out;
-    } catch (_) {
+    } catch (e) {
+      // ignore: avoid_print
+      print('LearnerSkillStore.allRecords: exception $e');
       return const [];
     }
   }
