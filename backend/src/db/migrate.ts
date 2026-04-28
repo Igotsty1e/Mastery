@@ -321,6 +321,30 @@ CREATE UNIQUE INDEX IF NOT EXISTS diagnostic_runs_active_idx
   ON diagnostic_runs(user_id) WHERE status = 'in_progress';
 `;
 
+// Wave 14.3 — V1.5 feedback system. Two prompt surfaces (after-session
+// summary, after-friction) write into one append-only table. The
+// outcome column distinguishes "submitted" (the learner rated) from
+// "dismissed" (swiped the prompt away) so analytics can read response
+// rate without conflating disengagement with negative sentiment. The
+// cooldown query reads `created_at` directly — the row is enough,
+// regardless of outcome.
+const FEEDBACK_RESPONSES_SQL = `
+CREATE TABLE IF NOT EXISTS feedback_responses (
+  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id       uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  prompt_kind   text NOT NULL,
+  outcome       text NOT NULL,
+  rating        smallint,
+  comment_text  text,
+  context       jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at    timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS feedback_responses_user_idx
+  ON feedback_responses(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS feedback_responses_kind_idx
+  ON feedback_responses(prompt_kind, created_at DESC);
+`;
+
 const MIGRATIONS: Migration[] = [
   { id: '0001_init', sql: INIT_SQL },
   { id: '0002_lesson_sessions', sql: LESSON_SESSIONS_SQL },
@@ -331,6 +355,7 @@ const MIGRATIONS: Migration[] = [
   { id: '0007_mastery_v1', sql: MASTERY_V1_SQL },
   { id: '0008_dynamic_sessions', sql: DYNAMIC_SESSIONS_SQL },
   { id: '0009_diagnostic_runs', sql: DIAGNOSTIC_RUNS_SQL },
+  { id: '0010_feedback_responses', sql: FEEDBACK_RESPONSES_SQL },
 ];
 
 export async function runMigrations(database: Database): Promise<void> {

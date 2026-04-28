@@ -1287,3 +1287,67 @@ state. Same auth + `window` query param as the JSON route.
 covering empty DB, cohort sizing, strict D1 boundary (same-day
 attempts excluded), `d1Complete` flip when window not closed,
 401/403/200 auth gate, `window` clamp, and HTML rendering.
+
+## Wave 14.3 — feedback system
+
+User-scoped two-prompt feedback surface backed by an append-only
+`feedback_responses` table. The Decision Engine does not read these
+rows — they are product analytics, not engine input. V1 ships two
+endpoints; the matching client UI lands in phase 2 (after-summary)
+and phase 3 (after-friction).
+
+### POST /me/feedback
+
+Records one feedback row. Authenticated.
+
+**Request body:**
+```json
+{
+  "prompt_kind": "after_summary | after_friction",
+  "outcome": "submitted | dismissed",
+  "rating": 1-5 (optional),
+  "comment_text": "string ≤1000 chars (optional)",
+  "context": { "session_id": "...", ... } (optional jsonb)
+}
+```
+
+- `outcome = 'submitted'` requires at least one of `rating` or
+  `comment_text` — server returns 400 `submitted_requires_content`
+  otherwise. `outcome = 'dismissed'` is the swipe-away record and
+  carries no rating.
+- Both outcomes consume the cooldown so a learner who declines is
+  not pestered.
+
+**Response 201:** `{ "id": "uuid" }`
+
+**Response 400:** `{ "error": "invalid_payload" | "submitted_requires_content" }`
+
+**Response 401:** `{ "error": "unauthorized" }`
+
+**Response 429:** `{ "error": "cooldown", "retry_after_seconds": N }` —
+fires when a row of the same `prompt_kind` exists within the last
+24 h. Cooldown is per-user × per-prompt-kind; a fresh `after_summary`
+response does not block `after_friction`.
+
+### GET /me/feedback/cooldown
+
+Quiet, idempotent gate the client reads before deciding whether to
+render either prompt. Authenticated.
+
+**Response 200:**
+```json
+{
+  "cooldown_hours": 24,
+  "after_summary_allowed": true,
+  "after_friction_allowed": true
+}
+```
+
+A gate flips to `false` when a row for that prompt_kind has been
+recorded in the last `cooldown_hours` (regardless of `outcome`).
+
+**Tests:** 12 test cases in `backend/tests/feedback.test.ts` covering
+auth gates, payload validation (bad enums, out-of-range rating, empty
+submitted), 201 happy paths for `submitted` and `dismissed`, cooldown
+enforcement, per-kind isolation, stale-row release, and the cooldown
+GET responses.
