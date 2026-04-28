@@ -126,7 +126,7 @@ can use them.
   - 25% selection (single_choice / multi_select)
   - 20% correction (sentence_correction / multi_error_correction)
   - 5% diagnostic-tagged (`is_diagnostic = true`) — these can also serve in regular sessions.
-- Open-answer types (`sentence_rewrite`, `short_free_sentence`) skipped per V1.5 deferral.
+- Open-answer types (`sentence_rewrite`, `short_free_sentence`) — initially skipped at V1 MVP; both shipped in V1.5 (Waves 14.2 + 14.4) on 2026-04-28. The bank now contains 10 sentence_rewrite + 5 short_free_sentence items across the 5 shipped skills.
 - Coverage: every skill in `skills.json` should have at least 4 exercises (so the `attempts ≥ 4` gate is reachable).
 
 **Output.** Lessons under `backend/data/lessons/` flattened into the bank

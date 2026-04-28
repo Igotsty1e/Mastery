@@ -549,11 +549,15 @@ enforce these invariants when the family is wired into the runtime:
   matching `sentence_correction`); broader meaning-equivalent paraphrases
   are out of scope. See `exercise_structure.md §5.1 Bounded answer-space
   discipline`.
-- **`short_free_sentence`** — deterministic-first scoring with a bounded
-  AI fallback envelope. The structural and meaning-frame checks run first;
-  AI is only invoked for borderline grammaticality on items that have
-  passed the structural and frame checks. See `exercise_structure.md §5.5
-  Scoring discipline`.
+- **`short_free_sentence`** — bounded AI evaluation. **Shipped runtime
+  (Wave 14.4) is AI-only**: there is no canonical answer set to match
+  against, so the deterministic gate is reduced to "answer is non-empty
+  and provider has the method", and rule conformance is judged by
+  `AiProvider.evaluateFreeSentence`. Authors keep `accepted_examples`
+  short (≤ 3) for grounding. The original target-state safeguard
+  (deterministic structural + meaning-frame checks before AI) remains
+  the engineering goal but is not yet enforced at the runtime; see
+  `exercise_structure.md §5.5 Scoring discipline` for the target.
 
 These safeguards are non-negotiable. A family that cannot be implemented
 under its safeguard is not ready to ship; it must be re-scoped or deferred

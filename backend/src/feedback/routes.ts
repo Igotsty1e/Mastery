@@ -45,10 +45,18 @@ async function lastResponseAt(
   db: AppDatabase,
   userId: string
 ): Promise<Map<PromptKind, Date>> {
+  // Bound by `cooldown_hours` so the GROUP BY scans the relevant
+  // slice instead of every row this user has ever submitted. Older
+  // rows can never make a gate flip to closed (they're past the
+  // cooldown window by definition), so excluding them is safe — the
+  // computed boolean is identical with or without the bound.
+  const cutoffMs = Date.now() - COOLDOWN_HOURS * 3_600_000;
+  const cutoff = new Date(cutoffMs);
   const result = await db.execute<CooldownRow>(sql`
     SELECT prompt_kind, MAX(created_at) AS created_at
     FROM feedback_responses
     WHERE user_id = ${userId}
+      AND created_at >= ${cutoff.toISOString()}
     GROUP BY prompt_kind
   `);
   const rows: CooldownRow[] = Array.isArray(result)
