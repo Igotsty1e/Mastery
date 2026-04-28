@@ -11,6 +11,8 @@
 //   5. coming next (quiet)
 //   6. premium block (visual stub — no monetisation in MVP)
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -20,6 +22,7 @@ import '../config.dart';
 import '../learner/learner_skill_store.dart';
 import '../learner/learner_state_migrator.dart';
 import '../learner/review_scheduler.dart';
+import '../learner/skill_catalog.dart';
 import '../progress/local_progress_store.dart';
 import '../session/last_lesson_store.dart';
 import '../theme/mastery_theme.dart';
@@ -285,6 +288,12 @@ class _HomeScreenState extends State<HomeScreen> {
     // Wave 4 review-due lookup runs in parallel with the lesson list
     // fetch so the dashboard isn't gated on the network for engine state.
     final dueFuture = ReviewScheduler.dueAt(DateTime.now().toUtc());
+    // Wave 12.7 — populate the SkillCatalog (display names + per-skill
+    // rule snapshots) in parallel with the lesson list fetch. Failures
+    // are swallowed inside refresh(); the hardcoded fallback in
+    // skill_titles.dart keeps existing surfaces readable until the
+    // next successful refresh.
+    unawaited(SkillCatalog.instance.refresh(baseUrl: AppConfig.apiBaseUrl));
     final api = context.read<ApiClient>();
 
     try {
@@ -488,6 +497,17 @@ class _HomeScreenState extends State<HomeScreen> {
               // so a fixed unit listing no longer reflects what the
               // learner will see. Skill-progress UI is V1.5
               // (`docs/plans/learning-engine-v1.md` decision #12).
+              // Wave 12.7 — Rules card. Lists every skill in the bank
+              // with title + CEFR chip; tap a row → opens the Wave
+              // 12.6 SkillRule bottom sheet (intro_rule +
+              // intro_examples). The library V1.6 entry per
+              // `docs/plans/wave12.6-rule-access.md`. Re-renders when
+              // the SkillCatalog finishes its first fetch.
+              const SizedBox(height: 22),
+              ListenableBuilder(
+                listenable: SkillCatalog.instance,
+                builder: (context, _) => const _RulesCard(),
+              ),
               const SizedBox(height: 22),
               const _PremiumBlock(),
               // Wave 12.4 — diagnostic re-take affordance. Quiet text
@@ -1665,6 +1685,258 @@ class _UnitMenuItemState extends State<_UnitMenuItem> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────
+// Wave 12.7 — Rules card (V1.6 library entry)
+// ─────────────────────────────────────────────────────────────────────────
+
+class _RulesCard extends StatelessWidget {
+  const _RulesCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.masteryTokens;
+    final entries = SkillCatalog.instance.all;
+    if (entries.isEmpty) {
+      // Pre-fetch / offline: render nothing so the dashboard stays
+      // calm. The card pops in once SkillCatalog completes refresh.
+      return const SizedBox.shrink();
+    }
+    return MasteryCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SectionEyebrow(
+            label: 'Rules',
+            variant: SectionEyebrowVariant.secondary,
+          ),
+          const SizedBox(height: MasterySpacing.xs),
+          Text(
+            'The grammar this app teaches.',
+            style: MasteryTextStyles.bodyMd.copyWith(
+              color: MasteryColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: MasterySpacing.md),
+          for (var i = 0; i < entries.length; i++) ...[
+            if (i > 0)
+              Divider(
+                height: 1,
+                thickness: 1,
+                color: tokens.borderSoft,
+              ),
+            _RulesRow(entry: entries[i]),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _RulesRow extends StatelessWidget {
+  final SkillCatalogEntry entry;
+
+  const _RulesRow({required this.entry});
+
+  bool get _hasRule =>
+      entry.introRule != null && entry.introRule!.trim().isNotEmpty;
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.masteryTokens;
+    return InkWell(
+      borderRadius: BorderRadius.circular(MasteryRadii.sm),
+      onTap: _hasRule ? () => _openSheet(context) : null,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 4,
+          vertical: MasterySpacing.sm,
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    entry.title,
+                    style: MasteryTextStyles.bodyMd.copyWith(
+                      color: MasteryColors.textPrimary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  if (entry.description != null &&
+                      entry.description!.trim().isNotEmpty) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      entry.description!,
+                      style: MasteryTextStyles.bodySm.copyWith(
+                        color: MasteryColors.textTertiary,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(width: MasterySpacing.md),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 4,
+              ),
+              decoration: BoxDecoration(
+                color: tokens.bgPrimarySoft,
+                borderRadius: BorderRadius.circular(MasteryRadii.pill),
+              ),
+              child: Text(
+                entry.cefrLevel,
+                style: MasteryTextStyles.labelSm.copyWith(
+                  color: MasteryColors.actionPrimaryPressed,
+                  letterSpacing: 0.4,
+                ),
+              ),
+            ),
+            if (_hasRule) ...[
+              const SizedBox(width: 6),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: tokens.textTertiary,
+                size: 22,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: MasteryColors.bgSurface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(MasteryRadii.lg),
+        ),
+      ),
+      builder: (sheetCtx) => _RuleSheetBody(entry: entry),
+    );
+  }
+}
+
+class _RuleSheetBody extends StatelessWidget {
+  final SkillCatalogEntry entry;
+
+  const _RuleSheetBody({required this.entry});
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.masteryTokens;
+    return SafeArea(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(
+            MasterySpacing.lg,
+            MasterySpacing.lg,
+            MasterySpacing.lg,
+            MasterySpacing.xl,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: MasterySpacing.lg),
+                  decoration: BoxDecoration(
+                    color: tokens.borderSoft,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Text(
+                entry.title,
+                style: MasteryTextStyles.headlineLg.copyWith(
+                  color: MasteryColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: MasterySpacing.md),
+              if (entry.introRule != null) ...[
+                Text(
+                  entry.introRule!,
+                  style: MasteryTextStyles.bodyLg.copyWith(
+                    color: MasteryColors.textPrimary,
+                    height: 1.6,
+                  ),
+                ),
+              ],
+              if (entry.introExamples.isNotEmpty) ...[
+                const SizedBox(height: MasterySpacing.xl),
+                Text(
+                  'Examples',
+                  style: MasteryTextStyles.eyebrow(
+                    color: tokens.textTertiary,
+                  ),
+                ),
+                const SizedBox(height: MasterySpacing.sm),
+                for (final ex in entry.introExamples) ...[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8, right: 10),
+                          child: Container(
+                            width: 5,
+                            height: 5,
+                            decoration: const BoxDecoration(
+                              color: MasteryColors.actionPrimary,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            ex,
+                            style: MasteryTextStyles.bodyMd.copyWith(
+                              color: MasteryColors.textPrimary,
+                              height: 1.55,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ],
+              const SizedBox(height: MasterySpacing.lg),
+              Center(
+                child: TextButton(
+                  onPressed: () => Navigator.of(context).maybePop(),
+                  child: Text(
+                    'Close',
+                    style: MasteryTextStyles.labelMd.copyWith(
+                      color: MasteryColors.textSecondary,
+                      letterSpacing: 0.4,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

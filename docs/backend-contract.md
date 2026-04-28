@@ -40,6 +40,34 @@ the client.
 
 ---
 
+### GET /skills
+
+Wave 12.7 — public read-only route returning the skill registry joined with each skill's source-lesson rule snapshot. The Flutter `SkillCatalog` (`app/lib/learner/skill_catalog.dart`) fetches this on dashboard mount; surfaces consume it for human-readable titles and the V1.6 Rules card.
+
+**Response 200:**
+```json
+[
+  {
+    "skill_id": "verb-ing-after-gerund-verbs",
+    "title": "Verb + -ing after gerund-taking verbs",
+    "description": "After enjoy, avoid, suggest, mind, keep, finish (and consider in this cluster)…",
+    "cefr_level": "B2",
+    "intro_rule": "Use\n\nSome verbs are followed directly by the -ing form…",
+    "intro_examples": ["I enjoy reading novels…", "She suggested taking a taxi…"]
+  }
+]
+```
+
+`title`, `description`, `cefr_level` come from `backend/data/skills.json`. `intro_rule` and `intro_examples` are joined from the source lesson — the skill's first `lesson_refs` entry (with the bank-index fallback if `lesson_refs` is missing).
+
+Public, no auth — same posture as `GET /lessons` and `GET /lessons/:id`. The dashboard reads it on first paint before the AuthClient is attached.
+
+### GET /skills/:skill_id
+
+Same shape as a single element of `GET /skills`. Returns `404 skill_not_found` for an unknown id.
+
+---
+
 ### Wave 8 (legacy drop, 2026-04-26)
 
 The unauthenticated `POST /lessons/{lesson_id}/answers` and
