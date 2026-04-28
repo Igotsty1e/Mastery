@@ -306,6 +306,7 @@ Key routing rules:
 - `DATABASE_URL` — Postgres connection string for the auth/identity persistence
 - `AUTH_SECRET` — HMAC key for access tokens. **Boot fails when unset under `NODE_ENV=production`** (no silent dev-fallback)
 - `APPLE_STUB_ENABLED` — leave unset in real prod. Set to `1` only on staging if `/auth/apple/stub/login` needs to remain reachable
+- `ADMIN_USER_IDS` — comma-separated UUIDs that gate the `/admin/*` routes (Wave 14.1 retention dashboard). Unset / empty = nobody can read `/admin/retention`. Add the founder's `users.id` once after first sign-in
 
 **mastery-web-igotsty1e** — build-time env var used by `scripts/render-build-web.sh`:
 - `API_BASE_URL=https://mastery-backend-igotsty1e.onrender.com` (baked into Flutter binary via `--dart-define`)
