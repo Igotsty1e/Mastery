@@ -140,7 +140,62 @@ describe('Wave 11 — Decision Engine pickNext', () => {
         'session_complete',
         'no_candidates',
         'bank_empty',
+        'cap_relaxed_fallback',
       ].includes(result.reason)
     ).toBe(true);
+  });
+
+  // Wave 12.5 hot-fix regression test. Reproduces the prod bug
+  // observed 2026-04-28: with the Wave 10.5 expanded bank (5 skills),
+  // a brand-new learner who makes 3 mistakes on the first surfaced
+  // skill would have the engine return null at ~Q5 because the
+  // `MAX_NEW_SKILLS_PER_SESSION = 1` cap blocks every other skill.
+  // The fallback should kick in and return a candidate so the
+  // session can advance to its target length.
+  it('cap-relaxed fallback fires when cap+dropout starve the primary pass', () => {
+    const allSkills = listSkills();
+    expect(allSkills.length).toBeGreaterThanOrEqual(2);
+
+    // Pick the first skill in source order as the "touched" one and
+    // the next as the un-touched-but-blocked-by-cap one.
+    const touchedSkill = allSkills[0];
+    const touchedEntries = getEntriesForSkill(touchedSkill);
+    expect(touchedEntries.length).toBeGreaterThanOrEqual(4);
+
+    // shownExerciseIds: 3 items from the touched skill so the §9.1
+    // 3-mistake count would be plausibly active. Cap is reached
+    // because the touched skill has status=undefined (treated as new).
+    const shown = touchedEntries.slice(0, 3).map((e) => e.exercise.exercise_id);
+
+    const result = pickNext(
+      ctx({
+        shownExerciseIds: shown,
+        // 3 mistakes on the touched skill → §9.1 dropout.
+        mistakesBySkill: { [touchedSkill]: 3 },
+        // No mastery state for any skill (new learner).
+        masteryStatusBySkill: {},
+      })
+    );
+
+    // PRIMARY pass would return null here:
+    //   - touched skill is in dropoutSkills (3 mistakes).
+    //   - every other skill is new (status=undefined) AND the
+    //     new-skill cap (count=1) is reached, so they're all blocked.
+    // FALLBACK pass ignores the cap and finds a candidate.
+    expect(result.next).not.toBeNull();
+    expect(result.reason).toBe('cap_relaxed_fallback');
+    // The fallback must NOT return a dropped-out item — the §9.1
+    // intent (3 mistakes = stop showing this skill) is preserved.
+    expect(result.next?.exercise.skill_id).not.toBe(touchedSkill);
+  });
+
+  it('cap-relaxed fallback respects session-complete short-circuit', () => {
+    // Even with the fallback, a session that has reached SESSION_LENGTH
+    // must terminate cleanly.
+    const all = getAllBankEntries();
+    const shown = all.slice(0, SESSION_LENGTH).map((e) => e.exercise.exercise_id);
+    const result = pickNext(ctx({ shownExerciseIds: shown }));
+    expect(result.next).toBeNull();
+    expect(result.reason).toBe('session_complete');
   });
 });

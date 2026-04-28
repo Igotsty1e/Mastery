@@ -198,6 +198,46 @@ export function pickNext(ctx: DecisionContext): DecisionResult {
     }
   }
 
+  // Wave 12.5 hot-fix — cap-relaxed fallback. The primary pass above
+  // can starve the engine in this exact scenario, observed in prod
+  // 2026-04-28 with the Wave 10.5 expanded bank:
+  //
+  //   1. New learner, no `learner_skills` rows.
+  //   2. Engine surfaces an item from skill A; shownNewSkillIds = {A}.
+  //   3. `MAX_NEW_SKILLS_PER_SESSION = 1` is now reached. Every
+  //      candidate from skills B/C/D/E is blocked because they too
+  //      have status=undefined.
+  //   4. Learner makes 3 mistakes on skill A.
+  //   5. §9.1 puts A into `dropoutSkills` — A's items now also blocked.
+  //   6. Primary loop finds zero candidates → returns null → client
+  //      treats it as "session complete" and ends at ~Q5.
+  //
+  // Fix: when the primary pass yields nothing AND the session is
+  // under length, run a relaxed pass that ignores the new-skill cap.
+  // It is strictly better to introduce a second new skill than to
+  // kill the session prematurely. The dropout filter still applies —
+  // a 3-mistake skill stays out of rotation, which is the §9.1
+  // intent. Emits a distinct reason so the Decision Log makes the
+  // fallback observable for retention analysis.
+  if (bestEntry === null) {
+    let fallbackBest: BankEntry | null = null;
+    let fallbackScore = -Infinity;
+    for (const entry of flat) {
+      if (shownSet.has(entry.exercise.exercise_id)) continue;
+      const skillId = entry.exercise.skill_id ?? null;
+      if (skillId && dropoutSkills.has(skillId)) continue;
+      // NB: cap filter intentionally OMITTED here.
+      const score = positionJitter(entry.positionInSource);
+      if (score > fallbackScore) {
+        fallbackScore = score;
+        fallbackBest = entry;
+      }
+    }
+    if (fallbackBest !== null) {
+      return { next: fallbackBest, reason: 'cap_relaxed_fallback' };
+    }
+  }
+
   return {
     next: bestEntry,
     reason: bestEntry ? bestReason : 'no_candidates',
