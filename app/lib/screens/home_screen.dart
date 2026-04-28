@@ -28,6 +28,7 @@ import '../session/last_lesson_store.dart';
 import '../theme/mastery_theme.dart';
 import '../widgets/mastery_route.dart';
 import '../widgets/mastery_widgets.dart';
+import '../widgets/skill_status_badge.dart';
 import '../widgets/review_due_section.dart';
 import 'diagnostic_screen.dart';
 import 'lesson_intro_screen.dart';
@@ -89,6 +90,14 @@ class _HomeScreenState extends State<HomeScreen> {
   /// after every dashboard reload so a freshly-finished session shows
   /// up here when its due time arrives.
   List<ReviewSchedule> _dueReviews = const [];
+
+  /// Wave 14 (V1.5 Skill-progress UI) — per-skill mastery state for
+  /// the Rules card on the dashboard. Indexed by `skillId` so the
+  /// `_RulesCard` lookup is O(1). Populated on `_loadDashboard` from
+  /// `LearnerSkillStore.allRecords()` (server-backed once auth is
+  /// active). A skill the learner has not touched yet is absent from
+  /// the map and its row renders without a status chip.
+  Map<String, LearnerSkillRecord> _skillRecords = const {};
 
   /// Lesson the learner should land on — prefers a lesson they have
   /// already started over the manifest-order first-unfinished. Without
@@ -288,6 +297,9 @@ class _HomeScreenState extends State<HomeScreen> {
     // Wave 4 review-due lookup runs in parallel with the lesson list
     // fetch so the dashboard isn't gated on the network for engine state.
     final dueFuture = ReviewScheduler.dueAt(DateTime.now().toUtc());
+    // Wave 14 (V1.5 Skill-progress UI) — fetch per-skill records in
+    // parallel for the Rules card status badges.
+    final recordsFuture = LearnerSkillStore.allRecords();
     // Wave 12.7 — populate the SkillCatalog (display names + per-skill
     // rule snapshots) in parallel with the lesson list fetch. Failures
     // are swallowed inside refresh(); the hardcoded fallback in
@@ -315,10 +327,12 @@ class _HomeScreenState extends State<HomeScreen> {
         ));
       }
       final due = await dueFuture;
+      final records = await recordsFuture;
       if (!mounted) return;
       setState(() {
         _curriculum = entries;
         _dueReviews = due;
+        _skillRecords = {for (final r in records) r.skillId: r};
         _isLoadingDashboard = false;
       });
       // Level lookup is best-effort — a transient detail-endpoint
@@ -344,6 +358,7 @@ class _HomeScreenState extends State<HomeScreen> {
         AppConfig.defaultLessonId,
       );
       final due = await dueFuture;
+      final records = await recordsFuture;
       if (!mounted) return;
       setState(() {
         _curriculum = [
@@ -355,6 +370,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ];
         _dueReviews = due;
+        _skillRecords = {for (final r in records) r.skillId: r};
         _isLoadingDashboard = false;
       });
     }
@@ -506,7 +522,7 @@ class _HomeScreenState extends State<HomeScreen> {
               const SizedBox(height: 22),
               ListenableBuilder(
                 listenable: SkillCatalog.instance,
-                builder: (context, _) => const _RulesCard(),
+                builder: (context, _) => _RulesCard(records: _skillRecords),
               ),
               const SizedBox(height: 22),
               const _PremiumBlock(),
@@ -1695,7 +1711,14 @@ class _UnitMenuItemState extends State<_UnitMenuItem> {
 // ─────────────────────────────────────────────────────────────────────────
 
 class _RulesCard extends StatelessWidget {
-  const _RulesCard();
+  /// Wave 14 (V1.5 Skill-progress UI) — per-skill mastery records keyed
+  /// by `skillId`. Absent entries render the row without a status chip.
+  /// The map is owned by `_HomeScreenState`, refreshed on every
+  /// `_loadDashboard`, and pushed in via the constructor so the card
+  /// stays a `StatelessWidget`.
+  final Map<String, LearnerSkillRecord> records;
+
+  const _RulesCard({this.records = const {}});
 
   @override
   Widget build(BuildContext context) {
@@ -1706,6 +1729,7 @@ class _RulesCard extends StatelessWidget {
       // calm. The card pops in once SkillCatalog completes refresh.
       return const SizedBox.shrink();
     }
+    final now = DateTime.now();
     return MasteryCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1729,7 +1753,11 @@ class _RulesCard extends StatelessWidget {
                 thickness: 1,
                 color: tokens.borderSoft,
               ),
-            _RulesRow(entry: entries[i]),
+            _RulesRow(
+              entry: entries[i],
+              record: records[entries[i].skillId],
+              now: now,
+            ),
           ],
         ],
       ),
@@ -1740,7 +1768,21 @@ class _RulesCard extends StatelessWidget {
 class _RulesRow extends StatelessWidget {
   final SkillCatalogEntry entry;
 
-  const _RulesRow({required this.entry});
+  /// Wave 14 — null when the learner has never touched this skill.
+  /// Present, even with zero attempts, when `LearnerSkillStore` has
+  /// any record for it (status will be `started`).
+  final LearnerSkillRecord? record;
+
+  /// Wave 14 — anchor "now" passed in by the parent so derived status
+  /// is consistent across rows in a single render. Tests can pass a
+  /// fixed clock; production passes wall-clock.
+  final DateTime now;
+
+  const _RulesRow({
+    required this.entry,
+    required this.now,
+    this.record,
+  });
 
   bool get _hasRule =>
       entry.introRule != null && entry.introRule!.trim().isNotEmpty;
@@ -1785,6 +1827,14 @@ class _RulesRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: MasterySpacing.md),
+            // Wave 14 — status badge for skills the learner has touched.
+            // Calm-tone pill; renders only when a record exists. Pinned
+            // before the CEFR chip so the row reads as
+            // "<title>  [<status>] [B2]" left-to-right.
+            if (record != null) ...[
+              SkillStatusBadge(record: record!, now: now),
+              const SizedBox(width: 6),
+            ],
             Container(
               padding: const EdgeInsets.symmetric(
                 horizontal: 10,
