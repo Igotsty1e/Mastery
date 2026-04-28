@@ -409,13 +409,17 @@ export async function submitAnswer(
 
   // Wave 7.1.1 Codex P2.2: snapshot the review-time copy at insert. For
   // listening_discrimination items the prompt-equivalent is the audio
-  // transcript. For everything else, the exercise prompt directly.
+  // transcript. Wave 14.6: for short_free_sentence the prompt-equivalent
+  // is the instruction (no `prompt` field on the authored item). For
+  // everything else, the exercise prompt directly.
   const promptSnapshot =
     exercise.type === 'listening_discrimination'
       ? exercise.audio.transcript
-      : 'prompt' in exercise
-        ? exercise.prompt
-        : null;
+      : exercise.type === 'short_free_sentence'
+        ? exercise.instruction
+        : 'prompt' in exercise
+          ? exercise.prompt
+          : null;
   const explanationSnapshot = exercise.feedback?.explanation ?? null;
 
   // Wave 14.3 phase 3 — friction detection (V1: repeated_error only).
@@ -551,13 +555,21 @@ function buildAnswers(
         ?? exercise?.feedback?.explanation
         ?? null;
     }
+    // Wave 14.6 — short_free_sentence has no `prompt` field on the
+    // authored item (the `instruction` IS the prompt). Without the
+    // fallback, the SummaryScreen mistake card rendered with only
+    // ANSWER + explanation and no anchor for context — surfaced in
+    // QA on 2026-04-28 as bug #3. Use the instruction as the review
+    // anchor for that type so the card reads cleanly.
     const promptForReview =
       attempt.promptSnapshot
         ?? (exercise?.type === 'listening_discrimination'
               ? exercise.audio.transcript
-              : exercise && 'prompt' in exercise
-                ? exercise.prompt
-                : null);
+              : exercise?.type === 'short_free_sentence'
+                ? exercise.instruction
+                : exercise && 'prompt' in exercise
+                  ? exercise.prompt
+                  : null);
     return {
       exercise_id: attempt.exerciseId,
       correct: attempt.correct,

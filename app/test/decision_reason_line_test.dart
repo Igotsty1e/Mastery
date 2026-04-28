@@ -9,37 +9,74 @@ Widget _wrap(Widget child) => MaterialApp(
     );
 
 void main() {
-  group('DecisionReasonLine', () {
-    testWidgets('renders the reason when text is non-null and non-empty',
+  group('decisionReasonCopy', () {
+    test('maps the two §9.1 reorder codes to learner-facing copy', () {
+      expect(
+        decisionReasonCopy('same_rule_different_angle'),
+        'Same rule, different angle.',
+      );
+      expect(
+        decisionReasonCopy('same_rule_simpler_ask'),
+        'Same rule, simpler ask.',
+      );
+    });
+
+    test(
+        'returns null for operational codes (calm silence per §11.4)',
+        () {
+      // Every code emitted by the engine that is not a §11.3 routing
+      // string should collapse to silence. We snapshot the current
+      // server-side set so a new code added without a curated copy
+      // forces an explicit decision in this test.
+      const operationalCodes = [
+        'linear_default',
+        'cap_relaxed_fallback',
+        'no_candidates',
+        'bank_empty',
+        'session_complete',
+        'session_not_in_progress',
+      ];
+      for (final c in operationalCodes) {
+        expect(decisionReasonCopy(c), isNull, reason: 'code $c');
+      }
+    });
+
+    test('null and empty inputs return null', () {
+      expect(decisionReasonCopy(null), isNull);
+      expect(decisionReasonCopy(''), isNull);
+    });
+  });
+
+  group('DecisionReasonLine widget', () {
+    testWidgets('renders the curated copy for a known reorder code',
         (tester) async {
       await tester.pumpWidget(
-        _wrap(const DecisionReasonLine(text: 'Same rule, different angle.')),
+        _wrap(const DecisionReasonLine(text: 'same_rule_different_angle')),
       );
       expect(find.text('Same rule, different angle.'), findsOneWidget);
     });
 
-    testWidgets('collapses to zero-height SizedBox when text is null',
-        (tester) async {
+    testWidgets('collapses for null', (tester) async {
       await tester.pumpWidget(_wrap(const DecisionReasonLine(text: null)));
-      // No Text widget should be present.
       expect(find.byType(Text), findsNothing);
     });
 
-    testWidgets('collapses to zero-height SizedBox when text is empty',
-        (tester) async {
+    testWidgets('collapses for empty', (tester) async {
       await tester.pumpWidget(_wrap(const DecisionReasonLine(text: '')));
       expect(find.byType(Text), findsNothing);
     });
 
-    testWidgets('renders all three §9.1 reason variants', (tester) async {
-      const reasons = [
-        'Same rule, different angle.',
-        'Same rule, simpler ask.',
-        'Three misses on this rule — moving on for now. We will come back later.',
-      ];
-      for (final r in reasons) {
-        await tester.pumpWidget(_wrap(DecisionReasonLine(text: r)));
-        expect(find.text(r), findsOneWidget);
+    testWidgets(
+        'collapses for operational codes (no raw enum leaks to UI)',
+        (tester) async {
+      // This is the regression bar for the QA-found bug:
+      // `linear_default`, `cap_relaxed_fallback`, `same_rule_simpler_ask`
+      // were being rendered raw in production. Confirm operational
+      // codes never reach the screen.
+      for (final c in ['linear_default', 'cap_relaxed_fallback', 'no_candidates']) {
+        await tester.pumpWidget(_wrap(DecisionReasonLine(text: c)));
+        expect(find.text(c), findsNothing, reason: 'raw code $c leaked');
+        expect(find.byType(Text), findsNothing);
       }
     });
   });

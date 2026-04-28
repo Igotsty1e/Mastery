@@ -22,15 +22,24 @@ import {
 
 const SkillIdSchema = z.string().min(1).max(120).regex(/^[a-zA-Z0-9._-]+$/);
 
+// Wave 14.6 — null-tolerance hardening. Flutter clients on devices
+// that pre-date the strict-omit serialiser send `meaning_frame: null`
+// (and other optional fields) explicitly instead of omitting the key.
+// Strict `.optional()` rejects `null` and the entire payload fails as
+// `invalid_payload`, silently dropping the attempt — bug surfaced in
+// production QA on 2026-04-28 (no SkillStatusBadge appearing after a
+// session). Relaxing optionals to `.nullable()` accepts both shapes.
+// We post-process to drop nulls before the service call so the
+// underlying mastery code keeps the cleaner type.
 const RecordAttemptSchema = z.object({
   evidence_tier: z.enum(['weak', 'medium', 'strong', 'strongest']),
   correct: z.boolean(),
-  primary_target_error: z.enum(TARGET_ERROR_CODES as [string, ...string[]]).optional(),
-  meaning_frame: z.string().min(1).max(500).optional(),
-  evaluation_version: z.number().int().nonnegative().optional(),
+  primary_target_error: z.enum(TARGET_ERROR_CODES as [string, ...string[]]).nullable().optional(),
+  meaning_frame: z.string().min(1).max(500).nullable().optional(),
+  evaluation_version: z.number().int().nonnegative().nullable().optional(),
   // Wave 10 — V1 mastery gate inputs.
-  exercise_type: z.string().min(1).max(64).optional(),
-  outcome: z.enum(['correct', 'partial', 'wrong']).optional(),
+  exercise_type: z.string().min(1).max(64).nullable().optional(),
+  outcome: z.enum(['correct', 'partial', 'wrong']).nullable().optional(),
 });
 
 const RecordCadenceSchema = z.object({
@@ -111,13 +120,15 @@ export function makeLearnerRouter(db: AppDatabase): Router {
       const updated = await recordAttempt(db, userId, skillId, {
         evidenceTier: parsed.data.evidence_tier,
         correct: parsed.data.correct,
-        primaryTargetError: parsed.data.primary_target_error as
-          | (typeof TARGET_ERROR_CODES)[number]
-          | undefined,
-        meaningFrame: parsed.data.meaning_frame,
-        evaluationVersion: parsed.data.evaluation_version,
-        exerciseType: parsed.data.exercise_type,
-        outcome: parsed.data.outcome,
+        primaryTargetError:
+          (parsed.data.primary_target_error as
+            | (typeof TARGET_ERROR_CODES)[number]
+            | null
+            | undefined) ?? undefined,
+        meaningFrame: parsed.data.meaning_frame ?? undefined,
+        evaluationVersion: parsed.data.evaluation_version ?? undefined,
+        exerciseType: parsed.data.exercise_type ?? undefined,
+        outcome: parsed.data.outcome ?? undefined,
       });
       res.json(recordToDto(updated, new Date()));
     } catch (err) {

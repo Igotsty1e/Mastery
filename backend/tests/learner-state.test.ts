@@ -587,6 +587,40 @@ describe('Wave 7.4 part 2.4 — POST /me/state/bulk-import', () => {
     expect((sched.json as any).graduated).toBe(false);
   });
 
+  // Wave 14.6 — null-tolerance regression. Surfaced in QA on 2026-04-28
+  // when the dashboard SkillStatusBadge was missing post-session: the
+  // Flutter client serialised optional fields explicitly as `null`,
+  // strict `.optional()` rejected the payload, the entire attempt was
+  // dropped silently. Schema now accepts both shapes.
+  it('accepts null-valued optional fields (Flutter sends explicit nulls)', async () => {
+    const { headers, userId } = await login('null-tolerance');
+    const res = await inject(h.app, {
+      method: 'POST',
+      path: `/me/skills/${SKILL_A}/attempts`,
+      headers,
+      json: {
+        evidence_tier: 'medium',
+        correct: true,
+        primary_target_error: null,
+        meaning_frame: null,
+        evaluation_version: null,
+        exercise_type: null,
+        outcome: null,
+      },
+    });
+    expect(res.status).toBe(200);
+    expect((res.json as { skill_id: string }).skill_id).toBe(SKILL_A);
+    // And the row really persisted — GET shows it.
+    const after = await inject(h.app, {
+      method: 'GET',
+      path: '/me/skills',
+      headers,
+    });
+    const skills = (after.json as { skills: Array<{ skill_id: string }> }).skills;
+    expect(skills.find((s) => s.skill_id === SKILL_A)).toBeDefined();
+    void userId;
+  });
+
   it('rejects oversized payloads (>500 entries)', async () => {
     const { headers } = await login('bulk-big');
     const skills = Array.from({ length: 501 }, (_, i) => ({
