@@ -171,6 +171,33 @@ as authored — see `docs/backend-contract.md`.
   free-text widget. Until phase 2, no shipped lesson contains items of
   this type.
 
+### 2.3b short_free_sentence (Wave 14.4)
+
+```json
+{
+  "exercise_id": "string (uuid)",
+  "type": "short_free_sentence",
+  "instruction": "string (the directive shown to the learner)",
+  "target_rule": "string (one-line rule description for the AI evaluator — NOT shown to learner)",
+  "accepted_examples": ["string", ...0-3 entries],
+  "feedback": { "explanation": "string" }
+}
+```
+
+- The learner produces ANY grammatical sentence that demonstrates
+  the rule. There is no canonical answer set.
+- `target_rule` is the rule description used by the AI evaluator
+  to judge conformance. The wire projection strips it — the learner
+  never sees it. Keep it precise: "Present perfect continuous
+  describes an ongoing activity from a past start point."
+- `accepted_examples`: 0-3 sample-correct sentences for the AI to
+  ground its judgement. Authors should keep this short to avoid
+  biasing the model toward verbatim mimicry. Empty arrays are fine.
+- There is no `prompt` field — the `instruction` IS the prompt.
+- The evaluator is AI-only (no deterministic match — the answer
+  space is open). The server consumes the AI rate-limit budget on
+  every submission of this type.
+
 ### 2.4 listening_discrimination
 
 ```json
@@ -272,7 +299,7 @@ Client → Backend:
 {
   "attempt_id": "string (uuid, client-generated)",
   "exercise_id": "string (uuid)",
-  "exercise_type": "fill_blank|multiple_choice|sentence_correction|sentence_rewrite|listening_discrimination",
+  "exercise_type": "fill_blank|multiple_choice|sentence_correction|sentence_rewrite|short_free_sentence|listening_discrimination",
   "user_answer": "string",
   "submitted_at": "string (ISO 8601 UTC)"
 }

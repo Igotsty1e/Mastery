@@ -191,6 +191,23 @@
       "feedback": {
         "explanation": "Remember + -ing reports a memory of a past event you experienced. Remember + to do means \"don't forget to do X in the future\" — a forward-looking action, not a recollection."
       }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0004-4000-8000-00000000003d",
+      "type": "short_free_sentence",
+      "skill_id": "verb-both-forms-meaning-change",
+      "primary_target_error": "conceptual_error",
+      "evidence_tier": "strongest",
+      "meaning_frame": "Describe a clear memory of a past personal event.",
+      "instruction": "Write a sentence using \"remember\" + -ing to describe a clear memory of a past event.",
+      "target_rule": "Remember + -ing reports a memory of a past event you experienced (recall). It is distinct from remember + to do, which means \"don't forget to do X in the future\". The -ing form is required for the recall meaning.",
+      "accepted_examples": [
+        "I remember meeting her at the conference.",
+        "He remembers visiting Rome as a child."
+      ],
+      "feedback": {
+        "explanation": "Remember + -ing names a memory of something you actually did. The to-infinitive form switches the meaning to forward-looking obligation (\"don't forget\"), so the -ing form is what the rule asks for here."
+      }
     }
   ]
 }

@@ -3,6 +3,7 @@ enum ExerciseType {
   multipleChoice,
   sentenceCorrection,
   sentenceRewrite,
+  shortFreeSentence,
   listeningDiscrimination,
 }
 
@@ -11,6 +12,7 @@ ExerciseType _parseType(String s) => switch (s) {
       'multiple_choice' => ExerciseType.multipleChoice,
       'sentence_correction' => ExerciseType.sentenceCorrection,
       'sentence_rewrite' => ExerciseType.sentenceRewrite,
+      'short_free_sentence' => ExerciseType.shortFreeSentence,
       'listening_discrimination' => ExerciseType.listeningDiscrimination,
       _ => throw ArgumentError('Unknown exercise type: $s'),
     };
@@ -20,6 +22,7 @@ String exerciseTypeToString(ExerciseType t) => switch (t) {
       ExerciseType.multipleChoice => 'multiple_choice',
       ExerciseType.sentenceCorrection => 'sentence_correction',
       ExerciseType.sentenceRewrite => 'sentence_rewrite',
+      ExerciseType.shortFreeSentence => 'short_free_sentence',
       ExerciseType.listeningDiscrimination => 'listening_discrimination',
     };
 

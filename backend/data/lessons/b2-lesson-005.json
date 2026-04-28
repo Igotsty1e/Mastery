@@ -187,6 +187,23 @@
       "feedback": {
         "explanation": "After continue, both -ing and to + infinitive are correct with no real change in meaning. Continue groups with begin, start, like, love, hate, prefer."
       }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0005-4000-8000-00000000003d",
+      "type": "short_free_sentence",
+      "skill_id": "verb-both-forms-little-change",
+      "primary_target_error": "form_error",
+      "evidence_tier": "strongest",
+      "meaning_frame": "Describe an activity you began at some point this year.",
+      "instruction": "Write a sentence using \"start\" + a verb to describe something you began this year.",
+      "target_rule": "After start, both -ing and to + infinitive are valid with no real change in meaning. Same applies to begin, continue, like, love, hate, prefer.",
+      "accepted_examples": [
+        "I started learning Italian this year.",
+        "She started to take cooking classes in January."
+      ],
+      "feedback": {
+        "explanation": "After start, both forms (-ing OR to + infinitive) work with no real meaning change. The only requirement is that the verb after start is in one of those two shapes."
+      }
     }
   ]
 }

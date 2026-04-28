@@ -9,6 +9,7 @@ export const AnswerRequestSchema = z.object({
     'multiple_choice',
     'sentence_correction',
     'sentence_rewrite',
+    'short_free_sentence',
     'listening_discrimination',
   ]),
   user_answer: z.string().max(500),

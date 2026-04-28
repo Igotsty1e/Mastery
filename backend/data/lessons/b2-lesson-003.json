@@ -189,6 +189,23 @@
       "feedback": {
         "explanation": "Refuse takes to + infinitive, not -ing — \"refuse signing\" is a common contrast slip from the gerund group. Refuse is an aspirational verb, so the next verb is always to + infinitive."
       }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0003-4000-8000-00000000003d",
+      "type": "short_free_sentence",
+      "skill_id": "verb-to-inf-after-aspirational-verbs",
+      "primary_target_error": "form_error",
+      "evidence_tier": "strongest",
+      "meaning_frame": "Describe a recent forward-looking choice you made.",
+      "instruction": "Write a sentence using \"decide\" + to-infinitive to describe a recent choice.",
+      "target_rule": "After decide, the next verb takes to + infinitive, not -ing. Decide belongs to the aspirational verb group (decide, hope, plan, want, agree, refuse, learn).",
+      "accepted_examples": [
+        "I decided to switch jobs last month.",
+        "She decided to learn Spanish this year."
+      ],
+      "feedback": {
+        "explanation": "Decide takes to + infinitive — it's an aspirational verb describing a forward-looking choice. \"Decide doing\" is a common slip from the gerund pattern."
+      }
     }
   ]
 }

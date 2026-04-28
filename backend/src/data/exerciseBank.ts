@@ -38,6 +38,7 @@ export const RUNTIME_SUPPORTED_EXERCISE_TYPES: ReadonlySet<Exercise['type']> =
     'multiple_choice',
     'sentence_correction',
     'sentence_rewrite',
+    'short_free_sentence',
     'listening_discrimination',
   ]);
 
