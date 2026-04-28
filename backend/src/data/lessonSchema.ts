@@ -92,6 +92,31 @@ const SentenceCorrectionExerciseBaseSchema = z.object({
   ...EngineMetadataShape,
 });
 
+// Wave 14.2 — V1.5 open-answer family, phase 1.
+//
+// `sentence_rewrite` asks the learner to rewrite the prompt under a
+// transformation constraint stated in `instruction` (e.g. "Rewrite
+// using past perfect"). Unlike `sentence_correction`, the prompt is
+// not malformed — it's a correct sentence that must be transformed
+// into another correct shape. `accepted_answers` lists the canonical
+// post-rewrite variants; the runtime mirrors the `sentence_correction`
+// evaluator (deterministic match → AI fallback) so the operational
+// surface stays identical.
+//
+// `short_free_sentence` is intentionally NOT in this slice. Its
+// evaluator is fundamentally different (rule-conformance, not match
+// against canonical variants) and ships in a follow-up wave.
+const SentenceRewriteExerciseBaseSchema = z.object({
+  exercise_id: z.string().uuid(),
+  type: z.literal('sentence_rewrite'),
+  instruction: z.string().min(1),
+  prompt: z.string().min(1),
+  accepted_answers: z.array(z.string().min(1)).min(1),
+  image: ExerciseImageSchema.optional(),
+  feedback: ExerciseFeedbackSchema.optional(),
+  ...EngineMetadataShape,
+});
+
 const VoiceSchema = z.enum(['nova', 'onyx']);
 
 const ExerciseAudioSchema = z.object({
@@ -116,6 +141,7 @@ const ExerciseBaseSchema = z.discriminatedUnion('type', [
   FillBlankExerciseBaseSchema,
   MultipleChoiceExerciseBaseSchema,
   SentenceCorrectionExerciseBaseSchema,
+  SentenceRewriteExerciseBaseSchema,
   ListeningDiscriminationExerciseBaseSchema,
 ]);
 

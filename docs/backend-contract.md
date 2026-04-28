@@ -166,7 +166,7 @@ Submit one answer to a server-owned session.
 {
   "attempt_id": "uuid (client-generated for idempotency on the wire)",
   "exercise_id": "uuid",
-  "exercise_type": "fill_blank|multiple_choice|sentence_correction|listening_discrimination",
+  "exercise_type": "fill_blank|multiple_choice|sentence_correction|sentence_rewrite|listening_discrimination",
   "user_answer": "string (max 500 chars)",
   "submitted_at": "ISO 8601 UTC"
 }

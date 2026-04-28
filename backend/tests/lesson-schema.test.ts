@@ -331,4 +331,71 @@ describe('LessonSchema', () => {
 
     expect(LessonSchema.safeParse(lesson).success).toBe(false);
   });
+
+  // Wave 14.2 — V1.5 open-answer family, phase 1.
+  it('accepts a sentence_rewrite exercise with non-empty accepted_answers', () => {
+    const lesson = {
+      lesson_id: '00000000-0000-4000-8000-000000000010',
+      title: 'T',
+      language: 'en',
+      level: 'B2',
+      intro_rule: '',
+      intro_examples: [],
+      exercises: [
+        {
+          exercise_id: '00000000-0000-4000-8000-000000000030',
+          type: 'sentence_rewrite',
+          instruction: 'Rewrite using the present perfect.',
+          prompt: 'I work here for five years.',
+          accepted_answers: [
+            'I have worked here for five years.',
+            "I've worked here for five years.",
+          ],
+        },
+      ],
+    };
+    expect(LessonSchema.safeParse(lesson).success).toBe(true);
+  });
+
+  it('rejects sentence_rewrite when accepted_answers is empty', () => {
+    const lesson = {
+      lesson_id: '00000000-0000-4000-8000-000000000011',
+      title: 'T',
+      language: 'en',
+      level: 'B2',
+      intro_rule: '',
+      intro_examples: [],
+      exercises: [
+        {
+          exercise_id: '00000000-0000-4000-8000-000000000031',
+          type: 'sentence_rewrite',
+          instruction: 'Rewrite.',
+          prompt: 'Hello.',
+          accepted_answers: [],
+        },
+      ],
+    };
+    expect(LessonSchema.safeParse(lesson).success).toBe(false);
+  });
+
+  it('rejects sentence_rewrite with empty prompt', () => {
+    const lesson = {
+      lesson_id: '00000000-0000-4000-8000-000000000012',
+      title: 'T',
+      language: 'en',
+      level: 'B2',
+      intro_rule: '',
+      intro_examples: [],
+      exercises: [
+        {
+          exercise_id: '00000000-0000-4000-8000-000000000032',
+          type: 'sentence_rewrite',
+          instruction: 'Rewrite using past perfect.',
+          prompt: '',
+          accepted_answers: ['Anything.'],
+        },
+      ],
+    };
+    expect(LessonSchema.safeParse(lesson).success).toBe(false);
+  });
 });

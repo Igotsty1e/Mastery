@@ -68,6 +68,23 @@ export interface SentenceCorrectionExercise extends ExerciseEngineMetadata {
   feedback?: ExerciseFeedback;
 }
 
+// Wave 14.2 — V1.5 open-answer family, phase 1.
+//
+// `sentence_rewrite` asks the learner to rewrite the (correct) prompt
+// under a transformation constraint stated in `instruction`
+// (e.g. "Rewrite using past perfect"). The runtime evaluator mirrors
+// `sentence_correction` (deterministic match against
+// `accepted_answers`, AI fallback for borderline submissions).
+export interface SentenceRewriteExercise extends ExerciseEngineMetadata {
+  exercise_id: string;
+  type: 'sentence_rewrite';
+  instruction: string;
+  prompt: string;
+  accepted_answers: string[];
+  image?: ExerciseImage;
+  feedback?: ExerciseFeedback;
+}
+
 export interface ExerciseAudio {
   url: string;
   voice: 'nova' | 'onyx';
@@ -110,6 +127,7 @@ export type Exercise =
   | FillBlankExercise
   | MultipleChoiceExercise
   | SentenceCorrectionExercise
+  | SentenceRewriteExercise
   | ListeningDiscriminationExercise;
 
 export interface Lesson {

@@ -312,9 +312,21 @@ export async function submitAnswer(
       exercise.options
     );
   } else {
+    // sentence_correction + sentence_rewrite share the deterministic
+    // → AI fallback path. The two types differ only in the field name
+    // that holds the canonical variants (`accepted_corrections` vs
+    // `accepted_answers`) and in pedagogical framing — semantically
+    // both ask the AI "is the student answer equivalent to one of
+    // these accepted variants given this prompt?". The OpenAI prompt
+    // template treats both identically (Wave 14.2 — V1.5 open-answer
+    // family, phase 1).
+    const acceptedVariants =
+      exercise.type === 'sentence_rewrite'
+        ? exercise.accepted_answers
+        : exercise.accepted_corrections;
     const deterministic = evaluateSentenceCorrectionDeterministic(
       input.userAnswer,
-      exercise.accepted_corrections,
+      acceptedVariants,
       exercise.prompt
     );
     if (deterministic) {
@@ -335,7 +347,7 @@ export async function submitAnswer(
         }
         const aiResult = await evaluateSentenceCorrection(
           input.userAnswer,
-          exercise.accepted_corrections,
+          acceptedVariants,
           exercise.prompt,
           ai
         );

@@ -31,6 +31,11 @@ export function projectExerciseForClient(exercise: Exercise): object {
     const { correct_option_id: _c, feedback: _f, image: _i, ...pub } = exercise;
     return { ...pub, ...stripImage(exercise) };
   }
+  if (exercise.type === 'sentence_rewrite') {
+    // Strip the canonical answers — the client must not see them.
+    const { accepted_answers: _aa, feedback: _f, image: _i, ...pub } = exercise;
+    return { ...pub, ...stripImage(exercise) };
+  }
   // sentence_correction
   const { accepted_corrections: _ac, feedback: _f, image: _i, ...pub } = exercise;
   return { ...pub, ...stripImage(exercise) };
