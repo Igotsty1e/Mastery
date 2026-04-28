@@ -42,6 +42,7 @@
       "skill_id": "verb-both-forms-meaning-change",
       "primary_target_error": "conceptual_error",
       "evidence_tier": "weak",
+      "is_diagnostic": true,
       "instruction": "Choose the correct option.",
       "prompt": "I'm sorry — I completely forgot ___ you about the change in schedule.",
       "options": [

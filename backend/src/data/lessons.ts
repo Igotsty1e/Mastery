@@ -26,6 +26,10 @@ export interface ExerciseEngineMetadata {
   primary_target_error?: TargetError;
   evidence_tier?: EvidenceTier;
   meaning_frame?: string;
+  // Wave 12 — diagnostic-probe eligibility flag. Defaults to false.
+  // Diagnostic items still serve in regular sessions; the flag is
+  // about probe inclusion, not main-bank exclusion.
+  is_diagnostic?: boolean;
 }
 
 export interface FillBlankExercise extends ExerciseEngineMetadata {

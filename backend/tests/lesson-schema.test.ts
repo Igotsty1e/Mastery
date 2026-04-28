@@ -266,4 +266,69 @@ describe('LessonSchema', () => {
 
     expect(LessonSchema.safeParse(lesson).success).toBe(false);
   });
+
+  it('accepts the optional Wave 12 is_diagnostic flag on every exercise type', () => {
+    const lesson = {
+      lesson_id: '00000000-0000-4000-8000-000000000001',
+      title: 'T',
+      language: 'en',
+      level: 'B2',
+      intro_rule: '',
+      intro_examples: [],
+      exercises: [
+        {
+          exercise_id: '00000000-0000-4000-8000-000000000020',
+          type: 'fill_blank',
+          instruction: 'Complete the gap.',
+          prompt: 'One ___ placeholder.',
+          accepted_answers: ['x'],
+          is_diagnostic: true,
+        },
+        {
+          exercise_id: '00000000-0000-4000-8000-000000000021',
+          type: 'multiple_choice',
+          instruction: 'Choose.',
+          prompt: 'Pick one.',
+          options: [
+            { id: 'a', text: 'A' },
+            { id: 'b', text: 'B' },
+          ],
+          correct_option_id: 'a',
+          is_diagnostic: false,
+        },
+      ],
+    };
+
+    const parsed = LessonSchema.safeParse(lesson);
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      const fb = parsed.data.exercises[0];
+      const mc = parsed.data.exercises[1];
+      expect((fb as { is_diagnostic?: boolean }).is_diagnostic).toBe(true);
+      expect((mc as { is_diagnostic?: boolean }).is_diagnostic).toBe(false);
+    }
+  });
+
+  it('rejects a non-boolean is_diagnostic value', () => {
+    const lesson = {
+      lesson_id: '00000000-0000-4000-8000-000000000001',
+      title: 'T',
+      language: 'en',
+      level: 'B2',
+      intro_rule: '',
+      intro_examples: [],
+      exercises: [
+        {
+          exercise_id: '00000000-0000-4000-8000-000000000022',
+          type: 'fill_blank',
+          instruction: 'Complete the gap.',
+          prompt: 'One ___ placeholder.',
+          accepted_answers: ['x'],
+          is_diagnostic: 'yes',
+        },
+      ],
+    };
+
+    expect(LessonSchema.safeParse(lesson).success).toBe(false);
+  });
 });

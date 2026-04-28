@@ -156,6 +156,12 @@ four. Older fixtures or item types without metadata leave the fields
 attempt for them. No UI surface yet — Wave 4 (Transparency Layer)
 introduces the per-skill panel.
 
+The Wave 12 `is_diagnostic` flag is server-side authoring metadata
+only — `Exercise.fromJson` does not yet deserialise it because the
+client never reads from a lesson endpoint to pick diagnostic items.
+The diagnostic flow lives behind dedicated `/diagnostic/...` routes
+(Wave 12.2) that filter the bank server-side before responding.
+
 ### Wave 2 mastery state — `LearnerSkillStore` (dual-mode since Wave 7.4 part 2B)
 
 Per-learner per-skill state per `LEARNING_ENGINE.md §7.1` is held by

@@ -28,6 +28,11 @@ const EngineMetadataShape = {
   primary_target_error: TargetErrorSchema.optional(),
   evidence_tier: EvidenceTierSchema.optional(),
   meaning_frame: z.string().min(1).optional(),
+  // Wave 12 — items eligible for the diagnostic probe (LEARNING_ENGINE.md
+  // §10, V1 spec §15). Optional and defaults to `false`. Diagnostic items
+  // also serve in regular sessions; the flag is purely about probe
+  // eligibility, not about exclusion from the main bank.
+  is_diagnostic: z.boolean().optional(),
 };
 
 // Visual Context Layer per exercise_structure.md §2.9. Authoring metadata

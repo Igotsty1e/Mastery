@@ -81,13 +81,12 @@ function buildIndex(): {
         bySkill.set(skillId, arr);
       }
       // V1 spec §15: diagnostic exercises share the bank, marked by
-      // an authoring-time flag. Until the manual sprint adds the
-      // `is_diagnostic` field on individual exercises, the diagnostic
-      // pool stays empty and the diagnostic flow falls back to the
-      // first 5 entries of the flat bank.
-      const isDiagnostic =
-        (exercise as { is_diagnostic?: boolean }).is_diagnostic === true;
-      if (isDiagnostic) diagnosticPool.push(entry);
+      // an authoring-time `is_diagnostic` flag (Wave 12). Items remain
+      // eligible for regular sessions; the flag only governs probe
+      // inclusion. `getDiagnosticPool()` falls back to the first 5
+      // flat entries when no items are tagged so the probe path can
+      // boot on a partially-tagged bank.
+      if (exercise.is_diagnostic === true) diagnosticPool.push(entry);
     });
   }
 

@@ -52,7 +52,8 @@ consume them.
   "skill_id": "string (registry id, e.g. 'verbs.suggest_ing')",
   "primary_target_error": "conceptual_error | form_error | contrast_error | careless_error",
   "evidence_tier": "weak | medium | strong | strongest",
-  "meaning_frame": "string (required only when evidence_tier == 'strongest')"
+  "meaning_frame": "string (required only when evidence_tier == 'strongest')",
+  "is_diagnostic": "bool (optional, default false — eligible for the diagnostic probe)"
 }
 ```
 
@@ -75,6 +76,12 @@ Rules:
 - `meaning_frame` is **required** when `evidence_tier == "strongest"`,
   per `LEARNING_ENGINE.md §6.3`. The schema rejects a strongest-tier item
   without a meaning_frame.
+- `is_diagnostic` (Wave 12) marks items eligible for the diagnostic
+  probe per `LEARNING_ENGINE.md §10`. Optional and defaults to `false`.
+  Tagged items still serve in regular sessions — the flag only governs
+  probe inclusion. The runtime falls back to the first 5 flat-bank
+  entries when no items are tagged, so the probe path boots on a
+  partially-tagged bank.
 - The fields apply to all exercise families (`fill_blank`,
   `multiple_choice`, `sentence_correction`, `listening_discrimination`).
 

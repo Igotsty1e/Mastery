@@ -188,6 +188,25 @@ five flat entries until then.
 
 ### Wave 12 — Diagnostic Mode
 
+**Status (2026-04-28): in progress, broken into 12.1 / 12.2 / 12.3 / 12.4
+sub-waves so each lands as a self-contained PR (mirroring the Wave 11
+split). 12.1 shipped; 12.2 / 12.3 / 12.4 pending.**
+
+- **12.1 — schema + diagnostic-tagged items (off-path).** ✅
+  Optional `is_diagnostic: bool` field added to every exercise variant in
+  `LessonSchema`; threaded through the `Exercise` interface and the
+  exercise-bank loader (which already supported the flag via a duck-typed
+  cast — Wave 12.1 cleaned that up). 5 weak-tier MC items tagged across
+  the 5 shipped skills (one per skill) so the diagnostic-pool path now
+  returns a real cross-skill probe instead of the `flat.slice(0, 5)`
+  fallback. 6 new tests (3 schema, 3 bank-index). Content contract §1.2
+  documents the field; mobile-architecture.md notes that the client
+  does not deserialise it because the diagnostic flow lives behind
+  dedicated `/diagnostic/...` routes server-side.
+- **12.2 — backend routes + diagnostic_runs storage + CEFR derivation.** ⏳
+- **12.3 — Flutter `DiagnosticScreen`, route gating, skip-for-now.** ⏳
+- **12.4 — `audit_events` telemetry for completion vs skip cohorts.** ⏳
+
 **Goal.** Onboarding hook: 5–7 exercises → CEFR + skill map output. Strong retention lever (per spec §15).
 
 **Backend.**
