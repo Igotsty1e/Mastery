@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../api/api_client.dart';
 import '../models/lesson.dart';
 import '../session/session_controller.dart';
 import '../session/session_state.dart';
 import '../theme/mastery_theme.dart';
 import '../widgets/decision_reason_line.dart';
+import '../widgets/feedback_prompt_sheet.dart';
 import '../widgets/fill_blank_widget.dart';
 import '../widgets/listening_discrimination_widget.dart';
 import '../widgets/mastery_exercise_image.dart';
@@ -209,7 +211,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                     onPressed: isLoading
                         ? null
                         : isSubmitted
-                            ? controller.advance
+                            ? () => _onAdvanceTap(controller, state)
                             : (_currentAnswer.isEmpty
                                 ? null
                                 : () => _submitIfReady(controller)),
@@ -236,6 +238,58 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   void _submitIfReady(SessionController controller) {
     if (_currentAnswer.isEmpty) return;
     controller.submitAnswer(_currentAnswer);
+  }
+
+  /// Wave 14.3 phase 3 — V1.5 after-friction prompt.
+  ///
+  /// When the just-resolved attempt carries a `friction_event` tag
+  /// from the server (V1: `repeated_error`), check the cooldown gate
+  /// and offer a single-line rating sheet between the result panel
+  /// and the next exercise. Result is mirrored as one row to
+  /// `POST /me/feedback` and then `controller.advance` is called.
+  ///
+  /// Failure modes are silent — the advance always happens. Worst
+  /// case the learner doesn't see the prompt this session.
+  Future<void> _onAdvanceTap(
+    SessionController controller,
+    SessionState state,
+  ) async {
+    final friction = state.lastResult?.frictionEvent;
+    final exerciseId = state.lastResult?.exerciseId;
+    if (friction != null) {
+      final api = context.read<ApiClient>();
+      try {
+        final cooldown = await api.getFeedbackCooldown();
+        if (mounted &&
+            cooldown != null &&
+            cooldown.afterFrictionAllowed) {
+          final result = await showFeedbackPromptSheet(
+            context,
+            title: 'How did that feel?',
+            subtitle:
+                'Two misses on the same skill — your read of it helps us tune the rule.',
+          );
+          try {
+            await api.submitFeedback(
+              promptKind: 'after_friction',
+              outcome: result.wireOutcome,
+              rating: result.rating,
+              commentText: result.commentText,
+              context: {
+                'friction_event': friction,
+                if (exerciseId != null) 'exercise_id': exerciseId,
+              },
+            );
+          } catch (_) {
+            // Best-effort — do not block advance on a flaky POST.
+          }
+        }
+      } catch (_) {
+        // Quiet on cooldown read failure — skip the prompt.
+      }
+    }
+    if (!mounted) return;
+    controller.advance();
   }
 }
 

@@ -58,6 +58,11 @@ export interface ExerciseAttemptRow {
   clientAttemptId: string | null;
   submittedAt: Date;
   createdAt: Date;
+  /// Wave 14.3 phase 3 — friction-event tag stamped on the row by
+  /// `lessonSessions/friction.ts` (V1: `repeated_error` only). Null
+  /// for unremarkable attempts and for rows inserted before the
+  /// detector shipped.
+  frictionEvent: string | null;
 }
 
 export interface LessonProgressRow {
@@ -176,6 +181,13 @@ export interface InsertAttemptInput {
   explanationSnapshot: string | null;
   clientAttemptId: string | null;
   submittedAt: Date;
+  /// Wave 14.3 phase 3 — friction-event tag detected by the service
+  /// just before this insert. One of `repeated_error` /
+  /// `abandon_after_error` / `retry_loop` / `time_spike`, or null when
+  /// the attempt was unremarkable. V1 detector ships only
+  /// `repeated_error` (same skill_id, two consecutive wrongs in this
+  /// session) — the other tags are reserved for follow-up waves.
+  frictionEvent?: string | null;
 }
 
 export async function findAttemptByClientId(
@@ -229,6 +241,7 @@ export async function insertAttempt(
         explanationSnapshot: input.explanationSnapshot,
         clientAttemptId: input.clientAttemptId,
         submittedAt: input.submittedAt,
+        frictionEvent: input.frictionEvent ?? null,
       })
       .returning();
     const row = rows[0];

@@ -73,6 +73,13 @@ class EvaluateResponse {
   /// the link only when this is non-null.
   final SkillRuleSnapshot? skillRuleSnapshot;
 
+  /// Wave 14.3 phase 3 — V1.5 friction tag stamped by the service when
+  /// it detects a §17 friction signal on this attempt. V1 detector
+  /// surfaces only `repeated_error` (same skill_id, two consecutive
+  /// wrongs). Null on unremarkable attempts. Drives the
+  /// `after_friction` feedback prompt.
+  final String? frictionEvent;
+
   const EvaluateResponse({
     required this.attemptId,
     required this.exerciseId,
@@ -83,6 +90,7 @@ class EvaluateResponse {
     this.responseUnits,
     this.evaluationVersion,
     this.skillRuleSnapshot,
+    this.frictionEvent,
   });
 
   factory EvaluateResponse.fromJson(Map<String, dynamic> j) => EvaluateResponse(
@@ -100,6 +108,7 @@ class EvaluateResponse {
             ? SkillRuleSnapshot.fromJson(
                 j['skill_rule_snapshot'] as Map<String, dynamic>)
             : null,
+        frictionEvent: j['friction_event'] as String?,
       );
 }
 
