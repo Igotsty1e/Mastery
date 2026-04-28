@@ -295,6 +295,32 @@ CREATE INDEX IF NOT EXISTS exercise_stats_pending_idx
   ON exercise_stats(qa_review_pending) WHERE qa_review_pending = true;
 `;
 
+// Wave 12.2 — diagnostic probe runs (V1 spec §15). Separate table from
+// lesson_sessions because the probe lifecycle is different: 5–7 fixed
+// items, no day-to-day resume, scored into a CEFR derivation rather
+// than a per-lesson aggregate. Partial unique index on
+// `(user_id) WHERE status = 'in_progress'` enforces "at most one
+// active run per user" so /diagnostic/start can resume an existing run
+// idempotently.
+const DIAGNOSTIC_RUNS_SQL = `
+CREATE TABLE IF NOT EXISTS diagnostic_runs (
+  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id       uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  status        text NOT NULL DEFAULT 'in_progress',
+  exercise_ids  jsonb NOT NULL DEFAULT '[]'::jsonb,
+  responses     jsonb NOT NULL DEFAULT '[]'::jsonb,
+  cefr_level    text,
+  skill_map     jsonb,
+  started_at    timestamptz NOT NULL DEFAULT now(),
+  completed_at  timestamptz,
+  created_at    timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS diagnostic_runs_user_idx
+  ON diagnostic_runs(user_id, started_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS diagnostic_runs_active_idx
+  ON diagnostic_runs(user_id) WHERE status = 'in_progress';
+`;
+
 const MIGRATIONS: Migration[] = [
   { id: '0001_init', sql: INIT_SQL },
   { id: '0002_lesson_sessions', sql: LESSON_SESSIONS_SQL },
@@ -304,6 +330,7 @@ const MIGRATIONS: Migration[] = [
   { id: '0006_observability_v1', sql: OBSERVABILITY_V1_SQL },
   { id: '0007_mastery_v1', sql: MASTERY_V1_SQL },
   { id: '0008_dynamic_sessions', sql: DYNAMIC_SESSIONS_SQL },
+  { id: '0009_diagnostic_runs', sql: DIAGNOSTIC_RUNS_SQL },
 ];
 
 export async function runMigrations(database: Database): Promise<void> {

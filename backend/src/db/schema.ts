@@ -501,6 +501,69 @@ export const decisionLog = pgTable(
   })
 );
 
+/// Wave 12.2 — diagnostic probe runs (V1 spec §15, LEARNING_ENGINE.md
+/// §10). Separate table from `lesson_sessions` because the probe is a
+/// different lifecycle: 5–7 fixed items, no resume across days, scored
+/// into a CEFR derivation rather than a per-lesson aggregate.
+///
+/// Idempotency: at most one in_progress run per user (partial unique
+/// index). `/diagnostic/start` returns the active run if one exists.
+/// `/diagnostic/restart` cancels the active run and creates a new one;
+/// `learner_skills` is never reset by this route per the "augments,
+/// does not reset" rule in `docs/plans/learning-engine-v1.md`.
+export const diagnosticRuns = pgTable(
+  'diagnostic_runs',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    status: text('status').notNull().default('in_progress'),
+    /// Ordered list of exercise_ids surfaced for this probe. Populated
+    /// at run-start so the order is stable across resume + complete.
+    exerciseIds: jsonb('exercise_ids')
+      .$type<string[]>()
+      .notNull()
+      .default([]),
+    /// Per-attempt outcomes the run has recorded so far. Each entry:
+    /// { exercise_id, skill_id, evidence_tier, correct, submitted_at }.
+    responses: jsonb('responses')
+      .$type<
+        {
+          exercise_id: string;
+          skill_id: string | null;
+          evidence_tier: string | null;
+          correct: boolean;
+          submitted_at: string;
+        }[]
+      >()
+      .notNull()
+      .default([]),
+    /// Derived CEFR level. Null while in_progress; one of A2 / B1 / B2 /
+    /// C1 once /complete fires the derivation.
+    cefrLevel: text('cefr_level'),
+    /// Per-skill status map per LEARNING_ENGINE.md §7.2, keyed by
+    /// skill_id. Null while in_progress.
+    skillMap: jsonb('skill_map').$type<Record<string, string>>(),
+    startedAt: timestamp('started_at', { withTimezone: true, mode: 'date' })
+      .defaultNow()
+      .notNull(),
+    completedAt: timestamp('completed_at', {
+      withTimezone: true,
+      mode: 'date',
+    }),
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({
+    userIdx: index('diagnostic_runs_user_idx').on(t.userId, t.startedAt),
+    activeIdx: uniqueIndex('diagnostic_runs_active_idx')
+      .on(t.userId)
+      .where(sql`status = 'in_progress'`),
+  })
+);
+
 /// Wave 9 — daily exercise health counters. Per
 /// `LEARNING_ENGINE.md §17`, an exercise needs ≥30 attempts before
 /// metric-driven decisions can be made on it. We aggregate by date so

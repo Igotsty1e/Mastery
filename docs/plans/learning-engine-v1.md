@@ -203,7 +203,19 @@ split). 12.1 shipped; 12.2 / 12.3 / 12.4 pending.**
   documents the field; mobile-architecture.md notes that the client
   does not deserialise it because the diagnostic flow lives behind
   dedicated `/diagnostic/...` routes server-side.
-- **12.2 — backend routes + diagnostic_runs storage + CEFR derivation.** ⏳
+- **12.2 — backend routes + diagnostic_runs storage + CEFR derivation.** ✅
+  Migration `0009_diagnostic_runs` adds the table + partial-unique
+  active-run index. Four `/diagnostic/...` routes mounted: `start`,
+  `:id/answers`, `:id/complete` (idempotent), `restart`, plus a
+  write-only `/skip` telemetry endpoint. CEFR derivation in
+  `backend/src/diagnostic/cefr.ts` (≥80% → B2, 50–79% → B1, <50%
+  → A2, C1 unreachable from a B2 bank). Probe attempts augment
+  `learner_skills` through the existing `recordAttempt` path so the
+  probe never resets state. `user_profiles.level` is stamped on
+  `/complete`; `diagnostic_completed` / `diagnostic_skipped` /
+  `diagnostic_abandoned` audit events power the retention cohort
+  analysis (Wave 12.4 wires the client signals). 14 new tests; 312/312
+  backend green.
 - **12.3 — Flutter `DiagnosticScreen`, route gating, skip-for-now.** ⏳
 - **12.4 — `audit_events` telemetry for completion vs skip cohorts.** ⏳
 
