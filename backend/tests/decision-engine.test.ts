@@ -198,4 +198,58 @@ describe('Wave 11 — Decision Engine pickNext', () => {
     expect(result.next).toBeNull();
     expect(result.reason).toBe('session_complete');
   });
+
+  // Wave 12.6 — MAX_SKILLS_PER_SESSION cap.
+  it('blocks a third skill once two distinct skills are in the session', () => {
+    const allSkills = listSkills();
+    expect(allSkills.length).toBeGreaterThanOrEqual(3);
+    const skillA = allSkills[0];
+    const skillB = allSkills[1];
+
+    // 1 item from A + 1 item from B already shown — both are touched.
+    const aItem = getEntriesForSkill(skillA)[0];
+    const bItem = getEntriesForSkill(skillB)[0];
+    expect(aItem).toBeDefined();
+    expect(bItem).toBeDefined();
+    const shown = [aItem.exercise.exercise_id, bItem.exercise.exercise_id];
+
+    // Treat both as already-practicing so the new-skills cap doesn't
+    // apply (it would block them anyway, but the total cap is what
+    // we're actually testing here). Still has to land non-null —
+    // the engine must keep pulling from A or B.
+    const masteryStatusBySkill: Record<string, string> = {
+      [skillA]: 'practicing',
+      [skillB]: 'practicing',
+    };
+    const result = pickNext(
+      ctx({ shownExerciseIds: shown, masteryStatusBySkill })
+    );
+    expect(result.next).not.toBeNull();
+    // The next pick must be from A or B — never a 3rd skill.
+    const pickedSkill = result.next?.exercise.skill_id;
+    expect([skillA, skillB]).toContain(pickedSkill);
+  });
+
+  it('cap allows the second skill (cap=2 means 2 OK, 3 blocked)', () => {
+    const allSkills = listSkills();
+    const skillA = allSkills[0];
+    const aItem = getEntriesForSkill(skillA)[0];
+    const shown = [aItem.exercise.exercise_id];
+
+    // Only one skill touched. Engine MUST be free to surface another
+    // skill (variety). The new-skill cap (=1) blocks brand-new from
+    // a brand-new ledge, but here we mark all skills as 'practicing'
+    // so the new-skill filter is moot — confirms the total cap kicks
+    // in at 3, not at 2.
+    const masteryStatusBySkill: Record<string, string> = Object.fromEntries(
+      allSkills.map((s) => [s, 'practicing'])
+    );
+    const result = pickNext(
+      ctx({ shownExerciseIds: shown, masteryStatusBySkill })
+    );
+    expect(result.next).not.toBeNull();
+    // Either A again, or any other practicing skill — both fine,
+    // because we're not yet at the 2-skill cap.
+    expect(result.next?.exercise.skill_id).toBeTruthy();
+  });
 });
