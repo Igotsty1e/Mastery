@@ -83,6 +83,12 @@ class SessionController extends ChangeNotifier {
         results: [],
         remainingIndices: const [0],
         clearLastDecisionReason: true,
+        // Wave 12.5 — anchor the progress counter to the
+        // server-declared session size. Without this the denominator
+        // would be `lesson.exercises.length` which starts at 1 and
+        // grows lazily, producing the prod-observed `1/1 → 2/2`
+        // bug.
+        sessionTargetLength: start.exerciseCount,
       ));
     } catch (e) {
       _emit(_state.copyWith(
@@ -120,6 +126,11 @@ class SessionController extends ChangeNotifier {
         remainingIndices:
             List<int>.generate(lesson.exercises.length, (i) => i),
         clearLastDecisionReason: true,
+        // Wave 12.5 — legacy lesson-bound flow uses
+        // `lesson.exercises.length` as the denominator; clear any
+        // stale session target left over from a prior
+        // `loadDynamicSession` on the same controller instance.
+        clearSessionTargetLength: true,
       ));
     } catch (e) {
       _emit(_state.copyWith(

@@ -25,6 +25,14 @@ class LessonIntroScreen extends StatefulWidget {
 class _LessonIntroScreenState extends State<LessonIntroScreen> {
   late final SessionController _controller;
   bool _controllerHandedOff = false;
+  /// Wave 12.5 hot-fix — guard so we only auto-advance once. The
+  /// dynamic-session flow has no per-lesson intro to render (the
+  /// session is assembled from the bank and the synthetic Lesson
+  /// carries empty `introRule` / `introExamples`), so we skip the
+  /// intro screen entirely. Without this skip, the user sees a blank
+  /// frame with a `Start Practice` button — which was the prod bug
+  /// observed 2026-04-28.
+  bool _autoAdvancedDynamic = false;
 
   @override
   void initState() {
@@ -36,6 +44,23 @@ class _LessonIntroScreenState extends State<LessonIntroScreen> {
     } else {
       _controller.loadDynamicSession();
     }
+  }
+
+  /// Wave 12.5 hot-fix — for dynamic sessions, the intro carries no
+  /// rule (the session is bank-assembled). Auto-advance to
+  /// `ExerciseScreen` as soon as the controller reaches the
+  /// `ready` phase. Lesson-bound flow keeps the manual
+  /// `Start Practice` CTA so the rule explanation is read.
+  void _maybeAutoAdvanceDynamic(SessionState state) {
+    if (_autoAdvancedDynamic) return;
+    if (widget.lessonId != null) return;
+    if (state.phase != SessionPhase.ready) return;
+    _autoAdvancedDynamic = true;
+    // Defer to the next frame so build() finishes and we don't push
+    // mid-build. Same pattern as a `WidgetsBinding.addPostFrameCallback`.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _start();
+    });
   }
 
   @override
@@ -64,7 +89,16 @@ class _LessonIntroScreenState extends State<LessonIntroScreen> {
         final state = _controller.state;
         final tokens = context.masteryTokens;
 
-        if (state.phase == SessionPhase.loading) {
+        // Wave 12.5 — dynamic flow: skip the empty intro entirely.
+        _maybeAutoAdvanceDynamic(state);
+
+        // Wave 12.5 — keep the loader visible during the
+        // single-frame window between `ready` and the post-frame
+        // push, so the user never sees the empty intro chrome.
+        final isDynamicSkip =
+            widget.lessonId == null && state.phase == SessionPhase.ready;
+
+        if (state.phase == SessionPhase.loading || isDynamicSkip) {
           return Scaffold(
             backgroundColor: tokens.bgApp,
             body: const Center(child: CircularProgressIndicator()),

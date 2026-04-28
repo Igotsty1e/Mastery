@@ -24,6 +24,15 @@ class SessionState {
   /// Wave 4 (Transparency Layer) renders it.
   final String? lastDecisionReason;
 
+  /// Wave 12.5 hot-fix — declared session length for the dynamic flow.
+  /// `loadDynamicSession` reads `start.exerciseCount` from
+  /// `POST /sessions/start` and stores it here; the lazy queue
+  /// (`lesson.exercises`) starts at length 1 and grows as `/next`
+  /// returns subsequent items, so it is NOT a meaningful denominator
+  /// for the progress counter. Null on the lesson-bound flow, where
+  /// `lesson.exercises.length` is the correct total.
+  final int? sessionTargetLength;
+
   const SessionState({
     this.lesson,
     this.currentIndex = 0,
@@ -34,6 +43,7 @@ class SessionState {
     this.summary,
     this.remainingIndices = const [],
     this.lastDecisionReason,
+    this.sessionTargetLength,
   });
 
   Exercise? get currentExercise =>
@@ -46,7 +56,12 @@ class SessionState {
   bool get isLastExercise =>
       lesson != null && remainingIndices.length <= 1;
 
-  int get totalCount => lesson?.exercises.length ?? 0;
+  /// Total denominator for the progress counter. For the dynamic flow
+  /// returns `sessionTargetLength` (the server-declared session size,
+  /// typically 10) so the counter renders `1/10`, not `1/1` while the
+  /// lazy queue is still being filled. For the legacy lesson-bound
+  /// flow returns `lesson.exercises.length`.
+  int get totalCount => sessionTargetLength ?? lesson?.exercises.length ?? 0;
   int get correctCount => results.where((r) => r).length;
 
   SessionState copyWith({
@@ -61,6 +76,8 @@ class SessionState {
     List<int>? remainingIndices,
     String? lastDecisionReason,
     bool clearLastDecisionReason = false,
+    int? sessionTargetLength,
+    bool clearSessionTargetLength = false,
   }) =>
       SessionState(
         lesson: lesson ?? this.lesson,
@@ -74,5 +91,8 @@ class SessionState {
         lastDecisionReason: clearLastDecisionReason
             ? null
             : (lastDecisionReason ?? this.lastDecisionReason),
+        sessionTargetLength: clearSessionTargetLength
+            ? null
+            : (sessionTargetLength ?? this.sessionTargetLength),
       );
 }
