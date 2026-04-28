@@ -230,7 +230,29 @@ split). 12.1 shipped; 12.2 / 12.3 / 12.4 pending.**
   Continue path, Skip-for-now writing the local flag, Re-take
   restart. 141/141 Flutter tests green (was 136). Spec lives in
   `docs/plans/diagnostic-mode.md`.
-- **12.4 — `audit_events` telemetry for completion vs skip cohorts.** ⏳
+- **12.4 — re-take affordance + D1 cohort SQL + V1 MVP closeout.** ✅
+  Quiet `Re-run my level check` text link at the bottom of the Study
+  Desk dashboard pushes `DiagnosticScreen` via `MasteryFadeRoute`;
+  Begin→Complete and Skip-for-now both pop back. The probe always
+  augments `learner_skills`, never resets — V1 spec §15. Audit-event
+  payload locked: `diagnostic_completed` carries
+  `{ run_id, cefr_level, total_correct, total_answered,
+  skills_touched: string[] }`, asserted by
+  `tests/diagnostic.test.ts`. D1 retention cohort SQL example landed
+  in `docs/backend-contract.md §Wave 12.4 status` — splits users by
+  `diagnostic_completed` / `diagnostic_skipped` / `no_signal` and
+  reports D1 active percentages. 2 widget tests in
+  `app/test/diagnostic_dashboard_retake_test.dart` (push +
+  pop-on-skip). 143/143 Flutter (was 141), 312/312 backend.
+
+**V1 MVP shipped (2026-04-28).** All planned waves landed:
+9 → 10 → 10.5 → 11 (.1–.4) → 12 (.1–.4) → 13. The decisions log at
+the top of this file is implemented; `LEARNING_ENGINE.md §1–14, 17–18,
+21, 24` honoured by the runtime; §15 (Diagnostic) honoured along the
+non-skip path; §16 (Transparency) shipped at the V1 level (result +
+explanation + skill_id surface — skill-progress panel deferred per
+decision #12); §19 (Debug UI) reachable via SQL queries; §20 / §22
+deferred to V1.5 per the Out-of-MVP scope above.
 
 **Goal.** Onboarding hook: 5–7 exercises → CEFR + skill map output. Strong retention lever (per spec §15).
 
@@ -288,8 +310,10 @@ split). 12.1 shipped; 12.2 / 12.3 / 12.4 pending.**
 | 10 — Mastery V1 + Error model 6→4 | 3–4 | 7 | ✅ New gate enforced; 4-error model |
 | 10.5 — Authoring sprint (overlaps Wave 11 prep) | 2–3 | 9 | ✅ Bank at 50 exercises across 5 skills |
 | 11 — Exercise bank + dynamic DE | 5–7 | 16 | ✅ Lessons-as-bank live |
-| 12 — Diagnostic Mode | 4–5 | 21 | Onboarding hook live |
+| 12 — Diagnostic Mode | 4–5 | 21 | ✅ Probe + CEFR + cohort telemetry |
 | 13 — Session pacing + mixing | 2–3 | 24 | ✅ Adaptive pacing live |
+
+**V1 MVP shipped 2026-04-28.**
 
 **V1 MVP done = ~3.5 weeks of engineering** (plus authoring time in 10.5).
 

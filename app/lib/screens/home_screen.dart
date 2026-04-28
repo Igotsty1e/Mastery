@@ -490,8 +490,42 @@ class _HomeScreenState extends State<HomeScreen> {
               // (`docs/plans/learning-engine-v1.md` decision #12).
               const SizedBox(height: 22),
               const _PremiumBlock(),
+              // Wave 12.4 — diagnostic re-take affordance. Quiet text
+              // link at the bottom; tapping pushes DiagnosticScreen
+              // via MasteryFadeRoute. Skipping or completing pops back
+              // here. The diagnostic always augments learner_skills,
+              // never resets it (V1 spec §15).
+              const SizedBox(height: 18),
+              Center(
+                child: TextButton(
+                  onPressed: _openDiagnosticRetake,
+                  child: Text(
+                    'Re-run my level check',
+                    style: MasteryTextStyles.labelMd.copyWith(
+                      color: MasteryColors.textTertiary,
+                      letterSpacing: 0.4,
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  /// Wave 12.4 — pushes `DiagnosticScreen` via `MasteryFadeRoute` so a
+  /// learner who Skip-for-now'd onboarding can come back to the probe
+  /// later, or a returning learner can re-run it for a fresh CEFR
+  /// reading. Both Begin→Complete and Skip-for-now pop back here.
+  void _openDiagnosticRetake() {
+    final api = context.read<ApiClient>();
+    Navigator.of(context).push(
+      MasteryFadeRoute<void>(
+        builder: (_) => DiagnosticScreen(
+          apiClient: api,
+          onComplete: () => Navigator.of(context).maybePop(),
         ),
       ),
     );

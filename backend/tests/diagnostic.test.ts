@@ -288,9 +288,19 @@ describe('Wave 12.2 — POST /diagnostic/:runId/complete', () => {
       .select()
       .from(auditEvents)
       .where(eq(auditEvents.userId, userId));
-    expect(
-      events.some((e) => e.eventType === 'diagnostic_completed')
-    ).toBe(true);
+    const completedEvent = events.find(
+      (e) => e.eventType === 'diagnostic_completed'
+    );
+    expect(completedEvent).toBeTruthy();
+    // Wave 12.4 — D1 cohort split reads from this payload. Lock the
+    // shape so future refactors don't silently drop the fields the
+    // retention dashboard query depends on.
+    const payload = completedEvent!.payload as Record<string, unknown>;
+    expect(payload.run_id).toBe(runId);
+    expect(['A2', 'B1', 'B2']).toContain(payload.cefr_level);
+    expect(typeof payload.total_correct).toBe('number');
+    expect(typeof payload.total_answered).toBe('number');
+    expect(Array.isArray(payload.skills_touched)).toBe(true);
   });
 
   it('is idempotent on re-call', async () => {

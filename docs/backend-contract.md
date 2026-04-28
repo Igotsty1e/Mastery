@@ -1092,3 +1092,91 @@ Out of scope (Wave 12.3 / 12.4):
 - "Skip for now" UI affordance backed by `POST /diagnostic/skip`.
 - Dashboard "Welcome — your level is B2" surface backed by
   `user_profiles.level`.
+
+### Wave 12.4 status (2026-04-28) — re-take affordance + D1 cohort SQL
+
+**V1 MVP closeout.** Wave 12 was the last open V1 wave; this finishes
+it.
+
+- **Dashboard re-take.** A quiet `Re-run my level check` text link
+  sits at the bottom of the Study Desk dashboard
+  (`app/lib/screens/home_screen.dart`). Tapping pushes
+  `DiagnosticScreen` via `MasteryFadeRoute`; both Begin→Complete and
+  Skip-for-now pop back. The diagnostic always **augments**
+  `learner_skills`, never resets — V1 spec §15. A second pass adds
+  evidence on the existing skill rows; it does not wipe state. Useful
+  for: a learner who Skip-for-now'd onboarding and later wants the
+  level signal, or a returning learner who feels they've grown.
+- **Audit-event payload locked.** The `diagnostic_completed` payload
+  now carries `{ run_id, cefr_level, total_correct, total_answered,
+  skills_touched: string[] }`. The shape is asserted by
+  `tests/diagnostic.test.ts` so a future refactor can't silently drop
+  fields the cohort query depends on. `diagnostic_skipped` carries an
+  empty payload — the event_type itself is the cohort marker.
+
+**D1 retention cohort query.** Split D1 by who took the diagnostic:
+
+```sql
+-- D1 retention by diagnostic cohort.
+-- "D1 active" = the user came back at least once in the 24-72h
+-- window after their first session attempt. Adjust the windows to
+-- match the product's retention definition.
+WITH first_attempt AS (
+  SELECT user_id, MIN(submitted_at) AS first_at
+  FROM exercise_attempts
+  GROUP BY user_id
+),
+diag_cohort AS (
+  SELECT
+    fa.user_id,
+    fa.first_at,
+    EXISTS (
+      SELECT 1 FROM audit_events ae
+      WHERE ae.user_id = fa.user_id
+        AND ae.event_type = 'diagnostic_completed'
+    ) AS completed_diagnostic,
+    EXISTS (
+      SELECT 1 FROM audit_events ae
+      WHERE ae.user_id = fa.user_id
+        AND ae.event_type = 'diagnostic_skipped'
+    ) AS skipped_diagnostic
+  FROM first_attempt fa
+),
+returned_d1 AS (
+  SELECT DISTINCT ea.user_id
+  FROM exercise_attempts ea
+  JOIN first_attempt fa ON fa.user_id = ea.user_id
+  WHERE ea.submitted_at BETWEEN fa.first_at + interval '24 hours'
+                            AND fa.first_at + interval '72 hours'
+)
+SELECT
+  CASE
+    WHEN completed_diagnostic THEN 'completed'
+    WHEN skipped_diagnostic   THEN 'skipped'
+    ELSE                          'no_signal'
+  END AS cohort,
+  COUNT(*)                                                  AS users,
+  COUNT(*) FILTER (WHERE rd.user_id IS NOT NULL)            AS returned_d1,
+  ROUND(
+    100.0 * COUNT(*) FILTER (WHERE rd.user_id IS NOT NULL) / COUNT(*),
+    1
+  )                                                         AS d1_pct
+FROM diag_cohort dc
+LEFT JOIN returned_d1 rd ON rd.user_id = dc.user_id
+GROUP BY cohort
+ORDER BY cohort;
+```
+
+The full retention dashboard is a V1.5 follow-up per
+`learning-engine-v1.md` "Out-of-MVP scope". Until then, the query
+above is the authoritative shape — paste it into the Render Postgres
+SQL console for a one-off cohort cut.
+
+**Tests:** 1 widget test in
+`app/test/diagnostic_dashboard_retake_test.dart` covering the
+"Re-run my level check" tap → push DiagnosticScreen path. The
+existing diagnostic test was extended to assert the
+`diagnostic_completed` payload shape.
+
+This closes Wave 12 and completes the V1 MVP wave plan in
+`docs/plans/learning-engine-v1.md`.
