@@ -71,6 +71,29 @@ Make the new pedagogy executable across all future lessons, not just documented.
 
 ## 3. Workstream B — Audio Output
 
+### Status
+
+**Engineering shipped.** All tasks below landed before V1 MVP. The
+schema (`backend/src/data/lessonSchema.ts §ExerciseAudio`), the offline
+TTS pipeline (`backend/scripts/gen-audio.ts` + `npm run gen:audio`,
+hash-based skip + sidecar `.meta.json`), the Express static mount
+(`backend/public/audio/` with the immutable cache headers), the Flutter
+`MasteryAudioPlayer` widget (`app/lib/widgets/mastery_audio_player.dart`,
+277 LOC, transcript-on-demand toggle, soft-error fallback), and the
+`ListeningDiscriminationWidget` are live. Wave 14.8 (2026-04-28) added
+14 widget tests covering the player's transcript toggle / disabled
+state and the listening exercise's option ordering / selection /
+after-submit lock. Schema validates `audio.transcript` matches the
+correct option text.
+
+**What remains is content, not engineering.** The bank ships exactly
+one `listening_discrimination` item today (`b2-lesson-002.json`). The
+authoring sprint to widen listening coverage across the five shipped
+B2 skills is methodologist-owned and has not started — it is not
+blocked by any engineering work. When that sprint runs:
+`OPENAI_API_KEY=… npm run gen:audio` regenerates only the items whose
+`voice + transcript` hash changed.
+
 ### Goal
 
 Add deliberate listening support — only on items explicitly designed for it —
@@ -348,7 +371,14 @@ Support richer content and scoring while keeping backend authority.
 
 ### Phase 4
 
-- audio-first UI polish and QA packs for `listening_discrimination` (widget already shipped; audio pipeline and content expansion continue here)
+- audio-first UI polish for `listening_discrimination` (engineering
+  shipped — pipeline + widget + tests live; the open work is
+  methodologist-owned content expansion across the five shipped B2
+  skills)
+- imagery roll-out for items where the author has signed off on a
+  scene-setting / context-support brief (engineering shipped — same
+  state as audio; bottleneck is methodologist authoring time, not
+  engineering)
 
 (There is no Phase 5. Speaking capture is excluded — see
 `GRAM_STRATEGY.md §15.1`.)
@@ -356,6 +386,30 @@ Support richer content and scoring while keeping backend authority.
 ---
 
 ## 11.5 Workstream I — Visual Context Layer (Imagery)
+
+### Status
+
+**Engineering shipped.** All tasks below landed before V1 MVP. The
+schema (`ExerciseImageSchema` in `backend/src/data/lessonSchema.ts`,
+mirrored on every exercise variant), the projection layer that strips
+the authoring-only `brief` / `dont_show` / `risk` fields before the
+wire response, the kie.ai Flux Kontext generator
+(`backend/scripts/gen-image.ts` + `npm run gen:image`, hash-based skip
+on `role + brief + dont_show`, sidecar `.meta.json`, retry-tolerant),
+the Express static mount (`backend/public/images/` with immutable
+cache headers), the Flutter `ExerciseImage` model
+(`role` × `policy` enums) and the `MasteryExerciseImage` widget
+(`app/lib/widgets/mastery_exercise_image.dart`, with
+`cached_network_image` for canvaskit-friendly cross-origin PNGs and a
+quiet alt-text fallback) are live. Wave 14.8 (2026-04-28) added 5
+widget tests covering URL resolution, aspect-ratio defaults +
+overrides, and every role × policy combination.
+
+**What remains is content, not engineering.** Items in the bank
+opting into imagery (`image_policy != optional` with a non-empty
+`brief`) are sparse today. The authoring sprint to add scene-setting
+or context-support imagery to selected B2 items is methodologist-owned
+and has not started — it is not blocked by any engineering work.
 
 ### Goal
 
