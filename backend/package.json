@@ -10,6 +10,7 @@
     "gen:audio": "tsx scripts/gen-audio.ts",
     "gen:image": "tsx scripts/gen-image.ts",
     "gen:content": "tsx scripts/gen-content.ts",
+    "qa:content": "tsx scripts/qa-content.ts",
     "gen:assets": "npm run gen:audio && npm run gen:image"
   },
   "dependencies": {
