@@ -5,6 +5,12 @@ import type { AppDatabase } from '../db/client';
 import { auditEvents, userProfiles, users } from '../db/schema';
 import { requireAuth, type AuthedRequest } from '../auth/middleware';
 import { logAuditEvent } from '../auth/events';
+import {
+  DEFAULT_UI_LANGUAGE,
+  UI_LANGUAGES,
+  parseUiLanguage,
+  type UiLanguage,
+} from './uiLanguage';
 
 const ALLOWED_LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'] as const;
 
@@ -12,12 +18,14 @@ const ProfilePatchSchema = z
   .object({
     displayName: z.string().min(1).max(80).nullable().optional(),
     level: z.enum(ALLOWED_LEVELS).nullable().optional(),
+    uiLanguage: z.enum(UI_LANGUAGES).optional(),
   })
   .strict();
 
 interface ProfileDto {
   displayName: string | null;
   level: string | null;
+  uiLanguage: UiLanguage;
   updatedAt: string;
 }
 
@@ -40,6 +48,7 @@ async function loadProfile(
   return {
     displayName: row.displayName ?? null,
     level: row.level ?? null,
+    uiLanguage: parseUiLanguage(row.uiLanguage) ?? DEFAULT_UI_LANGUAGE,
     updatedAt: row.updatedAt.toISOString(),
   };
 }
@@ -84,6 +93,8 @@ export function makeUsersRouter(db: AppDatabase): Router {
       if (parsed.data.displayName !== undefined)
         updates.displayName = parsed.data.displayName;
       if (parsed.data.level !== undefined) updates.level = parsed.data.level;
+      if (parsed.data.uiLanguage !== undefined)
+        updates.uiLanguage = parsed.data.uiLanguage;
 
       const existing = await db
         .select({ userId: userProfiles.userId })
@@ -103,6 +114,9 @@ export function makeUsersRouter(db: AppDatabase): Router {
           userId,
           displayName: (updates.displayName as string | null | undefined) ?? null,
           level: (updates.level as string | null | undefined) ?? null,
+          uiLanguage:
+            (updates.uiLanguage as UiLanguage | undefined) ??
+            DEFAULT_UI_LANGUAGE,
         });
       }
 

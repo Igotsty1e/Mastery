@@ -94,6 +94,10 @@ export const userProfiles = pgTable('user_profiles', {
     .references(() => users.id, { onDelete: 'cascade' }),
   displayName: text('display_name'),
   level: text('level'),
+  /// J.1a — UI language preference (`en` | `ru` | `vi`). Seeded from
+  /// `Accept-Language` on first login; learner can override later.
+  /// CHECK constraint enforced by migration `0011_ui_language`.
+  uiLanguage: text('ui_language').notNull().default('en'),
   createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
     .defaultNow()
     .notNull(),

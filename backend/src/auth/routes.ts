@@ -19,6 +19,10 @@ import {
 import { requireAuth, type AuthedRequest } from './middleware';
 import { logAuditEvent, recordIntegrationEvent } from './events';
 import { resolveClientIp } from '../middleware/clientIp';
+import {
+  pickUiLanguageFromAcceptLanguage,
+  type UiLanguage,
+} from '../users/uiLanguage';
 
 // Stub Apple login. Production will replace this surface with verified
 // `identityToken` parsing; the *output* contract (access + refresh tokens)
@@ -74,7 +78,8 @@ async function resolveUserForIdentity(
   db: AppDatabase,
   provider: string,
   subject: string,
-  displayName: string | null
+  displayName: string | null,
+  uiLanguage: UiLanguage
 ): Promise<ResolveUserResult> {
   const findExisting = async (): Promise<string | null> => {
     const rows = await db
@@ -110,6 +115,7 @@ async function resolveUserForIdentity(
       await tx.insert(userProfiles).values({
         userId: user.id,
         displayName,
+        uiLanguage,
       });
       await tx.insert(auditEvents).values({
         userId: user.id,
@@ -148,12 +154,16 @@ export function makeAuthRouter(db: AppDatabase): Router {
         }
         const { subject, displayName } = parsed.data;
         const provider = 'apple_stub';
+        const uiLanguage = pickUiLanguageFromAcceptLanguage(
+          req.headers['accept-language']
+        );
 
         const { userId, isNew } = await resolveUserForIdentity(
           db,
           provider,
           subject,
-          displayName ?? null
+          displayName ?? null,
+          uiLanguage
         );
 
         const tokens = await createSession(

@@ -675,6 +675,13 @@ loser re-reads and lands on the winner's user.
 { "subject": "string", "displayName": "string|optional" }
 ```
 
+**Headers honoured:** `Accept-Language` is parsed on first-login only —
+the user row's `user_profiles.ui_language` is seeded from the first
+supported tag (region stripped: `en-US` → `en`). Unsupported headers
+fall back to `"en"`. Subsequent logins for the same identity ignore
+the header (the existing column is preserved); learners change their
+language via `PATCH /me/profile`.
+
 **Response 200:**
 ```json
 {
@@ -727,20 +734,32 @@ Auth required.
   "profile": {
     "displayName": "string|null",
     "level": "A1|A2|B1|B2|C1|C2|null",
+    "uiLanguage": "en|ru|vi",
     "updatedAt": "ISO 8601 UTC"
   }
 }
 ```
 
+`uiLanguage` (Wave J.1a) is the learner's preferred L1 for UI chrome
+and (eventually) localized content. Always defined — defaults to `"en"`
+on first login if `Accept-Language` does not name a supported tag.
+Seeded from `Accept-Language` on the first login request that creates
+the user row (per `docs/plans/roadmap.md §11.6 Workstream J`).
+
 ### PATCH /me/profile
 
-Auth required. Strict body: only `displayName` and `level` are
-accepted. Unknown fields → 400.
+Auth required. Strict body: only `displayName`, `level`, and
+`uiLanguage` are accepted. Unknown fields → 400.
 
 ```json
 { "displayName": "string|null|optional",
-  "level": "A1|A2|B1|B2|C1|C2|null|optional" }
+  "level": "A1|A2|B1|B2|C1|C2|null|optional",
+  "uiLanguage": "en|ru|vi|optional" }
 ```
+
+`uiLanguage` is **not** nullable — once the column exists, it always
+carries one of the three supported tags. Sending `null` returns 400.
+Sending an unsupported tag (`"de"`, `"zh"`, etc.) returns 400.
 
 **Response 200:** `{ "profile": { ... } }`.
 
