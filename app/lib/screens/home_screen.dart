@@ -409,11 +409,13 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (_) => SummaryScreen(
           correctCount: record.correctCount,
           totalCount: record.totalExercises,
-          summary: null, // record holds the headline data; SummaryScreen
-          // re-renders via correct/total. The full LessonResultResponse
-          // (with mistake list) is intentionally NOT carried — see tech
-          // debt note in docs/plans/roadmap.md "Persistent Last Lesson
-          // Report". `toMistakes` is honoured when summary is non-null.
+          // Wave 14.9 — full result threaded through LastLessonStore
+          // so the per-exercise mistake list renders + the
+          // `initialScrollToMistakes` deep-link actually has a scroll
+          // target. Falls back to null when the original `/result`
+          // fetch failed (rare; SummaryScreen still shows headline
+          // counts in that case).
+          summary: record.summary,
           initialScrollToMistakes: toMistakes,
         ),
       ),
@@ -1119,36 +1121,21 @@ class _LastLessonReport extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              child: Text(
-                'LAST LESSON REPORT',
-                style: MasteryTextStyles.mono(
-                  size: 11,
-                  lineHeight: 14,
-                  weight: FontWeight.w600,
-                  color: MasteryColors.textSecondary,
-                  letterSpacing: 1.6,
-                ),
-              ),
-            ),
-            TextButton(
-              onPressed: onOpenFullSummary,
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-                minimumSize: const Size(0, 32),
-              ),
-              child: Text(
-                'Open full summary',
-                style: MasteryTextStyles.labelSm.copyWith(
-                  color: MasteryColors.actionPrimary,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ),
-          ],
+        // Wave 14.9 — single eyebrow, no duplicate CTA. The card body
+        // below carries `Review mistakes` (deep-link to the mistakes
+        // section) and `See full report` (top-of-summary). The pre-14.9
+        // `Open full summary` link in the eyebrow row was a third entry
+        // point to the same destination as `See full report` — pure
+        // duplication, removed.
+        Text(
+          'LAST LESSON REPORT',
+          style: MasteryTextStyles.mono(
+            size: 11,
+            lineHeight: 14,
+            weight: FontWeight.w600,
+            color: MasteryColors.textSecondary,
+            letterSpacing: 1.6,
+          ),
         ),
         const SizedBox(height: 10),
         Container(
