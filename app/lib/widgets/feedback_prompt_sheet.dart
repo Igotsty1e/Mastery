@@ -50,9 +50,17 @@ class FeedbackPromptResult {
 
 /// Shows the feedback sheet and resolves to a result.
 /// Resolves to `FeedbackPromptResult.dismissed()` on swipe-away / back.
+///
+/// `title` and `subtitle` let the caller swap the framing — the
+/// after-summary surface asks "How was this session?" while the
+/// after-friction surface (Wave 14.3 phase 3) asks something narrower
+/// like "How did that exercise feel?". The rest of the sheet
+/// (5 stars, optional comment, Send / Skip) stays the same.
 Future<FeedbackPromptResult> showFeedbackPromptSheet(
-  BuildContext context,
-) async {
+  BuildContext context, {
+  String title = 'How was this session?',
+  String subtitle = 'A quick rating helps us tune the sessions you see next.',
+}) async {
   final result = await showModalBottomSheet<FeedbackPromptResult>(
     context: context,
     backgroundColor: MasteryColors.bgSurface,
@@ -62,13 +70,19 @@ Future<FeedbackPromptResult> showFeedbackPromptSheet(
         top: Radius.circular(MasteryRadii.lg),
       ),
     ),
-    builder: (sheetCtx) => const _FeedbackPromptSheetBody(),
+    builder: (sheetCtx) =>
+        _FeedbackPromptSheetBody(title: title, subtitle: subtitle),
   );
   return result ?? const FeedbackPromptResult.dismissed();
 }
 
 class _FeedbackPromptSheetBody extends StatefulWidget {
-  const _FeedbackPromptSheetBody();
+  final String title;
+  final String subtitle;
+  const _FeedbackPromptSheetBody({
+    required this.title,
+    required this.subtitle,
+  });
 
   @override
   State<_FeedbackPromptSheetBody> createState() =>
@@ -136,14 +150,14 @@ class _FeedbackPromptSheetBodyState extends State<_FeedbackPromptSheetBody> {
               ),
             ),
             Text(
-              'How was this session?',
+              widget.title,
               style: MasteryTextStyles.titleLg.copyWith(
                 color: MasteryColors.textPrimary,
               ),
             ),
             const SizedBox(height: 4),
             Text(
-              'A quick rating helps us tune the sessions you see next.',
+              widget.subtitle,
               style: MasteryTextStyles.bodySm.copyWith(
                 color: MasteryColors.textSecondary,
                 height: 1.5,

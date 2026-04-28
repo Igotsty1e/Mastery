@@ -186,6 +186,11 @@ export function makeLessonSessionsRouter(
         explanation: result.explanation,
         canonical_answer: result.evaluation.canonical_answer,
         skill_rule_snapshot: skillRuleSnapshot,
+        // Wave 14.3 phase 3 — surface the §17 friction tag the
+        // service stamped on the row so the client can show the
+        // after-friction feedback prompt without a follow-up call.
+        // Null when the attempt was unremarkable.
+        friction_event: result.attempt.frictionEvent ?? null,
       });
     } catch (err) {
       if (handleError(err, res)) return;

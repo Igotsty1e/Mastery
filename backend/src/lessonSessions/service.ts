@@ -36,6 +36,7 @@ import {
   type ExerciseAttemptRow,
   type LessonSessionRow,
 } from './repository';
+import { detectFrictionEvent, type FrictionEvent } from './friction';
 
 export type SessionStartReason = 'created' | 'resumed';
 
@@ -371,6 +372,16 @@ export async function submitAnswer(
         : null;
   const explanationSnapshot = exercise.feedback?.explanation ?? null;
 
+  // Wave 14.3 phase 3 — friction detection (V1: repeated_error only).
+  // Computed BEFORE the insert so it lands on the row, and surfaced
+  // back to the caller so the client can fire the after-friction
+  // feedback prompt without a follow-up round-trip.
+  const frictionEvent: FrictionEvent | null = await detectFrictionEvent(db, {
+    sessionId,
+    currentSkillId: exercise.skill_id ?? null,
+    currentCorrect: evaluation.correct,
+  });
+
   const inserted = await insertAttempt(db, {
     sessionId,
     userId,
@@ -391,6 +402,7 @@ export async function submitAnswer(
     explanationSnapshot,
     clientAttemptId: input.clientAttemptId,
     submittedAt: input.submittedAt,
+    frictionEvent,
   });
 
   if (inserted.duplicate) {

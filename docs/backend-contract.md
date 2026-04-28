@@ -1351,3 +1351,33 @@ auth gates, payload validation (bad enums, out-of-range rating, empty
 submitted), 201 happy paths for `submitted` and `dismissed`, cooldown
 enforcement, per-kind isolation, stale-row release, and the cooldown
 GET responses.
+
+### Wave 14.3 phase 3 — friction-event surface
+
+`POST /lesson-sessions/:sessionId/answers` now carries an additional
+field on the response:
+
+```json
+{
+  ...,
+  "friction_event": "repeated_error" | null
+}
+```
+
+The service writes the same value to `exercise_attempts.friction_event`
+on the row inserted for this attempt. V1 detector flags only
+`repeated_error` (current attempt wrong + most recent prior attempt
+in this session also wrong + both share `skill_id`). The `§17`
+sibling tags (`abandon_after_error`, `retry_loop`, `time_spike`)
+remain reserved.
+
+Clients react by reading `getFeedbackCooldown()` and, when
+`after_friction_allowed`, opening the `after_friction` feedback
+prompt (see "Wave 14.3 — feedback system" above). Server-side
+behaviour is unchanged regardless of whether the client surfaces the
+prompt — the row is the source of truth for analytics.
+
+**Tests:** 4 cases in `backend/tests/friction.test.ts` covering
+single-wrong (no friction), two-consecutive-wrongs-same-skill
+(`repeated_error`), prior-correct (no friction), prior-wrong-
+different-skill (no friction).
