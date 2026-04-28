@@ -1225,3 +1225,65 @@ existing diagnostic test was extended to assert the
 
 This closes Wave 12 and completes the V1 MVP wave plan in
 `docs/plans/learning-engine-v1.md`.
+
+## Wave 14.1 — admin retention dashboard
+
+Founder-only surface for the V1.5 D1/D7 cohort retention table.
+Backed by `users.created_at` (cohort) × `exercise_attempts.submitted_at`
+(activity), aggregated in a single Postgres CTE.
+
+**Auth:** all `/admin/*` routes require `Authorization: Bearer <jwt>`
+**and** the caller's `user_id` must appear in the `ADMIN_USER_IDS` env
+var (comma-separated UUIDs, lower-cased on read). Unset or empty env =
+no admins, every admin route returns 403. 401 vs 403 distinction:
+- 401 = bearer missing / invalid (delegated to `requireAuth`).
+- 403 = bearer valid but the user is not an admin.
+
+### GET /admin/retention
+
+Returns the cohort table as JSON.
+
+**Query params:**
+- `window` — number of cohort days to include (count back from
+  today, UTC). Clamped to `[1, 180]`. Default `30`.
+
+**Response 200:**
+```json
+{
+  "window_days": 30,
+  "cohorts": [
+    {
+      "cohortDay": "2026-04-22",
+      "cohortSize": 4,
+      "d1Active": 3,
+      "d7Active": 1,
+      "d1Rate": 0.75,
+      "d7Rate": 0.25,
+      "d1Complete": true,
+      "d7Complete": false
+    }
+  ]
+}
+```
+
+`d1Rate` / `d7Rate` are `null` when `cohortSize == 0`.
+`d1Complete` is `true` once `now >= cohort_day + 1d`; `d7Complete`
+once `now >= cohort_day + 7d`. Incomplete cohorts still emit numbers
+so the dashboard can show "in progress" rates with a marker.
+
+### GET /admin/retention.html
+
+Same data, server-rendered into a single-page HTML table that
+matches the calm DESIGN.md tokens. Bookmarkable, no JS, no client
+state. Same auth + `window` query param as the JSON route.
+
+**Definition recap:**
+- `cohort_day` = UTC calendar day of `users.created_at`.
+- D1 active = at least one `exercise_attempts` row with
+  `submitted_at` falling on `cohort_day + 1` (UTC).
+- D7 active = same for `cohort_day + 7`.
+
+**Tests:** 9 test cases in `backend/tests/admin-retention.test.ts`
+covering empty DB, cohort sizing, strict D1 boundary (same-day
+attempts excluded), `d1Complete` flip when window not closed,
+401/403/200 auth gate, `window` clamp, and HTML rendering.
