@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
+import '../api/api_client.dart';
 import '../learner/learner_skill_store.dart';
 import '../models/evaluation.dart';
 import '../theme/mastery_theme.dart';
+import '../widgets/feedback_prompt_sheet.dart';
 import '../widgets/mastery_widgets.dart';
 import '../widgets/skill_state_card.dart';
 
@@ -71,6 +74,54 @@ class _SummaryScreenState extends State<SummaryScreen> {
         ? all
         : all.where((r) => filter.contains(r.skillId)).toList();
     setState(() => _skillRecords = filtered);
+  }
+
+  /// Wave 14.3 phase 2 — V1.5 feedback after-summary surface.
+  ///
+  /// Intercepts the Done tap. If the server-side cooldown allows a
+  /// new `after_summary` record, opens the rating sheet. Whatever the
+  /// learner does (rate, comment, skip, swipe-away) is mirrored as a
+  /// single POST to `/me/feedback` so server analytics see one row
+  /// per Done. Network failures are silent — the screen always pops
+  /// at the end.
+  ///
+  /// Why on Done (not on screen mount): the learner has just read the
+  /// score and any debrief; asking now is asking when the experience
+  /// is freshest, not when they're still scanning the result. It also
+  /// piggybacks on an action they were going to take anyway.
+  Future<void> _onDoneTap() async {
+    final api = context.read<ApiClient>();
+    final summaryId = widget.summary?.lessonId;
+    final navigator = Navigator.of(context);
+
+    FeedbackPromptResult? result;
+    try {
+      final cooldown = await api.getFeedbackCooldown();
+      if (!mounted) return;
+      if (cooldown != null && cooldown.afterSummaryAllowed) {
+        result = await showFeedbackPromptSheet(context);
+      }
+    } catch (_) {
+      // Cooldown read failures are quiet — pop without prompting.
+    }
+    if (result != null) {
+      try {
+        await api.submitFeedback(
+          promptKind: 'after_summary',
+          outcome: result.wireOutcome,
+          rating: result.rating,
+          commentText: result.commentText,
+          context: summaryId == null
+              ? null
+              : {'summary_lesson_id': summaryId},
+        );
+      } catch (_) {
+        // Best-effort — never block the dashboard return on a flaky
+        // feedback POST.
+      }
+    }
+    if (!mounted) return;
+    navigator.pop();
   }
 
   @override
@@ -163,7 +214,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
               ],
               const SizedBox(height: 28),
               FilledButton(
-                onPressed: () => Navigator.of(context).pop(),
+                onPressed: _onDoneTap,
                 child: const Text('Done'),
               ),
             ],

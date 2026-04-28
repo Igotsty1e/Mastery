@@ -216,6 +216,63 @@ class ApiClient {
   }
 
   // ────────────────────────────────────────────────────────────────────
+  // Wave 14.3 phase 2 — V1.5 feedback system. The SummaryScreen prompt
+  // is the only consumer today; phase 3 will add the after-friction
+  // surface in the exercise screen. Both endpoints are auth-gated and
+  // share the same 24h per-prompt-kind cooldown enforced server-side.
+  // ────────────────────────────────────────────────────────────────────
+
+  /// `GET /me/feedback/cooldown`. Quiet, idempotent gate the client
+  /// reads before deciding whether to render either prompt. Network
+  /// failures resolve to `null` so the caller can treat that as
+  /// "do not prompt" without surfacing an error to the learner.
+  Future<FeedbackCooldown?> getFeedbackCooldown() async {
+    try {
+      final auth = _requireAuth();
+      final res = await auth.send(
+        'GET',
+        Uri.parse('$baseUrl/me/feedback/cooldown'),
+      );
+      if (res.statusCode != 200) return null;
+      return FeedbackCooldown.fromJson(
+        jsonDecode(res.body) as Map<String, dynamic>,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// `POST /me/feedback`. Best-effort: 429 (cooldown raced our gate
+  /// read) is silently absorbed so the caller does not bother the
+  /// learner with a "you can't rate again" message. Other errors
+  /// throw so the caller can surface a generic toast if it wants.
+  Future<void> submitFeedback({
+    required String promptKind, // 'after_summary' | 'after_friction'
+    required String outcome, // 'submitted' | 'dismissed'
+    int? rating,
+    String? commentText,
+    Map<String, dynamic>? context,
+  }) async {
+    final auth = _requireAuth();
+    final body = <String, dynamic>{
+      'prompt_kind': promptKind,
+      'outcome': outcome,
+      if (rating != null) 'rating': rating,
+      if (commentText != null && commentText.trim().isNotEmpty)
+        'comment_text': commentText.trim(),
+      if (context != null && context.isNotEmpty) 'context': context,
+    };
+    final res = await auth.send(
+      'POST',
+      Uri.parse('$baseUrl/me/feedback'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(body),
+    );
+    if (res.statusCode == 201 || res.statusCode == 429) return;
+    _assertOk(res);
+  }
+
+  // ────────────────────────────────────────────────────────────────────
   // Wave 12.3 — diagnostic-mode endpoints (V1 spec §15). Auth-protected.
   // The probe is a 5-item multiple_choice run that scores into a CEFR
   // level + per-skill status map. The client orchestrates one /answers
@@ -408,4 +465,27 @@ class DynamicNextResult {
       next: raw is Map<String, dynamic> ? Exercise.fromJson(raw) : null,
     );
   }
+}
+
+/// Wave 14.3 phase 2 — V1.5 feedback cooldown gate. Both
+/// `*_allowed` flags are computed server-side from a 24h sliding
+/// window over `feedback_responses.created_at` (regardless of
+/// outcome).
+class FeedbackCooldown {
+  final int cooldownHours;
+  final bool afterSummaryAllowed;
+  final bool afterFrictionAllowed;
+
+  const FeedbackCooldown({
+    required this.cooldownHours,
+    required this.afterSummaryAllowed,
+    required this.afterFrictionAllowed,
+  });
+
+  factory FeedbackCooldown.fromJson(Map<String, dynamic> j) =>
+      FeedbackCooldown(
+        cooldownHours: (j['cooldown_hours'] as num).toInt(),
+        afterSummaryAllowed: j['after_summary_allowed'] as bool,
+        afterFrictionAllowed: j['after_friction_allowed'] as bool,
+      );
 }
