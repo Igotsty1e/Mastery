@@ -37,6 +37,7 @@ export const RUNTIME_SUPPORTED_EXERCISE_TYPES: ReadonlySet<Exercise['type']> =
     'fill_blank',
     'multiple_choice',
     'sentence_correction',
+    'sentence_rewrite',
     'listening_discrimination',
   ]);
 

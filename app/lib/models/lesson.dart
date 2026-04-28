@@ -2,6 +2,7 @@ enum ExerciseType {
   fillBlank,
   multipleChoice,
   sentenceCorrection,
+  sentenceRewrite,
   listeningDiscrimination,
 }
 
@@ -9,6 +10,7 @@ ExerciseType _parseType(String s) => switch (s) {
       'fill_blank' => ExerciseType.fillBlank,
       'multiple_choice' => ExerciseType.multipleChoice,
       'sentence_correction' => ExerciseType.sentenceCorrection,
+      'sentence_rewrite' => ExerciseType.sentenceRewrite,
       'listening_discrimination' => ExerciseType.listeningDiscrimination,
       _ => throw ArgumentError('Unknown exercise type: $s'),
     };
@@ -17,6 +19,7 @@ String exerciseTypeToString(ExerciseType t) => switch (t) {
       ExerciseType.fillBlank => 'fill_blank',
       ExerciseType.multipleChoice => 'multiple_choice',
       ExerciseType.sentenceCorrection => 'sentence_correction',
+      ExerciseType.sentenceRewrite => 'sentence_rewrite',
       ExerciseType.listeningDiscrimination => 'listening_discrimination',
     };
 
