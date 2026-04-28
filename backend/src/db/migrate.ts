@@ -345,6 +345,23 @@ CREATE INDEX IF NOT EXISTS feedback_responses_kind_idx
   ON feedback_responses(prompt_kind, created_at DESC);
 `;
 
+// Wave J.1a — Multilingual UI foundation (Workstream J).
+// Adds the `ui_language` column to `user_profiles`. Authenticated users
+// store their preference here; first login seeds it from
+// `Accept-Language`. The CHECK constraint enforces the locked supported
+// set (`en` | `ru` | `vi`) — partial / arbitrary tags are rejected at
+// the storage boundary, not the route boundary, so legacy direct DB
+// writes also stay honest.
+const UI_LANGUAGE_SQL = `
+ALTER TABLE user_profiles
+  ADD COLUMN IF NOT EXISTS ui_language text NOT NULL DEFAULT 'en';
+ALTER TABLE user_profiles
+  DROP CONSTRAINT IF EXISTS user_profiles_ui_language_check;
+ALTER TABLE user_profiles
+  ADD CONSTRAINT user_profiles_ui_language_check
+  CHECK (ui_language IN ('en', 'ru', 'vi'));
+`;
+
 const MIGRATIONS: Migration[] = [
   { id: '0001_init', sql: INIT_SQL },
   { id: '0002_lesson_sessions', sql: LESSON_SESSIONS_SQL },
@@ -356,6 +373,7 @@ const MIGRATIONS: Migration[] = [
   { id: '0008_dynamic_sessions', sql: DYNAMIC_SESSIONS_SQL },
   { id: '0009_diagnostic_runs', sql: DIAGNOSTIC_RUNS_SQL },
   { id: '0010_feedback_responses', sql: FEEDBACK_RESPONSES_SQL },
+  { id: '0011_ui_language', sql: UI_LANGUAGE_SQL },
 ];
 
 export async function runMigrations(database: Database): Promise<void> {

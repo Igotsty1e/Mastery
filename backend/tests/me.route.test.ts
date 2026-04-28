@@ -20,11 +20,18 @@ afterAll(async () => {
   await h.close();
 });
 
-async function loginAs(subject: string, displayName?: string) {
+async function loginAs(
+  subject: string,
+  displayName?: string,
+  acceptLanguage?: string
+) {
   const res = await inject(h.app, {
     method: 'POST',
     path: '/auth/apple/stub/login',
     json: { subject, displayName },
+    headers: acceptLanguage
+      ? { 'accept-language': acceptLanguage }
+      : undefined,
   });
   return {
     accessToken: (res.json as { accessToken: string }).accessToken,
@@ -63,11 +70,66 @@ describe('GET /me', () => {
     expect(res.status).toBe(200);
     const body = res.json as {
       user: { id: string; createdAt: string };
-      profile: { displayName: string | null; level: string | null };
+      profile: {
+        displayName: string | null;
+        level: string | null;
+        uiLanguage: string;
+      };
     };
     expect(body.user.id).toBe(userId);
     expect(body.profile?.displayName).toBe('Babbage');
     expect(body.profile?.level).toBeNull();
+    // J.1a — fresh profile defaults to 'en' when no Accept-Language header.
+    expect(body.profile?.uiLanguage).toBe('en');
+  });
+
+  // Wave J.1a — Accept-Language seeds the new profile's ui_language.
+  it('seeds ui_language from Accept-Language on first login (ru)', async () => {
+    const { accessToken } = await loginAs(
+      'me-sub-acceptlang-ru',
+      'Раиса',
+      'ru-RU,ru;q=0.9,en;q=0.8'
+    );
+    const res = await inject(h.app, {
+      method: 'GET',
+      path: '/me',
+      headers: { authorization: `Bearer ${accessToken}` },
+    });
+    expect(res.status).toBe(200);
+    const body = res.json as { profile: { uiLanguage: string } };
+    expect(body.profile.uiLanguage).toBe('ru');
+  });
+
+  it('seeds ui_language from Accept-Language on first login (vi)', async () => {
+    const { accessToken } = await loginAs(
+      'me-sub-acceptlang-vi',
+      'Lan',
+      'vi,en;q=0.9'
+    );
+    const res = await inject(h.app, {
+      method: 'GET',
+      path: '/me',
+      headers: { authorization: `Bearer ${accessToken}` },
+    });
+    expect(res.status).toBe(200);
+    const body = res.json as { profile: { uiLanguage: string } };
+    expect(body.profile.uiLanguage).toBe('vi');
+  });
+
+  it('falls back to en when Accept-Language has no supported tag', async () => {
+    const { accessToken } = await loginAs(
+      'me-sub-acceptlang-de',
+      'Klaus',
+      'de-DE,de;q=0.9,fr;q=0.8'
+    );
+    const res = await inject(h.app, {
+      method: 'GET',
+      path: '/me',
+      headers: { authorization: `Bearer ${accessToken}` },
+    });
+    expect(res.status).toBe(200);
+    const body = res.json as { profile: { uiLanguage: string } };
+    expect(body.profile.uiLanguage).toBe('en');
   });
 });
 
@@ -134,6 +196,58 @@ describe('PATCH /me/profile', () => {
     };
     expect(body.profile.level).toBe('C1');
     expect(body.profile.displayName).toBe('Initial');
+  });
+
+  // Wave J.1a — uiLanguage round-trip.
+  it('accepts a uiLanguage update and returns it on /me', async () => {
+    const { accessToken, userId } = await loginAs('me-sub-uilang', 'L');
+    const res = await inject(h.app, {
+      method: 'PATCH',
+      path: '/me/profile',
+      headers: { authorization: `Bearer ${accessToken}` },
+      json: { uiLanguage: 'ru' },
+    });
+    expect(res.status).toBe(200);
+    expect((res.json as { profile: { uiLanguage: string } }).profile.uiLanguage)
+      .toBe('ru');
+
+    // Round-trip via /me.
+    const me = await inject(h.app, {
+      method: 'GET',
+      path: '/me',
+      headers: { authorization: `Bearer ${accessToken}` },
+    });
+    expect((me.json as { profile: { uiLanguage: string } }).profile.uiLanguage)
+      .toBe('ru');
+
+    // And persistence in the underlying row.
+    const reloaded = await h.database.orm
+      .select()
+      .from(userProfiles)
+      .where(eq(userProfiles.userId, userId));
+    expect(reloaded[0]?.uiLanguage).toBe('ru');
+  });
+
+  it('rejects an unsupported uiLanguage with 400', async () => {
+    const { accessToken } = await loginAs('me-sub-uilang-bad');
+    const res = await inject(h.app, {
+      method: 'PATCH',
+      path: '/me/profile',
+      headers: { authorization: `Bearer ${accessToken}` },
+      json: { uiLanguage: 'de' },
+    });
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects null uiLanguage with 400 (always defined)', async () => {
+    const { accessToken } = await loginAs('me-sub-uilang-null');
+    const res = await inject(h.app, {
+      method: 'PATCH',
+      path: '/me/profile',
+      headers: { authorization: `Bearer ${accessToken}` },
+      json: { uiLanguage: null },
+    });
+    expect(res.status).toBe(400);
   });
 });
 
