@@ -421,6 +421,142 @@ authorial discipline is.
 
 ---
 
+## 11.6 Workstream J — Multilingual UI + Content Localization
+
+### Goal
+
+Let the learner pick the **L1** the app speaks to them in — UI chrome,
+exercise instructions, rule explanations, feedback copy — without
+translating the **target English** they are practising. The app teaches
+English; the scaffolding around it can be in the learner's first
+language.
+
+### Scope decisions (locked)
+
+- **Supported L1s:** English (`en`, default), Russian (`ru`),
+  Vietnamese (`vi`). Three languages, no auto-detection of more.
+- **What is localized:**
+  - app chrome — buttons, screen titles, dashboard labels, status
+    badges, error messages, navigation, onboarding copy, feedback
+    prompt sheets, diagnostic completion copy
+  - per-exercise `instruction` field (e.g. *"Choose the correct
+    option"*, *"Rewrite the sentence using the past perfect."*)
+  - rule materials served by `GET /skills` — `intro_rule`,
+    per-example explanation strings, skill `description`
+  - per-attempt curated `feedback.explanation` (the 3-part block
+    after a wrong answer)
+  - AI debrief prompt + AI feedback for `short_free_sentence`
+    evaluator (the model is told to respond in the learner's L1)
+- **What stays English (always):**
+  - the **target sentence** of every exercise (the prompt body, the
+    blank context, the `original` field of `sentence_correction` /
+    `sentence_rewrite`)
+  - the **answer options** / distractors of `multiple_choice` /
+    `multi_select`
+  - the **canonical answers** / `accepted_answers` / `accepted_rewrites`
+  - audio transcripts for `listening_discrimination`
+  - skill identifiers (`skill_id` is a code string; not translated)
+- **Authoring contract:** lesson JSON gains `i18n` blocks alongside
+  the localizable string fields. Authoring rule: an exercise is
+  schema-valid only if **all three** L1 strings are present —
+  partial localization is rejected at boot. (Avoids silent fallback
+  to English making the feature feel half-baked for a Vietnamese
+  learner.)
+- **Storage:** per-user preference on `user_profiles` (new column
+  `ui_language`). On first sign-in we seed it from
+  `Accept-Language` if it matches one of the supported L1s, else
+  `en`. Learner can change it in an Account/Settings screen.
+- **Wire:** the lesson / session / skills endpoints honour either
+  the `ui_language` from the authenticated profile or an
+  `Accept-Language` header for unauthenticated screens; the
+  response carries only the chosen L1's strings (no client-side
+  language switch table — keeps payload small and avoids leaking
+  in-progress translations).
+- **Out of scope for Workstream J:** translating learner-typed
+  free-text answers; right-to-left layouts; per-exercise mixed-L1
+  display; multi-L1 audio (only English clips ship).
+
+Authoritative references:
+- pedagogy: `GRAM_STRATEGY.md` (target language is English; L1
+  scaffolding is allowed)
+- authoring: `exercise_structure.md` — gains an `§i18n` section
+  when this workstream enters a wave
+- schema: `docs/content-contract.md` — gains the `i18n` field
+  shapes and the all-three-or-reject validation rule
+- UI: `DESIGN.md` — adds typography fallback for Vietnamese
+  diacritics and Cyrillic; verifies the calm-pace tokens still
+  read on longer Russian strings
+
+### Tasks
+
+- extend `LessonSchema` (`backend/src/data/lessonSchema.ts`) with
+  `i18n` blocks on `instruction`, the per-skill rule fields, and
+  the per-attempt explanation fields; reject partial localization
+  at boot
+- extend `backend/data/skills.json` with `i18n` blocks on
+  `title` / `description` / `intro_rule` / per-example
+  explanation strings
+- add `ui_language` column to `user_profiles` (migration); seed
+  from `Accept-Language` on first login
+- new endpoint shape: lesson / session / skills responses honour
+  `ui_language` from the profile (auth) or `Accept-Language`
+  (unauth pre-login screens); responses carry only the chosen
+  L1's strings
+- AI surfaces (debrief prompt builder, `short_free_sentence`
+  evaluator prompt) take `ui_language` as input and instruct the
+  model to respond in that language; deterministic-first scoring
+  is unchanged
+- Flutter: install `flutter_localizations` + `intl`; add
+  `MasteryStrings` ARB pipeline; route every UI string through it
+- Flutter: new `LanguagePicker` widget on a slim Account/Settings
+  screen reachable from the dashboard (calm, one-screen, three
+  options, immediate apply)
+- typography pass on Vietnamese (Inter / Noto stack — verify
+  diacritic stacking) and Russian (longer strings — verify the
+  Study Desk dashboard hierarchy still holds)
+- authoring sprint via `english-grammar-methodologist` to author
+  ru + vi for every shipped string; **all three** L1s ship in the
+  same wave or the wave does not ship (no half-launch)
+
+### Cost note
+
+The per-string localization is mostly authoring time, not API
+spend. AI debrief / `short_free_sentence` prompts in ru / vi are
+pennies per session at current pricing. The bottleneck is the
+methodologist + native-speaker review pass on the rule
+materials and feedback explanations.
+
+### Sequencing
+
+This is a multi-wave workstream. Suggested split when it enters
+the active backlog:
+
+1. **J.1** — schema additions + `ui_language` column + endpoint
+   plumbing + Flutter `MasteryStrings` scaffold. No UI surface;
+   defaults to `en` for everyone. Pure foundation.
+2. **J.2** — authoring sprint for Russian; ship the
+   `LanguagePicker` with **two** options (en, ru); Vietnamese row
+   greyed out as "coming soon." Validates the pipeline on the L1
+   the founder + tester team speaks.
+3. **J.3** — Vietnamese authoring sprint + open the third option
+   in the picker.
+
+Each sub-wave updates `docs/content-contract.md`,
+`docs/backend-contract.md`, `docs/mobile-architecture.md` in
+lockstep per the Documentation Maintenance Rule.
+
+### Risk
+
+- silent partial translation — mitigated by the all-three-or-reject
+  schema rule
+- typography regressions on longer Russian / accented Vietnamese
+  strings — mitigated by the J.2 / J.3 design pass before each
+  authoring sprint lands
+- AI surfaces drifting in tone across L1s — mitigated by curated
+  prompt templates per language, not free-form translation
+
+---
+
 ## 11. What Requires Spec Revision
 
 These are outside the current 4-type shipped set and must not be implemented silently:
