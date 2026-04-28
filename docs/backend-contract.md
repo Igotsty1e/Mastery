@@ -1008,3 +1008,87 @@ Activates the V1 spec §12 pacing splits and §9 mixing rule on top of the dynam
 - **`backend/src/sessions/dynamicService.ts`** — `startDynamicSession` and `pickNextForSession` both call `derivePacingTarget` on the learner's snapshot and pass the result via `DecisionContext.pacingTarget`. The chosen profile lands in the Decision Log `previousState` payload (`pacing_profile`, `pacing_signal`) so a regression can be traced back to the input distribution.
 - **Tests**: 6 new cases in `tests/pacing.test.ts`. 293/293 active backend tests passing (+ 29 skipped).
 - **Skill mixing** — already covered by the `variety_switch` boost in the Decision Engine score (Wave 11.1); no separate constant needed.
+
+### Wave 12.1 status (2026-04-27) — diagnostic schema field
+
+Off-path foundation for Wave 12.2. `LessonSchema` (and the `Exercise`
+TS interface) now accepts an optional `is_diagnostic: bool` field on
+every variant. Five weak-tier multiple_choice items tagged across the
+five shipped skills (one per skill) so `getDiagnosticPool()` returns
+a real cross-skill probe instead of the `flat.slice(0, 5)` fallback.
+No route surface, no client surface — Wave 12.2 mounts the
+`/diagnostic/...` routes that consume the pool.
+
+### Wave 12.2 status (2026-04-28) — diagnostic routes + CEFR derivation
+
+Server-side activation of the diagnostic probe per V1 spec §15 +
+`LEARNING_ENGINE.md §10`. **No Flutter changes yet** — the
+`DiagnosticScreen` lands in Wave 12.3.
+
+New table: **`diagnostic_runs`** (migration `0009_diagnostic_runs`).
+One row per probe. Stores `status` (`in_progress | completed |
+abandoned`), the ordered `exercise_ids` surfaced for the run, the
+`responses` jsonb (per-attempt outcome + skill_id + evidence_tier),
+the derived `cefr_level` (null while in progress) and `skill_map`,
+plus `started_at` / `completed_at`. Partial unique index
+`diagnostic_runs_active_idx` enforces "at most one in_progress run
+per user". Separate from `lesson_sessions` because the probe
+lifecycle is different (5–7 fixed items, no day-to-day resume,
+scored into a CEFR derivation rather than a per-lesson aggregate).
+
+Four endpoints, all auth-protected via `requireAuth`:
+
+- **`POST /diagnostic/start`** — Creates a fresh run if none is
+  active; resumes the active one otherwise. Response: `{ run_id,
+  resumed, position, total, next_exercise }`. Status `201` on fresh
+  start, `200` on resume. `next_exercise` is the projected
+  multiple_choice item at the run's current position.
+- **`POST /diagnostic/:runId/answers`** — Records one attempt.
+  Body: `{ exercise_id, exercise_type, user_answer, submitted_at? }`.
+  The route enforces positional ordering: callers cannot submit an
+  answer for an exercise that is not the run's next expected item.
+  Evaluates via `evaluateMultipleChoice` (deterministic exact-match
+  on `correct_option_id`) and augments `learner_skills` through the
+  same `recordAttempt` path lesson sessions use, so every downstream
+  invariant (recent_errors, weighted accuracy, exercise_types_seen)
+  stays consistent. Response: `{ result: 'correct' | 'wrong',
+  evaluation_source: 'deterministic', canonical_answer, explanation,
+  run_complete, position, total, next_exercise }`. `next_exercise`
+  is null when the run is complete.
+- **`POST /diagnostic/:runId/complete`** — Idempotent. Derives a
+  CEFR level + per-skill status map via `deriveCefrFromRun`, persists
+  on the run, stamps `user_profiles.level`, writes a
+  `diagnostic_completed` audit event. V1 thresholds (calibrated to a
+  5-item B2 probe, expressed as percentages so a probe-size change
+  doesn't require re-tuning): ≥80% correct → B2, 50–79% → B1, <50%
+  → A2. C1 is intentionally unreachable from a B2 bank — V1.5
+  territory. Response: `{ run_id, cefr_level, skill_map, completed_at,
+  already_completed }`.
+- **`POST /diagnostic/restart`** — Marks any active run as
+  `abandoned`, writes a `diagnostic_abandoned` audit event, then
+  starts a fresh run. The probe **augments** `learner_skills` rather
+  than resetting it, so a re-diagnostic adds evidence rather than
+  overwriting it.
+- **`POST /diagnostic/skip`** — Write-only telemetry. Records a
+  `diagnostic_skipped` audit event so D1 retention is measurable for
+  "diagnostic completed" vs "skipped" cohorts. Returns `204`.
+
+Error codes: `diagnostic_run_not_found` (404),
+`diagnostic_run_not_active` (409), `diagnostic_run_already_complete`
+(409), `diagnostic_answer_out_of_order` (409),
+`exercise_type_mismatch` (400), `diagnostic_pool_empty` (503),
+`diagnostic_unsupported_type` (500).
+
+Tests:
+- 14 new cases in `tests/diagnostic.test.ts` covering CEFR
+  derivation thresholds, route auth gates, fresh-vs-resumed start,
+  out-of-order rejection, learner_skills augmentation, idempotent
+  complete, restart abandons + replaces, skip telemetry. 312/312
+  backend tests passing.
+
+Out of scope (Wave 12.3 / 12.4):
+- Flutter `DiagnosticScreen` + route gating between sign-in and
+  onboarding.
+- "Skip for now" UI affordance backed by `POST /diagnostic/skip`.
+- Dashboard "Welcome — your level is B2" surface backed by
+  `user_profiles.level`.
