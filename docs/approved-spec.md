@@ -41,6 +41,8 @@ Roundups AI Assistant is a Flutter mobile app for English language practice. Use
 
 Every exercise has a required `instruction` field shown to the learner in a prominent band at the top of the exercise card before the prompt. It must be a short, action-oriented sentence (e.g. "Fill in the blank with the correct verb form.").
 
+**Post-MVP update (2026-04-28):** Two open-answer types shipped — `sentence_rewrite` (Wave 14.2) and `short_free_sentence` (Wave 14.4). Authoring schema lives in `docs/content-contract.md §2.3a` + §2.3b. Runtime gate at `backend/src/data/exerciseBank.ts#RUNTIME_SUPPORTED_EXERCISE_TYPES` is the live source of truth.
+
 ### 3.1 `fill_blank`
 User types a word or short phrase into a blank.  
 Evaluation: deterministic exact match + normalized match (lowercase, trim, collapse whitespace).  

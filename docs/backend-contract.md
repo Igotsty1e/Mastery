@@ -1292,9 +1292,11 @@ attempts excluded), `d1Complete` flip when window not closed,
 
 User-scoped two-prompt feedback surface backed by an append-only
 `feedback_responses` table. The Decision Engine does not read these
-rows — they are product analytics, not engine input. V1 ships two
-endpoints; the matching client UI lands in phase 2 (after-summary)
-and phase 3 (after-friction).
+rows — they are product analytics, not engine input. Wave 14.3
+shipped in three phases on 2026-04-28: phase 1 = these two
+endpoints; phase 2 = `after_summary` modal on SummaryScreen Done;
+phase 3 = `after_friction` modal triggered by the server-side
+`friction_event` tag (see `friction-event surface` section below).
 
 ### POST /me/feedback
 

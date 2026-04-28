@@ -13,13 +13,22 @@ import type { AppDatabase } from '../db/client';
 ///   - 401 means the bearer token is missing / invalid (delegated to
 ///     `requireAuth`).
 ///   - 403 means the token is valid but the subject is not an admin.
+// Memo: parsing the env on every admin request is wasteful, but we
+// also want test-time mutations to `process.env.ADMIN_USER_IDS` to
+// take effect without a server restart. Cache by raw string so a
+// changed env transparently invalidates the parsed Set.
+let _cachedRaw: string | undefined;
+let _cachedSet: Set<string> = new Set();
 function readAdminIds(): Set<string> {
   const raw = process.env.ADMIN_USER_IDS ?? '';
+  if (raw === _cachedRaw) return _cachedSet;
   const ids = raw
     .split(',')
     .map((s) => s.trim().toLowerCase())
     .filter((s) => s.length > 0);
-  return new Set(ids);
+  _cachedRaw = raw;
+  _cachedSet = new Set(ids);
+  return _cachedSet;
 }
 
 export function requireAdmin(db: AppDatabase): RequestHandler {
