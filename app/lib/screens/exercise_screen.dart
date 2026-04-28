@@ -12,6 +12,7 @@ import '../widgets/mastery_exercise_image.dart';
 import '../widgets/mastery_widgets.dart';
 import '../widgets/multiple_choice_widget.dart';
 import '../widgets/sentence_correction_widget.dart';
+import '../widgets/sentence_rewrite_widget.dart';
 import 'summary_screen.dart';
 
 class ExerciseScreen extends StatefulWidget {
@@ -155,6 +156,8 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                           text: exercise.instruction,
                           icon: switch (exercise.type) {
                             ExerciseType.sentenceCorrection =>
+                              Icons.edit_outlined,
+                            ExerciseType.sentenceRewrite =>
                               Icons.edit_outlined,
                             _ => Icons.task_alt_rounded,
                           },
@@ -339,6 +342,11 @@ class _ExerciseBody extends StatelessWidget {
           onChanged: onAnswerChanged,
         ),
       ExerciseType.sentenceCorrection => SentenceCorrectionWidget(
+          prompt: exercise.prompt ?? '',
+          enabled: enabled,
+          onChanged: onAnswerChanged,
+        ),
+      ExerciseType.sentenceRewrite => SentenceRewriteWidget(
           prompt: exercise.prompt ?? '',
           enabled: enabled,
           onChanged: onAnswerChanged,
