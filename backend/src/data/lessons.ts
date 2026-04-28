@@ -85,6 +85,23 @@ export interface SentenceRewriteExercise extends ExerciseEngineMetadata {
   feedback?: ExerciseFeedback;
 }
 
+// Wave 14.4 — V1.5 open-answer family, phase 4.
+//
+// `short_free_sentence` asks the learner to write any sentence that
+// demonstrates the target rule. No canonical answer; the AI judges
+// grammaticality + rule conformance. `target_rule` is the rule
+// description for the model (not shown to the learner); the wire
+// projection strips it.
+export interface ShortFreeSentenceExercise extends ExerciseEngineMetadata {
+  exercise_id: string;
+  type: 'short_free_sentence';
+  instruction: string;
+  target_rule: string;
+  accepted_examples: string[];
+  image?: ExerciseImage;
+  feedback?: ExerciseFeedback;
+}
+
 export interface ExerciseAudio {
   url: string;
   voice: 'nova' | 'onyx';
@@ -128,6 +145,7 @@ export type Exercise =
   | MultipleChoiceExercise
   | SentenceCorrectionExercise
   | SentenceRewriteExercise
+  | ShortFreeSentenceExercise
   | ListeningDiscriminationExercise;
 
 export interface Lesson {

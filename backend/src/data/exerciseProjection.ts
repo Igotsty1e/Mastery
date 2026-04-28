@@ -36,6 +36,19 @@ export function projectExerciseForClient(exercise: Exercise): object {
     const { accepted_answers: _aa, feedback: _f, image: _i, ...pub } = exercise;
     return { ...pub, ...stripImage(exercise) };
   }
+  if (exercise.type === 'short_free_sentence') {
+    // Strip the model-only fields. `target_rule` and
+    // `accepted_examples` exist for the AI evaluator and would bias
+    // the learner's output.
+    const {
+      target_rule: _tr,
+      accepted_examples: _ae,
+      feedback: _f,
+      image: _i,
+      ...pub
+    } = exercise;
+    return { ...pub, ...stripImage(exercise) };
+  }
   // sentence_correction
   const { accepted_corrections: _ac, feedback: _f, image: _i, ...pub } = exercise;
   return { ...pub, ...stripImage(exercise) };

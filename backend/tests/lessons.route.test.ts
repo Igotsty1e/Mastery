@@ -27,35 +27,35 @@ describe('GET /lessons', () => {
         title: 'Verbs Followed by -ing',
         slug: 'verbs-followed-by-ing',
         order: 1,
-        total_exercises: 12,
+        total_exercises: 13,
       },
       {
         id: LESSON_ID_2,
         title: 'Present Perfect: Continuous vs Simple',
         slug: 'present-perfect-continuous-vs-simple',
         order: 2,
-        total_exercises: 12,
+        total_exercises: 13,
       },
       {
         id: LESSON_ID_3,
         title: 'Verbs Followed by to + Infinitive',
         slug: 'verbs-followed-by-to-infinitive',
         order: 3,
-        total_exercises: 12,
+        total_exercises: 13,
       },
       {
         id: LESSON_ID_4,
         title: 'Verbs with a Change in Meaning: -ing vs to + Infinitive',
         slug: 'verbs-with-a-change-in-meaning-ing-vs-to-infinitive',
         order: 4,
-        total_exercises: 12,
+        total_exercises: 13,
       },
       {
         id: LESSON_ID_5,
         title: 'Verbs with Both Forms: Little or No Change in Meaning',
         slug: 'verbs-with-both-forms-little-or-no-change-in-meaning',
         order: 5,
-        total_exercises: 12,
+        total_exercises: 13,
       },
     ]);
   });
@@ -100,7 +100,7 @@ describe('GET /lessons/:lessonId', () => {
     expect(typeof (res.json as any).intro_rule).toBe('string');
     expect(Array.isArray((res.json as any).intro_examples)).toBe(true);
     expect(Array.isArray((res.json as any).exercises)).toBe(true);
-    expect((res.json as any).exercises).toHaveLength(12);
+    expect((res.json as any).exercises).toHaveLength(13);
   });
 
   it('strips accepted_answers from fill_blank exercises', async () => {

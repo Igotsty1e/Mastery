@@ -25,6 +25,7 @@ const Wave2AnswerSchema = z.object({
     'multiple_choice',
     'sentence_correction',
     'sentence_rewrite',
+    'short_free_sentence',
     'listening_discrimination',
   ]),
   user_answer: z.string().max(500),
@@ -131,10 +132,13 @@ export function makeLessonSessionsRouter(
       // sentence_correction submissions no longer burn quota.
       // Wave 14.2: sentence_rewrite goes through the same evaluator
       // path so it also needs the IP resolved up-front.
+      // Wave 14.4: short_free_sentence is AI-only (no deterministic
+      // pre-check) so it definitely needs rate-limit context.
       let clientIp: string | null = null;
       if (
         parsed.data.exercise_type === 'sentence_correction' ||
-        parsed.data.exercise_type === 'sentence_rewrite'
+        parsed.data.exercise_type === 'sentence_rewrite' ||
+        parsed.data.exercise_type === 'short_free_sentence'
       ) {
         const ip = resolveRateLimitIp(req);
         if (!ip) {

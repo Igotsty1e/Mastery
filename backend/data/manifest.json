@@ -7,12 +7,13 @@
       "title": "Verbs Followed by -ing",
       "level": "B2",
       "language": "en",
-      "exercise_count": 12,
+      "exercise_count": 13,
       "exercise_types": {
         "fill_blank": 4,
         "multiple_choice": 3,
         "sentence_correction": 3,
-        "sentence_rewrite": 2
+        "sentence_rewrite": 2,
+        "short_free_sentence": 1
       },
       "unit_id": "U01",
       "rule_tag": "infinitive-vs-ing",
@@ -24,13 +25,14 @@
       "title": "Present Perfect: Continuous vs Simple",
       "level": "B2",
       "language": "en",
-      "exercise_count": 12,
+      "exercise_count": 13,
       "exercise_types": {
         "fill_blank": 3,
         "multiple_choice": 5,
         "sentence_correction": 1,
         "listening_discrimination": 1,
-        "sentence_rewrite": 2
+        "sentence_rewrite": 2,
+        "short_free_sentence": 1
       },
       "unit_id": "U02",
       "rule_tag": "present-perfect-continuous-vs-simple",
@@ -42,12 +44,13 @@
       "title": "Verbs Followed by to + Infinitive",
       "level": "B2",
       "language": "en",
-      "exercise_count": 12,
+      "exercise_count": 13,
       "exercise_types": {
         "fill_blank": 6,
         "multiple_choice": 2,
         "sentence_correction": 2,
-        "sentence_rewrite": 2
+        "sentence_rewrite": 2,
+        "short_free_sentence": 1
       },
       "unit_id": "U01",
       "rule_tag": "infinitive-vs-ing",
@@ -59,12 +62,13 @@
       "title": "Verbs with a Change in Meaning: -ing vs to + Infinitive",
       "level": "B2",
       "language": "en",
-      "exercise_count": 12,
+      "exercise_count": 13,
       "exercise_types": {
         "fill_blank": 6,
         "multiple_choice": 2,
         "sentence_correction": 2,
-        "sentence_rewrite": 2
+        "sentence_rewrite": 2,
+        "short_free_sentence": 1
       },
       "unit_id": "U01",
       "rule_tag": "infinitive-vs-ing",
@@ -76,12 +80,13 @@
       "title": "Verbs with Both Forms: Little or No Change in Meaning",
       "level": "B2",
       "language": "en",
-      "exercise_count": 12,
+      "exercise_count": 13,
       "exercise_types": {
         "fill_blank": 6,
         "multiple_choice": 2,
         "sentence_correction": 2,
-        "sentence_rewrite": 2
+        "sentence_rewrite": 2,
+        "short_free_sentence": 1
       },
       "unit_id": "U01",
       "rule_tag": "infinitive-vs-ing",

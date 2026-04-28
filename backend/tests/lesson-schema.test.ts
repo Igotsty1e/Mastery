@@ -398,4 +398,92 @@ describe('LessonSchema', () => {
     };
     expect(LessonSchema.safeParse(lesson).success).toBe(false);
   });
+
+  // Wave 14.4 — V1.5 open-answer family, phase 4.
+  it('accepts a short_free_sentence with target_rule + 0..3 examples', () => {
+    const lesson = {
+      lesson_id: '00000000-0000-4000-8000-000000000020',
+      title: 'T',
+      language: 'en',
+      level: 'B2',
+      intro_rule: '',
+      intro_examples: [],
+      exercises: [
+        {
+          exercise_id: '00000000-0000-4000-8000-000000000040',
+          type: 'short_free_sentence',
+          instruction: 'Write a sentence using have been + -ing.',
+          target_rule:
+            'Present perfect continuous reports an ongoing activity from a past start point.',
+          accepted_examples: [
+            'I have been working on this report for three hours.',
+          ],
+        },
+      ],
+    };
+    expect(LessonSchema.safeParse(lesson).success).toBe(true);
+  });
+
+  it('accepts short_free_sentence with empty examples list', () => {
+    const lesson = {
+      lesson_id: '00000000-0000-4000-8000-000000000021',
+      title: 'T',
+      language: 'en',
+      level: 'B2',
+      intro_rule: '',
+      intro_examples: [],
+      exercises: [
+        {
+          exercise_id: '00000000-0000-4000-8000-000000000041',
+          type: 'short_free_sentence',
+          instruction: 'Write a sentence using enjoy + -ing.',
+          target_rule: 'After enjoy the next verb takes -ing.',
+          accepted_examples: [],
+        },
+      ],
+    };
+    expect(LessonSchema.safeParse(lesson).success).toBe(true);
+  });
+
+  it('rejects short_free_sentence with empty target_rule', () => {
+    const lesson = {
+      lesson_id: '00000000-0000-4000-8000-000000000022',
+      title: 'T',
+      language: 'en',
+      level: 'B2',
+      intro_rule: '',
+      intro_examples: [],
+      exercises: [
+        {
+          exercise_id: '00000000-0000-4000-8000-000000000042',
+          type: 'short_free_sentence',
+          instruction: 'Write something.',
+          target_rule: '',
+          accepted_examples: [],
+        },
+      ],
+    };
+    expect(LessonSchema.safeParse(lesson).success).toBe(false);
+  });
+
+  it('rejects short_free_sentence with more than 3 examples', () => {
+    const lesson = {
+      lesson_id: '00000000-0000-4000-8000-000000000023',
+      title: 'T',
+      language: 'en',
+      level: 'B2',
+      intro_rule: '',
+      intro_examples: [],
+      exercises: [
+        {
+          exercise_id: '00000000-0000-4000-8000-000000000043',
+          type: 'short_free_sentence',
+          instruction: 'Write a sentence.',
+          target_rule: 'Some rule.',
+          accepted_examples: ['One.', 'Two.', 'Three.', 'Four.'],
+        },
+      ],
+    };
+    expect(LessonSchema.safeParse(lesson).success).toBe(false);
+  });
 });

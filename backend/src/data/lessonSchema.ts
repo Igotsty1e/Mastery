@@ -102,16 +102,41 @@ const SentenceCorrectionExerciseBaseSchema = z.object({
 // post-rewrite variants; the runtime mirrors the `sentence_correction`
 // evaluator (deterministic match → AI fallback) so the operational
 // surface stays identical.
-//
-// `short_free_sentence` is intentionally NOT in this slice. Its
-// evaluator is fundamentally different (rule-conformance, not match
-// against canonical variants) and ships in a follow-up wave.
 const SentenceRewriteExerciseBaseSchema = z.object({
   exercise_id: z.string().uuid(),
   type: z.literal('sentence_rewrite'),
   instruction: z.string().min(1),
   prompt: z.string().min(1),
   accepted_answers: z.array(z.string().min(1)).min(1),
+  image: ExerciseImageSchema.optional(),
+  feedback: ExerciseFeedbackSchema.optional(),
+  ...EngineMetadataShape,
+});
+
+// Wave 14.4 — V1.5 open-answer family, phase 4.
+//
+// `short_free_sentence` asks the learner to produce ANY grammatical
+// sentence that demonstrates the target rule named in `instruction`
+// (e.g. "Write a sentence using the present perfect continuous to
+// describe an ongoing activity"). There is no canonical answer set;
+// the AI evaluator judges grammaticality + rule conformance.
+//
+// `target_rule` is a one-line description of the rule the student
+// must demonstrate, written for the model (not the learner). It
+// stays server-side — the wire projection strips it.
+//
+// `accepted_examples` is a 0-3 element list of sample-correct
+// sentences the model uses for grounding. Authors should keep this
+// list short to avoid biasing the model toward verbatim mimicry.
+// Empty arrays are allowed; the model still judges the rule.
+//
+// There is no `prompt` field — `instruction` is the prompt.
+const ShortFreeSentenceExerciseBaseSchema = z.object({
+  exercise_id: z.string().uuid(),
+  type: z.literal('short_free_sentence'),
+  instruction: z.string().min(1),
+  target_rule: z.string().min(1),
+  accepted_examples: z.array(z.string().min(1)).max(3).default([]),
   image: ExerciseImageSchema.optional(),
   feedback: ExerciseFeedbackSchema.optional(),
   ...EngineMetadataShape,
@@ -142,6 +167,7 @@ const ExerciseBaseSchema = z.discriminatedUnion('type', [
   MultipleChoiceExerciseBaseSchema,
   SentenceCorrectionExerciseBaseSchema,
   SentenceRewriteExerciseBaseSchema,
+  ShortFreeSentenceExerciseBaseSchema,
   ListeningDiscriminationExerciseBaseSchema,
 ]);
 

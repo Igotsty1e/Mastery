@@ -312,6 +312,52 @@ export async function submitAnswer(
       exercise.correct_option_id,
       exercise.options
     );
+  } else if (exercise.type === 'short_free_sentence') {
+    // Wave 14.4 — V1.5 open-answer family, phase 4. AI-only path:
+    // there is no canonical answer to match against. Rate-limit
+    // consumption is eager because the AI call always runs (no
+    // deterministic win to skip the budget). When the provider lacks
+    // the method (stub providers in tests), resolve as wrong without
+    // consuming budget so the service stays sane.
+    const normAnswer = normalize(input.userAnswer);
+    const cached = getAiResult(sessionId, input.exerciseId, normAnswer);
+    if (cached) {
+      evaluation = cached;
+    } else if (typeof ai.evaluateFreeSentence !== 'function' || !normAnswer) {
+      evaluation = {
+        correct: false,
+        evaluation_source: 'deterministic',
+        feedback: null,
+        canonical_answer: exercise.accepted_examples[0] ?? '',
+      };
+    } else {
+      if (input.clientIp !== null && !checkAiRateLimit(input.clientIp)) {
+        throw new LessonSessionError(429, 'rate_limit_exceeded');
+      }
+      try {
+        const aiRes = await ai.evaluateFreeSentence({
+          targetRule: exercise.target_rule,
+          instruction: exercise.instruction,
+          acceptedExamples: exercise.accepted_examples,
+          userAnswer: normAnswer,
+        });
+        const result: SentenceCorrectionResult = {
+          correct: aiRes.correct,
+          evaluation_source: 'ai_fallback',
+          feedback: aiRes.feedback || null,
+          canonical_answer: exercise.accepted_examples[0] ?? '',
+        };
+        setAiResult(sessionId, input.exerciseId, normAnswer, result);
+        evaluation = result;
+      } catch (_) {
+        evaluation = {
+          correct: false,
+          evaluation_source: 'ai_error',
+          feedback: null,
+          canonical_answer: exercise.accepted_examples[0] ?? '',
+        };
+      }
+    }
   } else {
     // sentence_correction + sentence_rewrite share the deterministic
     // → AI fallback path. The two types differ only in the field name

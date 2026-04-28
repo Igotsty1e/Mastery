@@ -230,6 +230,23 @@
       "feedback": {
         "explanation": "Present perfect simple reports a completed amount within a current period. The continuous form would foreground the ongoing activity rather than the count of finished items, which the cue \"so far this week\" requires."
       }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0002-4000-8000-00000000003d",
+      "type": "short_free_sentence",
+      "skill_id": "present-perfect-continuous-vs-simple",
+      "primary_target_error": "conceptual_error",
+      "evidence_tier": "strongest",
+      "meaning_frame": "Report how long an ongoing activity has lasted from a past start point.",
+      "instruction": "Write a sentence using \"have been + -ing\" with \"for\" or \"since\" to describe an ongoing activity in your life.",
+      "target_rule": "Present perfect continuous (have been + -ing) describes an activity that started in the past and is still happening now, typically marked by for + duration or since + start point.",
+      "accepted_examples": [
+        "I have been working on this report for three hours.",
+        "She's been studying English since 2020."
+      ],
+      "feedback": {
+        "explanation": "Present perfect continuous (have been + -ing) reports an ongoing activity from a past start point. Without \"for\" or \"since\", or with the simple form, the duration framing collapses."
+      }
     }
   ]
 }

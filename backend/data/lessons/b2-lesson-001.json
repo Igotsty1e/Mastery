@@ -238,6 +238,23 @@
       "feedback": {
         "explanation": "Avoid takes -ing, not to + infinitive — \"avoid to argue\" is a common slip from the aspirational pattern. Avoid sits in the gerund-only group, so the next verb is always -ing."
       }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0001-4000-8000-00000000003d",
+      "type": "short_free_sentence",
+      "skill_id": "verb-ing-after-gerund-verbs",
+      "primary_target_error": "form_error",
+      "evidence_tier": "strongest",
+      "meaning_frame": "Talk about a leisure activity you actively choose to do.",
+      "instruction": "Write a sentence using \"enjoy\" + the -ing form to talk about something you do at weekends.",
+      "target_rule": "After enjoy, the next verb takes -ing, not to + infinitive. Enjoy belongs to the gerund-only group (enjoy, avoid, suggest, mind, keep, finish).",
+      "accepted_examples": [
+        "I enjoy reading novels on Sunday mornings.",
+        "I really enjoy hiking with friends on the weekend."
+      ],
+      "feedback": {
+        "explanation": "After enjoy, the verb that follows must be in the -ing form. \"Enjoy to read\" is the most common L1-driven slip — enjoy sits in the gerund-only group, so the verb after it is always -ing."
+      }
     }
   ]
 }

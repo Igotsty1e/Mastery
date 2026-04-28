@@ -16,12 +16,12 @@ import {
 describe('exerciseBank indexes', () => {
   it('flattens every shipped lesson into a single bank', () => {
     const flat = getAllBankEntries();
-    // 5 shipped B2 lessons × 12 exercises each = 60 entries.
-    // Wave 14.2 phase 2 authored 10 sentence_rewrite items behind the
-    // RUNTIME_SUPPORTED_EXERCISE_TYPES gate; phase 3 (this wave)
-    // shipped the Flutter widget and flipped the gate, so the items
-    // are now engine-eligible.
-    expect(flat.length).toBe(60);
+    // 5 shipped B2 lessons × 13 exercises each = 65 entries.
+    // Wave 14.2 brought the bank to 60 (10 sentence_rewrite items
+    // behind a gate, then unlocked in phase 3). Wave 14.4 added one
+    // short_free_sentence item per lesson (+5) and flipped the gate
+    // for the new type in lockstep with the Flutter widget.
+    expect(flat.length).toBe(65);
   });
 
   it('groups entries by skill_id when present', () => {
@@ -80,6 +80,7 @@ describe('exerciseBank indexes', () => {
         'multiple_choice',
         'sentence_correction',
         'sentence_rewrite',
+        'short_free_sentence',
       ]);
     });
 
