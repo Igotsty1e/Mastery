@@ -1,0 +1,161 @@
+{
+  "lesson_id": "a1b2c3d4-0005-4000-8000-000000000001",
+  "title": "Verbs with Both Forms: Little or No Change in Meaning",
+  "language": "en",
+  "level": "B2",
+  "intro_rule": "Use\n\nA small group of verbs can be followed by **both -ing and to + infinitive** in standard B2 English with little or no change in meaning. In this lesson, focus on like, love, hate, prefer, start and begin.\n\nForm\n\nverb + **-ing** OR verb + **to + infinitive** — both accepted\n\nlike **reading** = like **to read**\nlove **cooking** = love **to cook**\nstart **planning** = start **to plan**\n\nImportant\n\nThere are two B2 exceptions where only **to + infinitive** is correct:\n\n1. After 'would' (would like / would love / would prefer / would hate) → only **to + infinitive**\n2. After start or begin in a continuous tense (am starting / is beginning) → only **to + infinitive**, to avoid two -ing forms in a row",
+  "intro_examples": [
+    "She loves **cooking** for her family. (also: 'loves **to cook**')",
+    "I would love **to visit** Tokyo next summer.",
+    "I am starting **to learn** Spanish online next month."
+  ],
+  "exercises": [
+    {
+      "exercise_id": "a1b2c3d4-0005-4000-8000-000000000031",
+      "type": "fill_blank",
+      "skill_id": "verb-both-forms-little-change",
+      "primary_target_error": "conceptual_error",
+      "evidence_tier": "medium",
+      "instruction": "Complete the gap with the correct form of the verb in brackets.",
+      "prompt": "I like ___ (read) novels before bed; it helps me fall asleep.",
+      "accepted_answers": ["reading", "to read"],
+      "feedback": {
+        "explanation": "Both 'reading' and 'to read' are accepted here. After like, love, hate and prefer (without 'would') both -ing and to + infinitive are acceptable in standard B2 English with little or no change in meaning. If you see like / love / hate / prefer (without 'would') followed by another verb → either form is correct."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0005-4000-8000-000000000032",
+      "type": "multiple_choice",
+      "skill_id": "verb-both-forms-little-change",
+      "primary_target_error": "contrast_error",
+      "evidence_tier": "weak",
+      "instruction": "Choose the correct option.",
+      "prompt": "Would you like ___ a cup of tea before the meeting starts?",
+      "options": [
+        { "id": "a", "text": "having" },
+        { "id": "b", "text": "to have" },
+        { "id": "c", "text": "have" },
+        { "id": "d", "text": "had" }
+      ],
+      "correct_option_id": "b",
+      "feedback": {
+        "explanation": "You chose 'having', but the correct answer is 'to have' because after 'would like / would love / would prefer / would hate' the only correct form is to + infinitive. The modal 'would' locks in the to-infinitive shape. If you see 'would' before like, love, hate or prefer → use to + infinitive."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0005-4000-8000-000000000033",
+      "type": "fill_blank",
+      "skill_id": "verb-both-forms-little-change",
+      "primary_target_error": "conceptual_error",
+      "evidence_tier": "medium",
+      "instruction": "Complete the gap with the correct form of the verb in brackets.",
+      "prompt": "She loves ___ (cook) for her family on weekends.",
+      "accepted_answers": ["cooking", "to cook"],
+      "feedback": {
+        "explanation": "Both 'cooking' and 'to cook' are accepted here. After love (and like, hate, prefer) both forms are acceptable in standard B2 English with no real change in meaning. If you see love / like / hate / prefer (without 'would') → either form works."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0005-4000-8000-000000000034",
+      "type": "fill_blank",
+      "skill_id": "verb-both-forms-little-change",
+      "primary_target_error": "conceptual_error",
+      "evidence_tier": "medium",
+      "instruction": "Complete the gap with the correct form of the verb in brackets.",
+      "prompt": "I hate ___ (wait) at the airport when flights are delayed.",
+      "accepted_answers": ["waiting", "to wait"],
+      "feedback": {
+        "explanation": "Both 'waiting' and 'to wait' are accepted here. After hate (and like, love, prefer) both forms are acceptable in standard B2 English with no real change in meaning. If you see hate / like / love / prefer (without 'would') → either form works."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0005-4000-8000-000000000035",
+      "type": "fill_blank",
+      "skill_id": "verb-both-forms-little-change",
+      "primary_target_error": "conceptual_error",
+      "evidence_tier": "medium",
+      "instruction": "Complete the gap with the correct form of the verb in brackets.",
+      "prompt": "He prefers ___ (work) from home on Fridays whenever possible.",
+      "accepted_answers": ["working", "to work"],
+      "feedback": {
+        "explanation": "Both 'working' and 'to work' are accepted here. After prefer (and like, love, hate) both forms are acceptable in standard B2 English with no real change in meaning. If you see prefer / like / love / hate (without 'would') → either form works."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0005-4000-8000-000000000036",
+      "type": "multiple_choice",
+      "skill_id": "verb-both-forms-little-change",
+      "primary_target_error": "contrast_error",
+      "evidence_tier": "weak",
+      "instruction": "Choose the correct option.",
+      "prompt": "I would prefer ___ in a quieter office if that is possible.",
+      "options": [
+        { "id": "a", "text": "working" },
+        { "id": "b", "text": "to work" },
+        { "id": "c", "text": "work" },
+        { "id": "d", "text": "worked" }
+      ],
+      "correct_option_id": "b",
+      "feedback": {
+        "explanation": "You chose 'working', but the correct answer is 'to work' because after 'would prefer / would like / would love / would hate' the only correct form is to + infinitive. The modal 'would' locks in the to-infinitive shape. If you see 'would' before prefer, like, love or hate → use to + infinitive."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0005-4000-8000-000000000037",
+      "type": "fill_blank",
+      "skill_id": "verb-both-forms-little-change",
+      "primary_target_error": "conceptual_error",
+      "evidence_tier": "medium",
+      "instruction": "Complete the gap with the correct form of the verb in brackets.",
+      "prompt": "We started ___ (plan) the project right after the holiday break.",
+      "accepted_answers": ["planning", "to plan"],
+      "feedback": {
+        "explanation": "Both 'planning' and 'to plan' are accepted here. After start (and begin) in a non-continuous tense, both forms are acceptable in standard B2 English with no real change in meaning. If you see start / begin (in a simple or perfect tense) followed by another verb → either form works."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0005-4000-8000-000000000038",
+      "type": "fill_blank",
+      "skill_id": "verb-both-forms-little-change",
+      "primary_target_error": "conceptual_error",
+      "evidence_tier": "medium",
+      "instruction": "Complete the gap with the correct form of the verb in brackets.",
+      "prompt": "She began ___ (study) Italian three years ago for her work.",
+      "accepted_answers": ["studying", "to study"],
+      "feedback": {
+        "explanation": "Both 'studying' and 'to study' are accepted here. After begin (and start) in a non-continuous tense, both forms are acceptable in standard B2 English with no real change in meaning. If you see begin / start (in a simple or perfect tense) followed by another verb → either form works."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0005-4000-8000-000000000039",
+      "type": "sentence_correction",
+      "skill_id": "verb-both-forms-little-change",
+      "primary_target_error": "form_error",
+      "evidence_tier": "strong",
+      "instruction": "Rewrite the sentence correctly.",
+      "prompt": "I am starting learning Spanish online next month for a project abroad.",
+      "accepted_corrections": [
+        "I am starting to learn Spanish online next month for a project abroad."
+      ],
+      "feedback": {
+        "explanation": "You kept 'am starting learning', but the correct form is 'am starting to learn' because start and begin in a continuous tense (am starting, are starting, is beginning) take to + infinitive to avoid two -ing forms in a row. If start or begin appears in a continuous tense → use to + infinitive."
+      }
+    },
+    {
+      "exercise_id": "a1b2c3d4-0005-4000-8000-00000000003a",
+      "type": "sentence_correction",
+      "skill_id": "verb-both-forms-little-change",
+      "primary_target_error": "contrast_error",
+      "evidence_tier": "strongest",
+      "meaning_frame": "preference framed as a polite or hypothetical wish",
+      "instruction": "Rewrite the sentence correctly.",
+      "prompt": "I would love visiting Tokyo with you next summer if we both have time off.",
+      "accepted_corrections": [
+        "I would love to visit Tokyo with you next summer if we both have time off."
+      ],
+      "feedback": {
+        "explanation": "You kept 'would love visiting', but the correct form is 'would love to visit' because 'would + love / like / prefer / hate' frames the action as a polite or hypothetical wish — and that meaning takes only to + infinitive in standard B2 English. Without 'would', both 'love visiting' and 'love to visit' would be acceptable; the modal 'would' is what locks in the to-infinitive. If you see 'would' before love / like / prefer / hate → use to + infinitive."
+      }
+    }
+  ]
+}

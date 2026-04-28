@@ -1,5 +1,5 @@
 {
-  "version": "1",
+  "version": "2",
   "content_schema_ref": "docs/content-contract.md",
   "lessons": [
     {
@@ -13,6 +13,9 @@
         "multiple_choice": 3,
         "sentence_correction": 3
       },
+      "unit_id": "U01",
+      "rule_tag": "infinitive-vs-ing",
+      "micro_rule_tag": "verb-ing-after-gerund-verbs",
       "file": "lessons/b2-lesson-001.json"
     },
     {
@@ -27,7 +30,58 @@
         "sentence_correction": 1,
         "listening_discrimination": 1
       },
+      "unit_id": "U02",
+      "rule_tag": "present-perfect-continuous-vs-simple",
+      "micro_rule_tag": "present-perfect-continuous-vs-simple",
       "file": "lessons/b2-lesson-002.json"
+    },
+    {
+      "lesson_id": "a1b2c3d4-0003-4000-8000-000000000001",
+      "title": "Verbs Followed by to + Infinitive",
+      "level": "B2",
+      "language": "en",
+      "exercise_count": 10,
+      "exercise_types": {
+        "fill_blank": 6,
+        "multiple_choice": 2,
+        "sentence_correction": 2
+      },
+      "unit_id": "U01",
+      "rule_tag": "infinitive-vs-ing",
+      "micro_rule_tag": "verb-to-inf-after-aspirational-verbs",
+      "file": "lessons/b2-lesson-003.json"
+    },
+    {
+      "lesson_id": "a1b2c3d4-0004-4000-8000-000000000001",
+      "title": "Verbs with a Change in Meaning: -ing vs to + Infinitive",
+      "level": "B2",
+      "language": "en",
+      "exercise_count": 10,
+      "exercise_types": {
+        "fill_blank": 6,
+        "multiple_choice": 2,
+        "sentence_correction": 2
+      },
+      "unit_id": "U01",
+      "rule_tag": "infinitive-vs-ing",
+      "micro_rule_tag": "verb-both-forms-meaning-change",
+      "file": "lessons/b2-lesson-004.json"
+    },
+    {
+      "lesson_id": "a1b2c3d4-0005-4000-8000-000000000001",
+      "title": "Verbs with Both Forms: Little or No Change in Meaning",
+      "level": "B2",
+      "language": "en",
+      "exercise_count": 10,
+      "exercise_types": {
+        "fill_blank": 6,
+        "multiple_choice": 2,
+        "sentence_correction": 2
+      },
+      "unit_id": "U01",
+      "rule_tag": "infinitive-vs-ing",
+      "micro_rule_tag": "verb-both-forms-little-change",
+      "file": "lessons/b2-lesson-005.json"
     }
   ]
 }

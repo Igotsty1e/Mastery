@@ -50,7 +50,7 @@ consume them.
 ```json
 {
   "skill_id": "string (registry id, e.g. 'verbs.suggest_ing')",
-  "primary_target_error": "conceptual_error | form_error | contrast_error | careless_error | transfer_error | pragmatic_error",
+  "primary_target_error": "conceptual_error | form_error | contrast_error | careless_error",
   "evidence_tier": "weak | medium | strong | strongest",
   "meaning_frame": "string (required only when evidence_tier == 'strongest')"
 }
@@ -67,8 +67,9 @@ Rules:
   the skill graph; see §10 below. This cross-reference is asserted by a
   CI test, not by `LessonSchema` itself, so registry-absent fixtures
   still load.
-- `primary_target_error` must be one of the six codes in
-  `LEARNING_ENGINE.md §5`.
+- `primary_target_error` must be one of the four V1 codes in
+  `LEARNING_ENGINE.md §5` (Wave 10 dropped `transfer_error` and
+  `pragmatic_error`).
 - `evidence_tier` follows the four-tier hierarchy in
   `LEARNING_ENGINE.md §6.1`.
 - `meaning_frame` is **required** when `evidence_tier == "strongest"`,
@@ -358,7 +359,7 @@ treated as an empty registry during the Wave 1 rollout.
       "cefr_level": "A1 | A2 | B1 | B2 | C1 | C2",
       "prerequisites": ["string (skill_id of an earlier-mastered skill)"],
       "contrasts_with": ["string (skill_id of a sibling commonly confused with this one)"],
-      "target_errors": ["conceptual_error | form_error | contrast_error | careless_error | transfer_error | pragmatic_error"],
+      "target_errors": ["conceptual_error | form_error | contrast_error | careless_error"],
       "mastery_signals": ["weak | medium | strong | strongest"],
       "lesson_refs": ["string (lesson_id where this skill is exercised)"]
     }

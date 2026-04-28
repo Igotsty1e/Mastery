@@ -7,6 +7,9 @@ import { inject } from './helpers/inject';
 
 const LESSON_ID = 'a1b2c3d4-0001-4000-8000-000000000001';
 const LESSON_ID_2 = 'a1b2c3d4-0002-4000-8000-000000000001';
+const LESSON_ID_3 = 'a1b2c3d4-0003-4000-8000-000000000001';
+const LESSON_ID_4 = 'a1b2c3d4-0004-4000-8000-000000000001';
+const LESSON_ID_5 = 'a1b2c3d4-0005-4000-8000-000000000001';
 const UNKNOWN_ID = '00000000-0000-4000-8000-000000000099';
 
 const stubAi: AiProvider = { evaluateSentenceCorrection: () => Promise.resolve({ correct: false, feedback: '' }) };
@@ -31,6 +34,27 @@ describe('GET /lessons', () => {
         title: 'Present Perfect: Continuous vs Simple',
         slug: 'present-perfect-continuous-vs-simple',
         order: 2,
+        total_exercises: 10,
+      },
+      {
+        id: LESSON_ID_3,
+        title: 'Verbs Followed by to + Infinitive',
+        slug: 'verbs-followed-by-to-infinitive',
+        order: 3,
+        total_exercises: 10,
+      },
+      {
+        id: LESSON_ID_4,
+        title: 'Verbs with a Change in Meaning: -ing vs to + Infinitive',
+        slug: 'verbs-with-a-change-in-meaning-ing-vs-to-infinitive',
+        order: 4,
+        total_exercises: 10,
+      },
+      {
+        id: LESSON_ID_5,
+        title: 'Verbs with Both Forms: Little or No Change in Meaning',
+        slug: 'verbs-with-both-forms-little-or-no-change-in-meaning',
+        order: 5,
         total_exercises: 10,
       },
     ]);
