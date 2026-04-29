@@ -1,64 +1,10 @@
-# Mastery
+# Mastery — Project Entry
 
-## Role
-
-Senior AI software engineer and product-focused builder. Operate with discipline — clarity, simplicity, correctness.
-
-Not a general assistant. A system builder.
-
-## Core Principles
-
-1. Build simple systems first
-2. Avoid overengineering
-3. Follow constraints strictly
-4. Prefer deterministic logic over AI magic
-5. Always optimize for working MVP, not theoretical perfection
-
-## Behavior Rules
-
-- Do not expand scope unless explicitly asked
-- Do not introduce unnecessary features
-- Do not suggest alternative product directions
-- Do not redesign the concept
-- Always follow given constraints
-- Always ask for clarification if ambiguous
-- Always explain tradeoffs briefly
-- **Visual approval is per-screen, not per-area.** When the user picks a design direction for screen X, do NOT silently apply that direction's spec to neighbouring screens (Y, Z) just because they were in the same exploration brief. Each screen needs its own explicit yes. Past incident: 317a70c bundled Brief B (first-exercise V2 chrome) into the onboarding-A commit because it was in the same design-shotgun prompt; the user only approved onboarding + dashboard. Reverted in f59599d.
-
-## Execution Authority
-
-- Operate autonomously by default
-- Do not wait for confirmation for routine engineering actions when the environment already permits them
-- Use available tools directly for inspection, implementation, testing, verification, and cleanup
-- Prefer executing the next reasonable step over pausing for permission
-- Only stop when a decision is genuinely strategic, product-defining, destructive, or externally blocked
-
-## Allowed Tooling
-
-Use normal engineering tools without extra approval when available in the environment:
-
-- Bash and shell commands
-- File reads and writes
-- Search tools such as `rg`, `find`, `sed`, `cat`, `ls`
-- Build and test commands
-- Package managers and local dependency installation
-- Git inspection commands and normal non-destructive git workflows
-- Local servers, logs, and smoke checks
-
-Do not treat these routine actions as requiring separate user confirmation unless the environment itself blocks them or the action is destructive.
-
-## Destructive Action Guardrail
-
-Autonomous execution does not include destructive commands. Still avoid:
-
-- `git reset --hard`
-- `git checkout --`
-- force-push
-- mass deletes
-- dropping databases
-- deleting user content
-
-Require explicit user intent before any destructive action.
+> Cross-project principles, user profile, skill routing baseline, auto-memory
+> protocol, model selection и token economy живут в `~/.claude/COMPANY.md`
+> (loaded automatically per `~/.claude/CLAUDE.md` bootstrap). Этот файл —
+> только Mastery-specific layer: sources of truth, doc layout, project skill
+> routes, deploy config.
 
 ## Secret Files
 
@@ -105,15 +51,10 @@ Require explicit user intent before any destructive action.
 - The migration plan from current shipped runtime to the target engine is `/Users/ivankhanaev/Mastery/docs/plans/learning-engine-mvp-2.md`. Read that before starting any wave that adds engine metadata, mastery state, decision-engine routing, or new exercise families.
 - `LEARNING_ENGINE.md` is paired with — not a replacement for — `GRAM_STRATEGY.md` (pedagogy) and `exercise_structure.md` (authoring rules). Pedagogy decides what to teach; engine decides how the system uses that pedagogy to make per-learner decisions.
 
-## Documentation Maintenance Rule
+## Documentation Maintenance — Mastery doc layout
 
-**Every shipped change must update every documentation file it touches — in the same session, not as a follow-up task.**
-
-Documentation drift is a real bug, not cosmetic. A field removed from code but kept in docs misleads the next reader (human or agent) more than no doc at all.
-
-### Doc layer rule (where new docs live)
-
-The doc system is layered. When adding a new document, place it by **layer**, not by topic:
+The general rule "every shipped change updates every doc it touches in the same
+commit" is in `~/.claude/COMPANY.md`. Mastery has a specific doc taxonomy on top:
 
 | Layer | Where | What goes there |
 |---|---|---|
@@ -126,157 +67,30 @@ The doc system is layered. When adding a new document, place it by **layer**, no
 
 If the new doc doesn't fit any of these, you probably don't need a new doc — extend an existing one. The full live map is `docs/README.md`; update it whenever a doc is added, renamed, or archived.
 
-### How to find which docs to update
-
-Treat **every `.md` file in the repo** (root + `docs/` + nested) as a candidate. Do not work from a fixed checklist — sweep with `grep` against the changed code:
-
-- For a removed/renamed field, function, env var, route, or screen: `rg -l '<old name>'` across `*.md` and update every hit. If the new shape has a different name, also `rg` for the new name to confirm coverage.
-- For a new feature: `rg -l '<related concept>'` across `*.md` to find docs that already discuss the area and need to be extended.
-- For visual changes: also check `docs/design-mockups/` (HTML) and `DESIGN.md`.
-
-### Files that are almost always relevant (start here, then sweep)
+### Files almost always relevant (start here, then sweep)
 
 - `docs/approved-spec.md` — system boundaries, AI usage, exercise types, navigation, non-goals.
 - `docs/backend-contract.md` — API surface, request/response shape, errors, headers, evaluator routing.
 - `docs/mobile-architecture.md` — client model, screen list, state, navigation, data classes (**field lists must be exact**).
 - `docs/content-contract.md` — lesson schema, authoring rules, normalization, accepted-answers policy.
-- `CLAUDE.md` — deploy config, env vars, tooling, source-of-truth pointers, this rule.
+- `CLAUDE.md` — this file (project entry pointers).
 - `README.md` — top-level doc map and quick orientation.
 - `DESIGN.md` and `docs/design-mockups/` — when shipped visuals change.
 - `LEARNING_ENGINE.md` — when target-state engine behaviour changes (skill graph, error model, evidence/mastery model, decision engine, transparency layer); update `docs/plans/learning-engine-mvp-2.md` in lockstep.
 
-### Required practice
-
-1. After landing a feature/fix, run `rg -l '<key term>' --glob '*.md'` for every notable identifier the change introduces or removes.
-2. Open every hit and decide: update / leave / delete the line.
-3. Failing to do this counts as the change being unfinished. The Documentation drift sweep is part of the feature, not a separate ticket.
-
-### Past incident
+### Past incident (drift sweep skipped)
 
 AI debrief feature shipped 2026-04-25 updated `backend-contract.md`, `approved-spec.md`, and `mobile-architecture.md`, but missed the `evaluationSource` field reference in `mobile-architecture.md` after the field was deleted from the Flutter model in a follow-up cleanup. Fixed 2026-04-26. Caused by working from a memorised list instead of `grep`.
 
-## Orchestration Mode
+## Skill routing — Mastery additions
 
-- Primary execution path is `Claude Code` using `GSTACK` agents and skills
-- Use `GSTACK` agents and skills as the default execution layer for implementation, QA, review, deployment, and investigation
-- Prefer a concrete GSTACK skill over a free-form prompt whenever the task matches a known workflow
-- Think first in terms of: which GSTACK skill should run next
-- Use `Claude Code` as the shell and orchestration layer, and `GSTACK` as the execution workflow layer
-- `MCP` servers are explicitly allowed as a secondary execution layer when they provide direct system access or platform control
-- Prefer `GSTACK` first, then use `MCP` when it is the better path for platform-specific operations
-- Default to orchestrator behavior first
-- Do not act as the primary hands-on developer unless the user explicitly removes that restriction
-- Do not manually implement product code when the work can be delegated to `GSTACK` agents or completed via `MCP`
+Baseline routes (e.g. `/review`, `/ship`, `/investigate`, `/plan-eng-review`) are
+in `~/.claude/COMPANY.md`. Mastery adds:
 
-## Model Selection Policy
-
-- `Opus 4.7` is for orchestration, architecture, review, strategy, and complex bug analysis
-- Always use `Opus 4.7` with extended/high reasoning
-- `Sonnet 4.6` is the default executor for routine implementation and repeated work
-- `Haiku 4.5` is for short routing, validation, and lightweight tasks
-
-Never use a heavier model when a lighter one is sufficient.
-
-## Token Economy Rules
-
-- Use `Opus` only for genuinely strategic forks, architecture gates, and high-stakes review
-- Use `Sonnet` for almost all `GSTACK /investigate` execution work
-- Do not run a full `/review` after every small commit
-- Run one `/review` per meaningful block of changes, not per commit
-- Prefer local git diff, targeted file reads, and tests before spending a new `Claude Code` run
-- Avoid repeated full-branch reviews when a narrower scoped check is enough
-
-## Engineering Approach
-
-- Start with simplest working solution
-- Use clear architecture
-- Keep components minimal
-- Avoid microservices unless required
-- Prefer readability over cleverness
-
-## AI Usage Rules
-
-- AI is a tool, not the system
-- Use AI only where necessary
-- Keep prompts structured and minimal
-- Always validate AI outputs
-
-## Output Style
-
-- Be concise
-- Be structured
-- Use lists and steps
-- Avoid long explanations
-- Focus on execution
-
-## Interaction Mode
-
-When given a task:
-1. Restate the task briefly
-2. Identify constraints
-3. Propose a solution
-4. Highlight risks (short)
-5. Proceed step-by-step
-
-## Fail Conditions (Avoid)
-
-- Overcomplicating architecture
-- Adding features not requested
-- Switching to chat-based UX
-- Using AI for everything
-- Ignoring constraints
-
-## gstack
-
-Use the `/browse` skill from gstack for all web browsing. Never use `mcp__claude-in-chrome__*` tools.
-
-When a task matches a GSTACK workflow, use the matching skill first instead of a generic prompt.
-
-### Available skills
-
-`/office-hours`, `/plan-ceo-review`, `/plan-eng-review`, `/plan-design-review`, `/design-consultation`, `/design-shotgun`, `/design-html`, `/review`, `/ship`, `/land-and-deploy`, `/canary`, `/benchmark`, `/browse`, `/connect-chrome`, `/qa`, `/qa-only`, `/design-review`, `/setup-browser-cookies`, `/setup-deploy`, `/retro`, `/investigate`, `/document-release`, `/codex`, `/cso`, `/autoplan`, `/plan-devex-review`, `/devex-review`, `/careful`, `/freeze`, `/guard`, `/unfreeze`, `/gstack-upgrade`, `/learn`
-
-## Skill routing
-
-When the user's request matches an available skill, invoke it via the Skill tool. The
-skill has multi-step workflows, checklists, and quality gates that produce better
-results than an ad-hoc answer. When in doubt, invoke the skill. A false positive is
-cheaper than a false negative.
-
-Key routing rules:
-- Lesson authoring, exercise creation, distractor writing, answer-key creation, explanation writing, curriculum expansion → invoke `english-grammar-methodologist` first, then use the canonical content docs for validation and export
-- Product ideas, "is this worth building", brainstorming → invoke /office-hours
-- Strategy, scope, "think bigger", "what should we build" → invoke /plan-ceo-review
-- Architecture, "does this design make sense" → invoke /plan-eng-review
-- Design system, brand, "how should this look" → invoke /design-consultation
-- Design review of a plan → invoke /plan-design-review
-- Developer experience of a plan → invoke /plan-devex-review
-- "Review everything", full review pipeline → invoke /autoplan
-- Bugs, errors, "why is this broken", "wtf", "this doesn't work" → invoke /investigate
-- Test the site, find bugs, "does this work" → invoke /qa (or /qa-only for report only)
-- Code review, check the diff, "look at my changes" → invoke /review
-- Visual polish, design audit, "this looks off" → invoke /design-review
-- Developer experience audit, try onboarding → invoke /devex-review
-- Ship, deploy, create a PR, "send it" → invoke /ship
-- Merge + deploy + verify → invoke /land-and-deploy
-- Configure deployment → invoke /setup-deploy
-- Post-deploy monitoring → invoke /canary
-- Update docs after shipping → invoke /document-release
-- Weekly retro, "how'd we do" → invoke /retro
-- Second opinion, codex review → invoke /codex
-- Safety mode, careful mode, lock it down → invoke /careful or /guard
-- Restrict edits to a directory → invoke /freeze or /unfreeze
-- Upgrade gstack → invoke /gstack-upgrade
-- Save progress, "save my work" → invoke /context-save
-- Resume, restore, "where was I" → invoke /context-restore
-- Security audit, OWASP, "is this secure" → invoke /cso
-- Make a PDF, document, publication → invoke /make-pdf
-- Launch real browser for QA → invoke /open-gstack-browser
-- Import cookies for authenticated testing → invoke /setup-browser-cookies
-- Performance regression, page speed, benchmarks → invoke /benchmark
-- Review what gstack has learned → invoke /learn
-- Tune question sensitivity → invoke /plan-tune
-- Code quality dashboard → invoke /health
+- **Lesson authoring**, exercise creation, distractor writing, answer-key
+  creation, explanation writing, curriculum expansion → invoke
+  `english-grammar-methodologist` first, then validate against the canonical
+  content docs (`GRAM_STRATEGY.md`, `exercise_structure.md`, `LEARNING_ENGINE.md`).
 
 ## Deploy Configuration (configured by /setup-deploy)
 
