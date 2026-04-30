@@ -135,33 +135,17 @@
     },
     {
       "exercise_id": "a1b2c3d4-0001-4000-8000-000000000037",
-      "type": "multiple_choice",
+      "type": "fill_blank",
       "skill_id": "verb-ing-after-gerund-verbs",
       "primary_target_error": "contrast_error",
-      "evidence_tier": "weak",
-      "instruction": "Choose the correct option.",
-      "prompt": "Which sentence is correct?",
-      "options": [
-        {
-          "id": "a",
-          "text": "I enjoy to read before bed."
-        },
-        {
-          "id": "b",
-          "text": "I enjoy reading before bed."
-        },
-        {
-          "id": "c",
-          "text": "I enjoy read before bed."
-        },
-        {
-          "id": "d",
-          "text": "I enjoying reading before bed."
-        }
+      "evidence_tier": "medium",
+      "instruction": "Complete the gap with the correct verb form.",
+      "prompt": "I enjoy ___ before bed.",
+      "accepted_answers": [
+        "reading"
       ],
-      "correct_option_id": "b",
       "feedback": {
-        "explanation": "Enjoy is followed by the -ing form. Only 'I enjoy reading before bed' follows the correct pattern."
+        "explanation": "After enjoy, we use the -ing form, never 'to + infinitive'. The natural pattern is 'enjoy + verb-ing', so the answer is 'reading'."
       }
     },
     {
@@ -170,6 +154,7 @@
       "skill_id": "verb-ing-after-gerund-verbs",
       "primary_target_error": "contrast_error",
       "evidence_tier": "strong",
+      "meaning_frame": "Recommend an action in response to time pressure.",
       "instruction": "Rewrite the sentence correctly.",
       "prompt": "She suggested to take a taxi because it was late.",
       "accepted_corrections": [
@@ -185,6 +170,7 @@
       "skill_id": "verb-ing-after-gerund-verbs",
       "primary_target_error": "contrast_error",
       "evidence_tier": "strong",
+      "meaning_frame": "Accept a small inconvenience without objection.",
       "instruction": "Rewrite the sentence correctly.",
       "prompt": "I don't mind to wait for a few minutes.",
       "accepted_corrections": [
@@ -200,6 +186,7 @@
       "skill_id": "verb-ing-after-gerund-verbs",
       "primary_target_error": "contrast_error",
       "evidence_tier": "strong",
+      "meaning_frame": "Hold off on a topic until the right people are present.",
       "instruction": "Rewrite the sentence correctly.",
       "prompt": "We avoided to discuss the budget until everyone arrived.",
       "accepted_corrections": [
@@ -215,6 +202,7 @@
       "skill_id": "verb-ing-after-gerund-verbs",
       "primary_target_error": "form_error",
       "evidence_tier": "strong",
+      "meaning_frame": "Recommend a preventative action against a known problem.",
       "instruction": "Rewrite starting with \"I suggest...\".",
       "prompt": "We should leave early to avoid the traffic.",
       "accepted_answers": [
@@ -230,6 +218,7 @@
       "skill_id": "verb-ing-after-gerund-verbs",
       "primary_target_error": "contrast_error",
       "evidence_tier": "strong",
+      "meaning_frame": "Describe a habit of stepping away from interpersonal friction.",
       "instruction": "Rewrite using \"avoid\".",
       "prompt": "I never argue with him at meetings.",
       "accepted_answers": [
