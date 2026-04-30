@@ -1,15 +1,13 @@
 // HomeScreen — first-launch routes through the Arrival Ritual onboarding;
-// the dashboard is the single Home for every other launch. The dashboard
-// implements the locked Study Desk contract (`docs/plans/dashboard-study-desk.md`)
-// with reference visual at `docs/design-mockups/dashboard-study-desk.html`.
+// the dashboard is the single Home for every other launch.
 //
-// Order on the dashboard (locked):
-//   1. header (greeting + level dropdown trigger + avatar)
+// Order on the dashboard:
+//   1. header (level dropdown trigger only — greeting + sub + avatar removed
+//      in the automaticity pivot Wave 0 cleanup)
 //   2. next-lesson hero
-//   3. last-lesson report (only when LastLessonStore has a record)
-//   4. current unit with badge states
-//   5. coming next (quiet)
-//   6. premium block (visual stub — no monetisation in MVP)
+//   3. review-due section (when ReviewScheduler has due skills)
+//   4. rules trigger (button → modal listing skills + per-skill rules)
+//   5. premium block (visual stub — no monetisation in MVP)
 
 import 'dart:async';
 
@@ -24,17 +22,15 @@ import '../learner/learner_state_migrator.dart';
 import '../learner/review_scheduler.dart';
 import '../learner/skill_catalog.dart';
 import '../progress/local_progress_store.dart';
-import '../session/last_lesson_store.dart';
 import '../theme/mastery_theme.dart';
 import '../widgets/mastery_route.dart';
 import '../widgets/mastery_widgets.dart';
-import '../widgets/skill_status_badge.dart';
 import '../widgets/review_due_section.dart';
+import '../widgets/skill_status_badge.dart';
 import 'diagnostic_screen.dart';
 import 'lesson_intro_screen.dart';
 import 'onboarding_arrival_ritual_screen.dart';
 import 'sign_in_screen.dart';
-import 'summary_screen.dart';
 
 /// One row of the curriculum the dashboard tracks. Built from
 /// `GET /lessons` (server order) plus the per-lesson completion count
@@ -401,27 +397,6 @@ class _HomeScreenState extends State<HomeScreen> {
     await _loadDashboard();
   }
 
-  void _openLastLessonSummary({bool toMistakes = false}) {
-    final record = LastLessonStore.instance.record;
-    if (record == null) return;
-    Navigator.of(context).push(
-      MasteryFadeRoute(
-        builder: (_) => SummaryScreen(
-          correctCount: record.correctCount,
-          totalCount: record.totalExercises,
-          // Wave 14.9 — full result threaded through LastLessonStore
-          // so the per-exercise mistake list renders + the
-          // `initialScrollToMistakes` deep-link actually has a scroll
-          // target. Falls back to null when the original `/result`
-          // fetch failed (rare; SummaryScreen still shows headline
-          // counts in that case).
-          summary: record.summary,
-          initialScrollToMistakes: toMistakes,
-        ),
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     if (_resolving) {
@@ -450,19 +425,21 @@ class _HomeScreenState extends State<HomeScreen> {
         onComplete: _completeOnboarding,
       );
     }
-    return ListenableBuilder(
-      listenable: LastLessonStore.instance,
-      builder: (context, _) => _buildDashboard(),
-    );
+    return _buildDashboard();
   }
 
   // ────────────────────────────────────────────────────────────────────────
-  // Dashboard — Study Desk (docs/plans/dashboard-study-desk.md)
+  // Dashboard
+  //
+  // The post-lesson report is still recorded in `LastLessonStore` and
+  // persisted by the backend (`lesson_sessions.debrief_snapshot`), but
+  // is intentionally not rendered here as part of the automaticity pivot
+  // (Wave 0). The data stays available for the SummaryScreen surface and
+  // for future engine-driven decisions; the dashboard itself stays lean.
   // ────────────────────────────────────────────────────────────────────────
 
   Widget _buildDashboard() {
     final tokens = context.masteryTokens;
-    final lastRecord = LastLessonStore.instance.record;
 
     return Scaffold(
       backgroundColor: tokens.bgApp,
@@ -494,15 +471,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 // longer routes through it.
                 onStart: _startDynamicSession,
               ),
-              if (lastRecord != null) ...[
-                const SizedBox(height: 22),
-                _LastLessonReport(
-                  record: lastRecord,
-                  onReviewMistakes: () =>
-                      _openLastLessonSummary(toMistakes: true),
-                  onOpenFullSummary: () => _openLastLessonSummary(),
-                ),
-              ],
               if (_dueReviews.isNotEmpty) ...[
                 const SizedBox(height: 22),
                 ReviewDueSection(
@@ -515,16 +483,16 @@ class _HomeScreenState extends State<HomeScreen> {
               // so a fixed unit listing no longer reflects what the
               // learner will see. Skill-progress UI is V1.5
               // (`docs/plans/learning-engine-v1.md` decision #12).
-              // Wave 12.7 — Rules card. Lists every skill in the bank
-              // with title + CEFR chip; tap a row → opens the Wave
-              // 12.6 SkillRule bottom sheet (intro_rule +
-              // intro_examples). The library V1.6 entry per
-              // `docs/plans/wave12.6-rule-access.md`. Re-renders when
-              // the SkillCatalog finishes its first fetch.
+              // Rules — collapsed behind a trigger as part of the
+              // automaticity pivot Wave 0. Tap → modal bottom sheet
+              // listing every skill in the bank (title + CEFR chip +
+              // status badge). Tapping a row inside the modal still
+              // opens the per-skill rule sheet (`_RuleSheetBody`).
               const SizedBox(height: 22),
               ListenableBuilder(
                 listenable: SkillCatalog.instance,
-                builder: (context, _) => _RulesCard(records: _skillRecords),
+                builder: (context, _) =>
+                    _RulesTrigger(records: _skillRecords),
               ),
               const SizedBox(height: 22),
               const _PremiumBlock(),
@@ -577,72 +545,11 @@ class _HomeScreenState extends State<HomeScreen> {
 class _DashboardHeader extends StatelessWidget {
   const _DashboardHeader();
 
-  String get _greeting {
-    final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
-  }
-
   @override
   Widget build(BuildContext context) {
-    final tokens = context.masteryTokens;
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'STUDY DESK',
-                style: MasteryTextStyles.mono(
-                  size: 11,
-                  lineHeight: 14,
-                  weight: FontWeight.w600,
-                  color: tokens.textTertiary,
-                  letterSpacing: 1.6,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                _greeting,
-                style: MasteryTextStyles.headlineMd.copyWith(
-                  fontFamily: 'Fraunces',
-                  fontSize: 28,
-                  height: 32 / 28,
-                  fontWeight: FontWeight.w600,
-                  color: MasteryColors.textPrimary,
-                  letterSpacing: -0.4,
-                  fontVariations: const [
-                    FontVariation('opsz', 144),
-                    FontVariation('wght', 600),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Your next lesson is ready, your last result is close at hand.',
-                style: MasteryTextStyles.bodySm.copyWith(
-                  color: MasteryColors.textSecondary,
-                  height: 1.5,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(width: 12),
-        Padding(
-          padding: const EdgeInsets.only(top: 22),
-          child: Row(
-            children: const [
-              _LevelTrigger(level: 'B2'),
-              SizedBox(width: 10),
-              _Avatar(),
-            ],
-          ),
-        ),
-      ],
+    return const Align(
+      alignment: Alignment.centerRight,
+      child: _LevelTrigger(level: 'B2'),
     );
   }
 }
@@ -765,40 +672,6 @@ class _LevelMenuItemState extends State<_LevelMenuItem> {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _Avatar extends StatelessWidget {
-  const _Avatar();
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = context.masteryTokens;
-    return Container(
-      width: 36,
-      height: 36,
-      alignment: Alignment.center,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            tokens.bgPrimarySoft,
-            MasteryColors.actionPrimary,
-          ],
-        ),
-        border: Border.all(color: tokens.borderSoft),
-        shape: BoxShape.circle,
-        boxShadow: tokens.shadowCard,
-      ),
-      child: Text(
-        'M',
-        style: MasteryTextStyles.labelMd.copyWith(
-          color: MasteryColors.bgSurface,
-          letterSpacing: 0,
-        ),
       ),
     );
   }
@@ -1085,245 +958,6 @@ class _ProgressCluster extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────
-// Last Lesson Report
-// ─────────────────────────────────────────────────────────────────────────
-
-class _LastLessonReport extends StatelessWidget {
-  final LastLessonRecord record;
-  final VoidCallback onReviewMistakes;
-  final VoidCallback onOpenFullSummary;
-
-  const _LastLessonReport({
-    required this.record,
-    required this.onReviewMistakes,
-    required this.onOpenFullSummary,
-  });
-
-  String _whenText(DateTime t) {
-    final now = DateTime.now();
-    if (now.year == t.year && now.month == t.month && now.day == t.day) {
-      return 'Today';
-    }
-    final yesterday = now.subtract(const Duration(days: 1));
-    if (yesterday.year == t.year &&
-        yesterday.month == t.month &&
-        yesterday.day == t.day) {
-      return 'Yesterday';
-    }
-    return '${t.day.toString().padLeft(2, '0')}.${t.month.toString().padLeft(2, '0')}';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = context.masteryTokens;
-    final debrief = record.debrief;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Wave 14.9 — single eyebrow, no duplicate CTA. The card body
-        // below carries `Review mistakes` (deep-link to the mistakes
-        // section) and `See full report` (top-of-summary). The pre-14.9
-        // `Open full summary` link in the eyebrow row was a third entry
-        // point to the same destination as `See full report` — pure
-        // duplication, removed.
-        Text(
-          'LAST LESSON REPORT',
-          style: MasteryTextStyles.mono(
-            size: 11,
-            lineHeight: 14,
-            weight: FontWeight.w600,
-            color: MasteryColors.textSecondary,
-            letterSpacing: 1.6,
-          ),
-        ),
-        const SizedBox(height: 10),
-        Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: MasteryColors.bgRaised,
-            border: Border.all(color: tokens.borderSoft),
-            borderRadius: BorderRadius.circular(MasteryRadii.lg),
-            boxShadow: tokens.shadowCard,
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        SectionEyebrow(
-                          label: 'Lesson completed',
-                          variant: SectionEyebrowVariant.gold,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          record.lessonTitle,
-                          style: MasteryTextStyles.titleSm.copyWith(
-                            color: MasteryColors.textPrimary,
-                            height: 1.3,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${_whenText(record.completedAt)} · '
-                          '${record.totalExercises} exercises · '
-                          '${record.mistakesCount} ${record.mistakesCount == 1 ? "mistake" : "mistakes"}',
-                          style: MasteryTextStyles.bodySm.copyWith(
-                            color: MasteryColors.textSecondary,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  _ScorePill(
-                    correct: record.correctCount,
-                    total: record.totalExercises,
-                  ),
-                ],
-              ),
-              if (debrief != null && debrief.headline.isNotEmpty) ...[
-                const SizedBox(height: 14),
-                Text(
-                  debrief.headline,
-                  style: MasteryTextStyles.bodyMd.copyWith(
-                    color: MasteryColors.textPrimary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                if (debrief.body.isNotEmpty) ...[
-                  const SizedBox(height: 6),
-                  Text(
-                    debrief.body,
-                    style: MasteryTextStyles.bodySm.copyWith(
-                      color: MasteryColors.textPrimary,
-                      height: 1.55,
-                    ),
-                  ),
-                ],
-                if (debrief.watchOut != null &&
-                    debrief.watchOut!.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
-                    decoration: BoxDecoration(
-                      color: tokens.bgPrimarySoft.withAlpha(120),
-                      borderRadius: BorderRadius.circular(MasteryRadii.sm),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'WATCH OUT',
-                          style: MasteryTextStyles.mono(
-                            size: 10,
-                            lineHeight: 12,
-                            weight: FontWeight.w600,
-                            color: tokens.accentGoldDeep,
-                            letterSpacing: 1.2,
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            debrief.watchOut!,
-                            style: MasteryTextStyles.bodySm.copyWith(
-                              color: MasteryColors.textPrimary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ],
-              const SizedBox(height: 14),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: onReviewMistakes,
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(44),
-                        side: BorderSide(color: tokens.borderStrong),
-                      ),
-                      child: const Text('Review mistakes'),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: TextButton(
-                      onPressed: onOpenFullSummary,
-                      style: TextButton.styleFrom(
-                        minimumSize: const Size.fromHeight(44),
-                      ),
-                      child: const Text('See full report'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ScorePill extends StatelessWidget {
-  final int correct;
-  final int total;
-  const _ScorePill({required this.correct, required this.total});
-
-  @override
-  Widget build(BuildContext context) {
-    final tokens = context.masteryTokens;
-    return Container(
-      padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
-      decoration: BoxDecoration(
-        color: tokens.accentGoldSoft.withAlpha(140),
-        border: Border.all(color: tokens.accentGold.withAlpha(60)),
-        borderRadius: BorderRadius.circular(MasteryRadii.md),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            '$correct / $total',
-            style: TextStyle(
-              fontFamily: 'Fraunces',
-              fontSize: 22,
-              height: 1.0,
-              fontWeight: FontWeight.w600,
-              color: tokens.accentGoldDeep,
-              fontVariations: const [
-                FontVariation('opsz', 144),
-                FontVariation('wght', 600),
-              ],
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'SCORE',
-            style: MasteryTextStyles.mono(
-              size: 10,
-              lineHeight: 12,
-              weight: FontWeight.w600,
-              color: tokens.accentGoldDeep,
-              letterSpacing: 1.4,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 // ─────────────────────────────────────────────────────────────────────────
 // Current Unit
@@ -1694,18 +1328,20 @@ class _UnitMenuItemState extends State<_UnitMenuItem> {
 }
 
 // ─────────────────────────────────────────────────────────────────────────
-// Wave 12.7 — Rules card (V1.6 library entry)
+// Rules trigger + library sheet (Wave 0 automaticity pivot)
+//
+// The Rules card used to render inline on the dashboard. To keep the
+// dashboard lean, the rule list now lives behind a single trigger that
+// opens a modal bottom sheet. The list of rules and the per-rule sheet
+// (`_RulesRow`, `_RuleSheetBody`) are unchanged.
 // ─────────────────────────────────────────────────────────────────────────
 
-class _RulesCard extends StatelessWidget {
-  /// Wave 14 (V1.5 Skill-progress UI) — per-skill mastery records keyed
-  /// by `skillId`. Absent entries render the row without a status chip.
-  /// The map is owned by `_HomeScreenState`, refreshed on every
-  /// `_loadDashboard`, and pushed in via the constructor so the card
-  /// stays a `StatelessWidget`.
+class _RulesTrigger extends StatelessWidget {
+  /// Per-skill mastery records keyed by `skillId`. Forwarded into the
+  /// modal so each row can render its `SkillStatusBadge`.
   final Map<String, LearnerSkillRecord> records;
 
-  const _RulesCard({this.records = const {}});
+  const _RulesTrigger({this.records = const {}});
 
   @override
   Widget build(BuildContext context) {
@@ -1713,40 +1349,157 @@ class _RulesCard extends StatelessWidget {
     final entries = SkillCatalog.instance.all;
     if (entries.isEmpty) {
       // Pre-fetch / offline: render nothing so the dashboard stays
-      // calm. The card pops in once SkillCatalog completes refresh.
+      // calm. The trigger pops in once SkillCatalog completes refresh.
       return const SizedBox.shrink();
     }
-    final now = DateTime.now();
-    return MasteryCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const SectionEyebrow(
-            label: 'Rules',
-            variant: SectionEyebrowVariant.secondary,
-          ),
-          const SizedBox(height: MasterySpacing.xs),
-          Text(
-            'The grammar this app teaches.',
-            style: MasteryTextStyles.bodyMd.copyWith(
-              color: MasteryColors.textSecondary,
+    return InkWell(
+      borderRadius: BorderRadius.circular(MasteryRadii.lg),
+      onTap: () => _openLibrary(context),
+      child: Container(
+        padding: const EdgeInsets.symmetric(
+          horizontal: 18,
+          vertical: 16,
+        ),
+        decoration: BoxDecoration(
+          color: MasteryColors.bgRaised,
+          border: Border.all(color: tokens.borderSoft),
+          borderRadius: BorderRadius.circular(MasteryRadii.lg),
+          boxShadow: tokens.shadowCard,
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.menu_book_outlined,
+              size: 22,
+              color: MasteryColors.actionPrimary,
             ),
-          ),
-          const SizedBox(height: MasterySpacing.md),
-          for (var i = 0; i < entries.length; i++) ...[
-            if (i > 0)
-              Divider(
-                height: 1,
-                thickness: 1,
-                color: tokens.borderSoft,
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Rules',
+                    style: MasteryTextStyles.titleSm.copyWith(
+                      color: MasteryColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    '${entries.length} ${entries.length == 1 ? "rule" : "rules"} · tap to open the library',
+                    style: MasteryTextStyles.bodySm.copyWith(
+                      color: MasteryColors.textSecondary,
+                    ),
+                  ),
+                ],
               ),
-            _RulesRow(
-              entry: entries[i],
-              record: records[entries[i].skillId],
-              now: now,
+            ),
+            const SizedBox(width: 8),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: tokens.textTertiary,
+              size: 22,
             ),
           ],
-        ],
+        ),
+      ),
+    );
+  }
+
+  void _openLibrary(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: MasteryColors.bgSurface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(MasteryRadii.lg),
+        ),
+      ),
+      builder: (_) => _RulesLibrarySheet(records: records),
+    );
+  }
+}
+
+class _RulesLibrarySheet extends StatelessWidget {
+  final Map<String, LearnerSkillRecord> records;
+
+  const _RulesLibrarySheet({required this.records});
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.masteryTokens;
+    final entries = SkillCatalog.instance.all;
+    final now = DateTime.now();
+    return SafeArea(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(
+            MasterySpacing.lg,
+            MasterySpacing.md,
+            MasterySpacing.lg,
+            MasterySpacing.xl,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: MasterySpacing.lg),
+                  decoration: BoxDecoration(
+                    color: tokens.borderSoft,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Text(
+                'Rules',
+                style: MasteryTextStyles.headlineLg.copyWith(
+                  color: MasteryColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Tap a rule to read it. The badge shows where you are.',
+                style: MasteryTextStyles.bodyMd.copyWith(
+                  color: MasteryColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: MasterySpacing.lg),
+              for (var i = 0; i < entries.length; i++) ...[
+                if (i > 0)
+                  Divider(
+                    height: 1,
+                    thickness: 1,
+                    color: tokens.borderSoft,
+                  ),
+                _RulesRow(
+                  entry: entries[i],
+                  record: records[entries[i].skillId],
+                  now: now,
+                ),
+              ],
+              const SizedBox(height: MasterySpacing.lg),
+              Center(
+                child: TextButton(
+                  onPressed: () => Navigator.of(context).maybePop(),
+                  child: Text(
+                    'Close',
+                    style: MasteryTextStyles.labelMd.copyWith(
+                      color: MasteryColors.textSecondary,
+                      letterSpacing: 0.4,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

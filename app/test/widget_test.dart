@@ -187,8 +187,10 @@ void main() {
       await tester.pumpWidget(_withApi(const HomeScreen(), client));
       await tester.pumpAndSettle();
 
-      // Dashboard subtitle, not onboarding.
-      expect(find.text('STUDY DESK'), findsOneWidget);
+      // Dashboard marker — the onboarding ritual would render `Continue`
+      // here, the dashboard renders `Start lesson` as its primary CTA.
+      // The `STUDY DESK` eyebrow used to be the marker; it was removed
+      // in the automaticity pivot Wave 0 cleanup.
       expect(find.widgetWithText(FilledButton, 'Start lesson'), findsOneWidget);
       expect(find.widgetWithText(FilledButton, 'Continue'), findsNothing);
     });
@@ -211,8 +213,9 @@ void main() {
       await _safeTap(tester, find.widgetWithText(FilledButton, 'Open my dashboard'));
       await tester.pumpAndSettle();
 
-      // Dashboard markers
-      expect(find.text('STUDY DESK'), findsOneWidget);
+      // Dashboard markers — `STUDY DESK` eyebrow was removed in the
+      // automaticity pivot; `Start lesson` is the dashboard CTA, the
+      // onboarding ritual has no such button.
       expect(find.widgetWithText(FilledButton, 'Start lesson'), findsOneWidget);
       // Lesson intro NOT pushed automatically
       expect(find.widgetWithText(FilledButton, 'Start Practice'), findsNothing);
