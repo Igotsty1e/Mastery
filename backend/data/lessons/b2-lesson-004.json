@@ -133,6 +133,7 @@
       "skill_id": "verb-both-forms-meaning-change",
       "primary_target_error": "conceptual_error",
       "evidence_tier": "strong",
+      "meaning_frame": "Express remorse about a past favor that turned out badly.",
       "instruction": "Rewrite the sentence correctly.",
       "prompt": "She regrets to lend him her car last summer because he never returned it.",
       "accepted_corrections": [

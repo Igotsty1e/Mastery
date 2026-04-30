@@ -133,6 +133,7 @@
       "skill_id": "verb-to-inf-after-aspirational-verbs",
       "primary_target_error": "contrast_error",
       "evidence_tier": "strong",
+      "meaning_frame": "Report someone acquiring a practical skill for an upcoming need.",
       "instruction": "Rewrite the sentence correctly.",
       "prompt": "He is learning driving so he can commute to the new office.",
       "accepted_corrections": [
@@ -164,6 +165,7 @@
       "skill_id": "verb-to-inf-after-aspirational-verbs",
       "primary_target_error": "form_error",
       "evidence_tier": "strong",
+      "meaning_frame": "Announce a settled decision about a future career move.",
       "instruction": "Rewrite starting with \"I have decided...\".",
       "prompt": "I'm leaving the company next month.",
       "accepted_answers": [
@@ -180,6 +182,7 @@
       "skill_id": "verb-to-inf-after-aspirational-verbs",
       "primary_target_error": "contrast_error",
       "evidence_tier": "strong",
+      "meaning_frame": "Report a deliberate refusal in a business or legal situation.",
       "instruction": "Rewrite using \"refuse\".",
       "prompt": "She won't sign the contract.",
       "accepted_answers": [
