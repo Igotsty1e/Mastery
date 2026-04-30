@@ -17,6 +17,7 @@ const LESSON_ID = 'a1b2c3d4-0001-4000-8000-000000000001';
 const SC_EX_ID  = 'a1b2c3d4-0001-4000-8000-000000000038';
 const ATTEMPT_ID = '00000000-0000-4000-8000-000000000002';
 const SESSION_ID = '11111111-0001-4000-8000-000000000001';
+const PROD_ORIGIN = 'https://frontend.example.com';
 
 function borderlineBody() {
   return {
@@ -329,16 +330,31 @@ describe('aiCache — MAX_AI_CACHE cap', () => {
 // CORS origin allowlist
 // ──────────────────────────────────────────────────────────────────
 describe('CORS origin allowlist', () => {
+  function restorePublicWebOrigin(previousOrigin: string | undefined) {
+    if (previousOrigin === undefined) {
+      delete process.env.PUBLIC_WEB_ORIGIN;
+      return;
+    }
+
+    process.env.PUBLIC_WEB_ORIGIN = previousOrigin;
+  }
+
   it('allowed origin receives Access-Control-Allow-Origin header and Vary header', async () => {
-    const app = createApp(stubAi);
-    const res = await inject(app, {
-      method: 'POST',
-      path: `/lessons/${LESSON_ID}/answers`,
-      json: borderlineBody(),
-      headers: { 'origin': 'https://mastery-web-igotsty1e.onrender.com' },
-    });
-    expect(res.headers['access-control-allow-origin']).toBe('https://mastery-web-igotsty1e.onrender.com');
-    expect(res.headers['vary']).toBe('Origin');
+    const previousOrigin = process.env.PUBLIC_WEB_ORIGIN;
+    try {
+      process.env.PUBLIC_WEB_ORIGIN = PROD_ORIGIN;
+      const app = createApp(stubAi);
+      const res = await inject(app, {
+        method: 'POST',
+        path: `/lessons/${LESSON_ID}/answers`,
+        json: borderlineBody(),
+        headers: { origin: PROD_ORIGIN },
+      });
+      expect(res.headers['access-control-allow-origin']).toBe(PROD_ORIGIN);
+      expect(res.headers['vary']).toBe('Origin');
+    } finally {
+      restorePublicWebOrigin(previousOrigin);
+    }
   });
 
   it('localhost dev origin receives allowed headers', async () => {
@@ -377,16 +393,22 @@ describe('CORS origin allowlist', () => {
   });
 
   it('OPTIONS preflight from allowed origin returns 204 with correct headers', async () => {
-    const app = createApp(stubAi);
-    const res = await inject(app, {
-      method: 'OPTIONS',
-      path: `/lessons/${LESSON_ID}/answers`,
-      headers: { 'origin': 'https://mastery-web-igotsty1e.onrender.com' },
-    });
-    expect(res.status).toBe(204);
-    expect(res.headers['access-control-allow-origin']).toBe('https://mastery-web-igotsty1e.onrender.com');
-    expect(res.headers['access-control-allow-methods']).toBe('GET, POST, PATCH, DELETE, OPTIONS');
-    expect(res.headers['access-control-allow-headers']).toBe('Content-Type, Authorization');
+    const previousOrigin = process.env.PUBLIC_WEB_ORIGIN;
+    try {
+      process.env.PUBLIC_WEB_ORIGIN = PROD_ORIGIN;
+      const app = createApp(stubAi);
+      const res = await inject(app, {
+        method: 'OPTIONS',
+        path: `/lessons/${LESSON_ID}/answers`,
+        headers: { origin: PROD_ORIGIN },
+      });
+      expect(res.status).toBe(204);
+      expect(res.headers['access-control-allow-origin']).toBe(PROD_ORIGIN);
+      expect(res.headers['access-control-allow-methods']).toBe('GET, POST, PATCH, DELETE, OPTIONS');
+      expect(res.headers['access-control-allow-headers']).toBe('Content-Type, Authorization');
+    } finally {
+      restorePublicWebOrigin(previousOrigin);
+    }
   });
 
   it('OPTIONS preflight from unknown origin returns 204 but no CORS allow header', async () => {

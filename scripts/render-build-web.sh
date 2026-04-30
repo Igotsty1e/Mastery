@@ -10,6 +10,11 @@ FLUTTER_DIR="$CACHE_DIR/flutter-$FLUTTER_VERSION"
 FLUTTER_ARCHIVE="flutter_linux_${FLUTTER_VERSION}-stable.tar.xz"
 FLUTTER_URL="https://storage.googleapis.com/flutter_infra_release/releases/stable/linux/${FLUTTER_ARCHIVE}"
 
+if [ "${REQUIRE_API_BASE_URL:-}" = "true" ] && [ -z "${API_BASE_URL:-}" ]; then
+  echo "[render-build] API_BASE_URL is required when REQUIRE_API_BASE_URL=true" >&2
+  exit 1
+fi
+
 # ── Install Flutter (cached) ──────────────────────────────────────────────
 # Render's incremental-cache layer can restore a partial Flutter SDK where
 # `bin/flutter` exists but the `packages/flutter_tools/` directory doesn't.
@@ -46,9 +51,10 @@ flutter --version
 flutter config --no-analytics
 
 # ── Build ─────────────────────────────────────────────────────────────────
-# API_BASE_URL is set as a Render build-time env var (see render.yaml).
-# Default falls back to the expected Render backend slug.
-BACKEND_URL="${API_BASE_URL:-https://mastery-backend-igotsty1e.onrender.com}"
+# API_BASE_URL should be set explicitly in deployment.
+# Local fallback stays on localhost so the script does not bake a
+# private production endpoint into committed source.
+BACKEND_URL="${API_BASE_URL:-http://localhost:3000}"
 echo "[render-build] Building Flutter web → API_BASE_URL=$BACKEND_URL"
 
 cd app
