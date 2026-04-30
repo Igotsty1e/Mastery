@@ -252,6 +252,22 @@ after every successful evaluation that has both a `skillId` and an
 `evidenceTier`. Persistence failures are tolerated (lesson flow keeps
 working). No UI surface yet.
 
+### Wave A — per-skill latency capture (`LatencyHistoryStore`)
+
+Side store next to `LearnerSkillStore`. `LatencyHistoryStore`
+(`app/lib/learner/latency_history_store.dart`) holds a per-skill FIFO
+of the last 20 render→submit durations (ms) on the device. The
+duration is captured in `SessionController` between the moment an
+exercise enters `SessionPhase.ready` and the moment `submitAnswer`
+fires — strictly client-side, before the network call, so AI-fallback
+latency cannot pollute it. Persistence failures are tolerated (the
+session never breaks because of a measurement gap).
+
+The store is intentionally separate from `LearnerSkillStore` and from
+the server `/me/skills/...` surface — see `LEARNING_ENGINE.md §7.5`
+for the rationale. Measurement-only today; Wave B introduces the UI
+band, Wave D wires the median into the §6.4 production gate.
+
 ### Wave 3 in-session loop — `DecisionEngine` + `ReviewScheduler`
 
 Wave 3 introduces the §9 learning loop without adding a UI surface

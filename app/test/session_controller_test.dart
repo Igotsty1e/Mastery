@@ -5,6 +5,7 @@ import 'package:mastery/session/session_controller.dart';
 import 'package:mastery/session/session_state.dart';
 import 'package:mastery/models/lesson.dart';
 import 'package:mastery/models/evaluation.dart';
+import 'package:mastery/learner/latency_history_store.dart';
 import 'package:mastery/learner/learner_skill_store.dart';
 import 'package:mastery/learner/review_scheduler.dart';
 import 'package:mastery/progress/local_progress_store.dart';
@@ -311,6 +312,57 @@ void main() {
       await ctrl.submitAnswer('is');
       final all = await LearnerSkillStore.allRecords();
       expect(all, isEmpty);
+    });
+
+    test('LatencyHistoryStore records render→submit duration when skill tagged',
+        () async {
+      const tagged = {
+        'lesson_id': _lessonId,
+        'title': 'Test Lesson',
+        'language': 'en',
+        'level': 'B2',
+        'intro_rule': 'Test rule.',
+        'intro_examples': <String>[],
+        'exercises': [
+          {
+            'exercise_id': _exId,
+            'type': 'fill_blank',
+            'instruction': 'Complete the gap with the correct verb form.',
+            'prompt': 'She ___ working.',
+            'skill_id': 'verb-ing-after-gerund-verbs',
+            'primary_target_error': 'contrast_error',
+            'evidence_tier': 'medium',
+          }
+        ],
+      };
+
+      final api = _authed((req) => _routedDispatch(
+            req,
+            lesson: tagged,
+            sessionStart: sessionStartDto(_lessonId),
+            answer: (_) => _jsonResponse(_evaluateJson()),
+            complete: _resultJson(),
+            result: _resultJson(),
+          ));
+      final ctrl = SessionController(api);
+      await ctrl.loadLesson(_lessonId);
+      await ctrl.submitAnswer('is');
+
+      final history = await LatencyHistoryStore.historyFor(
+          'verb-ing-after-gerund-verbs');
+      expect(history.length, 1);
+      expect(history.first, greaterThanOrEqualTo(0));
+    });
+
+    test('LatencyHistoryStore is a no-op when the exercise lacks a skill_id',
+        () async {
+      // Default loadedController uses the un-tagged fixture (`_lessonJson`)
+      // — no skill_id means nothing to key the history by, so the store
+      // stays empty.
+      final ctrl = await loadedController();
+      await ctrl.submitAnswer('is');
+      final history = await LatencyHistoryStore.historyFor('whatever');
+      expect(history, isEmpty);
     });
   });
 

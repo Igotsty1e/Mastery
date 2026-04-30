@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 import '../api/api_client.dart';
 import '../learner/decision_engine.dart';
+import '../learner/latency_history_store.dart';
 import '../learner/learner_skill_store.dart';
 import '../learner/review_scheduler.dart';
 import '../models/evaluation.dart';
@@ -42,6 +43,14 @@ class SessionController extends ChangeNotifier {
   /// `advance()`. Stored so we don't recompute when `advance()` runs.
   DecisionResult? _pendingDecision;
 
+  /// Wave A — timestamp of the moment the current exercise entered the
+  /// `ready` phase. Read once on `submitAnswer` to derive the
+  /// render→submit duration that feeds `LatencyHistoryStore`. The
+  /// duration is wall-clock client-side only; AI fallback latency is
+  /// intentionally not part of it (the band measures the learner's
+  /// retrieval speed, not the network).
+  DateTime? _exerciseShownAt;
+
   SessionController(this._api) : _state = const SessionState();
 
   /// Wave 11.3 — V1 dynamic-session entry point. Calls `POST /sessions/start`,
@@ -59,6 +68,7 @@ class SessionController extends ChangeNotifier {
     _sessionId = null;
     _sessionMistakesBySkill = {};
     _pendingDecision = null;
+    _exerciseShownAt = null;
     _dynamicMode = true;
     _emit(_state.copyWith(phase: SessionPhase.loading));
     try {
@@ -104,6 +114,7 @@ class SessionController extends ChangeNotifier {
     _sessionId = null;
     _sessionMistakesBySkill = {};
     _pendingDecision = null;
+    _exerciseShownAt = null;
     _dynamicMode = false;
     _emit(_state.copyWith(phase: SessionPhase.loading));
     try {
@@ -151,6 +162,16 @@ class SessionController extends ChangeNotifier {
       ));
       return;
     }
+
+    // Wave A — capture render→submit duration before the network call,
+    // so AI fallback latency does not pollute the learner-side measure.
+    // `_exerciseShownAt` is set by `_emit` whenever the controller
+    // transitions into `SessionPhase.ready`.
+    final shownAt = _exerciseShownAt;
+    final responseTimeMs = shownAt == null
+        ? null
+        : DateTime.now().difference(shownAt).inMilliseconds;
+    _exerciseShownAt = null;
 
     _lastAnswer = userAnswer;
     _emit(_state.copyWith(phase: SessionPhase.evaluating));
@@ -201,6 +222,15 @@ class SessionController extends ChangeNotifier {
             meaningFrame: exercise.meaningFrame,
             evaluationVersion: response.evaluationVersion,
           );
+          // Wave A — measurement-only collector. Persists only when we
+          // have a non-null duration AND a tagged skill; no mastery
+          // formula consumes this yet.
+          if (responseTimeMs != null) {
+            await LatencyHistoryStore.record(
+              skillId: exercise.skillId!,
+              responseTimeMs: responseTimeMs,
+            );
+          }
         }
         _emit(_state.copyWith(
           phase: SessionPhase.result,
@@ -249,6 +279,12 @@ class SessionController extends ChangeNotifier {
           meaningFrame: exercise.meaningFrame,
           evaluationVersion: response.evaluationVersion,
         );
+        if (responseTimeMs != null) {
+          await LatencyHistoryStore.record(
+            skillId: exercise.skillId!,
+            responseTimeMs: responseTimeMs,
+          );
+        }
       }
     } catch (e) {
       _emit(_state.copyWith(
@@ -396,6 +432,12 @@ class SessionController extends ChangeNotifier {
   }
 
   void _emit(SessionState next) {
+    // Wave A — stamp the moment a fresh exercise becomes interactable.
+    // Triggers on every `ready` emission (initial load, post-result
+    // advance) so the next `submitAnswer` can derive the latency.
+    if (next.phase == SessionPhase.ready) {
+      _exerciseShownAt = DateTime.now();
+    }
     _state = next;
     notifyListeners();
   }

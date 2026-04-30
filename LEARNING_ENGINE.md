@@ -475,6 +475,39 @@ deltas live in `LearnerSkillStore._scoreDelta` and are tunable; the
 introduces the per-skill panel. Server-side learner storage is a
 follow-up wave once accounts exist.
 
+### 7.5 Per-skill response-time history (Wave A — measurement-only)
+
+The automaticity pivot adds one client-side signal that no part of the
+Mastery Model reads yet: the median render→submit latency per skill.
+
+`LatencyHistoryStore` (`app/lib/learner/latency_history_store.dart`) is
+a separate, SharedPreferences-backed FIFO of the last 20 response times
+(ms) per `skill_id`. The duration is captured in `SessionController`
+between the moment an exercise enters `SessionPhase.ready` and the
+moment `submitAnswer` fires — strictly client-side, before the network
+call, so AI-fallback latency does not pollute the measurement.
+
+The store is **deliberately separate** from `LearnerSkillStore`:
+
+- The server has no `response_time_ms` column on `/me/skills/...`.
+  Threading it through would force a backend contract change in a
+  measurement-only wave.
+- Latency is a per-device signal (different keyboard, different
+  median); cross-device sync would dilute it.
+- A separate store can be promoted to a pluggable backend later
+  without touching the existing Mastery Model fields.
+
+No mastery formula consumes `LatencyHistoryStore` yet. Sequencing:
+
+- **Wave A — shipped (this wave).** Measurement only. Per-skill FIFO
+  + median accessor. No UI, no formula change.
+- **Wave B — planned.** Latency band UI on the exercise screen (calm
+  green/amber/red rail driven by the per-skill median).
+- **Wave D — planned.** Median latency feeds the §6.4 production
+  gate: `mastered` requires not just a strongest-tier correct attempt
+  with a `meaning_frame`, but a stable median in the green band on
+  the most recent attempts. The exact threshold ships with Wave D.
+
 ---
 
 ## 8. Exercise Model (Engine View)
