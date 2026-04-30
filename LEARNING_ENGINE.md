@@ -499,10 +499,17 @@ The store is **deliberately separate** from `LearnerSkillStore`:
 
 No mastery formula consumes `LatencyHistoryStore` yet. Sequencing:
 
-- **Wave A — shipped (this wave).** Measurement only. Per-skill FIFO
-  + median accessor. No UI, no formula change.
-- **Wave B — planned.** Latency band UI on the exercise screen (calm
-  green/amber/red rail driven by the per-skill median).
+- **Wave A — shipped.** Measurement only. Per-skill FIFO + median
+  accessor. No UI, no formula change.
+- **Wave B — shipped (this wave).** Calm 3-band UI on the exercise
+  screen via `LatencyBand`
+  (`app/lib/widgets/latency_band.dart`), inserted between the
+  Decision-reason line and the instruction band. Reads
+  `LatencyHistoryStore.medianFor(skillId)` and maps it to one of
+  three pace zones (`fast` < 6000ms, `steady` < 12000ms, `slow`
+  ≥ 12000ms). Hides on un-tagged exercises and skills with no
+  recorded attempts (calm silence per §11.4). Advisory only — no
+  countdown, no streak, no scoring effect.
 - **Wave D — planned.** Median latency feeds the §6.4 production
   gate: `mastered` requires not just a strongest-tier correct attempt
   with a `meaning_frame`, but a stable median in the green band on

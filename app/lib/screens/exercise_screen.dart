@@ -9,6 +9,7 @@ import '../theme/mastery_theme.dart';
 import '../widgets/decision_reason_line.dart';
 import '../widgets/feedback_prompt_sheet.dart';
 import '../widgets/fill_blank_widget.dart';
+import '../widgets/latency_band.dart';
 import '../widgets/listening_discrimination_widget.dart';
 import '../widgets/mastery_exercise_image.dart';
 import '../widgets/mastery_widgets.dart';
@@ -155,6 +156,14 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                               ? state.lastDecisionReason
                               : null,
                         ),
+                        // Wave B — calm pace rail. Reads the per-skill
+                        // median from `LatencyHistoryStore` and renders
+                        // a 3px coloured rail (green/amber/red) above
+                        // the instruction band. Hides itself when the
+                        // exercise is un-tagged or the skill has no
+                        // recorded attempts yet (calm silence per
+                        // LEARNING_ENGINE.md §11.4).
+                        LatencyBand(skillId: exercise.skillId),
                         InstructionBand(
                           text: exercise.instruction,
                           icon: switch (exercise.type) {

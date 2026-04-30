@@ -265,8 +265,31 @@ session never breaks because of a measurement gap).
 
 The store is intentionally separate from `LearnerSkillStore` and from
 the server `/me/skills/...` surface — see `LEARNING_ENGINE.md §7.5`
-for the rationale. Measurement-only today; Wave B introduces the UI
-band, Wave D wires the median into the §6.4 production gate.
+for the rationale. Wave A was measurement-only; Wave B added the UI
+band; Wave D will wire the median into the §6.4 production gate.
+
+### Wave B — pace band on the exercise screen (`LatencyBand`)
+
+`LatencyBand` (`app/lib/widgets/latency_band.dart`) sits between the
+Decision-reason line and the instruction band on `ExerciseScreen`.
+On every exercise it reads `LatencyHistoryStore.medianFor(skillId)`
+and maps the median to one of three calm zones: `fast` (< 6000ms,
+`MasteryColors.success`), `steady` (< 12000ms, `MasteryColors.warning`),
+`slow` (≥ 12000ms, `MasteryColors.error`). The rail is 3px tall, with
+a `PACE` mono-caps label to its left.
+
+The band hides itself in three cases:
+- the current exercise has no `skill_id`,
+- the skill has no recorded history yet (the learner has not finished
+  a single tagged attempt on it), or
+- resolution has not finished on the very first frame.
+
+The band does not refresh after an in-flight submit on the same
+skill — pace within a single skill swing should not flicker
+on every keypress. `didUpdateWidget` triggers a refetch only when the
+`skillId` changes between exercises. A `_resolutionId` counter on the
+state guards against stale futures overwriting a fresh one when the
+skill changes mid-flight.
 
 ### Wave 3 in-session loop — `DecisionEngine` + `ReviewScheduler`
 
