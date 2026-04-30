@@ -1186,6 +1186,72 @@ Reject when the image:
 Default for `listening_discrimination` items is `image_policy: none`. Only
 add an image when the scene gracefully accommodates *all* listed options.
 
+### 6.7 Composition Rules (Wave C policy)
+
+The audit on 2026-04-30 (`docs/plans/automaticity-pivot.md`)
+established that the shipped product was leaning on recognition more
+than the automaticity pivot allows. These rules close that gap. They
+apply to every new lesson and to every rewrite of an existing one;
+older shipped fixtures that violate them are scheduled for rewrite in
+the same plan.
+
+Each rule is enforced by `backend/scripts/audit-composition.ts`. A
+lesson that fails any rule is rejected by the script and must not
+ship.
+
+#### 6.7.1 Cap on recognition-only items
+
+Across a lesson's exercise list:
+
+- `multiple_choice` count must be **≤ 20%** of total items
+  (`floor(0.2 × total)`, with the floor itself counted as the cap;
+  for a 10-item lesson the cap is 2, for a 13-item lesson the cap
+  is 2 — `floor(0.2 × 13) = 2`).
+- `listening_discrimination` is recognition too; combined
+  `multiple_choice + listening_discrimination` must be **≤ 30%**
+  (`floor(0.3 × total)`).
+
+Rationale: pure recognition is `weak`-tier evidence (§6.1). The pivot
+shifts the burden of proof from "did the learner pick the right
+answer" to "did the learner produce or repair the right answer."
+
+#### 6.7.2 Required production floor
+
+Every shipped lesson must include:
+
+- **at least one** `short_free_sentence` item, AND
+- **at least one** `sentence_rewrite` item (or any other strongest-tier
+  family once shipped).
+
+This is the §6.4 mastery gate showing up at the lesson level: a
+learner cannot finish a lesson without at least one chance to clear
+production on the rule.
+
+#### 6.7.3 `meaning_frame` is mandatory on strong / strongest tier
+
+Every item with `evidence_tier ∈ { strong, strongest }` must carry a
+non-empty `meaning_frame`. This is the §6.3 meaning + form rule
+manifested at authoring time:
+
+- without `meaning_frame`, a `strongest` attempt drops to `strong`
+  evidence (per §6.3) and the learner can never clear the §6.4
+  production gate — even when they answer correctly;
+- without `meaning_frame`, a `strong` attempt is at risk of testing
+  surface form alone, which makes the lesson recognition-shaped in
+  disguise.
+
+Authors who cannot articulate the meaning frame for a strong / strongest
+item should re-tier it down to `medium` or rework the prompt until the
+meaning is committed.
+
+#### 6.7.4 Enforcement
+
+`backend/scripts/audit-composition.ts` is the runtime gate. CI must
+run it against every lesson under `backend/data/lessons/` and reject
+any PR that introduces a violation. Existing violators are listed in
+`docs/plans/automaticity-pivot.md` Wave C TODO and ride out the rewrite
+queue under methodologist supervision.
+
 ---
 
 ## 7. Distractor Strategy Rules

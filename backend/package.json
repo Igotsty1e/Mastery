@@ -11,7 +11,8 @@
     "gen:image": "tsx scripts/gen-image.ts",
     "gen:content": "tsx scripts/gen-content.ts",
     "qa:content": "tsx scripts/qa-content.ts",
-    "gen:assets": "npm run gen:audio && npm run gen:image"
+    "gen:assets": "npm run gen:audio && npm run gen:image",
+    "audit:composition": "tsx scripts/audit-composition.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "^0.4.4",
