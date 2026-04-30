@@ -1,0 +1,48 @@
+name: backend-test
+
+# Pre-merge gate for the Mastery backend (Node.js + Vitest).
+#
+# CLAUDE.md lists `cd backend && npm test` as the pre-merge check; this
+# workflow runs it on every PR so the gate is mechanical, not ceremonial.
+# Also runs `npm run build` (tsc) to catch TS regressions before merge.
+#
+# Tests use @electric-sql/pglite (Postgres-in-wasm), so no external DB
+# service is needed — fully hermetic.
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-test.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/backend-test.yml'
+
+jobs:
+  test:
+    name: backend test
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check (tsc)
+        run: npm run build
+
+      - name: Vitest
+        run: npm test
