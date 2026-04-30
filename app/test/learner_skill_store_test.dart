@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mastery/learner/latency_history_store.dart';
 import 'package:mastery/learner/learner_skill_store.dart';
 import 'package:mastery/models/lesson.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -9,6 +10,10 @@ const _skillB = 'present-perfect-continuous-vs-simple';
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
+  });
+
+  tearDown(() async {
+    await LatencyHistoryStore.clearForTests();
   });
 
   group('LearnerSkillRecord.statusAt', () {
@@ -48,7 +53,7 @@ void main() {
       expect(r.statusAt(now), SkillStatus.almostMastered);
     });
 
-    test('mastered requires score, strong-or-stronger evidence, AND production gate', () {
+    test('mastered requires score, strong-or-stronger evidence, production gate, AND fast median (Wave D)', () {
       final base = LearnerSkillRecord.empty(_skillA).copyWith(
         masteryScore: 85,
         evidenceSummary: const {EvidenceTier.strong: 3, EvidenceTier.strongest: 1},
@@ -56,17 +61,58 @@ void main() {
       );
       // Without gate → almost_mastered, not mastered
       expect(base.statusAt(now), SkillStatus.almostMastered);
-      // With gate → mastered
+      // With gate but no median snapshot → still almost_mastered (Wave D)
       final gated = base.copyWith(productionGateCleared: true);
-      expect(gated.statusAt(now), SkillStatus.mastered);
+      expect(gated.statusAt(now), SkillStatus.almostMastered);
+      // With gate AND fast median → mastered
+      final fast = gated.copyWith(medianResponseMsSnapshot: 4000);
+      expect(fast.statusAt(now), SkillStatus.mastered);
     });
 
-    test('mastered + last attempt > 21 days ago → review_due', () {
+    test('Wave D — slow median (≥ 6000ms) caps at almost_mastered even when fully gated',
+        () {
+      final slow = LearnerSkillRecord.empty(_skillA).copyWith(
+        masteryScore: 90,
+        evidenceSummary: const {EvidenceTier.strong: 3, EvidenceTier.strongest: 1},
+        productionGateCleared: true,
+        lastAttemptAt: now.subtract(const Duration(days: 1)),
+        medianResponseMsSnapshot: 8000,
+      );
+      expect(slow.statusAt(now), SkillStatus.almostMastered);
+    });
+
+    test('Wave D — boundary: median exactly 6000ms is NOT mastered (6000 is amber)',
+        () {
+      final amber = LearnerSkillRecord.empty(_skillA).copyWith(
+        masteryScore: 95,
+        evidenceSummary: const {EvidenceTier.strongest: 3},
+        productionGateCleared: true,
+        lastAttemptAt: now.subtract(const Duration(days: 1)),
+        medianResponseMsSnapshot: 6000,
+      );
+      expect(amber.statusAt(now), SkillStatus.almostMastered);
+    });
+
+    test('Wave D — median 5999ms (just under green threshold) → mastered',
+        () {
+      final fast = LearnerSkillRecord.empty(_skillA).copyWith(
+        masteryScore: 95,
+        evidenceSummary: const {EvidenceTier.strongest: 3},
+        productionGateCleared: true,
+        lastAttemptAt: now.subtract(const Duration(days: 1)),
+        medianResponseMsSnapshot: 5999,
+      );
+      expect(fast.statusAt(now), SkillStatus.mastered);
+    });
+
+    test('mastered + fast median + last attempt > 21 days ago → review_due',
+        () {
       final stale = LearnerSkillRecord.empty(_skillA).copyWith(
         masteryScore: 90,
         evidenceSummary: const {EvidenceTier.strong: 4, EvidenceTier.strongest: 1},
         productionGateCleared: true,
         lastAttemptAt: now.subtract(const Duration(days: 30)),
+        medianResponseMsSnapshot: 3500,
       );
       expect(stale.statusAt(now), SkillStatus.reviewDue);
     });
@@ -309,6 +355,82 @@ void main() {
       await LearnerSkillStore.clearForTests();
       final all = await LearnerSkillStore.allRecords();
       expect(all, isEmpty);
+    });
+  });
+
+  group('Wave D — latency enrichment on the LearnerSkillStore facade', () {
+    test('recordAttempt returns null medianResponseMsSnapshot when history < 5',
+        () async {
+      // Pre-seed only 4 latency samples — below the default
+      // stable-median floor.
+      for (final ms in const [3000, 3200, 3400, 3600]) {
+        await LatencyHistoryStore.record(skillId: _skillA, responseTimeMs: ms);
+      }
+      final rec = await LearnerSkillStore.recordAttempt(
+        skillId: _skillA,
+        evidenceTier: EvidenceTier.medium,
+        correct: true,
+      );
+      expect(rec!.medianResponseMsSnapshot, isNull);
+    });
+
+    test('recordAttempt enriches the snapshot once history hits the floor',
+        () async {
+      for (final ms in const [3000, 3200, 3400, 3600, 3800]) {
+        await LatencyHistoryStore.record(skillId: _skillA, responseTimeMs: ms);
+      }
+      final rec = await LearnerSkillStore.recordAttempt(
+        skillId: _skillA,
+        evidenceTier: EvidenceTier.medium,
+        correct: true,
+      );
+      // Median of [3000, 3200, 3400, 3600, 3800] = 3400.
+      expect(rec!.medianResponseMsSnapshot, 3400);
+    });
+
+    test('getRecord folds the current stable median into the returned record',
+        () async {
+      await LearnerSkillStore.recordAttempt(
+        skillId: _skillA,
+        evidenceTier: EvidenceTier.medium,
+        correct: true,
+      );
+      // No latency samples → snapshot is null.
+      var rec = await LearnerSkillStore.getRecord(_skillA);
+      expect(rec.medianResponseMsSnapshot, isNull);
+
+      for (final ms in const [4000, 4100, 4200, 4300, 4400]) {
+        await LatencyHistoryStore.record(skillId: _skillA, responseTimeMs: ms);
+      }
+      // New read picks up the freshly-stable median.
+      rec = await LearnerSkillStore.getRecord(_skillA);
+      expect(rec.medianResponseMsSnapshot, 4200);
+    });
+
+    test('allRecords enriches every record independently', () async {
+      // Two skills with distinct latency profiles.
+      await LearnerSkillStore.recordAttempt(
+        skillId: _skillA,
+        evidenceTier: EvidenceTier.medium,
+        correct: true,
+      );
+      await LearnerSkillStore.recordAttempt(
+        skillId: _skillB,
+        evidenceTier: EvidenceTier.medium,
+        correct: true,
+      );
+      // skillA is fast, skillB hasn't crossed the stable-median floor.
+      for (final ms in const [2000, 2500, 3000, 3500, 4000]) {
+        await LatencyHistoryStore.record(skillId: _skillA, responseTimeMs: ms);
+      }
+      for (final ms in const [9000, 9500]) {
+        await LatencyHistoryStore.record(skillId: _skillB, responseTimeMs: ms);
+      }
+
+      final all = await LearnerSkillStore.allRecords();
+      final byId = {for (final r in all) r.skillId: r};
+      expect(byId[_skillA]!.medianResponseMsSnapshot, 3000);
+      expect(byId[_skillB]!.medianResponseMsSnapshot, isNull);
     });
   });
 

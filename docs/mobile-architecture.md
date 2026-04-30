@@ -266,7 +266,29 @@ session never breaks because of a measurement gap).
 The store is intentionally separate from `LearnerSkillStore` and from
 the server `/me/skills/...` surface — see `LEARNING_ENGINE.md §7.5`
 for the rationale. Wave A was measurement-only; Wave B added the UI
-band; Wave D will wire the median into the §6.4 production gate.
+band; Wave D wires the median into the `mastered` gate.
+
+### Wave D — latency snapshot in `LearnerSkillRecord`
+
+`LearnerSkillRecord` carries a new in-memory field
+`medianResponseMsSnapshot` (`int?`) that the `LearnerSkillStore`
+facade folds in on every `recordAttempt` / `getRecord` / `allRecords`
+call from `LatencyHistoryStore.stableMedianFor(skillId)`.
+`stableMedianFor` returns `null` until the skill has at least
+`defaultMinSamplesForStableMedian` = 5 timed attempts, so a single
+fast attempt can not flip the gate on its own.
+
+`LearnerSkillRecord.statusAt(now)` adds one condition to the
+`mastered` gate: the snapshot must be non-null AND
+`< latencyMasteryGreenThresholdMs` (= 6000ms — the same boundary as
+the Wave B `fast` zone). Without it the skill caps at
+`almost_mastered`.
+
+The snapshot is **never persisted**. The backend has no
+`response_time_ms` column, and latency is per-device anyway. Folding
+the value onto the in-memory record at read time keeps `statusAt`
+synchronous for the existing widget tree (`SkillStatusBadge`,
+`SkillStateCard`).
 
 ### Wave B — pace band on the exercise screen (`LatencyBand`)
 

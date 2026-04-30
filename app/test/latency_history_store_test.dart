@@ -114,4 +114,45 @@ void main() {
     expect(await LatencyHistoryStore.historyFor('a'), isEmpty);
     expect(await LatencyHistoryStore.historyFor('b'), isEmpty);
   });
+
+  group('stableMedianFor (Wave D)', () {
+    test('returns null when history shorter than the default minSamples',
+        () async {
+      // 4 attempts is below the default floor of 5.
+      for (final ms in const [1000, 2000, 3000, 4000]) {
+        await LatencyHistoryStore.record(skillId: 's', responseTimeMs: ms);
+      }
+      expect(
+        await LatencyHistoryStore.stableMedianFor('s'),
+        isNull,
+      );
+    });
+
+    test('returns the median once history hits the default floor', () async {
+      // 5 attempts — median of [1000, 2000, 3000, 4000, 5000] = 3000.
+      for (final ms in const [1000, 2000, 3000, 4000, 5000]) {
+        await LatencyHistoryStore.record(skillId: 's', responseTimeMs: ms);
+      }
+      expect(await LatencyHistoryStore.stableMedianFor('s'), 3000);
+    });
+
+    test('honours an explicit minSamples override', () async {
+      // 3 attempts — passes minSamples=3 but fails default of 5.
+      for (final ms in const [1000, 2000, 3000]) {
+        await LatencyHistoryStore.record(skillId: 's', responseTimeMs: ms);
+      }
+      expect(
+        await LatencyHistoryStore.stableMedianFor('s', minSamples: 3),
+        2000,
+      );
+      expect(
+        await LatencyHistoryStore.stableMedianFor('s', minSamples: 5),
+        isNull,
+      );
+    });
+
+    test('default minSamples constant matches the documented value', () {
+      expect(LatencyHistoryStore.defaultMinSamplesForStableMedian, 5);
+    });
+  });
 }

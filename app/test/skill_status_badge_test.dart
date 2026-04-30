@@ -27,6 +27,7 @@ LearnerSkillRecord _rec({
   Map<EvidenceTier, int> evidence = const {},
   bool gateCleared = false,
   DateTime? lastAttemptAt,
+  int? medianResponseMs,
 }) =>
     LearnerSkillRecord(
       skillId: _skill,
@@ -35,6 +36,7 @@ LearnerSkillRecord _rec({
       evidenceSummary: evidence,
       recentErrors: const [],
       productionGateCleared: gateCleared,
+      medianResponseMsSnapshot: medianResponseMs,
     );
 
 void main() {
@@ -70,7 +72,8 @@ void main() {
     expect(find.text('ALMOST MASTERED'), findsOneWidget);
   });
 
-  testWidgets('renders MASTERED only with productionGateCleared',
+  testWidgets(
+      'renders MASTERED only with productionGateCleared AND fast median (Wave D)',
       (tester) async {
     await tester.pumpWidget(
       _wrap(SkillStatusBadge(
@@ -83,11 +86,32 @@ void main() {
             EvidenceTier.strong: 2,
             EvidenceTier.strongest: 1,
           },
+          // Wave D — median in the green band lets the gate clear.
+          medianResponseMs: 4200,
         ),
         now: now,
       )),
     );
     expect(find.text('MASTERED'), findsOneWidget);
+  });
+
+  testWidgets(
+      'caps at ALMOST MASTERED when median snapshot is missing (Wave D)',
+      (tester) async {
+    await tester.pumpWidget(
+      _wrap(SkillStatusBadge(
+        record: _rec(
+          score: 95,
+          gateCleared: true,
+          evidence: const {EvidenceTier.strongest: 1, EvidenceTier.strong: 2},
+          // medianResponseMs intentionally omitted — no stable timed
+          // attempts yet → status holds at ALMOST MASTERED.
+        ),
+        now: now,
+      )),
+    );
+    expect(find.text('ALMOST MASTERED'), findsOneWidget);
+    expect(find.text('MASTERED'), findsNothing);
   });
 
   testWidgets('renders REVIEW DUE when overdue per the schedule',
@@ -100,6 +124,10 @@ void main() {
           gateCleared: true,
           evidence: const {EvidenceTier.strong: 3},
           lastAttemptAt: stale,
+          // Wave D — review_due requires the same green-band median
+          // that gates `mastered`; without it the skill never enters
+          // mastered and never expires into review_due.
+          medianResponseMs: 3500,
         ),
         now: now,
       )),

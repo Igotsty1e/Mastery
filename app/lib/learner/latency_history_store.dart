@@ -60,13 +60,38 @@ class LatencyHistoryStore {
     }
   }
 
+  /// Minimum number of recorded attempts before
+  /// `stableMedianFor` returns a value. Below this floor the median
+  /// is too volatile to feed any gating decision (Wave D mastery
+  /// formula). Tunable; conservative default of 5 keeps the gate
+  /// fair for new learners.
+  static const int defaultMinSamplesForStableMedian = 5;
+
   /// Median of the recorded history, or `null` when there are no
-  /// attempts yet. Future Wave B/D code uses this to compute the
-  /// per-skill latency band and (later) the mastery gate.
+  /// attempts yet. Used by the Wave B latency band (advisory only).
+  /// Wave D consumers should prefer `stableMedianFor` so a single
+  /// fast attempt can not flip the mastery gate.
   static Future<int?> medianFor(String skillId) async {
     final h = await historyFor(skillId);
     if (h.isEmpty) return null;
-    final sorted = [...h]..sort();
+    return _medianOf(h);
+  }
+
+  /// Same as `medianFor` but returns `null` when fewer than
+  /// `minSamples` attempts are recorded. The Mastery Model uses this
+  /// instead of the raw median so a one-shot fast attempt cannot
+  /// promote a skill into `mastered` on its own.
+  static Future<int?> stableMedianFor(
+    String skillId, {
+    int minSamples = defaultMinSamplesForStableMedian,
+  }) async {
+    final h = await historyFor(skillId);
+    if (h.length < minSamples) return null;
+    return _medianOf(h);
+  }
+
+  static int _medianOf(List<int> samples) {
+    final sorted = [...samples]..sort();
     final n = sorted.length;
     if (n.isOdd) return sorted[n ~/ 2];
     return ((sorted[n ~/ 2 - 1] + sorted[n ~/ 2]) / 2).round();

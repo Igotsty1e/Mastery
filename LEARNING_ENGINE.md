@@ -437,7 +437,7 @@ contract.
 | `practicing` | Score climbing on weak/medium evidence; no strong evidence yet |
 | `getting_there` | Strong evidence appearing; score positive but unstable |
 | `almost_mastered` | Strong evidence converging; one or two stable signals away from mastery |
-| `mastered` | Threshold passed AND no-recognition-only constraint (§6.2) AND at least one strongest-tier correct attempt that satisfies the meaning + form rule (§§6.3, 6.4) |
+| `mastered` | Threshold passed AND no-recognition-only constraint (§6.2) AND at least one strongest-tier correct attempt that satisfies the meaning + form rule (§§6.3, 6.4) AND a stable median in the latency green band (Wave D — see §7.5) |
 | `review_due` | Previously mastered; recency window expired, scheduled review pending |
 
 `graduated` is not a separate status. It is an additional **flag** that
@@ -454,6 +454,7 @@ Mastery requires:
 - accuracy
 - evidence-tier breadth (per §6.2)
 - a strongest-tier correct attempt on the production gate (per §§6.3, 6.4)
+- a stable median in the latency green band (per §7.5 Wave D)
 - stability across nearby contrast skills (per `GRAM_STRATEGY.md §11`)
 - absence of recurring same-error patterns
 
@@ -497,23 +498,33 @@ The store is **deliberately separate** from `LearnerSkillStore`:
 - A separate store can be promoted to a pluggable backend later
   without touching the existing Mastery Model fields.
 
-No mastery formula consumes `LatencyHistoryStore` yet. Sequencing:
+Sequencing:
 
 - **Wave A — shipped.** Measurement only. Per-skill FIFO + median
   accessor. No UI, no formula change.
-- **Wave B — shipped (this wave).** Calm 3-band UI on the exercise
-  screen via `LatencyBand`
-  (`app/lib/widgets/latency_band.dart`), inserted between the
-  Decision-reason line and the instruction band. Reads
+- **Wave B — shipped.** Calm 3-band UI on the exercise screen via
+  `LatencyBand` (`app/lib/widgets/latency_band.dart`), inserted
+  between the Decision-reason line and the instruction band. Reads
   `LatencyHistoryStore.medianFor(skillId)` and maps it to one of
   three pace zones (`fast` < 6000ms, `steady` < 12000ms, `slow`
   ≥ 12000ms). Hides on un-tagged exercises and skills with no
-  recorded attempts (calm silence per §11.4). Advisory only — no
-  countdown, no streak, no scoring effect.
-- **Wave D — planned.** Median latency feeds the §6.4 production
-  gate: `mastered` requires not just a strongest-tier correct attempt
-  with a `meaning_frame`, but a stable median in the green band on
-  the most recent attempts. The exact threshold ships with Wave D.
+  recorded attempts (calm silence per §11.4). Advisory only.
+- **Wave D — shipped (this wave).** Median latency now gates
+  `mastered`. `LearnerSkillRecord` carries an in-memory
+  `medianResponseMsSnapshot` populated by the `LearnerSkillStore`
+  facade on every read/write from
+  `LatencyHistoryStore.stableMedianFor(skillId)` (a new accessor that
+  returns `null` until the skill has at least
+  `defaultMinSamplesForStableMedian` = 5 timed attempts, so a single
+  fast attempt can not flip the gate on its own). `statusAt` adds one
+  condition to the §7.2 mastered-gate trio: the snapshot must be
+  non-null AND `< latencyMasteryGreenThresholdMs` (= 6000ms — the
+  same boundary as the Wave B `fast` zone). Without it the skill
+  caps at `almost_mastered`. The snapshot is **never persisted** —
+  latency is a per-device signal (`§7.5` rationale) and the backend
+  store has no `response_time_ms` column. Promoting the snapshot
+  into the record on read is the contract that lets `statusAt` stay
+  synchronous.
 
 ---
 

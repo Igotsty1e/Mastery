@@ -20,6 +20,7 @@ LearnerSkillRecord _rec({
   List<TargetError> errors = const [],
   bool gateCleared = false,
   DateTime? lastAttemptAt,
+  int? medianResponseMs,
 }) =>
     LearnerSkillRecord(
       skillId: skillId,
@@ -28,6 +29,7 @@ LearnerSkillRecord _rec({
       evidenceSummary: evidence,
       recentErrors: errors,
       productionGateCleared: gateCleared,
+      medianResponseMsSnapshot: medianResponseMs,
     );
 
 void main() {
@@ -88,6 +90,8 @@ void main() {
         evidence: const {EvidenceTier.strongest: 1, EvidenceTier.strong: 2},
         gateCleared: true,
         lastAttemptAt: now.subtract(const Duration(days: 1)),
+        // Wave D — green-band median required for `mastered`.
+        medianResponseMs: 4000,
       );
       expect(
           reasonLineFor(r, now), 'Strongest evidence on this rule is solid.');
@@ -154,6 +158,9 @@ void main() {
         evidence: const {EvidenceTier.strongest: 1, EvidenceTier.strong: 2},
         gateCleared: true,
         lastAttemptAt: now.subtract(const Duration(days: 30)),
+        // Wave D — review_due is reachable only after the skill once
+        // reached mastered, which now requires a fast median.
+        medianResponseMs: 4000,
       );
       expect(reasonLineFor(r, now), 'Last seen 30 days ago.');
     });

@@ -4,6 +4,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../auth/auth_client.dart';
 import '../models/lesson.dart';
+import 'latency_history_store.dart';
+
+/// Wave D — upper bound (ms) on the stable median that gates
+/// `mastered`. Same numeric threshold as the Wave B `fast` zone in
+/// `app/lib/widgets/latency_band.dart` (`latencyFastThresholdMs`),
+/// duplicated here to keep this module free of widget imports. Keep
+/// both constants in lockstep when tuning.
+const int latencyMasteryGreenThresholdMs = 6000;
 
 /// Per-learner per-skill mastery state per `LEARNING_ENGINE.md §7.1`.
 ///
@@ -79,6 +87,17 @@ class LearnerSkillRecord {
   /// records that never cleared the gate.
   final int? gateClearedAtVersion;
 
+  /// Wave D — snapshot of `LatencyHistoryStore.stableMedianFor(skillId)`
+  /// at read time. Populated by the `LearnerSkillStore` facade so
+  /// `statusAt` can stay synchronous; the snapshot lives only on the
+  /// in-memory record returned to callers, never persisted in the
+  /// backend (latency is a per-device signal — see
+  /// `LEARNING_ENGINE.md §7.5`). `null` when the skill has fewer than
+  /// `LatencyHistoryStore.defaultMinSamplesForStableMedian` attempts —
+  /// in that case the Wave D gate treats the skill as "not yet timed"
+  /// and the status caps at `almost_mastered`.
+  final int? medianResponseMsSnapshot;
+
   const LearnerSkillRecord({
     required this.skillId,
     required this.masteryScore,
@@ -87,6 +106,7 @@ class LearnerSkillRecord {
     required this.recentErrors,
     required this.productionGateCleared,
     this.gateClearedAtVersion,
+    this.medianResponseMsSnapshot,
   });
 
   factory LearnerSkillRecord.empty(String skillId) => LearnerSkillRecord(
@@ -97,6 +117,7 @@ class LearnerSkillRecord {
         recentErrors: const [],
         productionGateCleared: false,
         gateClearedAtVersion: null,
+        medianResponseMsSnapshot: null,
       );
 
   LearnerSkillRecord copyWith({
@@ -107,6 +128,8 @@ class LearnerSkillRecord {
     bool? productionGateCleared,
     int? gateClearedAtVersion,
     bool clearGateClearedAtVersion = false,
+    int? medianResponseMsSnapshot,
+    bool clearMedianResponseMsSnapshot = false,
   }) =>
       LearnerSkillRecord(
         skillId: skillId,
@@ -119,12 +142,16 @@ class LearnerSkillRecord {
         gateClearedAtVersion: clearGateClearedAtVersion
             ? null
             : (gateClearedAtVersion ?? this.gateClearedAtVersion),
+        medianResponseMsSnapshot: clearMedianResponseMsSnapshot
+            ? null
+            : (medianResponseMsSnapshot ?? this.medianResponseMsSnapshot),
       );
 
-  /// Status derivation per `LEARNING_ENGINE.md §10` (Mastery Model V1).
-  /// Labels are part of the contract; thresholds finalised during the
-  /// V1 review on 2026-04-26 — `docs/plans/learning-engine-v1.md`
-  /// Decisions log #8.
+  /// Status derivation per `LEARNING_ENGINE.md §10` (Mastery Model V1)
+  /// + Wave D latency gate (`§7.5`). Labels are part of the contract;
+  /// thresholds finalised during the V1 review on 2026-04-26
+  /// (`docs/plans/learning-engine-v1.md` Decisions log #8) and the
+  /// Wave D ship in 2026-04-30 (latency green-band cap).
   ///
   /// V1 boundaries:
   ///   0–20  → started
@@ -134,15 +161,27 @@ class LearnerSkillRecord {
   ///   85–100 → mastered
   ///
   /// `productionGateCleared + hasStrongOrStronger + masteryScore ≥ 85`
-  /// is the gate for `mastered` (down from ≥80 in V0). `review_due`
-  /// fires when a mastered skill's `lastAttemptAt` is more than 21
-  /// days stale per §13.
+  /// is the V1 gate for `mastered`. Wave D adds one more condition:
+  /// `medianResponseMsSnapshot` must be non-null AND below the
+  /// `latencyMasteryGreenThresholdMs` (6000ms — same boundary as the
+  /// Wave B `fast` zone). A null snapshot means the learner does not
+  /// have enough timed attempts for a stable signal yet, so the gate
+  /// holds at `almost_mastered` until the latency history matures.
+  ///
+  /// `review_due` fires when a mastered skill's `lastAttemptAt` is
+  /// more than 21 days stale per §13.
   SkillStatus statusAt(DateTime now) {
     final hasStrongOrStronger = (evidenceSummary[EvidenceTier.strong] ?? 0) +
             (evidenceSummary[EvidenceTier.strongest] ?? 0) >
         0;
 
     if (productionGateCleared && hasStrongOrStronger && masteryScore >= 85) {
+      // Wave D — green-band cap. Without a stable fast median the
+      // learner has not yet shown the rule under speed pressure.
+      final median = medianResponseMsSnapshot;
+      if (median == null || median >= latencyMasteryGreenThresholdMs) {
+        return SkillStatus.almostMastered;
+      }
       if (lastAttemptAt != null &&
           now.difference(lastAttemptAt!) > const Duration(days: 21)) {
         return SkillStatus.reviewDue;
@@ -597,6 +636,9 @@ class LearnerSkillStore {
 
   /// Records one attempt for one skill. Returns the updated record (or
   /// `null` if persistence failed — the session must keep working).
+  /// Wave D — the returned record carries the current
+  /// `medianResponseMsSnapshot` so callers can run `statusAt` without
+  /// a second async hop.
   static Future<LearnerSkillRecord?> recordAttempt({
     required String skillId,
     required EvidenceTier evidenceTier,
@@ -605,22 +647,43 @@ class LearnerSkillStore {
     String? meaningFrame,
     DateTime? occurredAt,
     int? evaluationVersion,
-  }) =>
-      _backend.recordAttempt(
-        skillId: skillId,
-        evidenceTier: evidenceTier,
-        correct: correct,
-        primaryTargetError: primaryTargetError,
-        meaningFrame: meaningFrame,
-        occurredAt: occurredAt,
-        evaluationVersion: evaluationVersion,
-      );
+  }) async {
+    final rec = await _backend.recordAttempt(
+      skillId: skillId,
+      evidenceTier: evidenceTier,
+      correct: correct,
+      primaryTargetError: primaryTargetError,
+      meaningFrame: meaningFrame,
+      occurredAt: occurredAt,
+      evaluationVersion: evaluationVersion,
+    );
+    if (rec == null) return null;
+    return _enrichWithLatency(rec);
+  }
 
-  static Future<LearnerSkillRecord> getRecord(String skillId) =>
-      _backend.getRecord(skillId);
+  static Future<LearnerSkillRecord> getRecord(String skillId) async {
+    final rec = await _backend.getRecord(skillId);
+    return _enrichWithLatency(rec);
+  }
 
-  static Future<List<LearnerSkillRecord>> allRecords() =>
-      _backend.allRecords();
+  static Future<List<LearnerSkillRecord>> allRecords() async {
+    final list = await _backend.allRecords();
+    if (list.isEmpty) return list;
+    return Future.wait(list.map(_enrichWithLatency));
+  }
+
+  /// Wave D — fold the current stable median into the in-memory record
+  /// so `statusAt` can stay synchronous. The snapshot is **never**
+  /// persisted; the backend store has no `response_time_ms` field
+  /// (latency is per-device, see `LEARNING_ENGINE.md §7.5`).
+  static Future<LearnerSkillRecord> _enrichWithLatency(
+      LearnerSkillRecord rec) async {
+    final median = await LatencyHistoryStore.stableMedianFor(rec.skillId);
+    if (median == null) {
+      return rec.copyWith(clearMedianResponseMsSnapshot: true);
+    }
+    return rec.copyWith(medianResponseMsSnapshot: median);
+  }
 
   /// Test-only: clears whatever the active backend persists (local SharedPrefs
   /// for `LocalLearnerSkillBackend`; no-op for `RemoteLearnerSkillBackend`).
