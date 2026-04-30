@@ -3,7 +3,7 @@
 **Dataset:** `docs/ai-eval-dataset.v1.jsonl`  
 **Companion guide:** `docs/ai-eval-dataset-guide.md`  
 **Rubric:** `docs/ai-evaluation-rubric.md`  
-**Status:** Local review template for future AI sessions.  
+**Status:** Review template for the synthetic in-repo eval fixture.  
 **Last updated:** 2026-04-20
 
 ## Purpose
@@ -15,6 +15,9 @@ Use this sheet during the next AI-focused session to record what actually happen
 - expected behavior
 
 This sheet is intentionally operational. It is for review, not for changing the product spec.
+
+The companion dataset is synthetic and safe to keep in the repository.
+Do not append real learner data to it.
 
 ## Session Header
 

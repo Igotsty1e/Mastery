@@ -1,12 +1,16 @@
 # AI Eval Dataset Guide — v1
 
 **Dataset:** `docs/ai-eval-dataset.v1.jsonl`  
-**Status:** Local preparation artifact.  
+**Status:** Synthetic evaluation fixture, safe to keep in-repo.  
 **Last updated:** 2026-04-20
 
 ## Purpose
 
 This guide explains how to use the expanded eval dataset for future AI sessions.
+
+The dataset is synthetic. It was authored for evaluator calibration and
+does not contain real learner submissions, personal data, or production
+telemetry.
 
 The dataset is intentionally richer than the earlier template:
 - it captures current runtime expectations
@@ -103,6 +107,12 @@ It does not yet include:
 - adversarial spam inputs
 - rate-limit or timeout ops cases
 - multilingual edge cases
+
+## Repository Policy
+
+This file may remain committed to the repository because it is a
+synthetic fixture. If future eval material uses real learner answers or
+operational traces, it must live outside the public repository surface.
 
 ## Suggested Next Dataset Expansions
 

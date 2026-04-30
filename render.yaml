@@ -20,6 +20,8 @@ services:
         sync: false           # set manually in Render dashboard
       - key: OPENAI_MODEL
         value: gpt-4o-mini    # ignored when AI_PROVIDER=stub
+      - key: PUBLIC_WEB_ORIGIN
+        sync: false           # set manually in the deployment dashboard
 
   # ── Flutter web (static) ──────────────────────────────────────────────────
   - type: web
@@ -29,4 +31,6 @@ services:
     staticPublishPath: app/build/web
     envVars:
       - key: API_BASE_URL
-        value: https://mastery-backend-igotsty1e.onrender.com
+        sync: false           # set manually in the deployment dashboard
+      - key: REQUIRE_API_BASE_URL
+        value: true

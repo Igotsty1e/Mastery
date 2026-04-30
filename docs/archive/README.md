@@ -21,6 +21,11 @@ shipped to production. The actual prompt and contract live in code
 Template + §Debrief Generation. If a future session needs to redo manual
 AI eval, restart from these as a starting reference.
 
+The eval datasets in this folder are synthetic author-created fixtures,
+not learner production data. They are acceptable to keep in the
+repository as long as they remain synthetic, contain no personal data,
+and do not import operational traces.
+
 ### Historical planning artifacts
 
 - `execution-brief.md` — phase-by-phase MVP build order. The MVP is

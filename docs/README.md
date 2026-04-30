@@ -72,6 +72,21 @@ Visual references beyond the shipped set:
 
 Historical artifacts only. See [`archive/README.md`](archive/README.md) for the inventory and reasons.
 
+### Public docs (`docs/public/`)
+
+Public-facing product and engineering overviews that are safe to expose without operational detail:
+
+- [`public/ARCHITECTURE.md`](public/ARCHITECTURE.md)
+- [`public/ROADMAP.md`](public/ROADMAP.md)
+- [`public/AI_WORKFLOW.md`](public/AI_WORKFLOW.md)
+
+### GitHub readiness (`docs/github-readiness/`)
+
+Repository-publication prep artifacts:
+
+- [`github-readiness/security-audit.md`](github-readiness/security-audit.md)
+- [`github-readiness/final-report.md`](github-readiness/final-report.md)
+
 ---
 
 ## How to use this map

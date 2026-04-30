@@ -3,12 +3,12 @@
 ## Status
 
 Working blueprint for the first curriculum unit under the canonical pedagogy and exercise system in:
-- [GRAM_STRATEGY.md](/Users/ivankhanaev/Mastery/GRAM_STRATEGY.md)
-- [exercise_structure.md](/Users/ivankhanaev/Mastery/exercise_structure.md)
+- [GRAM_STRATEGY.md](../../GRAM_STRATEGY.md)
+- [exercise_structure.md](../../exercise_structure.md)
 
 Pedagogical and exercise-authoring authority for this blueprint also depends on:
-- [GRAM_STRATEGY.md](/Users/ivankhanaev/Mastery/GRAM_STRATEGY.md)
-- [exercise_structure.md](/Users/ivankhanaev/Mastery/exercise_structure.md)
+- [GRAM_STRATEGY.md](../../GRAM_STRATEGY.md)
+- [exercise_structure.md](../../exercise_structure.md)
 
 This file is not the runtime lesson fixture. It is the authoring blueprint that the shipped lessons should be built from.
 

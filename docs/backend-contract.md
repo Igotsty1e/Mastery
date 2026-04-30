@@ -550,7 +550,7 @@ The backend enforces a strict origin allowlist for cross-origin requests. Wildca
 
 ### Default Allowed Origins
 
-- `https://mastery-web-igotsty1e.onrender.com` (production frontend)
+- production frontend origin (configured via `ALLOWED_ORIGINS`, or `PUBLIC_WEB_ORIGIN` when no explicit allowlist is provided)
 - `http://localhost:3000` (local dev - typical Flutter web)
 - `http://localhost:8080` (alternate local dev port)
 - `http://localhost:57450` (Flutter web dev server)
@@ -563,6 +563,8 @@ ALLOWED_ORIGINS=https://custom-domain.com,http://localhost:5000
 ```
 
 Separate multiple origins with commas. Each will be trimmed of whitespace.
+
+If `ALLOWED_ORIGINS` is unset, the backend falls back to `PUBLIC_WEB_ORIGIN` and the localhost development origins above.
 
 ### Behavior
 

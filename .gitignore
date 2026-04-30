@@ -26,3 +26,9 @@ Thumbs.db
 .env.*
 .mcp.json
 .gstack/
+
+# Logs and temp
+*.log
+logs/
+tmp/
+temp/

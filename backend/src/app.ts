@@ -19,18 +19,27 @@ export interface CreateAppOptions {
   db?: AppDatabase;
 }
 
-const DEFAULT_ALLOWED_ORIGINS = [
-  'https://mastery-web-igotsty1e.onrender.com',
+const LOCAL_DEV_ALLOWED_ORIGINS = [
   'http://localhost:3000',
   'http://localhost:8080',
   'http://localhost:57450', // Flutter web dev server
 ];
 
-const allowedOrigins: string[] = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(',').map(s => s.trim())
-  : DEFAULT_ALLOWED_ORIGINS;
+function getAllowedOrigins(): string[] {
+  const explicit = process.env.ALLOWED_ORIGINS
+    ?.split(',')
+    .map(s => s.trim())
+    .filter(Boolean);
+  if (explicit?.length) return explicit;
+
+  const publicWebOrigin = process.env.PUBLIC_WEB_ORIGIN?.trim();
+  return publicWebOrigin
+    ? [publicWebOrigin, ...LOCAL_DEV_ALLOWED_ORIGINS]
+    : LOCAL_DEV_ALLOWED_ORIGINS;
+}
 
 export function createApp(ai: AiProvider, opts: CreateAppOptions = {}): express.Express {
+  const allowedOrigins = getAllowedOrigins();
   const app = express();
   app.set('trust proxy', 1);
   app.use((req, res, next) => {

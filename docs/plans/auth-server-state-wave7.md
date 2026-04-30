@@ -167,7 +167,7 @@ top of it must:
 ### Render infrastructure
 
 - Add a Render Postgres instance (Free tier covers MVP).
-- `DATABASE_URL` env var on `mastery-backend-igotsty1e`.
+- `DATABASE_URL` env var on the backend service.
 - Bump Render Blueprint to provision the DB alongside the web service.
 
 ### Migration of existing learners

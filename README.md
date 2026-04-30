@@ -1,44 +1,64 @@
-# Mastery — Roundups AI Assistant
+# Mastery
 
-Flutter app for structured English practice (web runnable locally; iOS/Android pending native toolchain). Fixed lessons, deterministic evaluation, minimal AI.
+Mastery is an English-practice product built around structured lessons, deterministic evaluation, and a deliberately narrow use of AI.
 
-## What it is
+It is aimed at learners who need guided grammar and sentence-level practice, and at builders who want a reference implementation for a constrained AI-assisted learning workflow.
 
-Users complete lessons composed of exercises. The backend decides correctness. AI is used only for borderline `sentence_correction` cases and a short post-lesson debrief. The shipped UX is anonymous; exercise progress (completed count) is stored locally on-device via SharedPreferences.
+## Current stage
 
-The backend ships an auth & identity foundation (Drizzle ORM, opaque refresh-token sessions, hard-delete) staged for a future client wave — see [`docs/plans/auth-foundation.md`](docs/plans/auth-foundation.md). The Flutter client is **not** wired to it yet.
+MVP, in active development.
 
-## Key constraints
+## Problem it solves
 
-- Flutter (Dart) client only
-- Backend is single source of truth for all correctness decisions
-- 4 exercise types: `fill_blank`, `multiple_choice`, `sentence_correction`, `listening_discrimination` (multi-unit families gated on Wave 6)
-- Deterministic evaluation for all types; AI fallback only for `sentence_correction` borderline cases
-- Default linear lesson flow with the `LEARNING_ENGINE.md §9.1` 1/2/3 in-session loop layered on top — the Decision Engine may pull a same-skill item to the head after a wrong answer; on the third miss it ends the loop on that skill for the session
-- Per-skill mastery state + cross-session review cadence are device-scoped today (`LearnerSkillStore` + `ReviewScheduler` shipped in Waves 2–3); server-side migration lives in `docs/plans/auth-server-state-wave7.md` Wave 7
-- Backend auth + server-owned lesson sessions (Apple stub login, refresh tokens, immutable `exercise_attempts`, `lesson_progress`, `/dashboard`) shipped server-side. No chat UI, no resume mid-session yet — Flutter client wire-up is Wave 7.4.
+Most language-learning products either overuse free-form AI or hide the evaluation logic behind opaque scoring. Mastery keeps the core lesson flow deterministic, uses AI only where the rules run out, and keeps the backend as the single source of truth for correctness.
 
-## Stack
+## What is implemented
 
-- Client: Flutter (Dart)
-- Backend: Node.js + TypeScript + Express (`backend/`)
-- AI: OpenAI Responses API, server-side only (`AI_PROVIDER=openai`; stub default for local dev)
-- Lesson content: JSON fixtures in `backend/data/` (manifest + per-lesson files)
+- Flutter client for structured lesson flows
+- Node.js + TypeScript backend for lesson delivery and evaluation
+- Deterministic evaluation for `fill_blank`, `multiple_choice`, and most `sentence_correction` cases
+- Narrow AI fallback for borderline `sentence_correction` answers
+- Post-lesson AI debrief generation
+- Server-side auth and session foundation
+- Server-side lesson session and progress model, staged for future client wiring
+- Content and pedagogy canon for lesson authoring
+
+## What is intentionally private
+
+- Concrete deployment endpoints and operational dashboards
+- Secret values and local environment files
+- Internal planning history that is not needed to understand the product
+- Internal evaluation assets that may be reviewed before any public release
+
+## High-level architecture
+
+- `app/` contains the Flutter client
+- `backend/` contains the Node.js API, evaluation pipeline, and persistence layer
+- `backend/data/` contains lesson fixtures and manifests
+- `docs/` contains product contracts, plans, public architecture notes, and archive material
+
+Public-facing architecture and workflow notes live in [`docs/public/ARCHITECTURE.md`](docs/public/ARCHITECTURE.md), [`docs/public/ROADMAP.md`](docs/public/ROADMAP.md), and [`docs/public/AI_WORKFLOW.md`](docs/public/AI_WORKFLOW.md).
+
+## AI usage in development
+
+AI is used in two places:
+
+- in the product, only for borderline sentence-correction evaluation and short debrief generation
+- in development, for implementation support, documentation drafting, and controlled content-authoring workflows
+
+Human review remains required for product direction, pedagogy, and any shipped content.
+
+## Short roadmap
+
+- wire the Flutter client to the shipped auth and lesson-session backend
+- continue the learning-engine migration in measured waves
+- expand exercise and audio coverage without weakening deterministic evaluation
+- tighten the public documentation and repository surface before any publication
+
+## Status
+
+Active development.
 
 ## Documentation
 
-The full doc map lives in [`docs/README.md`](docs/README.md). It groups every active document by purpose (canon / contracts / plans / authoring / references / history) and is the single place to update when files are added, renamed, or archived.
-
-Repo-root canon, in load order:
-
-- [`CLAUDE.md`](CLAUDE.md) — agent operating rules + doc-maintenance rule
-- [`DESIGN.md`](DESIGN.md) — visual canon
-- [`GRAM_STRATEGY.md`](GRAM_STRATEGY.md) — pedagogy canon
-- [`exercise_structure.md`](exercise_structure.md) — exercise authoring canon
-- [`LEARNING_ENGINE.md`](LEARNING_ENGINE.md) — target-state engine canon (skill graph, evidence model, mastery model, decision engine, transparency layer); migration in [`docs/plans/learning-engine-mvp-2.md`](docs/plans/learning-engine-mvp-2.md)
-
-Everything else lives under `docs/` — start at [`docs/README.md`](docs/README.md).
-
-Current active design wave after the shipped onboarding/home pass:
-- [`docs/plans/dashboard-study-desk.md`](docs/plans/dashboard-study-desk.md) — next `HomeScreen` redesign handoff
-- [`docs/design-mockups/dashboard-study-desk.html`](docs/design-mockups/dashboard-study-desk.html) — visual prototype for that wave
+Start with [`docs/README.md`](docs/README.md) for the full document map. Public-release preparation notes live under [`docs/github-readiness/`](docs/github-readiness/).
