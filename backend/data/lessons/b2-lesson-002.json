@@ -39,21 +39,15 @@
     },
     {
       "exercise_id": "a1b2c3d4-0002-4000-8000-000000000033",
-      "type": "multiple_choice",
+      "type": "fill_blank",
       "skill_id": "present-perfect-continuous-vs-simple",
       "primary_target_error": "contrast_error",
-      "evidence_tier": "weak",
-      "instruction": "Choose the correct option.",
-      "prompt": "Look — I ___ all the dishes. The kitchen is clean now.",
-      "options": [
-        { "id": "a", "text": "have washed" },
-        { "id": "b", "text": "have been washing" },
-        { "id": "c", "text": "am washing" },
-        { "id": "d", "text": "wash" }
-      ],
-      "correct_option_id": "a",
+      "evidence_tier": "medium",
+      "instruction": "Complete the gap with the correct form of the verb in brackets.",
+      "prompt": "Look — I ___ (wash) all the dishes. The kitchen is clean now.",
+      "accepted_answers": ["have washed", "'ve washed"],
       "feedback": {
-        "explanation": "You chose 'have been washing', but the correct answer is 'have washed' because the focus is the result — the kitchen is clean now. If the sentence emphasizes a finished outcome → usually use 'have / has + past participle'."
+        "explanation": "You may have written 'have been washing' or a simpler form, but the correct answer is 'have washed' because the focus is the result — the kitchen is clean now. If the sentence emphasizes a finished outcome → usually use 'have / has + past participle'."
       }
     },
     {
@@ -71,21 +65,15 @@
     },
     {
       "exercise_id": "a1b2c3d4-0002-4000-8000-000000000035",
-      "type": "multiple_choice",
+      "type": "fill_blank",
       "skill_id": "present-perfect-continuous-vs-simple",
       "primary_target_error": "contrast_error",
-      "evidence_tier": "weak",
-      "instruction": "Choose the correct option.",
-      "prompt": "I ___ this email three times — please read it carefully.",
-      "options": [
-        { "id": "a", "text": "have written" },
-        { "id": "b", "text": "have been writing" },
-        { "id": "c", "text": "am writing" },
-        { "id": "d", "text": "wrote" }
-      ],
-      "correct_option_id": "a",
+      "evidence_tier": "medium",
+      "instruction": "Complete the gap with the correct form of the verb in brackets.",
+      "prompt": "I ___ (write) this email three times — please read it carefully.",
+      "accepted_answers": ["have written", "'ve written"],
       "feedback": {
-        "explanation": "You chose 'have been writing', but the correct answer is 'have written' because 'three times' counts a finished number of attempts. If you can count the completed instances → usually use 'have / has + past participle', not the continuous form."
+        "explanation": "You may have written 'have been writing' or a simpler form, but the correct answer is 'have written' because 'three times' counts a finished number of attempts. If you can count the completed instances → usually use 'have / has + past participle', not the continuous form."
       }
     },
     {
@@ -165,6 +153,7 @@
       "skill_id": "present-perfect-continuous-vs-simple",
       "primary_target_error": "form_error",
       "evidence_tier": "strong",
+      "meaning_frame": "Report the length of an ongoing job from when it started.",
       "instruction": "Rewrite the sentence correctly.",
       "prompt": "I have working in this company for ten years.",
       "accepted_corrections": [
@@ -176,21 +165,15 @@
     },
     {
       "exercise_id": "a1b2c3d4-0002-4000-8000-00000000003a",
-      "type": "multiple_choice",
+      "type": "fill_blank",
       "skill_id": "present-perfect-continuous-vs-simple",
       "primary_target_error": "contrast_error",
-      "evidence_tier": "weak",
-      "instruction": "Choose the correct option.",
-      "prompt": "Look how exhausted he is — he ___ all morning.",
-      "options": [
-        { "id": "a", "text": "has run" },
-        { "id": "b", "text": "has been running" },
-        { "id": "c", "text": "is running" },
-        { "id": "d", "text": "ran" }
-      ],
-      "correct_option_id": "b",
+      "evidence_tier": "medium",
+      "instruction": "Complete the gap with the correct form of the verb in brackets.",
+      "prompt": "Look how exhausted he is — he ___ (run) all morning.",
+      "accepted_answers": ["has been running", "'s been running"],
       "feedback": {
-        "explanation": "You chose 'has run', but the correct answer is 'has been running' because the visible result (exhaustion) points to a recent ongoing process, not a single finished event. If the present state of someone is the trace of a recent ongoing action → usually use 'have / has been + verb-ing'."
+        "explanation": "You may have written 'has run' or a simpler form, but the correct answer is 'has been running' because the visible result (exhaustion) points to a recent ongoing process, not a single finished event. If the present state of someone is the trace of a recent ongoing action → usually use 'have / has been + verb-ing'."
       }
     },
     {
