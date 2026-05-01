@@ -140,6 +140,10 @@ export class OpenAiProvider implements AiProvider {
   async evaluateFreeSentence(
     args: AiFreeSentenceArgs
   ): Promise<AiEvaluationResult> {
+    process.stderr.write(
+      '[ai/sfs/enter] model=' + this.model +
+      ' sa=' + JSON.stringify(args.userAnswer) + '\n',
+    );
     const prompt = [
       `Grade a short English-grammar drill answer. Default to FALSE.`,
       `Pass only when ALL three checks succeed.`,
@@ -241,8 +245,8 @@ export class OpenAiProvider implements AiProvider {
     // util.format-style placeholders silently in this project.
     // Strip this log once root cause is fixed.
     // ignore: avoid_print
-    process.stdout.write(
-      '[ai/sfs] model=' + this.model +
+    process.stderr.write(
+      '[ai/sfs/exit] model=' + this.model +
       ' sa=' + JSON.stringify(args.userAnswer) +
       ' text=' + JSON.stringify(text.slice(0, 300)) +
       ' refusal=' + JSON.stringify(refusal) +
