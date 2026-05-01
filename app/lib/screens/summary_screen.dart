@@ -3,20 +3,26 @@ import 'package:provider/provider.dart';
 
 import '../api/api_client.dart';
 import '../learner/learner_skill_store.dart';
+import '../learner/skill_titles.dart';
 import '../models/evaluation.dart';
 import '../theme/mastery_theme.dart';
 import '../widgets/feedback_prompt_sheet.dart';
+import '../widgets/mastery_route.dart';
 import '../widgets/mastery_widgets.dart';
 import '../widgets/skill_state_card.dart';
+import '../widgets/skill_status_badge.dart';
+import 'lesson_intro_screen.dart';
 
 class SummaryScreen extends StatefulWidget {
   final int correctCount;
   final int totalCount;
   final LessonResultResponse? summary;
 
-  /// When `true`, the screen scrolls to the "Review your mistakes" section
-  /// after first frame. Used by the dashboard "Last lesson report" block so
-  /// its `Review mistakes` button lands directly at the relevant content.
+  /// Wave 14.9 left-over: the dashboard Last-lesson CTA used to deep-link
+  /// into the mistake list. The Wave G2 SummaryScreen rewrite removes the
+  /// mistake list entirely (per the 2026-05-01 product call), so this
+  /// flag is now a no-op kept for backwards compat with existing callers.
+  /// Remove once every caller has been updated.
   final bool initialScrollToMistakes;
 
   /// Wave 4 §11.2: skill IDs that this just-finished lesson touched. The
@@ -40,8 +46,6 @@ class SummaryScreen extends StatefulWidget {
 }
 
 class _SummaryScreenState extends State<SummaryScreen> {
-  final GlobalKey _mistakesKey = GlobalKey();
-
   /// Wave 4 §11.2 panel data. Loaded once at screen mount; reads from
   /// SharedPreferences so the per-skill state visible here always
   /// reflects what `SessionController.submitAnswer` just wrote on the
@@ -52,18 +56,6 @@ class _SummaryScreenState extends State<SummaryScreen> {
   void initState() {
     super.initState();
     _loadSkillRecords();
-    if (widget.initialScrollToMistakes) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        final ctx = _mistakesKey.currentContext;
-        if (ctx == null || !mounted) return;
-        Scrollable.ensureVisible(
-          ctx,
-          duration: MasteryDurations.medium,
-          curve: MasteryEasing.move,
-          alignment: 0.05,
-        );
-      });
-    }
   }
 
   Future<void> _loadSkillRecords() async {
@@ -78,18 +70,13 @@ class _SummaryScreenState extends State<SummaryScreen> {
 
   /// Wave 14.3 phase 2 — V1.5 feedback after-summary surface.
   ///
-  /// Intercepts the Done tap. If the server-side cooldown allows a
-  /// new `after_summary` record, opens the rating sheet. Whatever the
-  /// learner does (rate, comment, skip, swipe-away) is mirrored as a
-  /// single POST to `/me/feedback` so server analytics see one row
-  /// per Done. Network failures are silent — the screen always pops
-  /// at the end.
-  ///
-  /// Why on Done (not on screen mount): the learner has just read the
-  /// score and any debrief; asking now is asking when the experience
-  /// is freshest, not when they're still scanning the result. It also
-  /// piggybacks on an action they were going to take anyway.
-  Future<void> _onDoneTap() async {
+  /// Intercepts the discreet "Back to home" tap. If the server-side
+  /// cooldown allows a new `after_summary` record, opens the rating
+  /// sheet. Whatever the learner does (rate, comment, skip,
+  /// swipe-away) is mirrored as a single POST to `/me/feedback` so
+  /// server analytics see one row per Done. Network failures are
+  /// silent — the screen always pops at the end.
+  Future<void> _onBackToHomeTap() async {
     final api = context.read<ApiClient>();
     final summaryId = widget.summary?.lessonId;
     final navigator = Navigator.of(context);
@@ -124,14 +111,27 @@ class _SummaryScreenState extends State<SummaryScreen> {
     navigator.pop();
   }
 
+  /// Wave G2 — primary CTA. The product call on 2026-05-01 made
+  /// "practice another 10" the dominant action on the summary, so
+  /// the learner can stay in the loop without bouncing through the
+  /// dashboard. Pushes a fresh `LessonIntroScreen` (which boots a
+  /// dynamic session via `loadDynamicSession()`) and replaces the
+  /// current SummaryScreen so the back gesture lands on the
+  /// dashboard, not on the just-finished summary.
+  void _onPracticeMoreTap() {
+    Navigator.of(context).pushReplacement(
+      MasteryFadeRoute(
+        builder: (_) => const LessonIntroScreen(),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final tokens = context.masteryTokens;
     final summary = widget.summary;
     final displayCorrect = summary?.correctCount ?? widget.correctCount;
     final displayTotal = summary?.totalExercises ?? widget.totalCount;
-    final mistakes = summary?.answers.where((a) => !a.correct).toList() ?? [];
-    final conclusion = summary?.conclusion;
 
     final pct = displayTotal > 0 ? displayCorrect / displayTotal : 0.0;
     final scoreColor = pct == 1.0
@@ -140,85 +140,92 @@ class _SummaryScreenState extends State<SummaryScreen> {
             ? MasteryColors.actionPrimary
             : MasteryColors.error;
     final debrief = summary?.debrief;
+    final conclusion = summary?.conclusion;
 
     return Scaffold(
       backgroundColor: tokens.bgApp,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(
-              MasterySpacing.lg, 24, MasterySpacing.lg, MasterySpacing.xl),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Text(
-                  'Lesson Complete',
-                  style: MasteryTextStyles.headlineMd.copyWith(
-                    color: MasteryColors.textPrimary,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 18),
-              _ScoreHero(
-                correct: displayCorrect,
-                total: displayTotal,
-                scoreColor: scoreColor,
-              ),
-              if (debrief != null) ...[
-                const SizedBox(height: 18),
-                _DebriefCard(debrief: debrief),
-              ] else if (conclusion != null && conclusion.isNotEmpty) ...[
-                const SizedBox(height: 18),
-                MasterySoftCard(
-                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
-                  child: Text(
-                    conclusion,
-                    style: MasteryTextStyles.bodyMd.copyWith(
-                      height: 1.6,
-                      color: MasteryColors.textPrimary,
-                    ),
-                  ),
-                ),
-              ],
-              if (_skillRecords.isNotEmpty) ...[
-                const SizedBox(height: 18),
-                SkillStateCard(records: _skillRecords, now: DateTime.now()),
-              ],
-              if (mistakes.isNotEmpty) ...[
-                const SizedBox(height: 28),
-                Row(
-                  key: _mistakesKey,
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(
+                    MasterySpacing.lg, 24, MasterySpacing.lg, MasterySpacing.lg),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      'Review your mistakes',
-                      style: MasteryTextStyles.titleMd,
-                    ),
-                    const Spacer(),
-                    Text(
-                      '${mistakes.length}',
-                      style: MasteryTextStyles.mono(
-                        size: 13,
-                        lineHeight: 16,
-                        color: tokens.textTertiary,
+                    Center(
+                      child: Text(
+                        'Session done',
+                        style: MasteryTextStyles.headlineMd.copyWith(
+                          color: MasteryColors.textPrimary,
+                        ),
                       ),
                     ),
+                    const SizedBox(height: 18),
+                    _ScoreHero(
+                      correct: displayCorrect,
+                      total: displayTotal,
+                      scoreColor: scoreColor,
+                    ),
+                    if (debrief != null) ...[
+                      const SizedBox(height: 18),
+                      _DebriefCard(debrief: debrief),
+                    ] else if (conclusion != null && conclusion.isNotEmpty) ...[
+                      const SizedBox(height: 18),
+                      MasterySoftCard(
+                        padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+                        child: Text(
+                          conclusion,
+                          style: MasteryTextStyles.bodyMd.copyWith(
+                            height: 1.6,
+                            color: MasteryColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                    ],
+                    if (_skillRecords.isNotEmpty) ...[
+                      const SizedBox(height: 18),
+                      _CompactSkillPanel(records: _skillRecords),
+                    ],
                   ],
                 ),
-                const SizedBox(height: 12),
-                ...mistakes.map((m) => Padding(
-                      padding: const EdgeInsets.only(bottom: 10),
-                      child: _MistakeCard(answer: m),
-                    )),
-              ],
-              const SizedBox(height: 28),
-              FilledButton(
-                onPressed: _onDoneTap,
-                child: const Text('Done'),
               ),
-            ],
-          ),
+            ),
+            // Sticky CTA dock at the bottom: prominent "practice more"
+            // primary action + a quiet text-button to bail to the
+            // dashboard. Wrapped in SafeArea inset so the bottom edge
+            // doesn't collide with the home indicator on iPhone.
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                  MasterySpacing.lg, 0, MasterySpacing.lg, MasterySpacing.lg),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  FilledButton(
+                    onPressed: _onPracticeMoreTap,
+                    child: const Text('Practice another 10'),
+                  ),
+                  const SizedBox(height: 4),
+                  TextButton(
+                    onPressed: _onBackToHomeTap,
+                    style: TextButton.styleFrom(
+                      foregroundColor: MasteryColors.textTertiary,
+                      minimumSize: const Size.fromHeight(40),
+                    ),
+                    child: Text(
+                      'Back to home',
+                      style: MasteryTextStyles.labelMd.copyWith(
+                        color: MasteryColors.textTertiary,
+                        letterSpacing: 0.4,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -327,22 +334,20 @@ class _GoldHairline extends StatelessWidget {
   }
 }
 
+/// Wave G2 — calmer debrief card. Drops the per-row WATCH OUT /
+/// NEXT STEP rails the AI used to emit; the headline + body alone is
+/// what the learner actually reads. The eyebrow stays so the source
+/// of the note (an AI coach voice, not a robot) is named explicitly.
 class _DebriefCard extends StatelessWidget {
   final LessonDebrief debrief;
   const _DebriefCard({required this.debrief});
 
   @override
   Widget build(BuildContext context) {
-    final tokens = context.masteryTokens;
     final eyebrowVariant = switch (debrief.debriefType) {
       LessonDebriefType.strong => SectionEyebrowVariant.gold,
       LessonDebriefType.mixed => SectionEyebrowVariant.primary,
       LessonDebriefType.needsWork => SectionEyebrowVariant.secondary,
-    };
-    final eyebrowLabel = switch (debrief.debriefType) {
-      LessonDebriefType.strong => 'Coach\u2019s note',
-      LessonDebriefType.mixed => 'Coach\u2019s note',
-      LessonDebriefType.needsWork => 'Coach\u2019s note',
     };
 
     return MasteryCard(
@@ -350,7 +355,10 @@ class _DebriefCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SectionEyebrow(label: eyebrowLabel, variant: eyebrowVariant),
+          SectionEyebrow(
+            label: 'Coach\u2019s note',
+            variant: eyebrowVariant,
+          ),
           const SizedBox(height: 10),
           if (debrief.headline.isNotEmpty)
             Text(
@@ -370,134 +378,167 @@ class _DebriefCard extends StatelessWidget {
               ),
             ),
           ],
-          if (debrief.watchOut != null && debrief.watchOut!.isNotEmpty) ...[
-            const SizedBox(height: 14),
-            _DebriefTail(
-              label: 'WATCH OUT',
-              text: debrief.watchOut!,
-              color: tokens.accentGoldDeep,
-            ),
-          ],
-          if (debrief.nextStep != null && debrief.nextStep!.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            _DebriefTail(
-              label: 'NEXT STEP',
-              text: debrief.nextStep!,
-              color: MasteryColors.actionPrimaryPressed,
-            ),
-          ],
         ],
       ),
     );
   }
 }
 
-class _DebriefTail extends StatelessWidget {
-  final String label;
-  final String text;
-  final Color color;
-
-  const _DebriefTail({
-    required this.label,
-    required this.text,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 84,
-          child: Text(
-            label,
-            style: MasteryTextStyles.mono(
-              size: 11,
-              lineHeight: 14,
-              weight: FontWeight.w600,
-              color: color,
-              letterSpacing: 1.4,
-            ),
-          ),
-        ),
-        const SizedBox(width: 4),
-        Expanded(
-          child: Text(
-            text,
-            style: MasteryTextStyles.bodySm.copyWith(
-              color: MasteryColors.textPrimary,
-              height: 1.5,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _MistakeCard extends StatelessWidget {
-  final LessonResultAnswer answer;
-  const _MistakeCard({required this.answer});
+/// Wave G2 — compact skill-progress strip. One row per touched skill:
+/// title + status pill, no inline reason text. Tapping the
+/// "See progress →" footer opens a modal with the full
+/// `SkillStateCard` (the previous SummaryScreen surface, kept intact
+/// so reason copy and recurring-error rows stay accessible to anyone
+/// who wants the depth). Rationale: the post-session screen is for
+/// orientation, not study; the heavy text panel made the page feel
+/// like a graded report. The full breakdown is one tap away.
+class _CompactSkillPanel extends StatelessWidget {
+  final List<LearnerSkillRecord> records;
+  const _CompactSkillPanel({required this.records});
 
   @override
   Widget build(BuildContext context) {
     final tokens = context.masteryTokens;
+    final now = DateTime.now();
     return MasteryCard(
-      padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
-      shadow: const [],
+      padding: const EdgeInsets.fromLTRB(20, 18, 20, 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (answer.prompt != null && answer.prompt!.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+          const SectionEyebrow(
+            label: 'Skills',
+            variant: SectionEyebrowVariant.secondary,
+          ),
+          const SizedBox(height: MasterySpacing.sm),
+          for (var i = 0; i < records.length; i++) ...[
+            if (i > 0)
+              Divider(
+                height: 1,
+                thickness: 1,
+                color: tokens.borderSoft,
+              ),
+            _CompactSkillRow(record: records[i], now: now),
+          ],
+          const SizedBox(height: MasterySpacing.xs),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: () => _openProgressSheet(context),
+              style: TextButton.styleFrom(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
               child: Text(
-                '"${answer.prompt!}"',
-                style: MasteryTextStyles.bodyMd.copyWith(
-                  color: MasteryColors.textSecondary,
-                  fontStyle: FontStyle.italic,
-                  height: 1.5,
+                'See progress \u2192',
+                style: MasteryTextStyles.labelMd.copyWith(
+                  color: MasteryColors.actionPrimary,
+                  letterSpacing: 0.3,
                 ),
               ),
             ),
-          if (answer.canonicalAnswer != null) ...[
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.baseline,
-              textBaseline: TextBaseline.alphabetic,
-              children: [
-                Text(
-                  'ANSWER',
-                  style: MasteryTextStyles.labelSm.copyWith(
-                    color: tokens.textTertiary,
-                    letterSpacing: 0.6,
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _openProgressSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: MasteryColors.bgSurface,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(
+          top: Radius.circular(MasteryRadii.lg),
+        ),
+      ),
+      builder: (sheetCtx) => _ProgressSheetBody(records: records),
+    );
+  }
+}
+
+class _CompactSkillRow extends StatelessWidget {
+  final LearnerSkillRecord record;
+  final DateTime now;
+
+  const _CompactSkillRow({required this.record, required this.now});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: MasterySpacing.sm),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              skillTitleFor(record.skillId),
+              style: MasteryTextStyles.bodyMd.copyWith(
+                color: MasteryColors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: MasterySpacing.sm),
+          SkillStatusBadge(record: record, now: now),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProgressSheetBody extends StatelessWidget {
+  final List<LearnerSkillRecord> records;
+  const _ProgressSheetBody({required this.records});
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.masteryTokens;
+    return SafeArea(
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.of(context).size.height * 0.85,
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(
+            MasterySpacing.lg,
+            MasterySpacing.md,
+            MasterySpacing.lg,
+            MasterySpacing.xl,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 36,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: MasterySpacing.lg),
+                  decoration: BoxDecoration(
+                    color: tokens.borderSoft,
+                    borderRadius: BorderRadius.circular(2),
                   ),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
+              ),
+              SkillStateCard(records: records, now: DateTime.now()),
+              const SizedBox(height: MasterySpacing.lg),
+              Center(
+                child: TextButton(
+                  onPressed: () => Navigator.of(context).maybePop(),
                   child: Text(
-                    answer.canonicalAnswer!,
-                    style: MasteryTextStyles.bodyMd.copyWith(
-                      color: MasteryColors.actionPrimaryPressed,
-                      fontWeight: FontWeight.w700,
-                      height: 1.4,
+                    'Close',
+                    style: MasteryTextStyles.labelMd.copyWith(
+                      color: MasteryColors.textSecondary,
+                      letterSpacing: 0.4,
                     ),
                   ),
                 ),
-              ],
-            ),
-          ],
-          if (answer.explanation != null && answer.explanation!.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            Text(
-              answer.explanation!,
-              style: MasteryTextStyles.bodySm.copyWith(
-                color: MasteryColors.textSecondary,
-                height: 1.55,
               ),
-            ),
-          ],
-        ],
+            ],
+          ),
+        ),
       ),
     );
   }
