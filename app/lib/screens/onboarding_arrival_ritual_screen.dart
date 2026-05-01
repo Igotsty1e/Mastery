@@ -62,10 +62,13 @@ class _OnboardingArrivalRitualScreenState
     );
   }
 
-  String get _ctaLabel => switch (_index) {
-        0 => 'Continue',
-        _ => 'Open my dashboard',
-      };
+  // Wave G9 — final CTA used to read "Open my dashboard" because
+  // the dashboard was the next screen. The new flow lands on the
+  // diagnostic probe (or, for returning learners, on the
+  // first-session bridge). "Continue" stays neutral about what
+  // comes next so the copy survives both paths without a custom
+  // step-2 conditional.
+  String get _ctaLabel => 'Continue';
 
   Widget _bodyForIndex(int i) => switch (i) {
         0 => const _PromiseStep(),

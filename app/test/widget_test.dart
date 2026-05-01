@@ -207,10 +207,10 @@ void main() {
       await _safeTap(tester, find.widgetWithText(FilledButton, 'Continue'));
       await tester.pumpAndSettle();
       expect(find.text('STEP 2 OF 2'), findsOneWidget);
-      expect(find.widgetWithText(FilledButton, 'Open my dashboard'), findsOneWidget);
+      expect(find.widgetWithText(FilledButton, 'Continue'), findsOneWidget);
 
       // Step 2 final CTA → dashboard (NOT lesson intro)
-      await _safeTap(tester, find.widgetWithText(FilledButton, 'Open my dashboard'));
+      await _safeTap(tester, find.widgetWithText(FilledButton, 'Continue'));
       await tester.pumpAndSettle();
 
       // Dashboard markers — `STUDY DESK` eyebrow was removed in the
@@ -231,7 +231,7 @@ void main() {
 
       await _safeTap(tester, find.widgetWithText(FilledButton, 'Continue'));
       await tester.pumpAndSettle();
-      await _safeTap(tester, find.widgetWithText(FilledButton, 'Open my dashboard'));
+      await _safeTap(tester, find.widgetWithText(FilledButton, 'Continue'));
       await tester.pumpAndSettle();
 
       final prefs = await SharedPreferences.getInstance();
@@ -709,7 +709,7 @@ void main() {
       expect(find.widgetWithText(FilledButton, 'Continue'), findsOneWidget);
       await _safeTap(tester, find.widgetWithText(FilledButton, 'Continue'));
       await tester.pumpAndSettle();
-      await _safeTap(tester, find.widgetWithText(FilledButton, 'Open my dashboard'));
+      await _safeTap(tester, find.widgetWithText(FilledButton, 'Continue'));
       await tester.pumpAndSettle();
 
       expect(find.widgetWithText(FilledButton, 'Start lesson'), findsOneWidget);

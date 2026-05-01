@@ -71,6 +71,13 @@ class _HomeScreenState extends State<HomeScreen> {
   /// learner has not skipped the diagnostic on this device AND the
   /// server has no level set for them yet, surface the probe.
   bool _showDiagnostic = false;
+  /// Wave G9 — first-session bridge. After onboarding + diagnostic
+  /// are out of the way, a brand-new learner is routed straight
+  /// into a dynamic lesson session instead of the dashboard. The
+  /// bridge is a thin loading view that pushes `LessonIntroScreen`
+  /// post-frame; the dashboard becomes visible only after the
+  /// learner returns from the SummaryScreen.
+  bool _showFirstSessionBridge = false;
   bool _isLoadingDashboard = false;
   String _selectedLevel = 'B2';
 
@@ -159,14 +166,27 @@ class _HomeScreenState extends State<HomeScreen> {
     // dashboard reads from them. No bulk-import here: that only fires
     // on the `signedIn` outcome of a fresh sign-in below.
     _activateAuthenticatedClients();
+    // Wave G9 — first-touch flow:
+    //   onboarding (if not seen) → diagnostic (if not skipped + no
+    //   server level) → first-session bridge (if not started) →
+    //   dashboard.
+    // The dashboard is no longer the landing screen for brand-new
+    // learners. It becomes the landing screen only after the first
+    // SummaryScreen pop-back.
     final showDiagnostic = await _shouldShowDiagnostic();
+    final firstSessionStarted =
+        await LocalProgressStore.hasStartedFirstSession();
     if (!mounted) return;
+    final showOnboarding = !seen;
+    final showBridge =
+        !showOnboarding && !showDiagnostic && !firstSessionStarted;
     setState(() {
+      _showOnboarding = showOnboarding;
       _showDiagnostic = showDiagnostic;
-      _showOnboarding = !seen;
+      _showFirstSessionBridge = showBridge;
       _resolving = false;
     });
-    if (!showDiagnostic && seen) {
+    if (!showOnboarding && !showDiagnostic && !showBridge) {
       await _loadDashboard();
     }
   }
@@ -266,44 +286,62 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     final seen = await LocalProgressStore.hasSeenOnboarding();
     final showDiagnostic = await _shouldShowDiagnostic();
+    final firstSessionStarted =
+        await LocalProgressStore.hasStartedFirstSession();
     if (!mounted) return;
+    final showOnboarding = !seen;
+    final showBridge =
+        !showOnboarding && !showDiagnostic && !firstSessionStarted;
     setState(() {
       _showSignIn = false;
+      _showOnboarding = showOnboarding;
       _showDiagnostic = showDiagnostic;
-      _showOnboarding = !seen;
+      _showFirstSessionBridge = showBridge;
     });
-    if (!showDiagnostic && seen) {
+    if (!showOnboarding && !showDiagnostic && !showBridge) {
       await _loadDashboard();
     }
   }
 
-  /// Wave 12.3 — diagnostic CTA contract. Both Begin→Complete and
-  /// Skip-for-now land here; the diagnostic is additive to the
-  /// onboarding ritual, never a replacement, so we flip the gate off
-  /// and let the onboarding flow take over. The skip path has already
-  /// written `LocalProgressStore.diagnosticSkipped` and fired the
-  /// `diagnostic_skipped` audit event by the time this runs; the
-  /// complete path has stamped `user_profiles.level` server-side.
+  /// Wave G9 — diagnostic CTA contract. Both Begin→Complete and
+  /// Skip-for-now land here. The probe runs *after* onboarding now,
+  /// so on completion we either fire the first-session bridge
+  /// (brand-new learner) or fall back to the dashboard (returning
+  /// learner who somehow re-took the diagnostic).
   Future<void> _completeDiagnostic() async {
     if (!mounted) return;
     setState(() => _showDiagnostic = false);
-    final seen = await LocalProgressStore.hasSeenOnboarding();
+    final firstSessionStarted =
+        await LocalProgressStore.hasStartedFirstSession();
     if (!mounted) return;
-    setState(() => _showOnboarding = !seen);
-    if (seen) {
+    if (!firstSessionStarted) {
+      setState(() => _showFirstSessionBridge = true);
+    } else {
       await _loadDashboard();
     }
   }
 
-  // Onboarding-final CTA contract (locked 2026-04-26 per
-  // docs/plans/arrival-ritual.md): mark onboarding seen and reveal the
-  // dashboard. The dashboard is the single Home — both this CTA and the
-  // SummaryScreen `Done` button land here. Onboarding never pushes the
-  // lesson intro directly.
+  /// Wave G9 — onboarding finishes first now (was last in the
+  /// pre-G9 flow). The CTA either opens the diagnostic probe or,
+  /// on a returning device that already has its level set + the
+  /// diagnostic skipped, falls through to the first-session bridge
+  /// or the dashboard.
   Future<void> _completeOnboarding() async {
     await LocalProgressStore.markOnboardingSeen();
     if (!mounted) return;
     setState(() => _showOnboarding = false);
+    final showDiagnostic = await _shouldShowDiagnostic();
+    final firstSessionStarted =
+        await LocalProgressStore.hasStartedFirstSession();
+    if (!mounted) return;
+    if (showDiagnostic) {
+      setState(() => _showDiagnostic = true);
+      return;
+    }
+    if (!firstSessionStarted) {
+      setState(() => _showFirstSessionBridge = true);
+      return;
+    }
     await _loadDashboard();
   }
 
@@ -418,13 +456,23 @@ class _HomeScreenState extends State<HomeScreen> {
         body: const Center(child: CircularProgressIndicator()),
       );
     }
-    // Wave 7.4 part 2.3 — sign-in gate runs before onboarding when
-    // AppConfig.authEnabled is on and the device has no valid refresh
-    // token. Bypassed for the legacy unauthenticated build.
+    // Wave G9 — first-touch gate order:
+    //   sign-in (rare safety net) → onboarding → diagnostic →
+    //   first-session bridge → dashboard.
+    // Pre-G9 the dashboard was the landing screen and the
+    // diagnostic ran before onboarding; the new flow walks the
+    // brand-new learner through "what is this app → where do you
+    // stand → start practising" and only reveals the dashboard
+    // after the first SummaryScreen pop-back.
     if (_showSignIn && _authClient != null) {
       return SignInScreen(
         authClient: _authClient!,
         onResolved: _onSignInResolved,
+      );
+    }
+    if (_showOnboarding) {
+      return OnboardingArrivalRitualScreen(
+        onComplete: _completeOnboarding,
       );
     }
     if (_showDiagnostic) {
@@ -433,12 +481,29 @@ class _HomeScreenState extends State<HomeScreen> {
         onComplete: _completeDiagnostic,
       );
     }
-    if (_showOnboarding) {
-      return OnboardingArrivalRitualScreen(
-        onComplete: _completeOnboarding,
-      );
+    if (_showFirstSessionBridge) {
+      return _FirstSessionBridge(onReady: _enterFirstSession);
     }
     return _buildDashboard();
+  }
+
+  /// Wave G9 — the bridge fires this once after the first frame.
+  /// We mark the first-session flag *before* pushing so a refresh
+  /// mid-flight does not re-loop the learner through the bridge,
+  /// and so the dashboard renders normally when the SummaryScreen
+  /// pops back here.
+  Future<void> _enterFirstSession() async {
+    if (!mounted) return;
+    await LocalProgressStore.markFirstSessionStarted();
+    if (!mounted) return;
+    setState(() => _showFirstSessionBridge = false);
+    await Navigator.of(context).push(
+      MasteryFadeRoute(
+        builder: (_) => const LessonIntroScreen(),
+      ),
+    );
+    if (!mounted) return;
+    await _loadDashboard();
   }
 
   // ────────────────────────────────────────────────────────────────────────
@@ -1473,6 +1538,44 @@ class _PremiumBlock extends StatelessWidget {
             child: const Text('OK'),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Wave G9 — invisible bridge between onboarding/diagnostic and the
+/// learner's first dynamic lesson. We show a calm loading screen
+/// (no copy, no spinner-explanation) and immediately push the
+/// `LessonIntroScreen` after the first frame, so the brand-new
+/// learner never sees the dashboard before they've practised once.
+class _FirstSessionBridge extends StatefulWidget {
+  final Future<void> Function() onReady;
+  const _FirstSessionBridge({required this.onReady});
+
+  @override
+  State<_FirstSessionBridge> createState() => _FirstSessionBridgeState();
+}
+
+class _FirstSessionBridgeState extends State<_FirstSessionBridge> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      widget.onReady();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tokens = context.masteryTokens;
+    return Scaffold(
+      backgroundColor: tokens.bgApp,
+      body: const Center(
+        child: SizedBox(
+          width: 28,
+          height: 28,
+          child: CircularProgressIndicator(strokeWidth: 2),
+        ),
       ),
     );
   }

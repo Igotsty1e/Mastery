@@ -88,4 +88,34 @@ class LocalProgressStore {
       // Soft failure.
     }
   }
+
+  /// Wave G9 — first-session bridge gate. Set when the brand-new
+  /// learner has been pushed straight from onboarding/diagnostic
+  /// into their very first dynamic session, so the HomeScreen
+  /// "first-session bridge" view never re-fires (and the dashboard
+  /// renders normally on the way back from the SummaryScreen).
+  /// The semantics are "started", not "completed" — once we have
+  /// pushed the LessonIntroScreen we commit, even if the learner
+  /// closes the tab before submitting an answer.
+  static const _firstSessionStartedKey = 'first_session_started_v1';
+
+  static Future<bool> hasStartedFirstSession() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool(_firstSessionStartedKey) ?? false;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  static Future<void> markFirstSessionStarted() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_firstSessionStartedKey, true);
+    } catch (_) {
+      // Soft failure — worst case the bridge fires again on next
+      // launch, which still ends in a session (just one extra
+      // loading frame).
+    }
+  }
 }
