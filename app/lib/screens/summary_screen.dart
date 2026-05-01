@@ -186,7 +186,14 @@ class _SummaryScreenState extends State<SummaryScreen> {
                 padding: const EdgeInsets.fromLTRB(
                     MasterySpacing.lg, 14, MasterySpacing.lg, MasterySpacing.md),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  // Wave G8 — stretch so every block (Score Hero,
+                  // Coach's note, Skills) gets the same horizontal
+                  // span. Pre-G8 used CrossAxisAlignment.start, which
+                  // let MasteryCard children shrink-wrap to their
+                  // text width and the Coach's note ended up
+                  // visibly narrower than the Score Hero (which
+                  // hard-codes `width: double.infinity`).
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     Center(
                       child: Text(

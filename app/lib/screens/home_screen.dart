@@ -461,7 +461,13 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.fromLTRB(
               MasterySpacing.lg, 16, MasterySpacing.lg, MasterySpacing.xl),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            // Wave G8 — stretch so every block in the dashboard
+            // (next-lesson hero, review-due, rules trigger,
+            // premium block) shares the same horizontal span. The
+            // pre-G8 .start mode let the Premium block shrink to
+            // the width of its longest text line, which read as a
+            // narrower box stuck under the wider blocks above it.
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const _DashboardHeader(),
               const SizedBox(height: 18),
@@ -1395,11 +1401,14 @@ class _PremiumBlock extends StatelessWidget {
         borderRadius: BorderRadius.circular(MasteryRadii.lg),
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          SectionEyebrow(
-            label: 'Premium',
-            variant: SectionEyebrowVariant.gold,
+          Align(
+            alignment: Alignment.centerLeft,
+            child: SectionEyebrow(
+              label: 'Premium',
+              variant: SectionEyebrowVariant.gold,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
@@ -1415,6 +1424,53 @@ class _PremiumBlock extends StatelessWidget {
               color: MasteryColors.textSecondary,
               height: 1.5,
             ),
+          ),
+          const SizedBox(height: 14),
+          // Wave G8 — purchase CTA. No real billing yet (V1 has no
+          // payment provider wired up). The button fires an
+          // analytics event so the founder can read intent before
+          // building the rest of the funnel. Visible on every
+          // dashboard load — `purchase_intent` clicks land in the
+          // analytics_events table next to the rest of the V1
+          // signal stream.
+          FilledButton(
+            onPressed: () => _onPurchaseTap(context),
+            style: FilledButton.styleFrom(
+              backgroundColor: tokens.accentGold,
+              foregroundColor: MasteryColors.bgSurface,
+              minimumSize: const Size.fromHeight(44),
+            ),
+            child: const Text('Get premium'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _onPurchaseTap(BuildContext context) async {
+    Analytics.trackButton('premium_purchase_intent', screen: 'dashboard');
+    if (!context.mounted) return;
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: MasteryColors.bgRaised,
+        title: Text(
+          'Premium is on the way',
+          style: MasteryTextStyles.titleSm.copyWith(
+            color: MasteryColors.textPrimary,
+          ),
+        ),
+        content: Text(
+          'Thanks — your interest is logged. Billing isn\u2019t wired up yet; we\u2019ll email you the moment Premium opens.',
+          style: MasteryTextStyles.bodySm.copyWith(
+            color: MasteryColors.textPrimary,
+            height: 1.5,
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).maybePop(),
+            child: const Text('OK'),
           ),
         ],
       ),
