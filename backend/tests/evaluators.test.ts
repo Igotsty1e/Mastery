@@ -234,3 +234,41 @@ describe('evaluateSentenceCorrection AI fallback', () => {
     expect(r.feedback!.length).toBeLessThanOrEqual(80);
   });
 });
+
+// --- Wave G3 stub.evaluateFreeSentence (graceful degradation) ---
+describe('StubAiProvider.evaluateFreeSentence', () => {
+  const stub = new StubAiProvider();
+  const args = (userAnswer: string) => ({
+    targetRule: 'After enjoy, the next verb takes -ing.',
+    instruction: 'Write a sentence using "enjoy" + the -ing form.',
+    acceptedExamples: ['I enjoy reading novels on Sunday mornings.'],
+    userAnswer,
+  });
+
+  it('rejects empty input', async () => {
+    const r = await stub.evaluateFreeSentence(args(''));
+    expect(r.correct).toBe(false);
+  });
+
+  it('rejects two-word input', async () => {
+    const r = await stub.evaluateFreeSentence(args('I enjoy'));
+    expect(r.correct).toBe(false);
+  });
+
+  it('accepts any three-word-or-longer answer (lenient by design)', async () => {
+    const r = await stub.evaluateFreeSentence(
+      args('I enjoy smoking at weekends'),
+    );
+    expect(r.correct).toBe(true);
+  });
+
+  it('still accepts answers that miss the rule (real grading needs OpenAI)', async () => {
+    // Stub cannot judge rule conformance. The user got a Pass but the
+    // sentence does not actually demonstrate the target rule. This is
+    // the intentional trade-off — see the comment in stub.ts.
+    const r = await stub.evaluateFreeSentence(
+      args('The weather is nice today'),
+    );
+    expect(r.correct).toBe(true);
+  });
+});
