@@ -236,14 +236,18 @@ export class OpenAiProvider implements AiProvider {
     // gpt-4o-mini AND gpt-4o return correct=true for gibberish.
     // We need to see the actual model output (and the actual model
     // ID OpenAI is routing the call to) before we can blame the
-    // model vs our prompt. Strip this log once root cause is fixed.
+    // model vs our prompt. Plain-string console.log + explicit
+    // newline because Render's log capture seems to swallow
+    // util.format-style placeholders silently in this project.
+    // Strip this log once root cause is fixed.
     // ignore: avoid_print
-    console.log(
-      '[ai/sfs] model=%s sa=%j → text=%j refusal=%j',
-      this.model,
-      args.userAnswer,
-      text.slice(0, 200),
-      refusal,
+    process.stdout.write(
+      '[ai/sfs] model=' + this.model +
+      ' sa=' + JSON.stringify(args.userAnswer) +
+      ' text=' + JSON.stringify(text.slice(0, 300)) +
+      ' refusal=' + JSON.stringify(refusal) +
+      ' raw_keys=' + JSON.stringify(Object.keys((json as any) ?? {})) +
+      '\n',
     );
     if (refusal) {
       return { correct: false, feedback: '' };
