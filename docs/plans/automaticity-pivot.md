@@ -1,8 +1,9 @@
 # Automaticity pivot — roadmap
 
-**Status:** in flight. Waves 0 / A / B / D shipped. Wave C policy
-landed; Wave C content rewrite is the open item. Wave E (diagnostic
-redesign) is sketched but not started.
+**Status:** Waves 0 / A / B / C / D shipped. Wave E (diagnostic
+redesign) and Wave F (hint stripping) are sketched but not started.
+The composition audit (`npm run audit:composition`) is a pre-merge
+CI gate alongside `vitest` in `.github/workflows/backend-test.yml`.
 
 The pivot reframes Mastery from a recognition-shaped grammar app into
 a **cognitive skill engine**: pressure → forced generation → strict
@@ -44,7 +45,7 @@ exercise screen. Reads `LatencyHistoryStore.medianFor(skillId)`.
 Hides on un-tagged exercises and skills with no recorded history.
 Advisory only at this stage — no scoring effect.
 
-### Wave C — Content shift (policy shipped, content rewrite pending)
+### Wave C — Content shift (shipped)
 
 Policy lives in `exercise_structure.md §6.7`. Audit script:
 `backend/scripts/audit-composition.ts` (run via
@@ -58,40 +59,28 @@ Rules:
 - every `strong` / `strongest` item must carry a non-empty
   `meaning_frame`.
 
-**Open: content rewrite.** All 5 shipped B2 fixtures violate the new
-policy; the rewrite is **content authoring**, so per `CLAUDE.md` it
-must be done with the `english-grammar-methodologist` skill, not by a
-free-form pass. Audit baseline as of 2026-04-30:
+Shipped via four content commits, all authored under the
+`english-grammar-methodologist` skill per `CLAUDE.md` gating:
 
-| Lesson | items | MC count | recognition (MC+LD) | missing meaning_frame on strong/strongest |
-|---|---:|---:|---:|---:|
-| b2-lesson-001 (verbs + -ing) | 13 | 3 (23%) | 3 (23%) | 5 |
-| b2-lesson-002 (present perfect cont. vs simple) | 13 | 5 (38%) | 6 (46%) | 1 |
-| b2-lesson-003 (verbs + to + inf) | 13 | 2 (15%) | 2 (15%) | 3 |
-| b2-lesson-004 (verbs with change in meaning) | 13 | 2 (15%) | 2 (15%) | 1 |
-| b2-lesson-005 (verbs with both forms) | 13 | 2 (15%) | 2 (15%) | 3 |
+- `b092912` — **b2-lesson-001** rewrite. MC `…037` (`enjoy`,
+  whole-sentence judgment) converted to `fill_blank` (`enjoy` was
+  already double-covered by `…031` and `…03d`); 5 `meaning_frame`
+  strings added on items `…038 …039 …03a …03b …03c`.
+- `3b0a66a` — **b2-lesson-002** rewrite. Three MC items (`…033`
+  `wash` simple, `…035` `write` simple, `…03a` `run` continuous)
+  converted to `fill_blank` with the §4.1 `(verb)` hint convention;
+  kept `…036` (diagnostic probe) and `…037` (image-supported scene)
+  as MC; 1 `meaning_frame` added on `…039`.
+- `53ac40e` — **b2-lessons 003 / 004 / 005** metadata sweep. No
+  structural changes (those three were already MC-clean); 7
+  `meaning_frame` strings added across the three files.
 
-Per-lesson rewrite TODO for the methodologist — these items must
-ship before the audit script becomes a CI gate (otherwise main goes
-red):
+Final audit: 0 violations across all 5 shipped B2 fixtures.
 
-- **b2-lesson-001** — drop one MC (down to 2). Add `meaning_frame`
-  to 5 items: 1 sentence_correction (`...000038`), 2 sentence_rewrite
-  (`...00003b`, `...00003c`), 2 sentence_correction
-  (`...000039`, `...00003a`).
-- **b2-lesson-002** — drop 3 MC items (down to 2) **or** convert
-  some MC to fill_blank to keep the total at 13. Add `meaning_frame`
-  to 1 sentence_correction (`...000039`).
-- **b2-lesson-003** — add `meaning_frame` to 3 items
-  (`...000039`, `...00003b`, `...00003c`).
-- **b2-lesson-004** — add `meaning_frame` to 1 item (`...000039`).
-- **b2-lesson-005** — add `meaning_frame` to 3 items
-  (`...000039`, `...00003b`, `...00003c`).
-
-Until the rewrite lands, `npm run audit:composition` is intentionally
-**not** wired into CI. It runs on demand. Once the methodologist
-clears the TODO above, flip the script into the pre-merge job
-alongside `vitest`.
+The audit script is wired into the pre-merge CI gate as of the same
+commit as this update — it runs after `vitest` in
+`.github/workflows/backend-test.yml`. Any future fixture that
+violates §6.7 will block the merge.
 
 ### Wave D — Mastery latency gate (shipped, `2dd2d20`)
 

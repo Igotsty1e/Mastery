@@ -1,10 +1,13 @@
 name: backend-test
 
-# Pre-merge gate for the Mastery backend (Node.js + Vitest).
+# Pre-merge gate for the Mastery backend (Node.js + Vitest +
+# composition audit).
 #
-# CLAUDE.md lists `cd backend && npm test` as the pre-merge check; this
-# workflow runs it on every PR so the gate is mechanical, not ceremonial.
-# Also runs `npm run build` (tsc) to catch TS regressions before merge.
+# CLAUDE.md lists `cd backend && npm test` as the pre-merge check;
+# this workflow runs it on every PR so the gate is mechanical, not
+# ceremonial. It also runs `npm run build` (tsc) to catch TS
+# regressions and `npm run audit:composition` to enforce the Wave C
+# composition rules in `exercise_structure.md §6.7`.
 #
 # Tests use @electric-sql/pglite (Postgres-in-wasm), so no external DB
 # service is needed — fully hermetic.
@@ -14,11 +17,13 @@ on:
     branches: [main]
     paths:
       - 'backend/**'
+      - 'exercise_structure.md'
       - '.github/workflows/backend-test.yml'
   push:
     branches: [main]
     paths:
       - 'backend/**'
+      - 'exercise_structure.md'
       - '.github/workflows/backend-test.yml'
 
 jobs:
@@ -46,3 +51,6 @@ jobs:
 
       - name: Vitest
         run: npm test
+
+      - name: Composition audit (exercise_structure.md §6.7)
+        run: npm run audit:composition
