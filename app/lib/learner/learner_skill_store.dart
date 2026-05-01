@@ -7,10 +7,12 @@ import '../models/lesson.dart';
 import 'latency_history_store.dart';
 
 /// Wave D — upper bound (ms) on the stable median that gates
-/// `mastered`. Same numeric threshold as the Wave B `fast` zone in
-/// `app/lib/widgets/latency_band.dart` (`latencyFastThresholdMs`),
-/// duplicated here to keep this module free of widget imports. Keep
-/// both constants in lockstep when tuning.
+/// `mastered`. The Wave B `LatencyBand` ("PACE") widget that used
+/// the same constant was retired in Wave G7 (replaced by a
+/// 60-second `CountdownBar` per the 2026-05-01 product call), but
+/// the mastery-gate semantics carry over: a learner crosses into
+/// `mastered` only when the stable median sits below this
+/// threshold. Tunable.
 const int latencyMasteryGreenThresholdMs = 6000;
 
 /// Per-learner per-skill mastery state per `LEARNING_ENGINE.md §7.1`.
