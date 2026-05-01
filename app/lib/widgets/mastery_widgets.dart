@@ -574,14 +574,26 @@ class InstructionBand extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (prominent) {
+      // Wave H3 fix (2026-05-01): the user reported a serif fallback
+      // here on Flutter web. Cause: titleMd is built via the
+      // `_manrope` helper which stamps a `wght` FontVariation; on
+      // Brave/Chromium the variable axis intermittently mis-renders
+      // at w700 and the renderer falls back to a generic serif.
+      // Build the style explicitly with `fontFamily: 'Manrope'`,
+      // a named (non-variable) weight, and a small positive
+      // letter-spacing so the headline matches the rest of the body
+      // typography on the page.
       return Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
         child: Text(
           text,
-          style: MasteryTextStyles.titleMd.copyWith(
+          style: const TextStyle(
+            fontFamily: 'Manrope',
+            fontSize: 20,
+            height: 28 / 20,
+            fontWeight: FontWeight.w600,
             color: MasteryColors.textPrimary,
-            height: 1.35,
-            letterSpacing: -0.05,
+            letterSpacing: 0.1,
           ),
         ),
       );
