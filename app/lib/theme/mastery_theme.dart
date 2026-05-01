@@ -315,14 +315,29 @@ class MasteryTextStyles {
       size: 24, lineHeight: 30, weight: FontWeight.w700, letterSpacing: -0.1);
   static TextStyle get titleMd => _manrope(
       size: 20, lineHeight: 26, weight: FontWeight.w700, letterSpacing: -0.05);
-  static TextStyle get titleSm =>
-      _manrope(size: 18, lineHeight: 24, weight: FontWeight.w700);
-  static TextStyle get bodyLg =>
-      _manrope(size: 18, lineHeight: 30, weight: FontWeight.w500);
-  static TextStyle get bodyMd =>
-      _manrope(size: 16, lineHeight: 26, weight: FontWeight.w500);
-  static TextStyle get bodySm =>
-      _manrope(size: 15, lineHeight: 24, weight: FontWeight.w500);
+  static TextStyle get titleSm => _manrope(
+      size: 18,
+      lineHeight: 24,
+      weight: FontWeight.w700,
+      letterSpacing: 0.05);
+  // Body styles carry positive letter-spacing on mobile so the
+  // Manrope glyphs do not visually fuse — the user-reported
+  // "letters blend together" issue on phones (2026-05-01).
+  static TextStyle get bodyLg => _manrope(
+      size: 18,
+      lineHeight: 30,
+      weight: FontWeight.w500,
+      letterSpacing: 0.1);
+  static TextStyle get bodyMd => _manrope(
+      size: 16,
+      lineHeight: 26,
+      weight: FontWeight.w500,
+      letterSpacing: 0.15);
+  static TextStyle get bodySm => _manrope(
+      size: 15,
+      lineHeight: 24,
+      weight: FontWeight.w500,
+      letterSpacing: 0.2);
   static TextStyle get labelLg =>
       _manrope(size: 16, lineHeight: 20, weight: FontWeight.w700);
   static TextStyle get labelMd => _manrope(

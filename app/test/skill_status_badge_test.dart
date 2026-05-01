@@ -46,7 +46,7 @@ void main() {
     await tester.pumpWidget(
       _wrap(SkillStatusBadge(record: _rec(score: 10), now: now)),
     );
-    expect(find.text('JUST STARTED'), findsOneWidget);
+    expect(find.text('Just started'), findsOneWidget);
   });
 
   testWidgets('renders PRACTICING for masteryScore in [30,55)',
@@ -54,7 +54,7 @@ void main() {
     await tester.pumpWidget(
       _wrap(SkillStatusBadge(record: _rec(score: 35), now: now)),
     );
-    expect(find.text('PRACTICING'), findsOneWidget);
+    expect(find.text('Practicing'), findsOneWidget);
   });
 
   testWidgets('renders ALMOST MASTERED before the production gate',
@@ -69,7 +69,7 @@ void main() {
         now: now,
       )),
     );
-    expect(find.text('ALMOST MASTERED'), findsOneWidget);
+    expect(find.text('Almost mastered'), findsOneWidget);
   });
 
   testWidgets(
@@ -92,7 +92,7 @@ void main() {
         now: now,
       )),
     );
-    expect(find.text('MASTERED'), findsOneWidget);
+    expect(find.text('Mastered'), findsOneWidget);
   });
 
   testWidgets(
@@ -110,8 +110,8 @@ void main() {
         now: now,
       )),
     );
-    expect(find.text('ALMOST MASTERED'), findsOneWidget);
-    expect(find.text('MASTERED'), findsNothing);
+    expect(find.text('Almost mastered'), findsOneWidget);
+    expect(find.text('Mastered'), findsNothing);
   });
 
   testWidgets('renders REVIEW DUE when overdue per the schedule',
@@ -132,6 +132,6 @@ void main() {
         now: now,
       )),
     );
-    expect(find.text('REVIEW DUE'), findsOneWidget);
+    expect(find.text('Review due'), findsOneWidget);
   });
 }
