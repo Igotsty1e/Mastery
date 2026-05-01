@@ -165,7 +165,7 @@ describe('skills registry file loader', () => {
   });
 });
 
-// Cross-reference contract per docs/content-contract.md §1.2: any
+// Cross-reference contract per docs/content-contract.md §1.4: any
 // exercise.skill_id present on a shipped lesson must be declared in the
 // registry. LessonSchema does not couple to the registry at parse time —
 // this test runs the check in CI so drift is caught before merge.

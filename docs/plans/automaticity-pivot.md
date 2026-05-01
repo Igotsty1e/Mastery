@@ -1,15 +1,13 @@
 # Automaticity pivot — roadmap
 
-**Status:** Waves 0 / A / B / C / D / G1–G9 shipped. Live web build
-serves first users at `https://mastery-web-igotsty1e.onrender.com`
-with real OpenAI grading (`gpt-4o`), product analytics, and a
-calm 60-second countdown bar. Wave G9 reordered the first-touch
-flow to onboarding → diagnostic → first session, with the dashboard
-becoming a post-first-session reward. **Next up: Wave H1**
-(textbook-format rule cards) and **Wave H2** (dual-verdict AI judge,
-tutor critically evaluates alongside deterministic match). Wave E
-(diagnostic redesign), Wave F (hint stripping), and the
-engine-tuning backlog item are sketched but not started.
+**Status:** Waves 0 / A / B / C / D / G1–G9 / H1 / H2 shipped. Live
+web build serves first users at `https://mastery-web-igotsty1e.onrender.com`
+with real OpenAI grading (`gpt-4o`), product analytics, a calm
+60-second countdown bar, textbook-format rule cards, and a
+dual-verdict AI judge that grants credit on non-target slips on
+fill_blank items. Wave E (diagnostic redesign), Wave F (hint
+stripping), and the engine-tuning backlog item are sketched but
+not started.
 
 The composition audit (`npm run audit:composition`) is a pre-merge
 CI gate alongside `vitest` in `.github/workflows/backend-test.yml`.
@@ -153,7 +151,7 @@ Lit-up the public web build for first users:
 
 ---
 
-## Wave H1 — Textbook-format rule cards (planned, next)
+## Wave H1 — Textbook-format rule cards (shipped, `ba80f12`)
 
 **Why.** The shipped `intro_rule` field is a flat string with
 `\n\n`-separated sections. It looks like a paragraph dump, not a
@@ -214,7 +212,7 @@ historical / minimal form.
 
 ---
 
-## Wave H2 — Dual-verdict AI judge (planned, follows H1)
+## Wave H2 — Dual-verdict AI judge (shipped, fill_blank phase)
 
 **Why.** Today the verdict logic is split by exercise type:
 `fill_blank` / `multiple_choice` / `listening_discrimination` are
@@ -273,6 +271,21 @@ to `content-contract.md`. Note in `backend-contract.md` that the
 AI judge is now part of the standard scoring path, not just the
 free-form / borderline fallback.
 
+**Phase 1 ship (fill_blank only).** The shipped slice covers
+fill_blank only; multiple_choice / listening_discrimination stay
+deterministic-only (no free-form input → no benefit). The open-form
+types (`sentence_correction`, `sentence_rewrite`,
+`short_free_sentence`) already use AI in the verdict path; folding
+them into the same `evaluateTargetVerdict` shape (so the prompt is
+explicitly about target-form vs. accepted-answer match) is parked
+in the backlog below. Schema:
+`docs/content-contract.md §1.3 Target Form`. Combiner:
+`backend/src/lessonSessions/service.ts` `submitAnswer` →
+`evaluateTargetVerdict` after deterministic fail. Provider
+implementation: `backend/src/ai/openai.ts` (real prompt) and
+`backend/src/ai/stub.ts` (safe-default returning `target_met=false`).
+Tests: `backend/tests/dual-verdict.test.ts` (6 cases).
+
 ---
 
 ## Wave E — Diagnostic redesign (planned)
@@ -323,6 +336,19 @@ runtime decision. No content-side change.
 ---
 
 ## Backlog (parked, not started)
+
+- **Extend dual-verdict (Wave H2) to open-form types.** Today the
+  judge runs only on `fill_blank`. The other AI-graded families
+  (`sentence_correction`, `sentence_rewrite`, `short_free_sentence`)
+  use the existing AI evaluators (`evaluateSentenceCorrection`,
+  `evaluateFreeSentence`) — those evaluators implicitly judge the
+  target form, but they don't separate "target met but off-target
+  slip" from "target missed". Folding them into the
+  `evaluateTargetVerdict` shape (with the `target_form` lesson
+  field as explicit context) would give a consistent dual-judge
+  contract across all six exercise types. Cost: +1 AI call only on
+  borderline / open-form items (already part of those paths today),
+  prompt design per type.
 
 These are decisions the founder explicitly tabled for a later
 session. Listed here so they don't get lost; each will graduate

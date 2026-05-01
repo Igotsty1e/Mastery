@@ -3,6 +3,8 @@ import type {
   AiEvaluationArgs,
   AiEvaluationResult,
   AiFreeSentenceArgs,
+  AiTargetVerdictArgs,
+  AiTargetVerdictResult,
   DebriefAiResult,
   DebriefArgs,
 } from './interface';
@@ -50,6 +52,20 @@ export class StubAiProvider implements AiProvider {
     return {
       correct: true,
       feedback: '', // stub can't say more — leave the field empty
+    };
+  }
+
+  /// Wave H2 — safe-by-default. The stub never overrides the
+  /// deterministic verdict, so a deployment without OpenAI behaves
+  /// exactly as before this wave. Real lenient judging requires
+  /// `AI_PROVIDER=openai` + `OPENAI_API_KEY`.
+  async evaluateTargetVerdict(
+    _args: AiTargetVerdictArgs
+  ): Promise<AiTargetVerdictResult> {
+    return {
+      target_met: false,
+      off_target_error: false,
+      off_target_note: '',
     };
   }
 }

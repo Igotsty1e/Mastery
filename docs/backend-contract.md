@@ -30,7 +30,7 @@ Client never receives `accepted_answers`, `accepted_corrections`, or `correct_op
 
 **Wave 1 engine metadata pass-through.** When an exercise declares the
 optional Wave 1 metadata fields (`skill_id`, `primary_target_error`,
-`evidence_tier`, `meaning_frame` — see `docs/content-contract.md §1.2`),
+`evidence_tier`, `meaning_frame` — see `docs/content-contract.md §1.4`),
 the route emits them on the wire unchanged. Today's runtime does not
 otherwise consume these fields; they exist so future engine waves
 (Mastery Model, Decision Engine, Transparency Layer) can use them on

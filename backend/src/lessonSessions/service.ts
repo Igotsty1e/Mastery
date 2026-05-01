@@ -297,9 +297,70 @@ export async function submitAnswer(
   }
 
   let evaluation: SentenceCorrectionResult;
+  // Wave H2 — when the AI judge flips a fill_blank from
+  // deterministic-wrong to target-met, this captures the soft note
+  // the judge produced so the explanation can append it. Stays null
+  // on every other path.
+  let dualVerdictNote: string | null = null;
+
+  // Wave H2 — find the lesson that authored this exercise. For
+  // lesson-bound sessions this is the same as `lesson` above; for
+  // dynamic sessions, the synthetic lesson has no `target_form` so
+  // we resolve via the bank entry's `sourceLessonId`. When neither
+  // path returns a lesson with `target_form`, the dual-verdict
+  // step is skipped (deterministic-only behaviour).
+  async function resolveTargetForm(): Promise<string | null> {
+    if (lesson.target_form) return lesson.target_form;
+    const { getBankEntry } = await import('../data/exerciseBank');
+    const entry = getBankEntry(input.exerciseId);
+    if (!entry) return null;
+    const source = getLessonById(entry.sourceLessonId);
+    return source?.target_form ?? null;
+  }
 
   if (exercise.type === 'fill_blank') {
     evaluation = evaluateFillBlank(input.userAnswer, exercise.accepted_answers);
+    // Wave H2 — dual-verdict judge. Only triggers when the
+    // deterministic matcher said wrong, the source lesson declares
+    // a `target_form`, and the provider implements
+    // `evaluateTargetVerdict`. AI errors fall back to the
+    // deterministic verdict (no penalty for an AI outage).
+    if (
+      !evaluation.correct &&
+      typeof ai.evaluateTargetVerdict === 'function' &&
+      input.userAnswer.trim().length > 0
+    ) {
+      const targetForm = await resolveTargetForm();
+      if (targetForm) {
+        if (input.clientIp !== null && !checkAiRateLimit(input.clientIp)) {
+          // Soft fail: keep the deterministic verdict if budget is
+          // exhausted, do NOT throw. Learner sees the original
+          // wrong-but-honest result; the AI lift is best-effort.
+        } else {
+          try {
+            const verdict = await ai.evaluateTargetVerdict({
+              targetForm,
+              prompt: exercise.prompt,
+              acceptedAnswers: exercise.accepted_answers,
+              userAnswer: input.userAnswer,
+            });
+            if (verdict.target_met) {
+              evaluation = {
+                correct: true,
+                evaluation_source: 'ai_fallback',
+                feedback: null,
+                canonical_answer: evaluation.canonical_answer,
+              };
+              if (verdict.off_target_error && verdict.off_target_note) {
+                dualVerdictNote = verdict.off_target_note;
+              }
+            }
+          } catch (_) {
+            // Keep deterministic verdict on any AI error.
+          }
+        }
+      }
+    }
   } else if (exercise.type === 'multiple_choice') {
     evaluation = evaluateMultipleChoice(
       input.userAnswer,
@@ -404,8 +465,16 @@ export async function submitAnswer(
     }
   }
 
-  const explanation =
-    !evaluation.correct && exercise.feedback ? exercise.feedback.explanation : null;
+  // Wave H2 — when the dual-verdict judge flipped the answer to
+  // correct because of an off-target slip, surface the judge's
+  // one-line note so the learner sees "form is right; small slip on
+  // …" instead of a silent green tick. Otherwise: the legacy
+  // explanation rule (curated copy on wrong answers only).
+  const explanation = dualVerdictNote !== null
+    ? dualVerdictNote
+    : !evaluation.correct && exercise.feedback
+      ? exercise.feedback.explanation
+      : null;
 
   // Wave 7.1.1 Codex P2.2: snapshot the review-time copy at insert. For
   // listening_discrimination items the prompt-equivalent is the audio

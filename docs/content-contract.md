@@ -112,7 +112,39 @@ Source-of-truth conventions:
   includes the `rule_card` so the result-panel `See full rule →`
   sheet renders the textbook view, not the flat string.
 
-## 1.3 Learning Engine Metadata (Wave 1, additive)
+## 1.3 Target Form (Wave H2, additive)
+
+Lessons SHOULD declare a lesson-level `target_form` string — one
+plain sentence stating what the lesson teaches. The backend feeds
+this to the AI dual-verdict judge so it can grant credit on
+non-target slips: a learner who hit the target form correctly but
+made a small spelling slip on an unrelated word should not be
+penalised on a grammar drill.
+
+```json
+{
+  "target_form": "verb-ing form after gerund-only verbs (enjoy, avoid, suggest, mind, finish, keep, postpone)."
+}
+```
+
+Rules:
+
+- One sentence in plain English describing what's *under test*. The
+  AI uses this verbatim to decide whether the answer demonstrates
+  the form. A vague or aspirational `target_form` produces vague
+  judgements.
+- Optional but strongly recommended for any lesson that ships
+  `fill_blank` items. Without it, only the deterministic matcher
+  runs (no dual-judge).
+- The judge is invoked only when the deterministic matcher already
+  failed AND the provider implements `evaluateTargetVerdict` AND
+  there's spare AI rate budget. The dual-verdict path is an upgrade,
+  never a regression: deterministic-correct answers are not
+  re-judged, and AI errors fall back to the deterministic verdict.
+- See `LEARNING_ENGINE.md §6.3` for the verdict-model rationale and
+  the parked extension to the open-form types.
+
+## 1.4 Learning Engine Metadata (Wave 1, additive)
 
 Every `Exercise` may carry the optional engine metadata fields below. They
 were introduced by `docs/plans/learning-engine-mvp-2.md` Wave 1 and are

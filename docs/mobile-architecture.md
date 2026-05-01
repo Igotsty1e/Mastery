@@ -143,7 +143,7 @@ Session state is managed by `SessionController` / `SessionState` (see `app/lib/s
 ### Wave 1 engine metadata (deserialised, used by Wave 2)
 
 `GET /lessons/{lesson_id}` may include the optional Wave 1 engine
-metadata fields per `docs/content-contract.md §1.2`:
+metadata fields per `docs/content-contract.md §1.4`:
 
 - `skillId` (`String?`)
 - `primaryTargetError` (`TargetError?` — enum from `LEARNING_ENGINE.md §5`)

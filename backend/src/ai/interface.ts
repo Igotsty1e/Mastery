@@ -64,6 +64,45 @@ export interface AiFreeSentenceRawProbe {
   parsed: unknown;
 }
 
+/// Wave H2 — dual-verdict judge.
+///
+/// Used after the deterministic matcher fails on a closed-form item
+/// (today: fill_blank only). The AI is told what's actually under
+/// test (`targetForm`) and asked whether the learner's answer hit the
+/// target — even when it doesn't match any accepted answer literally.
+/// A spelling slip on a non-target word, or a synonym that uses the
+/// same form, can return `target_met: true` with `off_target_note`
+/// describing the slip the human should mention but not penalise.
+export interface AiTargetVerdictArgs {
+  /// Plain English description of what the lesson teaches (e.g.
+  /// "verb-ing form after gerund-only verbs"). Lesson-level field;
+  /// see `docs/content-contract.md §1.4`.
+  targetForm: string;
+  /// The exercise prompt as the learner saw it (the blank shown as
+  /// `___` for fill_blank).
+  prompt: string;
+  /// The author's accepted answer(s) for the blank — used as positive
+  /// grounding for what the target form looks like.
+  acceptedAnswers: string[];
+  /// What the learner typed.
+  userAnswer: string;
+  signal?: AbortSignal;
+}
+
+export interface AiTargetVerdictResult {
+  /// True when the learner's answer demonstrates the target form
+  /// correctly, regardless of whether it matches an accepted answer.
+  target_met: boolean;
+  /// True when the answer has a non-target slip (e.g. a misspelling
+  /// of a different word, a wrong noun choice that doesn't affect
+  /// the grammar under test). Optional context for the explanation.
+  off_target_error: boolean;
+  /// Human-facing one-line note about the off-target slip. Empty
+  /// when there is none. Used by the service to append a soft note
+  /// to the explanation when the verdict is flipped to correct.
+  off_target_note: string;
+}
+
 export interface AiProvider {
   evaluateSentenceCorrection(args: AiEvaluationArgs): Promise<AiEvaluationResult>;
   /// Wave 14.4 — V1.5 `short_free_sentence` evaluator. Optional during
@@ -76,6 +115,10 @@ export interface AiProvider {
   /// response shape so the operator can debug from outside Render's
   /// log capture. Stub providers omit it.
   evaluateFreeSentenceRaw?(args: AiFreeSentenceArgs): Promise<AiFreeSentenceRawProbe>;
+  /// Wave H2 — dual-verdict judge for closed-form items. Optional;
+  /// the service falls back to the deterministic verdict when the
+  /// method is missing or throws. See `AiTargetVerdictArgs`.
+  evaluateTargetVerdict?(args: AiTargetVerdictArgs): Promise<AiTargetVerdictResult>;
   // Optional: providers may omit this in test scaffolding where only the
   // /answers route is exercised. The result route guards on its absence and
   // falls back to deterministic copy.

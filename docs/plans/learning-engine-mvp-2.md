@@ -134,7 +134,7 @@ Tasks:
 
 - ✅ extend the lesson JSON schema in `docs/content-contract.md` to add
   optional fields on every `Exercise`. The fields below are now declared
-  in `docs/content-contract.md §1.2` and validated by
+  in `docs/content-contract.md §1.4` and validated by
   `LessonSchema`:
   - `skill_id` (string, required for content **authored after Wave 1
     lands**; optional during the one-shot backfill of pre-Wave-1

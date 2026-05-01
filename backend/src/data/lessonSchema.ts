@@ -283,6 +283,12 @@ export const LessonSchema = z
     intro_rule: z.string(),
     intro_examples: z.array(z.string()),
     rule_card: RuleCardSchema.optional(),
+    // Wave H2 — target_form: plain English statement of what the
+    // lesson teaches. Used by the AI dual-verdict judge so it can
+    // grant credit on non-target slips (a learner who hit the
+    // target form but misspelled a non-target word). Optional;
+    // when absent the dual-verdict step is skipped.
+    target_form: z.string().min(1).optional(),
     exercises: z.array(ExerciseSchema).min(1),
   })
   .superRefine((value, ctx) => {

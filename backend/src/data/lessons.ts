@@ -180,6 +180,10 @@ export interface Lesson {
   intro_rule: string;
   intro_examples: string[];
   rule_card?: RuleCard;
+  /// Wave H2 — what the lesson teaches in one line. Fed to the AI
+  /// dual-verdict judge as the "what's under test" context. See
+  /// `docs/content-contract.md §1.4`.
+  target_form?: string;
   exercises: Exercise[];
 }
 
