@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../analytics/analytics.dart';
 import '../api/api_client.dart';
 import '../models/lesson.dart';
 import '../session/session_controller.dart';
@@ -33,6 +34,7 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
   @override
   void initState() {
     super.initState();
+    Analytics.trackScreen('exercise');
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final controller = context.read<SessionController>();
       void onChange() {
@@ -42,6 +44,11 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
             state.currentExercise!.exerciseId != _lastExerciseId) {
           _lastExerciseId = state.currentExercise!.exerciseId;
           if (mounted) setState(() => _currentAnswer = '');
+          Analytics.track('exercise_shown', screen: 'exercise', metadata: {
+            'exercise_id': state.currentExercise!.exerciseId,
+            'skill_id': state.currentExercise!.skillId,
+            'type': state.currentExercise!.type.toString().split('.').last,
+          });
         }
         if (state.phase == SessionPhase.summary) {
           controller.removeListener(onChange);
@@ -249,6 +256,11 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
 
   void _submitIfReady(SessionController controller) {
     if (_currentAnswer.isEmpty) return;
+    final exercise = controller.state.currentExercise;
+    Analytics.trackButton('check_answer', screen: 'exercise', extra: {
+      if (exercise != null) 'exercise_id': exercise.exerciseId,
+      if (exercise?.skillId != null) 'skill_id': exercise!.skillId,
+    });
     controller.submitAnswer(_currentAnswer);
   }
 
@@ -301,6 +313,10 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
       }
     }
     if (!mounted) return;
+    Analytics.trackButton(
+      state.isLastExercise ? 'finish' : 'next',
+      screen: 'exercise',
+    );
     controller.advance();
   }
 }

@@ -646,3 +646,53 @@ export const feedbackResponses = pgTable(
     kindIdx: index('feedback_responses_kind_idx').on(t.promptKind, t.createdAt),
   })
 );
+
+/// Wave G4 — lightweight product analytics. The shipped
+/// `feedback_responses` table covers explicit qualitative input;
+/// this one covers implicit usage signals — screen views, button
+/// clicks, key flow milestones — so the team can answer "are
+/// learners actually using practice_more?" without a third-party
+/// tool. Schema is intentionally narrow (one row per event,
+/// metadata in `jsonb`) so adding a new tracked surface is a
+/// frontend-only change.
+export const analyticsEvents = pgTable(
+  'analytics_events',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    /// Nullable so anonymous / pre-auth events can land here later
+    /// (V1 the route requires auth; V1.1 may add a public ingest).
+    /// The FK uses ON DELETE SET NULL so a hard-deleted user does
+    /// not lose the aggregated counts they generated, just their
+    /// identity link.
+    userId: uuid('user_id').references(() => users.id, {
+      onDelete: 'set null',
+    }),
+    /// 'screen_view' or 'button_click' for V1; freeform after that.
+    /// Capped to 80 chars at the route level.
+    eventName: text('event_name').notNull(),
+    /// Logical screen name — 'dashboard', 'exercise', 'summary'…
+    /// Optional so non-screen events (network, errors) can fit too.
+    screen: text('screen'),
+    /// Open metadata: button_id, skill_id, score, exercise_id…
+    metadata: jsonb('metadata'),
+    /// Client clock — what the learner's device thinks the time is.
+    /// Useful for ordering events on a single device but not trusted
+    /// for cross-device aggregation; use `created_at` for that.
+    occurredAt: timestamp('occurred_at', {
+      withTimezone: true,
+      mode: 'date',
+    }).notNull(),
+    /// Server clock — what the backend thinks the time is. Source
+    /// of truth for analytics queries.
+    createdAt: timestamp('created_at', { withTimezone: true, mode: 'date' })
+      .defaultNow()
+      .notNull(),
+  },
+  (t) => ({
+    userIdx: index('analytics_events_user_idx').on(t.userId, t.occurredAt),
+    eventIdx: index('analytics_events_event_idx').on(
+      t.eventName,
+      t.occurredAt,
+    ),
+  })
+);

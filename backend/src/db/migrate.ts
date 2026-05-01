@@ -362,6 +362,22 @@ ALTER TABLE user_profiles
   CHECK (ui_language IN ('en', 'ru', 'vi'));
 `;
 
+const ANALYTICS_EVENTS_SQL = `
+CREATE TABLE IF NOT EXISTS analytics_events (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES users(id) ON DELETE SET NULL,
+  event_name text NOT NULL,
+  screen text,
+  metadata jsonb,
+  occurred_at timestamptz NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS analytics_events_user_idx
+  ON analytics_events(user_id, occurred_at DESC);
+CREATE INDEX IF NOT EXISTS analytics_events_event_idx
+  ON analytics_events(event_name, occurred_at DESC);
+`;
+
 const MIGRATIONS: Migration[] = [
   { id: '0001_init', sql: INIT_SQL },
   { id: '0002_lesson_sessions', sql: LESSON_SESSIONS_SQL },
@@ -374,6 +390,7 @@ const MIGRATIONS: Migration[] = [
   { id: '0009_diagnostic_runs', sql: DIAGNOSTIC_RUNS_SQL },
   { id: '0010_feedback_responses', sql: FEEDBACK_RESPONSES_SQL },
   { id: '0011_ui_language', sql: UI_LANGUAGE_SQL },
+  { id: '0012_analytics_events', sql: ANALYTICS_EVENTS_SQL },
 ];
 
 export async function runMigrations(database: Database): Promise<void> {

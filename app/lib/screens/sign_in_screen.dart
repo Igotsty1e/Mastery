@@ -16,6 +16,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../analytics/analytics.dart';
 import '../auth/auth_client.dart';
 import '../theme/mastery_theme.dart';
 
@@ -58,8 +59,15 @@ class _SignInScreenState extends State<SignInScreen> {
   bool _busy = false;
   String? _error;
 
+  @override
+  void initState() {
+    super.initState();
+    Analytics.trackScreen('sign_in');
+  }
+
   Future<void> _signIn() async {
     if (_busy) return;
+    Analytics.trackButton('sign_in_apple', screen: 'sign_in');
     setState(() {
       _busy = true;
       _error = null;
@@ -108,6 +116,7 @@ class _SignInScreenState extends State<SignInScreen> {
   /// merges the records).
   Future<void> _skip() async {
     if (_busy) return;
+    Analytics.trackButton('skip_for_now', screen: 'sign_in');
     setState(() {
       _busy = true;
       _error = null;

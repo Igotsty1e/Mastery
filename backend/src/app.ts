@@ -13,6 +13,7 @@ import { makeDashboardRouter } from './dashboard/routes';
 import { makeLearnerRouter } from './learner/routes';
 import { makeDiagnosticRouter } from './diagnostic/routes';
 import { makeAdminRouter } from './admin/routes';
+import { makeAnalyticsRouter } from './analytics/routes';
 import { makeFeedbackRouter } from './feedback/routes';
 
 export interface CreateAppOptions {
@@ -110,6 +111,7 @@ export function createApp(ai: AiProvider, opts: CreateAppOptions = {}): express.
     app.use(makeDiagnosticRouter(opts.db));
     app.use(makeAdminRouter(opts.db));
     app.use(makeFeedbackRouter(opts.db));
+    app.use(makeAnalyticsRouter(opts.db));
   }
   app.use(makeLessonsRouter(ai));
   app.use(makeSkillsRouter());

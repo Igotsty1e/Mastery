@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../analytics/analytics.dart';
 import '../api/api_client.dart';
 import '../learner/learner_skill_store.dart';
 import '../learner/skill_titles.dart';
@@ -56,6 +57,10 @@ class _SummaryScreenState extends State<SummaryScreen> {
   void initState() {
     super.initState();
     _loadSkillRecords();
+    Analytics.trackScreen('summary', metadata: {
+      'correct': widget.correctCount,
+      'total': widget.totalCount,
+    });
   }
 
   Future<void> _loadSkillRecords() async {
@@ -77,6 +82,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
   /// server analytics see one row per Done. Network failures are
   /// silent — the screen always pops at the end.
   Future<void> _onBackToHomeTap() async {
+    Analytics.trackButton('back_to_home', screen: 'summary');
     final api = context.read<ApiClient>();
     final summaryId = widget.summary?.lessonId;
     final navigator = Navigator.of(context);
@@ -119,6 +125,7 @@ class _SummaryScreenState extends State<SummaryScreen> {
   /// current SummaryScreen so the back gesture lands on the
   /// dashboard, not on the just-finished summary.
   void _onPracticeMoreTap() {
+    Analytics.trackButton('practice_another_10', screen: 'summary');
     Navigator.of(context).pushReplacement(
       MasteryFadeRoute(
         builder: (_) => const LessonIntroScreen(),

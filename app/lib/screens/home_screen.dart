@@ -22,6 +22,7 @@ import '../learner/learner_state_migrator.dart';
 import '../learner/review_scheduler.dart';
 import '../learner/skill_catalog.dart';
 import '../progress/local_progress_store.dart';
+import '../analytics/analytics.dart';
 import '../theme/mastery_theme.dart';
 import '../widgets/mastery_route.dart';
 import '../widgets/mastery_widgets.dart';
@@ -277,6 +278,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _loadDashboard() async {
     if (_isLoadingDashboard) return;
+    Analytics.trackScreen('dashboard');
     setState(() => _isLoadingDashboard = true);
 
     // Wave 4 review-due lookup runs in parallel with the lesson list
@@ -367,6 +369,7 @@ class _HomeScreenState extends State<HomeScreen> {
   /// the null-id branch and calls `loadDynamicSession()` on the
   /// freshly-constructed controller.
   Future<void> _startDynamicSession() async {
+    Analytics.trackButton('start_lesson', screen: 'dashboard');
     await Navigator.of(context).push(
       MasteryFadeRoute(
         builder: (_) => const LessonIntroScreen(),

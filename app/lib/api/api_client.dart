@@ -272,6 +272,29 @@ class ApiClient {
     _assertOk(res);
   }
 
+  /// Wave G4 — analytics ingest. Best-effort: any non-200 response
+  /// (including 401 when auth has not been attached yet) is
+  /// swallowed silently. Analytics MUST NEVER block the user-facing
+  /// flow, so callers don't need to handle exceptions; this method
+  /// returns `true` when the batch landed and `false` otherwise so
+  /// the `Analytics` queue can decide whether to drop or retry.
+  Future<bool> trackEvents(List<Map<String, dynamic>> events) async {
+    if (events.isEmpty) return true;
+    final auth = _auth;
+    if (auth == null) return false;
+    try {
+      final res = await auth.send(
+        'POST',
+        Uri.parse('$baseUrl/me/events'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'events': events}),
+      );
+      return res.statusCode == 200;
+    } catch (_) {
+      return false;
+    }
+  }
+
   // ────────────────────────────────────────────────────────────────────
   // Wave 12.3 — diagnostic-mode endpoints (V1 spec §15). Auth-protected.
   // The probe is a 5-item multiple_choice run that scores into a CEFR
