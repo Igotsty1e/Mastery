@@ -369,6 +369,41 @@ describe('CORS origin allowlist', () => {
     expect(res.headers['vary']).toBe('Origin');
   });
 
+  // Regression guard for the 2026-05-01 prod CORS outage: the shipped
+  // Render frontend was blocked because no env var was set on the
+  // backend service AND the public origin wasn't hardcoded as a
+  // fallback. This test fixes the public origin in code so the next
+  // env-less deploy can not break the sign-in flow the same way.
+  it('hardcoded public Render origin is allowed without env vars', async () => {
+    const previousAllowed = process.env.ALLOWED_ORIGINS;
+    const previousPublic = process.env.PUBLIC_WEB_ORIGIN;
+    try {
+      delete process.env.ALLOWED_ORIGINS;
+      delete process.env.PUBLIC_WEB_ORIGIN;
+      const app = createApp(stubAi);
+      const origin = 'https://mastery-web-igotsty1e.onrender.com';
+      const res = await inject(app, {
+        method: 'OPTIONS',
+        path: '/auth/apple/stub/login',
+        headers: { origin },
+      });
+      expect(res.status).toBe(204);
+      expect(res.headers['access-control-allow-origin']).toBe(origin);
+      expect(res.headers['vary']).toBe('Origin');
+    } finally {
+      if (previousAllowed === undefined) {
+        delete process.env.ALLOWED_ORIGINS;
+      } else {
+        process.env.ALLOWED_ORIGINS = previousAllowed;
+      }
+      if (previousPublic === undefined) {
+        delete process.env.PUBLIC_WEB_ORIGIN;
+      } else {
+        process.env.PUBLIC_WEB_ORIGIN = previousPublic;
+      }
+    }
+  });
+
   it('unknown origin receives no Access-Control-Allow-Origin header', async () => {
     const app = createApp(stubAi);
     const res = await inject(app, {

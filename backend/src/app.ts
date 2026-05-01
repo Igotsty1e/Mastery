@@ -25,6 +25,16 @@ const LOCAL_DEV_ALLOWED_ORIGINS = [
   'http://localhost:57450', // Flutter web dev server
 ];
 
+/// Public Render-hosted web origins. Hardcoded as a fallback so the
+/// shipped frontend can call the backend even when the deploy env
+/// has no `PUBLIC_WEB_ORIGIN` / `ALLOWED_ORIGINS` set. The env vars
+/// still take precedence — if the user wires either of them, the
+/// list below is ignored. Add new public origins here when a new
+/// Render web service is provisioned.
+const PUBLIC_PROD_ORIGINS = [
+  'https://mastery-web-igotsty1e.onrender.com',
+];
+
 function getAllowedOrigins(): string[] {
   const explicit = process.env.ALLOWED_ORIGINS
     ?.split(',')
@@ -33,9 +43,10 @@ function getAllowedOrigins(): string[] {
   if (explicit?.length) return explicit;
 
   const publicWebOrigin = process.env.PUBLIC_WEB_ORIGIN?.trim();
-  return publicWebOrigin
-    ? [publicWebOrigin, ...LOCAL_DEV_ALLOWED_ORIGINS]
-    : LOCAL_DEV_ALLOWED_ORIGINS;
+  if (publicWebOrigin) {
+    return [publicWebOrigin, ...PUBLIC_PROD_ORIGINS, ...LOCAL_DEV_ALLOWED_ORIGINS];
+  }
+  return [...PUBLIC_PROD_ORIGINS, ...LOCAL_DEV_ALLOWED_ORIGINS];
 }
 
 export function createApp(ai: AiProvider, opts: CreateAppOptions = {}): express.Express {
