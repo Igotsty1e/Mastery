@@ -172,21 +172,35 @@ Wave 2 cut. Fixed in the same wave:
 
 ## Wave 3 — remaining
 
+> Status update (2026-05-01):
+> - Item 2 (Flutter client wiring) — **shipped Wave 7.4**: login,
+>   refresh, account, logout-all, delete-account all wired.
+> - Item 3 (lesson UX cutover) — **partially shipped Wave 7.4 part 2B**:
+>   `SessionController` runs on `/sessions/start` +
+>   `/lesson-sessions/:sid/answers` + `/complete` + `/next`;
+>   `LearnerSkillStore` is dual-mode. The **`/dashboard` last-lesson-
+>   report rebind is still open** — `LastLessonStore` remains in-memory
+>   device-local. See `app/lib/session/last_lesson_store.dart` and
+>   the CLAUDE.md project-entry note.
+> - Item 4 partial — Wave 8 legacy drop (2026-04-26) removed the
+>   unauth `/lessons/:id/answers` + `/result` routes.
+
 1. **Real Sign In with Apple.** Replace `/auth/apple/stub/login` with
    `/auth/apple/login`, which verifies Apple's `identityToken` JWT
    against the public JWKS and extracts `sub` for the existing identity
    model. The stub route stays on a feature flag for testing.
-2. **Flutter client wiring.** Login screen, secure refresh-token
-   storage (Keychain / Keystore), 401-driven refresh interceptor,
-   account screen with logout / logout-all / delete-account.
-3. **Lesson UX cutover.** Rewire `SessionController` and the lesson
-   flow against `/lessons/:id/sessions/start`,
-   `/lesson-sessions/:id/answers`, `/lesson-sessions/:id/complete`, and
-   `/lesson-sessions/:id/result`. The home dashboard rebinds to
-   `/dashboard` (replaces `LocalProgressStore` and the in-memory
-   `LastLessonStore` indirection).
-4. **Retire transitional anonymous routes** once the client has cut
-   over and the Wave 1 in-memory store has no live callers.
+2. ~~Flutter client wiring.~~ Shipped Wave 7.4.
+3. **Lesson UX cutover (residual).** `SessionController` cutover and
+   the per-skill state migration are done; the **`/dashboard`
+   last-lesson-report rebind on the home screen remains open** —
+   today the Last lesson card reads from the in-memory
+   `LastLessonStore`, not from `GET /dashboard`. Tracked in this
+   doc until the Flutter client reads `/dashboard` for the
+   persistent surface.
+4. **Retire transitional anonymous routes (residual).** Wave 8
+   legacy drop removed the unauth `/lessons/:id/answers` and
+   `/result` paths. Any Wave 1 in-memory store callers still wired
+   should be inventoried and cut.
 5. **Migration tooling.** Switch the embedded migrations to
    drizzle-kit's journal/.sql layout when migration count exceeds
    the current two.

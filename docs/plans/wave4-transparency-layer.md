@@ -67,8 +67,8 @@ Three viable directions, each with tradeoffs:
 
 | Direction | Where | Pro | Con |
 |---|---|---|---|
-| **A — Dashboard expansion** | New section on `home_screen.dart` between `_LastLessonReport` and `_CurrentUnitBlock` | Always visible; one screen for all engine state | Pollutes the calm Study Desk dashboard; per-screen approval needed for shipped layout |
-| **B — Summary-screen extension** | New `_SkillStateCard` on `summary_screen.dart` between `_DebriefCard` and `_MistakeCard` | Contextual to the just-finished session; doesn't touch dashboard | Only seen at session end; learner who returns later doesn't see updated state |
+| **A — Dashboard expansion** | New section on `home_screen.dart` adjacent to the `_RulesTrigger` (Wave 0 cleanup retired `_LastLessonReport`, `_Avatar`, and `_DashboardHeader`; the dashboard is now Study-Desk-flat) | Always visible; one screen for all engine state | Pollutes the calm Study Desk dashboard; per-screen approval needed for shipped layout |
+| **B — Summary-screen extension** | New `_SkillStateCard` on `summary_screen.dart` (the post-G2 layout drops `_MistakeCard` and `_DebriefCard` in favour of `_CompactSkillPanel` + a Coach's-note block — pick a stable insertion point that does not collide with that surface) | Contextual to the just-finished session; doesn't touch dashboard | Only seen at session end; learner who returns later doesn't see updated state |
 | **C — Tap-through detail** | New `SkillDetailScreen` route, opened from a small "skills" affordance on dashboard | Dashboard stays calm; rich detail for engaged learners | Discoverability — learners may never tap |
 
 **Recommendation:** **B + small A teaser.** Detailed per-skill panel

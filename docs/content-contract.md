@@ -504,13 +504,13 @@ Example:
 - Keep `prompt` strings under 300 characters.
 - Do not use HTML or markdown inside `prompt`, `feedback.explanation`, or answer fields.
 - For new content authored after Wave 1 lands: declare `skill_id`,
-  `primary_target_error`, and `evidence_tier` per §1.2; declare
+  `primary_target_error`, and `evidence_tier` per §1.4; declare
   `meaning_frame` whenever `evidence_tier == "strongest"`.
 
 ## 10. Skills Registry
 
 The skills registry lives at `backend/data/skills.json` and is the source
-of truth for the skill graph referenced by `Exercise.skill_id` (§1.2).
+of truth for the skill graph referenced by `Exercise.skill_id` (§1.4).
 The backend loads the file on startup and validates it; an absent file is
 treated as an empty registry during the Wave 1 rollout.
 
@@ -553,7 +553,7 @@ Validation rules (enforced at load time):
   authoring metadata; the runtime preserves them on parse but no current
   code path consumes them.
 
-Cross-reference between an exercise's `skill_id` (§1.2) and the registry
+Cross-reference between an exercise's `skill_id` (§1.4) and the registry
 is **not enforced by `LessonSchema` itself** — it is asserted by the
 `skills registry cross-reference` test in
 `backend/tests/skills-registry.test.ts`, which fails CI if a shipped

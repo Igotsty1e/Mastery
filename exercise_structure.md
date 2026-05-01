@@ -138,13 +138,21 @@ unless the lesson explicitly targets that domain.
 ### 2.8 Lesson-Level Inputs Must Be Fixed First
 
 Before authoring an exercise set, define:
-- `target form`
+- `target_form` — single sentence in plain English describing what
+  the lesson teaches. Authored as the lesson-level `target_form`
+  field per `docs/content-contract.md §1.3`. Fed to the dual-verdict
+  AI judge so off-target slips are not penalised.
 - `target CEFR`
 - `lesson context`
 - `lesson archetype`
 - `core contrast`
 - `expected learner errors`
 - `scoring mode`
+- `rule_card` (Wave H1, recommended for new content) — the
+  textbook-style structured rule shown on the LessonIntroScreen and
+  the Rules library. Schema: `docs/content-contract.md §1.2`. The
+  legacy `intro_rule` flat string remains supported for backward
+  compatibility but is no longer the preferred form.
 
 If these are not fixed, the set is not ready for generation or review.
 
@@ -1251,6 +1259,21 @@ run it against every lesson under `backend/data/lessons/` and reject
 any PR that introduces a violation. Existing violators are listed in
 `docs/plans/automaticity-pivot.md` Wave C TODO and ride out the rewrite
 queue under methodologist supervision.
+
+#### 6.7.5 Forward note — Wave H3 production floor lift (planned)
+
+The Wave H3 question-driven shift (`docs/plans/automaticity-pivot.md`)
+is on track to raise the §6.7.2 production floor from "≥ 1
+`short_free_sentence` per lesson" to "≥ 4". Phase 1 (Lesson 1) has
+already shipped past the new bar — 4 of its original 5 `fill_blank`
+items were converted to `short_free_sentence` with question-style
+instructions on 2026-05-01. Phases 2 + 3 will land the same
+conversion on Lessons 3 + 5 (clean fit) and a partial conversion on
+Lesson 4 (only the items where a question structurally pulls the
+target form). Lesson 2 stays `fill_blank`-dominant because the
+present-perfect contrast does not respond to question-pull. The §6.7
+numerical minimums will be edited in lockstep with that ship — until
+then, `≥ 1` remains the binding floor.
 
 ---
 

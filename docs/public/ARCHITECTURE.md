@@ -16,13 +16,19 @@ Mastery is a lesson-driven English practice product with a Flutter client and a 
 1. The client requests lesson definitions from the backend.
 2. The learner submits answers to the backend.
 3. The backend evaluates the answer deterministically whenever possible.
-4. AI is consulted only for narrow borderline cases in sentence correction and for short lesson debriefs.
+4. AI is consulted in two narrow shapes: as a borderline fallback or
+   open-form grader on the open-answer exercise families
+   (sentence-correction / sentence-rewrite / short-free-sentence),
+   and as a dual-verdict judge on fill-blank items — flipping a
+   deterministic miss to correct when the answer demonstrates the
+   lesson's target form despite an off-target slip. Short lesson
+   debriefs are also AI-generated.
 5. The backend returns correctness, explanation, and any debrief output to the client.
 
 ## Evaluation design
 
 - deterministic-first evaluation is the default
-- AI is a fallback, not the primary grader
+- AI is a fallback or a second judge, never the primary grader
 - the backend remains the source of truth for correctness
 
 ## Persistence model

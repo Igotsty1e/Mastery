@@ -93,9 +93,10 @@ Method note: this list uses public Android install bands from Google Play as the
 - `title-lg`: 24/30, `Manrope`, 700
 - `title-md`: 20/26, `Manrope`, 700
 - `title-sm`: 18/24, `Manrope`, 700
-- `body-lg`: 18/30, `Manrope`, 500
-- `body-md`: 16/26, `Manrope`, 500
-- `body-sm`: 15/24, `Manrope`, 500
+- `body-lg`: 18/30, `Manrope`, 500, letter-spacing **+0.1**
+- `body-md`: 16/26, `Manrope`, 500, letter-spacing **+0.15**
+- `body-sm`: 15/24, `Manrope`, 500, letter-spacing **+0.2**
+- `title-sm`: 18/24, `Manrope`, 700, letter-spacing **+0.05**
 - `label-lg`: 16/20, `Manrope`, 700
 - `label-md`: 14/18, `Manrope`, 700
 - `label-sm`: 13/16, `Manrope`, 700
@@ -106,6 +107,16 @@ Method note: this list uses public Android install bands from Google Play as the
 - No tappable text below `16px`.
 - Use `Fraunces` only for short, high-impact text. Never for dense paragraphs or input-heavy screens.
 - Avoid pure bold everywhere; use size and spacing first, weight second.
+- Body styles carry a small **positive** letter-spacing on mobile
+  (Manrope at zero tracking visually fuses on phones — observed
+  2026-05-01 user report). Apply the values listed in the Type
+  Scale; do not override to zero.
+- For the question-driven exercise headline (`InstructionBand`
+  `prominent` mode), build the `TextStyle` directly with
+  `fontFamily: 'Manrope'`, `fontWeight: FontWeight.w600`, and
+  **no `fontVariations`**. The variable-axis path mis-renders at
+  w700 on Brave/Chromium and falls back to a generic serif (fixed
+  by `533140d`).
 
 ## Color
 - **Approach:** balanced, warm, rose-led
@@ -229,13 +240,38 @@ Method note: this list uses public Android install bands from Google Play as the
 - Include one supporting micro-metric only. No analytics overload.
 - On dashboard heroes, the progress cluster should stack cleanly above or below the CTA on mobile. Avoid fragile two-column arrangements where the rail and CTA visually fight for width.
 
-### 5.1 Status Badges
+### 5.1 Status Badges (lesson rows)
 - Use compact rounded badges for `Done`, `Current`, and `Locked` states inside unit rows.
 - Badge = tint + border + label. Never show raw right-aligned status text without a container.
 - `Done`: muted success tint.
 - `Current`: dusty-rose tint.
 - `Locked`: warm neutral tint.
 - Target height: `28-32px`.
+
+### 5.2 Skill Status Indicator (per-skill mastery)
+**Wave 14 → 2026-05-01 redesign.** The earlier soft-tinted pill
+("Practicing", "Almost mastered", "Mastered" inside `bg.surface-alt`
+or `bg.primary-soft` chrome) blended into the calm beige/sage
+palette of the dashboard. The current contract is a **5-dot
+progress strip** plus a sentence-case label.
+
+- Five dots, each `7×7`, gap `4`, total strip `~55px`.
+- Filled count maps 1:1 to the mastery progression:
+  `started=1/5` → `practicing=2/5` → `getting there=3/5` →
+  `almost mastered=4/5` → `mastered=5/5`.
+- Filled colour: `actionPrimary` (dusty rose) for in-progress; the
+  fully-filled `mastered` strip switches to `success` (sage) so
+  "done" has its own visual category.
+- Empty dots: outlined with `borderStrong` at ~55% opacity, no fill.
+- `review_due` is **not** dots — render an `Icons.priority_high`
+  glyph inside an `errorSoft` filled circle with a thin
+  `error`-tinted border. The regressed state must never read as
+  "back to zero".
+- Status text label sits to the right of the strip in
+  `MasteryTextStyles.labelSm`, sentence case, weight `w600`,
+  letter-spacing `0.2`. Colour: `success` for mastered, `error`
+  for review_due, `text.secondary` otherwise.
+- Implementation: `app/lib/widgets/skill_status_badge.dart`.
 
 ### 6. Rule Card
 - Core teaching surface.
@@ -246,6 +282,52 @@ Method note: this list uses public Android install bands from Google Play as the
 - Shared grammar material stays visually quiet; only the variable slot gets the strong accent.
 - Contrasted formulas should stack vertically with aligned changing parts, never drift apart into decorative left/right scatter.
 - Use one accent treatment per contrasted form and reuse it in the matching examples below.
+
+### 6.1 Rule Card — Textbook Layout (Wave H1)
+**Shipped 2026-05-01.** When a lesson carries the structured
+`rule_card` field (`docs/content-contract.md §1.2`), the
+LessonIntroScreen and the dashboard Rules sheet render a
+textbook-style panel instead of the legacy flat-string parser.
+Visual contract:
+
+- **Title plate** — pill on `bg.primary-soft` with
+  `actionPrimary` text + thin border. Carries the textbook
+  pattern name (e.g. `verb + -ing form`).
+- **Rule statement** — single sentence in `bodyLg`, `text.primary`.
+  Plain English; no rule jargon a B2 learner wouldn't recognise.
+- **Examples** — `✓` checkmark in `success` colour + sentence in
+  `bodyMd`. The optional `highlight` substring renders in
+  `actionPrimaryPressed` bold.
+- **Pattern lists** — multi-column grid (2 / 3 / 4 columns based
+  on item count) inside a `bg.surface-alt` card with `borderSoft`.
+  Eyebrow label above. Each item: small dusty-rose dot + 14px
+  semibold word.
+- **Watch out!** — distinct callout on `warningSoft` with a
+  `priority_high` glyph and `WATCH OUT` eyebrow in the warning
+  colour. Optional ✓ example follows the rule text.
+- Implementation: `app/lib/widgets/rule_card.dart` →
+  `RuleCardView`.
+
+### 6.2 Question Headline (Wave H3, `InstructionBand` prominent)
+**Shipped 2026-05-01 phase 1, Lesson 1.** When the exercise type
+is `short_free_sentence`, the instruction IS the question — drop
+the pill chrome and render the text as a prominent headline
+above the answer field. The page reads as a real question, not a
+meta-label.
+
+- No card, no border, no icon. Plain text on `bg.app`.
+- Style: explicit `TextStyle` with `fontFamily: 'Manrope'`,
+  `fontSize: 20`, `height: 28/20`, `fontWeight: FontWeight.w600`,
+  `letterSpacing: 0.1`. Build directly — **do not** route
+  through the `_manrope` helper, which uses `FontVariation`
+  axes that mis-render at w700 on Chromium and fall back to a
+  generic serif.
+- Question copy: end with `?`; address the learner as `you`;
+  contains a "start with..." hint that constrains the form
+  (e.g. `Start with "I enjoy..."`). Authored under the
+  `english-grammar-methodologist` skill per `CLAUDE.md`.
+- All non-`short_free_sentence` types keep the original banded
+  pill (`InstructionBand` non-prominent).
 
 ### 7. Example Block
 - Slightly tinted `primary-soft` background.

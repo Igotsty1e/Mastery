@@ -2,8 +2,20 @@
 
 ## Status
 
-**Approved 2026-04-28.** Plan locked after methodologist + CEO consults.
-Implementation: `feat/wave12.6-rule-access-cap`.
+**Shipped 2026-04-28.** Plan was locked after methodologist + CEO
+consults; both sides shipped:
+- Wave 12.6 — `skill_rule_snapshot` field on
+  `POST /lesson-sessions/:sid/answers` + Flutter `See full rule →`
+  link on `ResultPanel`. Wave H1 (2026-05-01) extended the snapshot
+  with the optional structured `rule_card` so the bottom sheet
+  renders the textbook view when present.
+- Wave 12.7 — public `GET /skills` route + `SkillCatalog` client +
+  Rules card on the dashboard. Wave H1 added `rule_card` here too.
+- `MAX_SKILLS_PER_SESSION = 2` cap remains in place.
+
+This doc is the historical contract for the wave; backend route
+shape is now documented in `docs/backend-contract.md`, and the
+Flutter rendering contract lives in `docs/mobile-architecture.md`.
 
 ## Why this wave exists
 

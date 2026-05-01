@@ -26,12 +26,17 @@ Roundups AI Assistant is a Flutter mobile app for English language practice. Use
 |---|---|---|
 | Client | Flutter (Dart) | Render exercises, collect input, display results |
 | Backend | REST API (deterministic) | Serve lessons, evaluate answers, enforce authority |
-| AI Layer | LLM (server-side only) | (1) Evaluate borderline `sentence_correction`; return internal structured verdict only. (2) Generate the post-lesson **debrief** on `GET /result` from aggregated attempt facts (canonical answer + curated explanation), grounded by deterministic bucket. Never sees student free-text answers. **Post-MVP update:** AI now also evaluates `sentence_rewrite` (Wave 14.2 — same evaluator as sentence_correction) and `short_free_sentence` (Wave 14.4 — new `evaluateFreeSentence` method judging rule conformance instead of match-against-accepted). The "never sees student free-text" guarantee remains for the debrief; per-attempt evaluators do see the student answer for the open-answer family. |
+| AI Layer | LLM (server-side only) | (1) Evaluate borderline `sentence_correction`; return internal structured verdict only. (2) Generate the post-lesson **debrief** on `GET /result` from aggregated attempt facts (canonical answer + curated explanation), grounded by deterministic bucket. Never sees student free-text answers. **Post-MVP update:** AI now also evaluates `sentence_rewrite` (Wave 14.2 — same evaluator as sentence_correction) and `short_free_sentence` (Wave 14.4 — new `evaluateFreeSentence` method judging rule conformance instead of match-against-accepted). **Wave H2 (2026-05-01):** dual-verdict judge `evaluateTargetVerdict` runs on `fill_blank` after a deterministic miss; flips the verdict to correct when the answer demonstrates the lesson's `target_form`, optionally surfacing an off-target slip note in `explanation`. The "never sees student free-text" guarantee remains for the debrief; per-attempt evaluators do see the student answer for the open-answer family and (post-H2) for fill_blank dual-verdict. |
 
 **Hard rules:**
 - AI never runs on the client.
 - Client never makes its own correctness decisions.
-- AI is never called for `fill_blank`, `multiple_choice`, or `listening_discrimination` — those are fully deterministic.
+- AI is never called for `multiple_choice` or `listening_discrimination` — those stay fully deterministic.
+- AI **may** be called for `fill_blank` only after the deterministic
+  matcher fails, via the Wave H2 `evaluateTargetVerdict` judge. The
+  judge returns `{ target_met, off_target_error, off_target_note }`
+  and is gated on the source lesson declaring `target_form`. Any
+  AI error keeps the deterministic verdict.
 - AI output is always validated server-side before being returned to client.
 - Debrief AI is **never** called on a perfect score (zero-error short-circuit). Failure modes (timeout, malformed JSON, refusal) fall back to deterministic copy keyed off the score bucket. The score-bucket → `debrief_type` mapping is deterministic; AI generates copy only.
 
@@ -230,10 +235,21 @@ The following will NOT be built in this MVP. Any request to add them is a scope 
 - Hints or help system
 - Multiple language support beyond English
 - Analytics or telemetry
+  - **Post-MVP update (Wave G4, 2026-05-01):** server-side product
+    analytics shipped — `analytics_events` table, `POST /me/events`
+    ingest, Flutter `Analytics` singleton firing screen-views and
+    key-button events. Operator-only (psql queries today, no
+    learner-facing dashboard). The "no telemetry exposed to the
+    learner" non-goal still holds.
 - AI-generated lesson content
 - More than 4 exercise types (the 4 shipped types are `fill_blank`, `multiple_choice`, `sentence_correction`, `listening_discrimination`)
   - **Post-MVP update:** Wave 14.2 added `sentence_rewrite` and Wave 14.4 added `short_free_sentence`. The runtime gate (`backend/src/data/exerciseBank.ts#RUNTIME_SUPPORTED_EXERCISE_TYPES`) is the live source of truth. See `docs/plans/learning-engine-v1.md` Wave 14.2 + 14.4 entries.
 - Hints or practical tips shown after an incorrect answer
+  - **Wave 12.6 (2026-04-28) carve-out:** a quiet `See full rule →`
+    link on the result panel opens a bottom sheet with the source
+    lesson's rule (textbook `RuleCardView` post-Wave H1, flat
+    `intro_rule` fallback otherwise). This is a *rule reference*,
+    not a per-item hint, so the non-goal still holds.
 
 ---
 

@@ -2,9 +2,14 @@
 
 ## Status
 
-Draft for the visual approval gate per `CLAUDE.md` per-screen rule.
-Once approved, this doc becomes the implementation contract for the
-Flutter side of Wave 12 (Diagnostic Mode).
+**Shipped 2026-04-28** as Wave 12.3 (DiagnosticScreen + welcome /
+probe / completion phases); the post-implementation re-take entry
+from the dashboard landed alongside as Wave 12.4. Implementation:
+`app/lib/screens/diagnostic_screen.dart`, routing gate in
+`app/lib/screens/home_screen.dart` `_resolveInitialView`. This doc
+is the historical contract for that wave; for any future redesign
+of the probe (e.g. the planned Wave E mixed-evidence rebuild — see
+`docs/plans/automaticity-pivot.md`), spin a fresh plan.
 
 Implementation depends on:
 - Wave 12.1 (`is_diagnostic` schema + 5 tagged probe items) — shipped.

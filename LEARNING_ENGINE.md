@@ -142,10 +142,26 @@ Outputs:
 - per-response-unit scores when applicable
 - canonical answer + curated explanation
 
-Status: **partially shipped**. Today: deterministic exact/normalised match
-for `fill_blank`, `multiple_choice`, `listening_discrimination`; AI fallback
-only for `sentence_correction` borderline. No partial credit, no
-response-unit scoring. See migration plan.
+Status: **partially shipped**. Today:
+- deterministic exact/normalised match for `fill_blank`,
+  `multiple_choice`, `listening_discrimination`;
+- AI borderline fallback for `sentence_correction` and
+  `sentence_rewrite`;
+- AI-only judging for `short_free_sentence` (Wave 14.4
+  `evaluateFreeSentence`);
+- **dual-verdict judge** for `fill_blank` (Wave H2,
+  `evaluateTargetVerdict`): when the deterministic matcher
+  fails, the AI is told the lesson-level `target_form` and asked
+  whether the answer demonstrates the form. `target_met=true`
+  flips the verdict to correct; `off_target_error=true` attaches
+  a soft note instead of penalising. Any AI error keeps the
+  deterministic verdict.
+
+Still missing: partial credit, response-unit scoring, dual-verdict
+extension to the open-form types (`sentence_correction`,
+`sentence_rewrite`, `short_free_sentence` already use AI, but
+their prompts don't yet receive `target_form` explicitly — see
+`docs/plans/automaticity-pivot.md` Backlog).
 
 ### 2.5 Layer 5 — Mastery Model
 
@@ -184,8 +200,13 @@ reason.
 
 Outputs: result panel, skill state panel, "why this next" explanation.
 
-Status: **partially shipped**. Today: per-item result + curated explanation +
-post-lesson AI debrief. No skill state UI, no "why this next" UI.
+Status: **partially shipped**. Today: per-item result + curated
+explanation + post-lesson AI debrief + a dashboard 5-dot per-skill
+mastery indicator (Wave 14, redesigned Wave H1+ phase 2026-05-01)
++ a textbook-style `RuleCard` rendered on the LessonIntroScreen,
+the dashboard Rules sheet, and the result-panel `See full rule →`
+sheet (Wave H1, `app/lib/widgets/rule_card.dart`). No "why this
+next" UI yet.
 
 ---
 

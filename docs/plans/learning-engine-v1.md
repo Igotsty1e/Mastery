@@ -1,12 +1,18 @@
 # Learning Engine V1 — implementation roadmap
 
-> **Status (2026-04-26): draft, awaiting "go" before Wave 9 starts.**
+> **Status (2026-05-01): V1 + V1.5 substantially shipped — Waves 9
+> through 14.7 all landed. Live execution has moved to
+> `docs/plans/automaticity-pivot.md` (Waves 0 / A–D / G1–G9 / H1–H3
+> phase 1 shipped on top of the V1 baseline).** This file remains
+> the historical execution plan for the V1 / V1.5 sequence; consult
+> it when working on engine internals (skill graph, mastery model,
+> decision engine, evaluation) and refer to `automaticity-pivot.md`
+> for the current live wave list.
 >
-> Source of truth: `LEARNING_ENGINE.md` (V1 final spec, dropped into the
-> repo by the product owner on 2026-04-26). This document is the
-> **execution plan** that turns that spec into shippable waves. The
-> spec wins on intent; this plan wins on sequencing, scope, and
-> acceptance criteria.
+> Source of truth: `LEARNING_ENGINE.md` (V1 final spec). This
+> document is the **execution plan** that turned that spec into
+> shipped waves. The spec wins on intent; this plan wins on
+> sequencing, scope, and acceptance criteria.
 
 ## Decisions log (locked, do not relitigate)
 

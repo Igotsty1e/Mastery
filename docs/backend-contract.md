@@ -15,10 +15,12 @@ Returns full lesson definition for client to render.
   "level": "A1|A2|B1|B2|C1|C2",
   "intro_rule": "string",
   "intro_examples": ["string"],
+  "rule_card": { /* see content-contract.md §1.2 */ } | null,
+  "target_form": "string" | null,
   "exercises": [
     {
       "exercise_id": "uuid",
-      "type": "fill_blank|multiple_choice|sentence_correction",
+      "type": "fill_blank|multiple_choice|sentence_correction|sentence_rewrite|short_free_sentence|listening_discrimination",
       "prompt": "string",
       ...type-specific fields (see content-contract.md)
     }
@@ -27,6 +29,19 @@ Returns full lesson definition for client to render.
 ```
 
 Client never receives `accepted_answers`, `accepted_corrections`, or `correct_option_id`. These stay server-side.
+
+**Wave H1 — `rule_card` pass-through.** When the lesson declares
+`rule_card` (`content-contract.md §1.2`), the route emits the
+structured object unchanged so the client renders the textbook-style
+`RuleCardView`. `null` when the lesson has no card; the client falls
+back to parsing the legacy flat `intro_rule` string.
+
+**Wave H2 — `target_form` pass-through.** Plain English statement of
+what the lesson teaches (e.g. `"verb-ing form after gerund-only verbs
+(enjoy, avoid, suggest, mind, finish, keep, postpone)."`). Optional
+on the lesson; `null` on the wire when absent. Consumed by the
+backend dual-verdict judge (see `POST /lesson-sessions/:sid/answers`
+below); no client code reads it directly today.
 
 **Wave 1 engine metadata pass-through.** When an exercise declares the
 optional Wave 1 metadata fields (`skill_id`, `primary_target_error`,
@@ -53,12 +68,13 @@ Wave 12.7 — public read-only route returning the skill registry joined with ea
     "description": "After enjoy, avoid, suggest, mind, keep, finish (and consider in this cluster)…",
     "cefr_level": "B2",
     "intro_rule": "Use\n\nSome verbs are followed directly by the -ing form…",
-    "intro_examples": ["I enjoy reading novels…", "She suggested taking a taxi…"]
+    "intro_examples": ["I enjoy reading novels…", "She suggested taking a taxi…"],
+    "rule_card": { /* see content-contract.md §1.2 */ } | null
   }
 ]
 ```
 
-`title`, `description`, `cefr_level` come from `backend/data/skills.json`. `intro_rule` and `intro_examples` are joined from the source lesson — the skill's first `lesson_refs` entry (with the bank-index fallback if `lesson_refs` is missing).
+`title`, `description`, `cefr_level` come from `backend/data/skills.json`. `intro_rule`, `intro_examples`, and (Wave H1) `rule_card` are joined from the source lesson — the skill's first `lesson_refs` entry (with the bank-index fallback if `lesson_refs` is missing). The Flutter dashboard `_RuleSheetBody` prefers `rule_card` when present and falls back to the flat strings otherwise.
 
 Public, no auth — same posture as `GET /lessons` and `GET /lessons/:id`. The dashboard reads it on first paint before the AuthClient is attached.
 
@@ -172,7 +188,7 @@ Submit one answer to a server-owned session.
 }
 ```
 
-**Response 200:** same shape as the legacy `/lessons/:id/answers` route, plus the Wave 12.6 `skill_rule_snapshot` field:
+**Response 200:** same shape as the legacy `/lessons/:id/answers` route, plus the Wave 12.6 `skill_rule_snapshot` field (Wave H1 added the optional `rule_card` inside it):
 
 ```json
 {
@@ -184,12 +200,15 @@ Submit one answer to a server-owned session.
   "canonical_answer": "string",
   "skill_rule_snapshot": {
     "intro_rule": "string",
-    "intro_examples": ["string"]
+    "intro_examples": ["string"],
+    "rule_card": { /* see content-contract.md §1.2 */ } | null
   }
 }
 ```
 
-`skill_rule_snapshot` is `null` when the exercise has no `skill_id` (legacy or diagnostic items can be untagged) or the source lesson is unavailable. The snapshot is a verbatim copy of the source lesson's `intro_rule` and `intro_examples` at attempt time. Drives the Flutter `See full rule →` bottom sheet on `ResultPanel` per `docs/plans/wave12.6-rule-access.md`.
+`skill_rule_snapshot` is `null` when the exercise has no `skill_id` (legacy or diagnostic items can be untagged) or the source lesson is unavailable. The snapshot is a verbatim copy of the source lesson's `intro_rule`, `intro_examples`, and (Wave H1) `rule_card` at attempt time. Drives the Flutter `See full rule →` bottom sheet on `ResultPanel` per `docs/plans/wave12.6-rule-access.md`. The bottom sheet renders `RuleCardView` when `rule_card` is non-null and falls back to the flat strings otherwise.
+
+**Wave H2 — dual-verdict for fill_blank.** When the deterministic matcher fails on a `fill_blank` and the source lesson declares `target_form` (see `GET /lessons/:id` above) and the AI provider implements `evaluateTargetVerdict`, the service calls a second AI judge with `{target_form, prompt, accepted_answers, user_answer}` and may flip `correct` to `true` when the judge returns `target_met=true`. When the flip carries an off-target slip note, the judge's `off_target_note` is surfaced in `explanation` so the learner sees `"form is right; small slip on …"` rather than a silent green tick. The judge is **not** invoked on deterministic-correct submissions (no AI burn on success), and any AI error keeps the deterministic verdict (no penalty for an outage).
 
 Behaviour:
 - The session must belong to the authenticated user; foreign sessions

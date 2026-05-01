@@ -14,14 +14,21 @@ Most language-learning products either overuse free-form AI or hide the evaluati
 
 ## What is implemented
 
-- Flutter client for structured lesson flows
+- Flutter client for structured lesson flows (six exercise families:
+  `fill_blank`, `multiple_choice`, `sentence_correction`,
+  `sentence_rewrite`, `short_free_sentence`, `listening_discrimination`)
 - Node.js + TypeScript backend for lesson delivery and evaluation
-- Deterministic evaluation for `fill_blank`, `multiple_choice`, and most `sentence_correction` cases
-- Narrow AI fallback for borderline `sentence_correction` answers
+- Deterministic evaluation for `fill_blank`, `multiple_choice`, and
+  `listening_discrimination`; AI-graded for the open-form types
+  (`sentence_correction`, `sentence_rewrite`, `short_free_sentence`)
+- Wave H2 dual-verdict AI judge on `fill_blank` — flips a deterministic
+  miss to correct when the answer demonstrates the lesson's
+  `target_form`, with an off-target slip note in `explanation`
 - Post-lesson AI debrief generation
 - Server-side auth and session foundation
-- Server-side lesson session and progress model, staged for future client wiring
-- Content and pedagogy canon for lesson authoring
+- Server-side lesson session and progress model
+- Content and pedagogy canon for lesson authoring (textbook-format
+  `rule_card` per `docs/content-contract.md §1.2`)
 
 ## What is intentionally private
 
