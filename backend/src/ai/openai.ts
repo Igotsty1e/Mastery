@@ -232,6 +232,19 @@ export class OpenAiProvider implements AiProvider {
 
     const json = await res.json();
     const { text, refusal } = extractOutputText(json);
+    // Wave G6 — temporary debug. The 2026-05-01 prod probes saw
+    // gpt-4o-mini AND gpt-4o return correct=true for gibberish.
+    // We need to see the actual model output (and the actual model
+    // ID OpenAI is routing the call to) before we can blame the
+    // model vs our prompt. Strip this log once root cause is fixed.
+    // ignore: avoid_print
+    console.log(
+      '[ai/sfs] model=%s sa=%j → text=%j refusal=%j',
+      this.model,
+      args.userAnswer,
+      text.slice(0, 200),
+      refusal,
+    );
     if (refusal) {
       return { correct: false, feedback: '' };
     }
