@@ -502,29 +502,36 @@ Sequencing:
 
 - **Wave A — shipped.** Measurement only. Per-skill FIFO + median
   accessor. No UI, no formula change.
-- **Wave B — shipped.** Calm 3-band UI on the exercise screen via
-  `LatencyBand` (`app/lib/widgets/latency_band.dart`), inserted
-  between the Decision-reason line and the instruction band. Reads
-  `LatencyHistoryStore.medianFor(skillId)` and maps it to one of
-  three pace zones (`fast` < 6000ms, `steady` < 12000ms, `slow`
-  ≥ 12000ms). Hides on un-tagged exercises and skills with no
-  recorded attempts (calm silence per §11.4). Advisory only.
-- **Wave D — shipped (this wave).** Median latency now gates
-  `mastered`. `LearnerSkillRecord` carries an in-memory
+- **Wave B — shipped, then retired in G7.** A 3px green / amber /
+  red `LatencyBand` ("PACE") rail rendered the per-skill median
+  on the exercise screen as advisory feedback. Founder-test on
+  the live deploy showed PACE was confusing — a verdict on past
+  speed delivered before the learner had answered the current
+  item. Replaced by `CountdownBar` (G7).
+- **Wave D — shipped.** Median latency now gates `mastered`.
+  `LearnerSkillRecord` carries an in-memory
   `medianResponseMsSnapshot` populated by the `LearnerSkillStore`
   facade on every read/write from
-  `LatencyHistoryStore.stableMedianFor(skillId)` (a new accessor that
-  returns `null` until the skill has at least
-  `defaultMinSamplesForStableMedian` = 5 timed attempts, so a single
-  fast attempt can not flip the gate on its own). `statusAt` adds one
-  condition to the §7.2 mastered-gate trio: the snapshot must be
-  non-null AND `< latencyMasteryGreenThresholdMs` (= 6000ms — the
-  same boundary as the Wave B `fast` zone). Without it the skill
-  caps at `almost_mastered`. The snapshot is **never persisted** —
-  latency is a per-device signal (`§7.5` rationale) and the backend
-  store has no `response_time_ms` column. Promoting the snapshot
-  into the record on read is the contract that lets `statusAt` stay
-  synchronous.
+  `LatencyHistoryStore.stableMedianFor(skillId)` (a new accessor
+  that returns `null` until the skill has at least
+  `defaultMinSamplesForStableMedian` = 5 timed attempts, so a
+  single fast attempt can not flip the gate on its own).
+  `statusAt` adds one condition to the §7.2 mastered-gate trio:
+  the snapshot must be non-null AND
+  `< latencyMasteryGreenThresholdMs` (= 6000ms). Without it the
+  skill caps at `almost_mastered`. The snapshot is **never
+  persisted** — latency is a per-device signal (`§7.5` rationale)
+  and the backend store has no `response_time_ms` column.
+  Promoting the snapshot into the record on read is the contract
+  that lets `statusAt` stay synchronous.
+- **Wave G7 — shipped.** `CountdownBar`
+  (`app/lib/widgets/countdown_bar.dart`) replaced the retired
+  Wave B rail. A 60-second bar shrinks left-to-right, green →
+  amber (never red), key'd on `exercise_id` so it resets on
+  every fresh item. Visual only — does NOT block submit, the
+  learner can answer at any time. The render→submit duration
+  capture (Wave A) is unchanged, so the latency-driven
+  engine-tuning backlog item still has its data stream.
 
 ---
 

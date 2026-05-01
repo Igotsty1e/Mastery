@@ -290,28 +290,40 @@ the value onto the in-memory record at read time keeps `statusAt`
 synchronous for the existing widget tree (`SkillStatusBadge`,
 `SkillStateCard`).
 
-### Wave B — pace band on the exercise screen (`LatencyBand`)
+### Wave G7 — countdown bar on the exercise screen (`CountdownBar`)
 
-`LatencyBand` (`app/lib/widgets/latency_band.dart`) sits between the
-Decision-reason line and the instruction band on `ExerciseScreen`.
-On every exercise it reads `LatencyHistoryStore.medianFor(skillId)`
-and maps the median to one of three calm zones: `fast` (< 6000ms,
-`MasteryColors.success`), `steady` (< 12000ms, `MasteryColors.warning`),
-`slow` (≥ 12000ms, `MasteryColors.error`). The rail is 3px tall, with
-a `PACE` mono-caps label to its left.
+The Wave B `LatencyBand` ("PACE" rail) was retired here in
+commit `b3bdd59` after the live-deploy founder-test on
+2026-05-01 showed the rail confused the learner — a verdict on
+past speed before they had answered the current item, with no
+hint about what to do with that verdict.
 
-The band hides itself in three cases:
-- the current exercise has no `skill_id`,
-- the skill has no recorded history yet (the learner has not finished
-  a single tagged attempt on it), or
-- resolution has not finished on the very first frame.
+`CountdownBar` (`app/lib/widgets/countdown_bar.dart`) sits in the
+same slot — between the Decision-reason line and the instruction
+band — and runs a 60-second countdown:
 
-The band does not refresh after an in-flight submit on the same
-skill — pace within a single skill swing should not flicker
-on every keypress. `didUpdateWidget` triggers a refetch only when the
-`skillId` changes between exercises. A `_resolutionId` counter on the
-state guards against stale futures overwriting a fresh one when the
-skill changes mid-flight.
+- 3px tall track in `bgSurfaceAlt`, foreground bar shrinks
+  left-to-right via an `AnimationController(vsync: this,
+  duration: const Duration(seconds: 60))..forward()`.
+- Foreground colour `Color.lerp` between
+  `MasteryColors.success.withAlpha(160)` and
+  `MasteryColors.warning.withAlpha(160)`. The amber share is
+  `((0.25 - progress) / 0.25).clamp(0, 1)` — green for the first
+  three quarters, fading into warm amber in the last quarter.
+  Red is intentionally absent.
+- Label "TIME" in mono caps to the left of the bar.
+- The widget is key'd on `exercise.exerciseId` in `ExerciseScreen`,
+  so a fresh exercise re-creates the state and the animation
+  starts from full width.
+- **Does NOT block submit.** When the timer runs out the bar
+  sits at zero width forever — the learner keeps typing and
+  taps "Check answer" whenever they want.
+
+The render→submit duration capture (`SessionController` →
+`LatencyHistoryStore`, Wave A) is unchanged. The 60-second
+visual is independent of the captured number, so the
+mastery-gate (Wave D) and any future engine-tuning workstreams
+keep their data stream.
 
 ### Wave 3 in-session loop — `DecisionEngine` + `ReviewScheduler`
 
