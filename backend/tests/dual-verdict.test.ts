@@ -22,7 +22,11 @@ import type {
 } from '../src/ai/interface';
 
 const LESSON_ONE = 'a1b2c3d4-0001-4000-8000-000000000001';
-const EX_FB_1 = 'a1b2c3d4-0001-4000-8000-000000000031'; // expected "trying"
+// Wave H3 (2026-05-01): items …031–034 in Lesson 1 were converted
+// from fill_blank to short_free_sentence. The lone surviving
+// fill_blank in Lesson 1 is …037 (expected "reading"); keep that
+// one as the fixture for the dual-verdict (fill_blank-only) path.
+const EX_FB_1 = 'a1b2c3d4-0001-4000-8000-000000000037';
 
 const SUBMITTED = '2026-04-26T12:00:00.000Z';
 
@@ -116,10 +120,11 @@ describe('dual-verdict judge — fill_blank', () => {
     const { headers } = await login('h2-flip-correct');
     const sid = await start(headers);
 
-    // Lesson 1 EX_FB_1 expects "trying"; "visiting" is a synonym
-    // that uses the right form (verb-ing) but is not in the
-    // accepted list. Deterministic fails → judge runs → flip.
-    const res = await submit(headers, sid, EX_FB_1, 'visiting');
+    // EX_FB_1 (lesson 1, item 037) expects "reading" in
+    // "I enjoy ___ before bed". "swimming" is a synonym that uses
+    // the verb-ing form but is not in the accepted list.
+    // Deterministic fails → judge runs → flip.
+    const res = await submit(headers, sid, EX_FB_1, 'swimming');
     expect(res.status).toBe(200);
     expect((res.json as any).correct).toBe(true);
     expect(recorder.calls).toHaveLength(1);
@@ -137,7 +142,7 @@ describe('dual-verdict judge — fill_blank', () => {
     const { headers } = await login('h2-soft-note');
     const sid = await start(headers);
 
-    const res = await submit(headers, sid, EX_FB_1, 'tring');
+    const res = await submit(headers, sid, EX_FB_1, 'redaing');
     expect((res.json as any).correct).toBe(true);
     expect((res.json as any).explanation).toBe(
       'small spelling slip in the verb base'
@@ -155,7 +160,7 @@ describe('dual-verdict judge — fill_blank', () => {
     const { headers } = await login('h2-no-flip');
     const sid = await start(headers);
 
-    const res = await submit(headers, sid, EX_FB_1, 'to try');
+    const res = await submit(headers, sid, EX_FB_1, 'to read');
     expect((res.json as any).correct).toBe(false);
   });
 
@@ -172,7 +177,7 @@ describe('dual-verdict judge — fill_blank', () => {
     const { headers } = await login('h2-ai-error');
     const sid = await start(headers);
 
-    const res = await submit(headers, sid, EX_FB_1, 'visiting');
+    const res = await submit(headers, sid, EX_FB_1, 'swimming');
     expect((res.json as any).correct).toBe(false);
   });
 
@@ -187,7 +192,7 @@ describe('dual-verdict judge — fill_blank', () => {
     const { headers } = await login('h2-skip-on-correct');
     const sid = await start(headers);
 
-    const res = await submit(headers, sid, EX_FB_1, 'trying');
+    const res = await submit(headers, sid, EX_FB_1, 'reading');
     expect((res.json as any).correct).toBe(true);
     expect(recorder.calls).toHaveLength(0);
   });
@@ -202,7 +207,7 @@ describe('dual-verdict judge — fill_blank', () => {
     const { headers } = await login('h2-no-method');
     const sid = await start(headers);
 
-    const res = await submit(headers, sid, EX_FB_1, 'visiting');
+    const res = await submit(headers, sid, EX_FB_1, 'swimming');
     expect((res.json as any).correct).toBe(false);
   });
 });

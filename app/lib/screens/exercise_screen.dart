@@ -173,6 +173,12 @@ class _ExerciseScreenState extends State<ExerciseScreen> {
                         CountdownBar(key: ValueKey(exercise.exerciseId)),
                         InstructionBand(
                           text: exercise.instruction,
+                          // Wave H3 — question-driven framing for
+                          // short_free_sentence: the instruction IS the
+                          // question, render it as a prominent headline
+                          // instead of a small banded label.
+                          prominent: exercise.type ==
+                              ExerciseType.shortFreeSentence,
                           icon: switch (exercise.type) {
                             ExerciseType.sentenceCorrection =>
                               Icons.edit_outlined,

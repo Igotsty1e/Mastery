@@ -1,11 +1,13 @@
 # Automaticity pivot — roadmap
 
-**Status:** Waves 0 / A / B / C / D / G1–G9 / H1 / H2 shipped. Live
-web build serves first users at `https://mastery-web-igotsty1e.onrender.com`
-with real OpenAI grading (`gpt-4o`), product analytics, a calm
-60-second countdown bar, textbook-format rule cards, and a
-dual-verdict AI judge that grants credit on non-target slips on
-fill_blank items. Wave E (diagnostic redesign), Wave F (hint
+**Status:** Waves 0 / A / B / C / D / G1–G9 / H1 / H2 / H3 (phase 1)
+shipped. Live web build serves first users at
+`https://mastery-web-igotsty1e.onrender.com` with real OpenAI
+grading (`gpt-4o`), product analytics, a calm 60-second countdown
+bar, textbook-format rule cards, a dual-verdict AI judge that grants
+credit on non-target slips on fill_blank items, and a question-driven
+exercise framing on Lesson 1 (TTT — production-first, rule shown
+only after error). Wave E (diagnostic redesign), Wave F (hint
 stripping), and the engine-tuning backlog item are sketched but
 not started.
 
@@ -285,6 +287,79 @@ in the backlog below. Schema:
 implementation: `backend/src/ai/openai.ts` (real prompt) and
 `backend/src/ai/stub.ts` (safe-default returning `target_met=false`).
 Tests: `backend/tests/dual-verdict.test.ts` (6 cases).
+
+---
+
+## Wave H3 — Question-driven exercise framing (phase 1 shipped)
+
+**Why.** The shipped fill_blank instructions read as meta-labels
+(`"Complete the gap with the correct verb form."`) — they tell the
+learner *what task to do*, not *what to communicate*. The user
+proposed shifting to question-driven framing: the instruction IS a
+real question the learner answers freely; the rule is revealed
+only on error (Test-Teach-Test, Penny Ur §3.4 / Thornbury,
+*Uncovering Grammar*). Methodologically valid for B2 (Cambridge
+English Grammar Profile expects extended sentence-level production
+across most target structures); aligns with `LEARNING_ENGINE.md
+§6.1` evidence hierarchy where production = strongest evidence.
+
+**Caveats from the methodologist consultation (2026-05-01):**
+
+1. The question must structurally pull the target form. Self-test:
+   write three plausible answers; if at least two use the form,
+   the question is well-designed. Loose questions (`"What do you
+   do on weekends?"`) admit too many grammatical answers that
+   bypass the target.
+2. Not every form lends itself to question-pull. `Lesson 2` (PP
+   continuous vs simple) and parts of `Lesson 4` (meaning-changing
+   verbs) are recognition-flavoured contrasts where both forms
+   answer most natural questions correctly — those keep
+   `fill_blank` / `multiple_choice`.
+3. Today's dual-verdict judge (Wave H2) only runs on `fill_blank`.
+   Items shifted to `short_free_sentence` are graded by the
+   existing `evaluateFreeSentence` AI path — strict on target-rule,
+   already production. Extending dual-verdict shape to
+   `short_free_sentence` so the prompt explicitly carries
+   `target_form` is parked in the backlog.
+
+**Phase 1 — Lesson 1 (shipped).**
+
+- Converted 4 of 5 `fill_blank` items (`…031–034`) to
+  `short_free_sentence` with question instructions:
+  - `…031`: "What do you really enjoy doing when you travel?"
+  - `…032`: "What kind of decision do you avoid making when you're
+    tired?"
+  - `…033`: "Suggest one thing your team should try tomorrow."
+  - `…034`: "Tell me what you don't mind doing at work, even if
+    it's not your job."
+- Each carries `meaning_frame`, `target_rule`, two
+  `accepted_examples`, and the same skill metadata as the original
+  fill_blank (so the bank index stays consistent).
+- Kept 1 fill_blank (`…037`) for fast recognition.
+- Kept 2 multiple_choice (the diagnostic + a recognition probe).
+- Kept 3 sentence_correction + 2 sentence_rewrite untouched.
+- New post-conversion mix on Lesson 1: 5 short_free_sentence + 3
+  sentence_correction + 2 multiple_choice + 2 sentence_rewrite +
+  1 fill_blank. Audit (`§6.7`) clean.
+
+**UI change:** new `prominent` mode on `InstructionBand`
+(`app/lib/widgets/mastery_widgets.dart`). For
+`short_free_sentence`, the instruction renders as
+`MasteryTextStyles.titleMd` headline (no card chrome, no icon)
+instead of the small banded label. Other types are unchanged.
+
+**Phases 2 & 3 — planned, not shipped.**
+
+- **Phase 2** — same conversion on Lessons 3 + 5 (gerund-only
+  verbs / verbs with both forms — both fit question-pull
+  cleanly).
+- **Phase 3** — partial conversion on Lesson 4 (only the items
+  where question-pull is structurally valid); leave Lesson 2 as
+  fill_blank-dominant because the contrast itself is recognition.
+
+The composition policy (`exercise_structure.md §6.7`) is **not yet
+updated** — the new minimum (`≥4 short_free_sentence per lesson`)
+will land with Phase 2/3 alongside the bulk authoring.
 
 ---
 

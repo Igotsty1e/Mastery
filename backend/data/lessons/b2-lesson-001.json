@@ -47,62 +47,70 @@
   "exercises": [
     {
       "exercise_id": "a1b2c3d4-0001-4000-8000-000000000031",
-      "type": "fill_blank",
+      "type": "short_free_sentence",
       "skill_id": "verb-ing-after-gerund-verbs",
       "primary_target_error": "contrast_error",
-      "evidence_tier": "medium",
-      "instruction": "Complete the gap with the correct verb form.",
-      "prompt": "I really enjoy ___ new restaurants when I travel.",
-      "accepted_answers": [
-        "trying"
+      "evidence_tier": "strongest",
+      "meaning_frame": "Talk about something you actively enjoy when you travel.",
+      "instruction": "What do you really enjoy doing when you travel? Start with \"I enjoy...\".",
+      "target_rule": "After enjoy, the next verb takes -ing, not to + infinitive. Enjoy belongs to the gerund-only group (enjoy, avoid, suggest, mind, keep, finish).",
+      "accepted_examples": [
+        "I enjoy trying new restaurants when I travel.",
+        "I enjoy meeting locals in every new city."
       ],
       "feedback": {
-        "explanation": "After enjoy, we use the -ing form. The correct pattern is 'enjoy + verb-ing', so the sentence needs 'trying'."
+        "explanation": "After enjoy, the verb is always in the -ing form. \"Enjoy to try\" is the most common L1-driven slip — say \"enjoy trying\" instead."
       }
     },
     {
       "exercise_id": "a1b2c3d4-0001-4000-8000-000000000032",
-      "type": "fill_blank",
+      "type": "short_free_sentence",
       "skill_id": "verb-ing-after-gerund-verbs",
       "primary_target_error": "contrast_error",
-      "evidence_tier": "medium",
-      "instruction": "Complete the gap with the correct verb form.",
-      "prompt": "We should avoid ___ important decisions when we're tired.",
-      "accepted_answers": [
-        "making"
+      "evidence_tier": "strongest",
+      "meaning_frame": "Describe a kind of decision you avoid when you are tired.",
+      "instruction": "What kind of decision do you avoid making when you're tired? Start with \"I avoid...\".",
+      "target_rule": "After avoid, the next verb takes -ing, not to + infinitive. Avoid sits in the gerund-only group.",
+      "accepted_examples": [
+        "I avoid making important calls when I'm tired.",
+        "I avoid replying to emails late at night."
       ],
       "feedback": {
-        "explanation": "After avoid, we use the -ing form. The correct pattern is 'avoid + verb-ing', so we say 'avoid making'."
+        "explanation": "After avoid, the verb takes -ing. \"Avoid to make\" is wrong; \"avoid making\" is right."
       }
     },
     {
       "exercise_id": "a1b2c3d4-0001-4000-8000-000000000033",
-      "type": "fill_blank",
+      "type": "short_free_sentence",
       "skill_id": "verb-ing-after-gerund-verbs",
       "primary_target_error": "contrast_error",
-      "evidence_tier": "medium",
-      "instruction": "Complete the gap with the correct verb form.",
-      "prompt": "She suggested ___ the meeting until Friday.",
-      "accepted_answers": [
-        "postponing"
+      "evidence_tier": "strongest",
+      "meaning_frame": "Recommend a concrete action your team should take next.",
+      "instruction": "Suggest one thing your team should try tomorrow. Start with \"I suggest...\".",
+      "target_rule": "When suggest is followed directly by another verb, that verb takes -ing.",
+      "accepted_examples": [
+        "I suggest moving the meeting to the afternoon.",
+        "I suggest closing the office early on Friday."
       ],
       "feedback": {
-        "explanation": "When suggest is followed directly by another verb, we use the -ing form. That is why the sentence needs 'postponing'."
+        "explanation": "When suggest is followed directly by a verb, that verb takes -ing — \"I suggest moving\", not \"I suggest to move\"."
       }
     },
     {
       "exercise_id": "a1b2c3d4-0001-4000-8000-000000000034",
-      "type": "fill_blank",
+      "type": "short_free_sentence",
       "skill_id": "verb-ing-after-gerund-verbs",
       "primary_target_error": "contrast_error",
-      "evidence_tier": "medium",
-      "instruction": "Complete the gap with the correct verb form.",
-      "prompt": "Do you mind ___ the window before we start?",
-      "accepted_answers": [
-        "closing"
+      "evidence_tier": "strongest",
+      "meaning_frame": "Talk about a small favour you accept at work.",
+      "instruction": "Tell me what you don't mind doing at work, even if it's not your job. Start with \"I don't mind...\".",
+      "target_rule": "After mind, the next verb takes -ing, not to + infinitive.",
+      "accepted_examples": [
+        "I don't mind staying late to finish a deadline.",
+        "I don't mind helping new hires in their first week."
       ],
       "feedback": {
-        "explanation": "After mind, we use the -ing form. The correct pattern is 'mind + verb-ing', so the blank is 'closing'."
+        "explanation": "After mind, the verb is always -ing. \"Mind to wait\" is wrong; \"mind waiting\" is right."
       }
     },
     {

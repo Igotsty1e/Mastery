@@ -555,15 +555,37 @@ class ResultPanel extends StatelessWidget {
 class InstructionBand extends StatelessWidget {
   final String text;
   final IconData icon;
+  /// Wave H3 — question-driven framing for `short_free_sentence`.
+  /// In this mode the band drops its card chrome and renders the
+  /// instruction as a prominent headline ("What do you really enjoy
+  /// doing when you travel?") so the exercise header reads like a
+  /// real question, not a meta-label. Methodology: TTT
+  /// (Test-Teach-Test, Penny Ur §3.4 / Thornbury *Uncovering
+  /// Grammar*) — production-first, rule revealed only after error.
+  final bool prominent;
 
   const InstructionBand({
     super.key,
     required this.text,
     this.icon = Icons.task_alt_rounded,
+    this.prominent = false,
   });
 
   @override
   Widget build(BuildContext context) {
+    if (prominent) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        child: Text(
+          text,
+          style: MasteryTextStyles.titleMd.copyWith(
+            color: MasteryColors.textPrimary,
+            height: 1.35,
+            letterSpacing: -0.05,
+          ),
+        ),
+      );
+    }
     final tokens = context.masteryTokens;
     return Container(
       width: double.infinity,

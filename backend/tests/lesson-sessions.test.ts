@@ -10,8 +10,15 @@ import type { AiProvider } from '../src/ai/interface';
 const LESSON_ONE = 'a1b2c3d4-0001-4000-8000-000000000001';
 const LESSON_TWO = 'a1b2c3d4-0002-4000-8000-000000000001';
 
-const EX_FB_1 = 'a1b2c3d4-0001-4000-8000-000000000031'; // fill_blank, expected "trying"
-const EX_FB_2 = 'a1b2c3d4-0001-4000-8000-000000000032'; // fill_blank, expected "making"
+// Wave H3 (2026-05-01): Lesson 1 items …031–034 were converted from
+// fill_blank to short_free_sentence (question-driven framing, see
+// docs/plans/automaticity-pivot.md). EX_FB_1 now points at the
+// surviving Lesson 1 fill_blank (…037, expected "reading") and
+// EX_FB_2 borrows a Lesson 4 single-word fill_blank (…032,
+// expected "locking"). The bank is global across lessons, so the
+// session/attempt assertions still hold.
+const EX_FB_1 = 'a1b2c3d4-0001-4000-8000-000000000037'; // fill_blank, expected "reading"
+const EX_FB_2 = 'a1b2c3d4-0004-4000-8000-000000000032'; // fill_blank, expected "locking"
 const EX_MC_1 = 'a1b2c3d4-0001-4000-8000-000000000035'; // multiple_choice, B-level
 
 const SUBMITTED = '2026-04-26T12:00:00.000Z';
@@ -186,7 +193,7 @@ describe.skip('POST /lessons/:lessonId/sessions/start (Wave 11.4: route removed)
     await submit(headers, sid, {
       exercise_id: EX_FB_1,
       exercise_type: 'fill_blank',
-      user_answer: 'trying',
+      user_answer: 'reading',
     });
     const resumed = await startSession(headers, LESSON_ONE);
     expect((resumed.json as any).reason).toBe('resumed');
@@ -217,7 +224,7 @@ describe.skip('GET /lessons/:lessonId/sessions/current (Wave 11.4: route removed
     await submit(headers, sid, {
       exercise_id: EX_FB_2,
       exercise_type: 'fill_blank',
-      user_answer: 'making',
+      user_answer: 'locking',
     });
     const res = await inject(h.app, {
       method: 'GET',
@@ -239,7 +246,7 @@ describe('POST /lesson-sessions/:sessionId/answers', () => {
     const wrong = await submit(headers, sid, {
       exercise_id: EX_FB_1,
       exercise_type: 'fill_blank',
-      user_answer: 'try',
+      user_answer: 'red',
     });
     expect(wrong.status).toBe(200);
     expect((wrong.json as any).correct).toBe(false);
@@ -247,7 +254,7 @@ describe('POST /lesson-sessions/:sessionId/answers', () => {
     const right = await submit(headers, sid, {
       exercise_id: EX_FB_1,
       exercise_type: 'fill_blank',
-      user_answer: 'trying',
+      user_answer: 'reading',
     });
     expect((right.json as any).correct).toBe(true);
 
@@ -269,7 +276,7 @@ describe('POST /lesson-sessions/:sessionId/answers', () => {
     const res = await submit(b, sid, {
       exercise_id: EX_FB_1,
       exercise_type: 'fill_blank',
-      user_answer: 'trying',
+      user_answer: 'reading',
     });
     expect(res.status).toBe(404);
     expect((res.json as any).error).toBe('session_not_found');
@@ -282,7 +289,7 @@ describe('POST /lesson-sessions/:sessionId/answers', () => {
     const res = await submit(headers, sid, {
       exercise_id: '00000000-0000-4000-8000-000000000099',
       exercise_type: 'fill_blank',
-      user_answer: 'trying',
+      user_answer: 'reading',
     });
     expect(res.status).toBe(404);
     expect((res.json as any).error).toBe('exercise_not_found');
@@ -307,7 +314,7 @@ describe('POST /lesson-sessions/:sessionId/answers', () => {
     await submit(headers, sid, {
       exercise_id: EX_FB_1,
       exercise_type: 'fill_blank',
-      user_answer: 'trying',
+      user_answer: 'reading',
     });
     await inject(h.app, {
       method: 'POST',
@@ -317,7 +324,7 @@ describe('POST /lesson-sessions/:sessionId/answers', () => {
     const res = await submit(headers, sid, {
       exercise_id: EX_FB_2,
       exercise_type: 'fill_blank',
-      user_answer: 'making',
+      user_answer: 'locking',
     });
     expect(res.status).toBe(409);
     expect((res.json as any).error).toBe('session_not_in_progress');
@@ -332,7 +339,7 @@ describe.skip('GET /lesson-sessions/:sessionId/result (Wave 11.4: lesson-bound a
     await submit(headers, sid, {
       exercise_id: EX_FB_1,
       exercise_type: 'fill_blank',
-      user_answer: 'trying',
+      user_answer: 'reading',
     });
     await submit(headers, sid, {
       exercise_id: EX_MC_1,
@@ -362,13 +369,13 @@ describe.skip('GET /lesson-sessions/:sessionId/result (Wave 11.4: lesson-bound a
     await submit(headers, sid, {
       exercise_id: EX_FB_1,
       exercise_type: 'fill_blank',
-      user_answer: 'try',
+      user_answer: 'red',
       submitted_at: '2026-04-26T12:00:00.000Z',
     });
     await submit(headers, sid, {
       exercise_id: EX_FB_1,
       exercise_type: 'fill_blank',
-      user_answer: 'trying',
+      user_answer: 'reading',
       submitted_at: '2026-04-26T12:01:00.000Z',
     });
     const res = await inject(h.app, {
@@ -391,7 +398,7 @@ describe.skip('POST /lesson-sessions/:sessionId/complete (Wave 11.4: lesson_prog
     await submit(headers, sid, {
       exercise_id: EX_FB_1,
       exercise_type: 'fill_blank',
-      user_answer: 'trying',
+      user_answer: 'reading',
     });
     await submit(headers, sid, {
       exercise_id: EX_FB_2,
@@ -442,7 +449,7 @@ describe.skip('POST /lesson-sessions/:sessionId/complete (Wave 11.4: lesson_prog
     await submit(headers, sid, {
       exercise_id: EX_FB_1,
       exercise_type: 'fill_blank',
-      user_answer: 'trying',
+      user_answer: 'reading',
     });
     const first = await inject(h.app, {
       method: 'POST',
@@ -471,7 +478,7 @@ describe.skip('POST /lesson-sessions/:sessionId/complete (Wave 11.4: lesson_prog
     await submit(headers, sidA, {
       exercise_id: EX_FB_1,
       exercise_type: 'fill_blank',
-      user_answer: 'trying',
+      user_answer: 'reading',
     });
     await inject(h.app, {
       method: 'POST',
@@ -485,12 +492,12 @@ describe.skip('POST /lesson-sessions/:sessionId/complete (Wave 11.4: lesson_prog
     await submit(headers, sidB, {
       exercise_id: EX_FB_1,
       exercise_type: 'fill_blank',
-      user_answer: 'trying',
+      user_answer: 'reading',
     });
     await submit(headers, sidB, {
       exercise_id: EX_FB_2,
       exercise_type: 'fill_blank',
-      user_answer: 'making',
+      user_answer: 'locking',
     });
     await inject(h.app, {
       method: 'POST',
@@ -504,7 +511,7 @@ describe.skip('POST /lesson-sessions/:sessionId/complete (Wave 11.4: lesson_prog
     await submit(headers, sidC, {
       exercise_id: EX_FB_1,
       exercise_type: 'fill_blank',
-      user_answer: 'trying',
+      user_answer: 'reading',
     });
     await inject(h.app, {
       method: 'POST',
@@ -542,7 +549,7 @@ describe('non-UUID :sessionId is rejected at the route', () => {
             attempt_id: 'cccccccc-0001-4000-8000-000000000777',
             exercise_id: EX_FB_1,
             exercise_type: 'fill_blank',
-            user_answer: 'trying',
+            user_answer: 'reading',
             submitted_at: SUBMITTED,
           }
         : undefined,
@@ -563,7 +570,7 @@ describe('attempt_id idempotency', () => {
       attempt_id: attemptId,
       exercise_id: EX_FB_1,
       exercise_type: 'fill_blank',
-      user_answer: 'trying',
+      user_answer: 'reading',
     });
     expect(first.status).toBe(200);
     expect((first.json as any).correct).toBe(true);
@@ -598,13 +605,13 @@ describe('attempt_id idempotency', () => {
       attempt_id: 'cccccccc-0001-4000-8000-000000bbb001',
       exercise_id: EX_FB_1,
       exercise_type: 'fill_blank',
-      user_answer: 'try',
+      user_answer: 'red',
     });
     await submit(headers, sid, {
       attempt_id: 'cccccccc-0001-4000-8000-000000bbb002',
       exercise_id: EX_FB_1,
       exercise_type: 'fill_blank',
-      user_answer: 'trying',
+      user_answer: 'reading',
     });
 
     const rows = await h.database.orm
@@ -631,7 +638,7 @@ describe.skip('stale lesson content vs session.contentHash (Wave 11.4: dynamic s
     const res = await submit(headers, sid, {
       exercise_id: EX_FB_1,
       exercise_type: 'fill_blank',
-      user_answer: 'trying',
+      user_answer: 'reading',
     });
     expect(res.status).toBe(409);
     expect((res.json as any).error).toBe('lesson_content_changed');
@@ -644,7 +651,7 @@ describe.skip('stale lesson content vs session.contentHash (Wave 11.4: dynamic s
     await submit(headers, sid, {
       exercise_id: EX_FB_1,
       exercise_type: 'fill_blank',
-      user_answer: 'trying',
+      user_answer: 'reading',
     });
     await inject(h.app, {
       method: 'POST',
@@ -675,7 +682,7 @@ describe('result/dashboard agree on total_exercises', () => {
     await submit(headers, sid, {
       exercise_id: EX_FB_1,
       exercise_type: 'fill_blank',
-      user_answer: 'trying',
+      user_answer: 'reading',
     });
     await inject(h.app, {
       method: 'POST',
@@ -756,7 +763,7 @@ describe.skip('GET /dashboard (Wave 11.4: lesson-bound dashboard view; V1 dynami
     await submit(headers, sid, {
       exercise_id: EX_FB_1,
       exercise_type: 'fill_blank',
-      user_answer: 'trying',
+      user_answer: 'reading',
     });
     await submit(headers, sid, {
       exercise_id: EX_FB_2,
@@ -767,7 +774,7 @@ describe.skip('GET /dashboard (Wave 11.4: lesson-bound dashboard view; V1 dynami
     await submit(headers, sid, {
       exercise_id: EX_FB_1,
       exercise_type: 'fill_blank',
-      user_answer: 'trying',
+      user_answer: 'reading',
     });
     const res = await inject(h.app, {
       method: 'GET',
@@ -786,7 +793,7 @@ describe.skip('GET /dashboard (Wave 11.4: lesson-bound dashboard view; V1 dynami
     await submit(headers, sid, {
       exercise_id: EX_FB_1,
       exercise_type: 'fill_blank',
-      user_answer: 'trying',
+      user_answer: 'reading',
     });
     await inject(h.app, {
       method: 'POST',
@@ -871,7 +878,7 @@ describe('lesson-sessions Wave 7.1.1 Codex regressions', () => {
       await submit(headers, sid, {
         exercise_id: EX_FB_1,
         exercise_type: 'fill_blank',
-        user_answer: 'trying',
+        user_answer: 'reading',
       });
       await inject(h.app, {
         method: 'POST',

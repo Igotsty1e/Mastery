@@ -22,12 +22,19 @@ afterEach(async () => {
   await h.close();
 });
 
-// Known IDs from b2-lesson-001.json — every item is on
-// `verb-ing-after-gerund-verbs` so any two of them satisfy the
-// same-skill precondition for `repeated_error`.
-const EX_FILL_BLANK_1 = 'a1b2c3d4-0001-4000-8000-000000000031';
-const EX_FILL_BLANK_2 = 'a1b2c3d4-0001-4000-8000-000000000032';
-const EX_MC_1 = 'a1b2c3d4-0001-4000-8000-000000000034';
+// Wave H3 (2026-05-01): Lesson 1 …031–034 are now short_free_sentence
+// (question-driven framing — see docs/plans/automaticity-pivot.md).
+// All fixtures are still on `verb-ing-after-gerund-verbs` so the
+// same-skill precondition for `repeated_error` holds. Mix is now
+// fill_blank (the lone surviving …037) + multiple_choice
+// (recognition probe …036) instead of two fill_blanks.
+const EX_FILL_BLANK_1 = 'a1b2c3d4-0001-4000-8000-000000000037';
+const EX_MC_SAME_SKILL = 'a1b2c3d4-0001-4000-8000-000000000036';
+// (Legacy alias kept so the diff is small; semantically the second
+// item is a multiple_choice, not a fill_blank — see exercise_type
+// passed to `submit` below.)
+const EX_FILL_BLANK_2 = EX_MC_SAME_SKILL;
+const EX_MC_1 = 'a1b2c3d4-0001-4000-8000-000000000035';
 
 async function login(subject: string) {
   const res = await inject(h.app, {
@@ -99,8 +106,8 @@ describe('Wave 14.3 phase 3 — friction detection', () => {
 
     const r2 = await submit(auth, start.session_id, {
       exercise_id: EX_FILL_BLANK_2,
-      exercise_type: 'fill_blank',
-      user_answer: 'still-not-right',
+      exercise_type: 'multiple_choice',
+      user_answer: 'wrong-option-id',
     });
     expect(r2.status).toBe(200);
     expect((r2.json as { friction_event: string | null }).friction_event).toBe(
@@ -112,24 +119,20 @@ describe('Wave 14.3 phase 3 — friction detection', () => {
     const auth = await login('friction-prior-ok');
     const start = await startSession(auth);
 
-    // Multiple-choice with a non-existent option_id is wrong (not the
-    // shape we want for this case) — we want a correct prior. The MC
-    // first option in lesson 001 ex 34 is the correct one ('a' or so).
-    // Either way, do not engage that complexity — submit a correct
-    // fill_blank by reading the lesson and using its accepted answer.
-    // Lesson 001 ex 31: prompt has '___' and 'trying' is the canonical.
+    // EX_FILL_BLANK_1 (lesson 1, …037) expects "reading". Use the
+    // canonical answer for the prior-correct branch.
     const r1 = await submit(auth, start.session_id, {
       exercise_id: EX_FILL_BLANK_1,
       exercise_type: 'fill_blank',
-      user_answer: 'trying',
+      user_answer: 'reading',
     });
     expect(r1.status).toBe(200);
     expect((r1.json as { correct: boolean }).correct).toBe(true);
 
     const r2 = await submit(auth, start.session_id, {
       exercise_id: EX_FILL_BLANK_2,
-      exercise_type: 'fill_blank',
-      user_answer: 'wrong-answer',
+      exercise_type: 'multiple_choice',
+      user_answer: 'wrong-option-id',
     });
     expect(r2.status).toBe(200);
     expect((r2.json as { correct: boolean }).correct).toBe(false);
