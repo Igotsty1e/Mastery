@@ -271,6 +271,37 @@ export function pickNext(ctx: DecisionContext): DecisionResult {
     }
   }
 
+  // Wave G1 hot-fix — last-resort fallback. Observed in prod 2026-05-01:
+  // when the §9.1 dropout filter eliminates every touched skill AND the
+  // MAX_SKILLS_PER_SESSION cap blocks every untouched one, both the
+  // primary pass and the cap-relaxed pass starve. The session ends
+  // abruptly at item 6 (3 mistakes on skill A + 3 on skill B = both
+  // dropouts, 0 fresh candidates).
+  //
+  // Pedagogy is unhappy either way: re-showing a 3-mistake skill
+  // re-pokes the §9.1 intent, but ending the session 4 items short
+  // breaks the learner's contract with the 1/10 progress counter and
+  // skips the post-lesson debrief. The lesser evil is to keep the
+  // session alive — re-show an item from a dropout skill if there is
+  // truly nothing else. The Decision Log emits a distinct reason so
+  // we can spot how often the engine resorts to this in the wild.
+  if (bestEntry === null) {
+    let lastResortBest: BankEntry | null = null;
+    let lastResortScore = -Infinity;
+    for (const entry of flat) {
+      if (shownSet.has(entry.exercise.exercise_id)) continue;
+      // NB: dropout AND cap filters BOTH intentionally omitted here.
+      const score = positionJitter(entry.positionInSource);
+      if (score > lastResortScore) {
+        lastResortScore = score;
+        lastResortBest = entry;
+      }
+    }
+    if (lastResortBest !== null) {
+      return { next: lastResortBest, reason: 'last_resort_fallback' };
+    }
+  }
+
   return {
     next: bestEntry,
     reason: bestEntry ? bestReason : 'no_candidates',

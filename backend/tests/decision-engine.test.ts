@@ -189,6 +189,36 @@ describe('Wave 11 — Decision Engine pickNext', () => {
     expect(result.next?.exercise.skill_id).not.toBe(touchedSkill);
   });
 
+  // Wave G1 — last-resort fallback. Triggers when every skill in the
+  // bank is in §9.1 dropout (≥3 mistakes), so both the primary pass
+  // and the cap-relaxed pass starve. Pedagogically suboptimal — we
+  // re-show a 3-mistake skill — but keeping the session alive so it
+  // reaches the post-lesson summary is the lesser evil. The
+  // alternative (returning null) drops the learner on the summary
+  // mid-session with no warning.
+  it('last-resort fallback re-shows a dropout skill rather than ending early', () => {
+    const allSkills = listSkills();
+    if (allSkills.length === 0) return;
+    // Mark every skill in the bank as dropped out so cap-relaxed has
+    // no clean candidate left.
+    const allDropouts: Record<string, number> = {};
+    for (const s of allSkills) allDropouts[s] = 3;
+
+    const result = pickNext(
+      ctx({
+        shownExerciseIds: [],
+        mistakesBySkill: allDropouts,
+        masteryStatusBySkill: {},
+      })
+    );
+
+    // PRIMARY: every skill in dropoutSkills → empty.
+    // CAP-RELAXED: dropoutSkills filter still applies → empty.
+    // LAST-RESORT: drops both filters → finds an item.
+    expect(result.next).not.toBeNull();
+    expect(result.reason).toBe('last_resort_fallback');
+  });
+
   it('cap-relaxed fallback respects session-complete short-circuit', () => {
     // Even with the fallback, a session that has reached SESSION_LENGTH
     // must terminate cleanly.
