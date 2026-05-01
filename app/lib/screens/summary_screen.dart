@@ -150,42 +150,42 @@ class _SummaryScreenState extends State<SummaryScreen> {
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.fromLTRB(
-                    MasterySpacing.lg, 24, MasterySpacing.lg, MasterySpacing.lg),
+                    MasterySpacing.lg, 14, MasterySpacing.lg, MasterySpacing.md),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Center(
                       child: Text(
                         'Session done',
-                        style: MasteryTextStyles.headlineMd.copyWith(
+                        style: MasteryTextStyles.titleLg.copyWith(
                           color: MasteryColors.textPrimary,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 12),
                     _ScoreHero(
                       correct: displayCorrect,
                       total: displayTotal,
                       scoreColor: scoreColor,
                     ),
                     if (debrief != null) ...[
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 12),
                       _DebriefCard(debrief: debrief),
                     ] else if (conclusion != null && conclusion.isNotEmpty) ...[
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 12),
                       MasterySoftCard(
-                        padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+                        padding: const EdgeInsets.fromLTRB(18, 14, 18, 16),
                         child: Text(
                           conclusion,
-                          style: MasteryTextStyles.bodyMd.copyWith(
-                            height: 1.6,
+                          style: MasteryTextStyles.bodySm.copyWith(
+                            height: 1.55,
                             color: MasteryColors.textPrimary,
                           ),
                         ),
                       ),
                     ],
                     if (_skillRecords.isNotEmpty) ...[
-                      const SizedBox(height: 18),
+                      const SizedBox(height: 12),
                       _CompactSkillPanel(records: _skillRecords),
                     ],
                   ],
@@ -248,35 +248,40 @@ class _ScoreHero extends StatelessWidget {
     final tokens = context.masteryTokens;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
       decoration: BoxDecoration(
         gradient: RadialGradient(
           center: const Alignment(0, -1.0),
           radius: 0.9,
           colors: [
-            tokens.accentGoldSoft.withAlpha(115),
+            tokens.accentGoldSoft.withAlpha(110),
             MasteryColors.bgRaised,
           ],
-          stops: const [0.0, 0.55],
+          stops: const [0.0, 0.6],
         ),
         border: Border.all(color: tokens.borderSoft),
-        borderRadius: BorderRadius.circular(MasteryRadii.xl),
+        borderRadius: BorderRadius.circular(MasteryRadii.lg),
         boxShadow: tokens.shadowCard,
       ),
-      child: Column(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          _GoldHairline(color: tokens.accentGold),
-          const SizedBox(height: 18),
+          // Wave G2.1 — compact horizontal layout. The previous
+          // hero stacked huge (88px) digits + hairlines + label
+          // vertically, eating ~280px of viewport. The score is
+          // the smallest piece of information on the screen, so
+          // it should not be the loudest. Now: number on the
+          // left, label on the right, ~80px tall.
           Text.rich(
-            textAlign: TextAlign.center,
+            textAlign: TextAlign.left,
             TextSpan(
               style: TextStyle(
                 fontFamily: 'Fraunces',
-                fontSize: 88,
+                fontSize: 48,
                 height: 1.0,
                 fontWeight: FontWeight.w600,
                 color: scoreColor,
-                letterSpacing: -3.5,
+                letterSpacing: -2.0,
                 fontVariations: const [
                   FontVariation('opsz', 144),
                   FontVariation('wght', 600),
@@ -287,10 +292,10 @@ class _ScoreHero extends StatelessWidget {
                 TextSpan(
                   text: ' / ',
                   style: TextStyle(
-                    fontSize: 44,
+                    fontSize: 28,
                     color: tokens.textTertiary,
                     fontWeight: FontWeight.w500,
-                    letterSpacing: -1.5,
+                    letterSpacing: -1.0,
                     fontVariations: const [
                       FontVariation('opsz', 144),
                       FontVariation('wght', 500),
@@ -301,35 +306,27 @@ class _ScoreHero extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 10),
-          Text(
-            'CORRECT',
-            style: MasteryTextStyles.mono(
-              size: 13,
-              lineHeight: 16,
-              weight: FontWeight.w400,
-              color: tokens.textTertiary,
-              letterSpacing: 2.4,
+          const SizedBox(width: 16),
+          Container(
+            width: 1,
+            height: 32,
+            color: tokens.accentGold.withAlpha(160),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              'CORRECT',
+              style: MasteryTextStyles.mono(
+                size: 12,
+                lineHeight: 16,
+                weight: FontWeight.w500,
+                color: MasteryColors.textSecondary,
+                letterSpacing: 2.0,
+              ),
             ),
           ),
-          const SizedBox(height: 18),
-          _GoldHairline(color: tokens.accentGold),
         ],
       ),
-    );
-  }
-}
-
-class _GoldHairline extends StatelessWidget {
-  final Color color;
-  const _GoldHairline({required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 36,
-      height: 1,
-      color: color.withAlpha(180),
     );
   }
 }
@@ -351,7 +348,7 @@ class _DebriefCard extends StatelessWidget {
     };
 
     return MasteryCard(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+      padding: const EdgeInsets.fromLTRB(18, 14, 18, 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -359,22 +356,22 @@ class _DebriefCard extends StatelessWidget {
             label: 'Coach\u2019s note',
             variant: eyebrowVariant,
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 8),
           if (debrief.headline.isNotEmpty)
             Text(
               debrief.headline,
-              style: MasteryTextStyles.titleMd.copyWith(
+              style: MasteryTextStyles.titleSm.copyWith(
                 color: MasteryColors.textPrimary,
                 height: 1.3,
               ),
             ),
           if (debrief.body.isNotEmpty) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: 6),
             Text(
               debrief.body,
-              style: MasteryTextStyles.bodyMd.copyWith(
+              style: MasteryTextStyles.bodySm.copyWith(
                 color: MasteryColors.textPrimary,
-                height: 1.6,
+                height: 1.55,
               ),
             ),
           ],
