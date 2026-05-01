@@ -27,6 +27,10 @@ dependencies:
   # at 9.2.x because 10.x bumps minimum Dart SDK above what Render's
   # Flutter 3.22.2 image ships.
   flutter_secure_storage: ^9.2.2
+  # Wave G5 — feedback button on the summary screen opens a mailto:
+  # link via `launchUrl(...)`. Pinned at 6.2.x for Dart 3.4 compat
+  # under Render's Flutter 3.22.2 image.
+  url_launcher: ^6.2.6
 
 dev_dependencies:
   flutter_test:

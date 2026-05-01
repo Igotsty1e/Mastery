@@ -13,6 +13,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../api/api_client.dart';
 import '../auth/auth_client.dart';
@@ -132,12 +133,26 @@ class _HomeScreenState extends State<HomeScreen> {
     final tokens = await _authClient!.hydrateFromStorage();
     if (!mounted) return;
     if (tokens == null) {
-      setState(() {
-        _showSignIn = true;
-        _showOnboarding = !seen;
-        _resolving = false;
-      });
-      return;
+      // Wave G5 — silent stub-login for first-time visitors. The
+      // public web build does not surface a sign-in screen any
+      // more; we mint a stable per-device subject the first time
+      // we see a fresh browser, re-use it on every later visit,
+      // and proceed straight to onboarding / dashboard. Only
+      // hard failures (no network) fall back to the explicit
+      // SignInScreen as a safety net.
+      try {
+        final subject = await _stableStubSubject();
+        await _authClient!.signInWithAppleStub(subject: subject);
+        if (!mounted) return;
+      } catch (_) {
+        if (!mounted) return;
+        setState(() {
+          _showSignIn = true;
+          _showOnboarding = !seen;
+          _resolving = false;
+        });
+        return;
+      }
     }
     // Returning user with a live refresh token — point the engine
     // facades and the ApiClient at the remote backend before the
@@ -154,6 +169,22 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!showDiagnostic && seen) {
       await _loadDashboard();
     }
+  }
+
+  /// Wave G5 — same stable per-install subject as `SignInScreen`
+  /// uses on its (now rarely-shown) Skip path. Living here so the
+  /// silent auto-skip in `_resolveInitialView` does not import
+  /// `SignInScreen` to fish out a private helper.
+  static const _stubSubjectKey = 'mastery_stub_subject_v1';
+
+  Future<String> _stableStubSubject() async {
+    final prefs = await SharedPreferences.getInstance();
+    final existing = prefs.getString(_stubSubjectKey);
+    if (existing != null && existing.isNotEmpty) return existing;
+    final now = DateTime.now().microsecondsSinceEpoch.toRadixString(36);
+    final fresh = 'stub-$now';
+    await prefs.setString(_stubSubjectKey, fresh);
+    return fresh;
   }
 
   /// Wave 12.3 — diagnostic gate detection. Surface the probe when:

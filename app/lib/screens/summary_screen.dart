@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../analytics/analytics.dart';
 import '../api/api_client.dart';
@@ -133,6 +134,32 @@ class _SummaryScreenState extends State<SummaryScreen> {
     );
   }
 
+  /// Wave G5 — quiet feedback button. Opens the user's mail client
+  /// with a pre-filled subject and a body stub that includes the
+  /// session score so the recipient can correlate the note with what
+  /// the learner just experienced. Best-effort: a browser without a
+  /// configured handler simply does nothing — we don't surface a
+  /// "your mailto: failed" warning, the learner can copy the email
+  /// from the screen if they care.
+  Future<void> _onSendFeedbackTap() async {
+    Analytics.trackButton('send_feedback', screen: 'summary');
+    final correct = widget.summary?.correctCount ?? widget.correctCount;
+    final total = widget.summary?.totalExercises ?? widget.totalCount;
+    final body = Uri.encodeComponent(
+      'Hi! I just finished a Mastery session ($correct/$total).\n\n'
+      'What worked / didn\u2019t:\n',
+    );
+    final subject = Uri.encodeComponent('Mastery feedback');
+    final uri = Uri.parse(
+      'mailto:igotstyle227@gmail.com?subject=$subject&body=$body',
+    );
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      // Quiet failure — see method docstring.
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final tokens = context.masteryTokens;
@@ -224,6 +251,20 @@ class _SummaryScreenState extends State<SummaryScreen> {
                     child: Text(
                       'Back to home',
                       style: MasteryTextStyles.labelMd.copyWith(
+                        color: MasteryColors.textTertiary,
+                        letterSpacing: 0.4,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: _onSendFeedbackTap,
+                    style: TextButton.styleFrom(
+                      foregroundColor: MasteryColors.textTertiary,
+                      minimumSize: const Size.fromHeight(36),
+                    ),
+                    child: Text(
+                      'Send feedback',
+                      style: MasteryTextStyles.labelSm.copyWith(
                         color: MasteryColors.textTertiary,
                         letterSpacing: 0.4,
                       ),
