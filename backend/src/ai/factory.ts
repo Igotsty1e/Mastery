@@ -19,7 +19,15 @@ export function createAiProviderFromEnv(): AiProvider {
     return new StubAiProvider();
   }
 
-  const model = env('OPENAI_MODEL') ?? 'gpt-4o-mini';
+  // Default bumped 2026-05-01: gpt-4o-mini was too lenient for the
+  // short_free_sentence evaluator — prod probes saw it accept
+  // gibberish, off-trigger answers, and ungrammatical strings as
+  // correct=true even after a step-by-step "default to false"
+  // prompt rewrite (see commit adb4dcf). gpt-4o follows the
+  // multi-step instructions and rejects the same probes. Operators
+  // can still override via OPENAI_MODEL env var (e.g. for
+  // gpt-4.1-mini, o3-mini, or a cheaper-but-strict alternative).
+  const model = env('OPENAI_MODEL') ?? 'gpt-4o';
   const baseUrl = env('OPENAI_BASE_URL') ?? undefined;
   return new OpenAiProvider({ apiKey, model, baseUrl });
 }
