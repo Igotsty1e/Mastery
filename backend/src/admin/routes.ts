@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { requireAdmin } from './auth';
 import { cohortRetention } from './retention';
 import type { AppDatabase } from '../db/client';
+import type { AiProvider } from '../ai/interface';
 
 /// Wave 14.1 — admin surface for the founder. Currently exposes one
 /// resource: the D1/D7 cohort retention table backed by
@@ -19,7 +20,7 @@ import type { AppDatabase } from '../db/client';
 /// production host and read the table from a phone without juggling
 /// jq.
 
-export function makeAdminRouter(db: AppDatabase): Router {
+export function makeAdminRouter(db: AppDatabase, ai?: AiProvider): Router {
   const router = Router();
   const gate = requireAdmin(db);
 
@@ -41,6 +42,66 @@ export function makeAdminRouter(db: AppDatabase): Router {
       res.send(renderRetentionPage(rows, window));
     } catch (err) {
       next(err);
+    }
+  });
+
+  /// Wave G6 — diagnostic echo for the short_free_sentence
+  /// evaluator. Calls the same OpenAI /responses endpoint the
+  /// production grader uses and returns the raw decoded response
+  /// (model id, top-level keys, extracted text, refusal, parsed
+  /// JSON) directly in the HTTP body. Lets the operator see what
+  /// the model is actually returning when Render's log surface
+  /// silently swallows the in-process debug writes.
+  ///
+  /// Auth: a simple shared-secret query/header instead of the
+  /// admin gate, so the operator does not have to wire
+  /// `ADMIN_USER_IDS` just to debug. Set `DEBUG_PROBE_TOKEN` to a
+  /// long random string in Render env, then curl with `?token=...`
+  /// or `Authorization: Bearer <token>`. Without the env var the
+  /// route returns 404 (looks like it doesn't exist) so this
+  /// can't accidentally be left open in prod.
+  router.post('/debug/ai-probe', async (req, res) => {
+    const expected = (process.env.DEBUG_PROBE_TOKEN ?? '').trim();
+    if (!expected) return res.status(404).json({ error: 'not_found' });
+    const provided =
+      (typeof req.query.token === 'string' ? req.query.token : '') ||
+      (req.header('authorization') ?? '').replace(/^Bearer\s+/i, '').trim();
+    if (provided !== expected) {
+      return res.status(403).json({ error: 'forbidden' });
+    }
+    try {
+      if (!ai || typeof ai.evaluateFreeSentenceRaw !== 'function') {
+        return res.status(503).json({
+          error: 'ai_raw_probe_unavailable',
+          detail: 'No AI provider with raw probe wired up. Set AI_PROVIDER=openai + OPENAI_API_KEY.',
+        });
+      }
+      const body = req.body ?? {};
+      const userAnswer = typeof body.user_answer === 'string'
+        ? body.user_answer
+        : 'I enjoy reading novels in the evening';
+      const targetRule = typeof body.target_rule === 'string'
+        ? body.target_rule
+        : 'After enjoy, the next verb takes -ing, not to + infinitive.';
+      const instruction = typeof body.instruction === 'string'
+        ? body.instruction
+        : 'Write a sentence using "enjoy" + the -ing form.';
+      const acceptedExamples = Array.isArray(body.accepted_examples)
+        ? (body.accepted_examples as unknown[]).filter((s): s is string => typeof s === 'string')
+        : ['I enjoy reading novels on Sunday mornings.'];
+      const probe = await ai.evaluateFreeSentenceRaw({
+        userAnswer,
+        targetRule,
+        instruction,
+        acceptedExamples,
+      });
+      res.json(probe);
+    } catch (err) {
+      // Surface the error message to the operator instead of
+      // hiding it behind 500 — the whole point of this route is
+      // to see what's wrong.
+      const message = err instanceof Error ? err.message : String(err);
+      res.status(502).json({ error: 'ai_probe_failed', detail: message });
     }
   });
 

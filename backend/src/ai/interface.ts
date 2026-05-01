@@ -56,6 +56,14 @@ export interface DebriefAiResult {
   next_step: string | null;
 }
 
+export interface AiFreeSentenceRawProbe {
+  model: string;
+  response_keys: string[];
+  extracted_text: string;
+  refusal: string | null;
+  parsed: unknown;
+}
+
 export interface AiProvider {
   evaluateSentenceCorrection(args: AiEvaluationArgs): Promise<AiEvaluationResult>;
   /// Wave 14.4 — V1.5 `short_free_sentence` evaluator. Optional during
@@ -64,6 +72,10 @@ export interface AiProvider {
   /// items to a deterministic-fail when the method is missing so the
   /// runtime stays sane on a stub provider.
   evaluateFreeSentence?(args: AiFreeSentenceArgs): Promise<AiEvaluationResult>;
+  /// Wave G6 — diagnostic-only echo path. Returns the raw OpenAI
+  /// response shape so the operator can debug from outside Render's
+  /// log capture. Stub providers omit it.
+  evaluateFreeSentenceRaw?(args: AiFreeSentenceArgs): Promise<AiFreeSentenceRawProbe>;
   // Optional: providers may omit this in test scaffolding where only the
   // /answers route is exercised. The result route guards on its absence and
   // falls back to deterministic copy.
