@@ -148,6 +148,30 @@ export type Exercise =
   | ShortFreeSentenceExercise
   | ListeningDiscriminationExercise;
 
+export interface RuleCardExample {
+  text: string;
+  highlight?: string;
+}
+
+export interface RuleCardPatternList {
+  label: string;
+  items: string[];
+}
+
+export interface RuleCardWatchOut {
+  text: string;
+  example?: string;
+  highlight?: string;
+}
+
+export interface RuleCard {
+  title: string;
+  rule: string;
+  examples: RuleCardExample[];
+  pattern_lists: RuleCardPatternList[];
+  watch_outs: RuleCardWatchOut[];
+}
+
 export interface Lesson {
   lesson_id: string;
   title: string;
@@ -155,6 +179,7 @@ export interface Lesson {
   level: string;
   intro_rule: string;
   intro_examples: string[];
+  rule_card?: RuleCard;
   exercises: Exercise[];
 }
 

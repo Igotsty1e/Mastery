@@ -1,3 +1,5 @@
+import 'rule_card.dart';
+
 class EvaluateRequest {
   /// Wave 8 (legacy drop): the session id is now part of the URL
   /// (`POST /lesson-sessions/:sessionId/answers`), not the body. Kept on
@@ -114,14 +116,18 @@ class EvaluateResponse {
 
 /// Wave 12.6 — `intro_rule` + `intro_examples` snapshot served on the
 /// `/answers` response. Drives the `See full rule` bottom sheet on
-/// the result panel.
+/// the result panel. Wave H1 added the optional textbook-format
+/// `ruleCard`; consumers prefer it when present and fall back to
+/// the flat-string fields otherwise.
 class SkillRuleSnapshot {
   final String introRule;
   final List<String> introExamples;
+  final RuleCardData? ruleCard;
 
   const SkillRuleSnapshot({
     required this.introRule,
     required this.introExamples,
+    this.ruleCard,
   });
 
   factory SkillRuleSnapshot.fromJson(Map<String, dynamic> j) =>
@@ -131,6 +137,9 @@ class SkillRuleSnapshot {
                 ?.map((e) => e.toString())
                 .toList() ??
             const <String>[],
+        ruleCard: RuleCardData.maybeFromJson(
+          j['rule_card'] as Map<String, dynamic>?,
+        ),
       );
 }
 

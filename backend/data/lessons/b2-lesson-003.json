@@ -9,6 +9,40 @@
     "She hopes **to finish** the report before the weekend.",
     "He refused **to answer** any questions about his previous job."
   ],
+  "rule_card": {
+    "title": "verb + to + infinitive",
+    "rule": "After certain verbs we use the to + infinitive of the next verb, not the -ing form.",
+    "examples": [
+      {"text": "After two long meetings, we decided to postpone the launch.", "highlight": "to postpone"},
+      {"text": "She hopes to finish the report before the weekend.", "highlight": "to finish"},
+      {"text": "He refused to answer any questions about his previous job.", "highlight": "to answer"}
+    ],
+    "pattern_lists": [
+      {
+        "label": "Verbs followed by to + infinitive",
+        "items": [
+          "agree", "appear", "arrange", "ask", "choose", "decide", "deserve", "expect", "fail", "happen", "hesitate", "hope", "intend", "learn", "manage", "offer", "plan", "prepare", "pretend", "promise", "refuse", "seem", "tend", "threaten", "want", "wish"
+        ]
+      }
+    ],
+    "watch_outs": [
+      {
+        "text": "Some verbs need an object before to + infinitive (advise, allow, ask, encourage, expect, invite, order, persuade, remind, teach, tell, warn).",
+        "example": "She told me to wait outside.",
+        "highlight": "me to wait"
+      },
+      {
+        "text": "After want / would like we never use a that-clause; we use object + to + infinitive.",
+        "example": "I want you to call me back, not I want that you call me back.",
+        "highlight": "you to call"
+      },
+      {
+        "text": "Modal-like verbs (can, must, will, should) take a bare infinitive — no to.",
+        "example": "I must leave now, not I must to leave.",
+        "highlight": "must leave"
+      }
+    ]
+  },
   "exercises": [
     {
       "exercise_id": "a1b2c3d4-0003-4000-8000-000000000031",

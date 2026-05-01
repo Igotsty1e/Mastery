@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { getAllSkills } from '../data/skills';
 import { getEntriesForSkill } from '../data/exerciseBank';
 import { getLessonById } from '../data/lessons';
+import type { RuleCard } from '../data/lessons';
 
 // Wave 12.7 — public read-only `/skills` route. Source of truth for
 // the client's display names + the dashboard Rules library card. The
@@ -28,6 +29,7 @@ interface SkillDto {
   cefr_level: string;
   intro_rule: string | null;
   intro_examples: string[];
+  rule_card: RuleCard | null;
 }
 
 function buildSkillDto(skillId: string): SkillDto | null {
@@ -40,6 +42,7 @@ function buildSkillDto(skillId: string): SkillDto | null {
   // expansion adds skills before the bank reindexes.
   let intro_rule: string | null = null;
   let intro_examples: string[] = [];
+  let rule_card: RuleCard | null = null;
   const sourceLessonId = skill.lesson_refs[0] ?? null;
   let sourceLesson = sourceLessonId ? getLessonById(sourceLessonId) : undefined;
   if (!sourceLesson) {
@@ -49,6 +52,7 @@ function buildSkillDto(skillId: string): SkillDto | null {
   if (sourceLesson) {
     intro_rule = sourceLesson.intro_rule;
     intro_examples = [...sourceLesson.intro_examples];
+    rule_card = sourceLesson.rule_card ?? null;
   }
 
   return {
@@ -58,6 +62,7 @@ function buildSkillDto(skillId: string): SkillDto | null {
     cefr_level: skill.cefr_level,
     intro_rule,
     intro_examples,
+    rule_card,
   };
 }
 

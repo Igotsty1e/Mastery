@@ -49,6 +49,7 @@ export function makeLessonsRouter(_ai: AiProvider): Router {
       level: lesson.level,
       intro_rule: lesson.intro_rule,
       intro_examples: lesson.intro_examples,
+      rule_card: lesson.rule_card ?? null,
       exercises: lesson.exercises.map(projectExerciseForClient),
     });
   });

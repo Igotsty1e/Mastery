@@ -9,6 +9,56 @@
     "I clearly remember **locking** the door this morning.",
     "On the way home, we stopped **to have** a coffee at a small café."
   ],
+  "rule_card": {
+    "title": "verb + -ing OR verb + to (meaning changes)",
+    "rule": "A small group of verbs can take either form — but the meaning is different. The to-form usually points forward (a new action, duty, or purpose); the -ing form usually points back (a memory, an ongoing activity, a method tried).",
+    "examples": [
+      {"text": "Please remember to lock the door before you leave tonight.", "highlight": "to lock"},
+      {"text": "I clearly remember locking the door this morning.", "highlight": "locking"},
+      {"text": "On the way home, we stopped to have a coffee at a small café.", "highlight": "to have"}
+    ],
+    "pattern_lists": [
+      {
+        "label": "remember / forget — duty vs memory",
+        "items": [
+          "remember to + inf = don't forget this future duty",
+          "remember + -ing = recall a past event",
+          "forget to + inf = fail to do a duty",
+          "forget + -ing = lose memory of doing"
+        ]
+      },
+      {
+        "label": "stop / try / regret / go on",
+        "items": [
+          "stop to + inf = pause in order to do something else",
+          "stop + -ing = cease the ongoing activity",
+          "try to + inf = make an effort",
+          "try + -ing = experiment with a method",
+          "regret to + inf = announce bad news (formal)",
+          "regret + -ing = feel sorry about a past act",
+          "go on to + inf = move to a new stage",
+          "go on + -ing = continue the same activity"
+        ]
+      }
+    ],
+    "watch_outs": [
+      {
+        "text": "Decide the form by meaning, not by the verb in isolation. Read the time and intention in the sentence.",
+        "example": "I stopped smoking last year. — I stopped to read the sign.",
+        "highlight": "stopped smoking"
+      },
+      {
+        "text": "regret + to + inf is mostly fixed to formal announcements (regret to inform / say / tell). For everyday regret about a past action, use -ing.",
+        "example": "We regret to inform you that the flight is cancelled.",
+        "highlight": "to inform"
+      },
+      {
+        "text": "After need, the -ing form often has a passive meaning (something needs to be done).",
+        "example": "These shoes need cleaning.",
+        "highlight": "need cleaning"
+      }
+    ]
+  },
   "exercises": [
     {
       "exercise_id": "a1b2c3d4-0004-4000-8000-000000000031",

@@ -21,6 +21,8 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 
+import '../models/rule_card.dart';
+
 class SkillCatalogEntry {
   final String skillId;
   final String title;
@@ -28,6 +30,11 @@ class SkillCatalogEntry {
   final String cefrLevel;
   final String? introRule;
   final List<String> introExamples;
+  /// Wave H1 — textbook-format rule card from the source lesson.
+  /// When present, the dashboard `_RuleSheetBody` and any future
+  /// per-skill rule surface render this in place of the flat
+  /// `introRule` string.
+  final RuleCardData? ruleCard;
 
   const SkillCatalogEntry({
     required this.skillId,
@@ -36,6 +43,7 @@ class SkillCatalogEntry {
     required this.cefrLevel,
     required this.introRule,
     required this.introExamples,
+    this.ruleCard,
   });
 
   factory SkillCatalogEntry.fromJson(Map<String, dynamic> j) =>
@@ -49,6 +57,9 @@ class SkillCatalogEntry {
                 ?.map((e) => e.toString())
                 .toList() ??
             const <String>[],
+        ruleCard: RuleCardData.maybeFromJson(
+          j['rule_card'] as Map<String, dynamic>?,
+        ),
       );
 }
 

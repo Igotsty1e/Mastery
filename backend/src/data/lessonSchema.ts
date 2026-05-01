@@ -246,6 +246,34 @@ export const ExerciseSchema = ExerciseBaseSchema.superRefine((value, ctx) => {
   }
 });
 
+// Wave H1 — textbook-format rule card. Additive to `intro_rule` /
+// `intro_examples`; the client prefers `rule_card` when present and
+// falls back to the legacy flat-string parser otherwise. See
+// `docs/content-contract.md §1.2`.
+export const RuleCardExampleSchema = z.object({
+  text: z.string().min(1),
+  highlight: z.string().min(1).optional(),
+});
+
+export const RuleCardPatternListSchema = z.object({
+  label: z.string().min(1),
+  items: z.array(z.string().min(1)).min(1),
+});
+
+export const RuleCardWatchOutSchema = z.object({
+  text: z.string().min(1),
+  example: z.string().min(1).optional(),
+  highlight: z.string().min(1).optional(),
+});
+
+export const RuleCardSchema = z.object({
+  title: z.string().min(1),
+  rule: z.string().min(1),
+  examples: z.array(RuleCardExampleSchema).default([]),
+  pattern_lists: z.array(RuleCardPatternListSchema).default([]),
+  watch_outs: z.array(RuleCardWatchOutSchema).default([]),
+});
+
 export const LessonSchema = z
   .object({
     lesson_id: z.string().uuid(),
@@ -254,6 +282,7 @@ export const LessonSchema = z
     level: LevelSchema,
     intro_rule: z.string(),
     intro_examples: z.array(z.string()),
+    rule_card: RuleCardSchema.optional(),
     exercises: z.array(ExerciseSchema).min(1),
   })
   .superRefine((value, ctx) => {

@@ -9,6 +9,40 @@
     "She suggested taking a taxi because it was late.",
     "Do you mind waiting a few minutes?"
   ],
+  "rule_card": {
+    "title": "verb + -ing form",
+    "rule": "After certain verbs we use the -ing form of the next verb, not the to + infinitive.",
+    "examples": [
+      {"text": "I enjoy working with international clients.", "highlight": "working"},
+      {"text": "She suggested taking a taxi because it was late.", "highlight": "taking"},
+      {"text": "Do you mind waiting a few minutes?", "highlight": "waiting"}
+    ],
+    "pattern_lists": [
+      {
+        "label": "Verbs followed by -ing",
+        "items": [
+          "admit", "appreciate", "avoid", "can't help", "can't stand", "consider", "delay", "deny", "dislike", "enjoy", "fancy", "feel like", "finish", "give up", "imagine", "involve", "keep (on)", "mention", "mind", "miss", "postpone", "practise", "put off", "recommend", "risk", "suggest"
+        ]
+      }
+    ],
+    "watch_outs": [
+      {
+        "text": "Some of these verbs can also be followed by an object before the -ing form.",
+        "example": "I can't stand people cheating in exams.",
+        "highlight": "people cheating"
+      },
+      {
+        "text": "After a preposition we almost always use the -ing form.",
+        "example": "I'm interested in hearing more about that course.",
+        "highlight": "in hearing"
+      },
+      {
+        "text": "After these verbs, never use to + infinitive.",
+        "example": "I enjoy reading, not I enjoy to read.",
+        "highlight": "enjoy reading"
+      }
+    ]
+  },
   "exercises": [
     {
       "exercise_id": "a1b2c3d4-0001-4000-8000-000000000031",

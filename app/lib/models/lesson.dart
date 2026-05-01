@@ -1,3 +1,5 @@
+import 'rule_card.dart';
+
 enum ExerciseType {
   fillBlank,
   multipleChoice,
@@ -274,6 +276,10 @@ class Lesson {
   final String level;
   final String introRule;
   final List<String> introExamples;
+  /// Wave H1 — textbook-format rule card. When present, the
+  /// `LessonIntroScreen` renders this in place of parsing
+  /// `introRule`. See `app/lib/widgets/rule_card.dart`.
+  final RuleCardData? ruleCard;
   final List<Exercise> exercises;
 
   const Lesson({
@@ -284,6 +290,7 @@ class Lesson {
     required this.introRule,
     required this.introExamples,
     required this.exercises,
+    this.ruleCard,
   });
 
   factory Lesson.fromJson(Map<String, dynamic> j) => Lesson(
@@ -295,6 +302,9 @@ class Lesson {
         introExamples:
             (j['intro_examples'] as List?)?.map((e) => e as String).toList() ??
                 const [],
+        ruleCard: RuleCardData.maybeFromJson(
+          j['rule_card'] as Map<String, dynamic>?,
+        ),
         exercises: (j['exercises'] as List)
             .map((e) => Exercise.fromJson(e as Map<String, dynamic>))
             .toList(),
@@ -307,6 +317,7 @@ class Lesson {
         level: level,
         introRule: introRule,
         introExamples: introExamples,
+        ruleCard: ruleCard,
         exercises: exercises ?? this.exercises,
       );
 }

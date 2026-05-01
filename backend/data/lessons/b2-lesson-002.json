@@ -10,6 +10,47 @@
     "She has **been studying** English since 2020.",
     "We have **cleaned** all the windows."
   ],
+  "rule_card": {
+    "title": "present perfect: continuous vs simple",
+    "rule": "Use the continuous (have / has been + -ing) for duration of an action up to now. Use the simple (have / has + past participle) for the completed result or how many times.",
+    "examples": [
+      {"text": "I have been working on this report for three hours.", "highlight": "been working"},
+      {"text": "I have finished the report.", "highlight": "finished"},
+      {"text": "She has been studying English since 2020.", "highlight": "been studying"},
+      {"text": "We have cleaned all the windows.", "highlight": "cleaned"}
+    ],
+    "pattern_lists": [
+      {
+        "label": "Duration / ongoing → continuous",
+        "items": [
+          "for two hours", "since 2020", "all morning", "all day", "lately", "recently", "the whole week", "How long…?"
+        ]
+      },
+      {
+        "label": "Result / quantity → simple",
+        "items": [
+          "three times", "twice", "ever", "never", "just", "already", "yet", "this morning", "How many…?", "How many times…?"
+        ]
+      }
+    ],
+    "watch_outs": [
+      {
+        "text": "State verbs (know, believe, own, like, understand) prefer the simple form even when the situation is ongoing.",
+        "example": "I have known her since 2010.",
+        "highlight": "have known"
+      },
+      {
+        "text": "Use the continuous when the activity itself matters; use the simple when the finished result matters.",
+        "example": "I have been painting (paint on me) — I have painted three rooms (rooms are ready).",
+        "highlight": "been painting"
+      },
+      {
+        "text": "How long…? usually pulls the continuous; How many…? usually pulls the simple.",
+        "example": "How long have you been waiting? — How many emails have you sent?",
+        "highlight": "been waiting"
+      }
+    ]
+  },
   "exercises": [
     {
       "exercise_id": "a1b2c3d4-0002-4000-8000-000000000031",

@@ -7,6 +7,7 @@ import '../session/session_state.dart';
 import '../theme/mastery_theme.dart';
 import '../widgets/mastery_route.dart';
 import '../widgets/mastery_widgets.dart';
+import '../widgets/rule_card.dart';
 import 'exercise_screen.dart';
 
 class LessonIntroScreen extends StatefulWidget {
@@ -143,7 +144,14 @@ class _LessonIntroScreenState extends State<LessonIntroScreen> {
         }
 
         final lesson = state.lesson!;
-        final sections = _parseRuleSections(lesson.introRule);
+        // Wave H1 — when the lesson carries a structured `rule_card`,
+        // render the textbook view directly. Otherwise fall back to
+        // the legacy flat-string parser. Both paths render the same
+        // page chrome (header, title, meta row, examples block, CTA).
+        final ruleCard = lesson.ruleCard;
+        final sections = ruleCard == null
+            ? _parseRuleSections(lesson.introRule)
+            : const <_RuleSection>[];
 
         return Scaffold(
           backgroundColor: tokens.bgApp,
@@ -198,12 +206,17 @@ class _LessonIntroScreenState extends State<LessonIntroScreen> {
                     'Grammar',
                   ]),
                   const SizedBox(height: MasterySpacing.lg),
-                  ...sections.map((s) => Padding(
-                        padding:
-                            const EdgeInsets.only(bottom: MasterySpacing.md),
-                        child: _RuleCard(section: s),
-                      )),
-                  if (lesson.introExamples.isNotEmpty) ...[
+                  if (ruleCard != null) ...[
+                    RuleCardView(data: ruleCard),
+                    const SizedBox(height: MasterySpacing.md),
+                  ] else ...[
+                    ...sections.map((s) => Padding(
+                          padding:
+                              const EdgeInsets.only(bottom: MasterySpacing.md),
+                          child: _RuleCard(section: s),
+                        )),
+                  ],
+                  if (ruleCard == null && lesson.introExamples.isNotEmpty) ...[
                     MasterySoftCard(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,

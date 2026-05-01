@@ -165,7 +165,11 @@ export function makeLessonSessionsRouter(
       // diagnostic items can be untagged), or when the source
       // lesson is unavailable. The client treats null as "no link".
       let skillRuleSnapshot:
-        | { intro_rule: string; intro_examples: string[] }
+        | {
+            intro_rule: string;
+            intro_examples: string[];
+            rule_card: import('../data/lessons').RuleCard | null;
+          }
         | null = null;
       if ('skill_id' in result.exercise && result.exercise.skill_id) {
         const { getBankEntry } = await import('../data/exerciseBank');
@@ -178,6 +182,7 @@ export function makeLessonSessionsRouter(
           skillRuleSnapshot = {
             intro_rule: sourceLesson.intro_rule,
             intro_examples: [...sourceLesson.intro_examples],
+            rule_card: sourceLesson.rule_card ?? null,
           };
         }
       }

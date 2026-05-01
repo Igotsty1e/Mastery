@@ -28,6 +28,7 @@ import '../theme/mastery_theme.dart';
 import '../widgets/mastery_route.dart';
 import '../widgets/mastery_widgets.dart';
 import '../widgets/review_due_section.dart';
+import '../widgets/rule_card.dart';
 import '../widgets/skill_status_badge.dart';
 import 'diagnostic_screen.dart';
 import 'lesson_intro_screen.dart';
@@ -1378,53 +1379,57 @@ class _RuleSheetBody extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: MasterySpacing.md),
-              if (entry.introRule != null) ...[
-                Text(
-                  entry.introRule!,
-                  style: MasteryTextStyles.bodyLg.copyWith(
-                    color: MasteryColors.textPrimary,
-                    height: 1.6,
-                  ),
-                ),
-              ],
-              if (entry.introExamples.isNotEmpty) ...[
-                const SizedBox(height: MasterySpacing.xl),
-                Text(
-                  'Examples',
-                  style: MasteryTextStyles.eyebrow(
-                    color: tokens.textTertiary,
-                  ),
-                ),
-                const SizedBox(height: MasterySpacing.sm),
-                for (final ex in entry.introExamples) ...[
-                  Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 4),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Padding(
-                          padding: const EdgeInsets.only(top: 8, right: 10),
-                          child: Container(
-                            width: 5,
-                            height: 5,
-                            decoration: const BoxDecoration(
-                              color: MasteryColors.actionPrimary,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ),
-                        Expanded(
-                          child: Text(
-                            ex,
-                            style: MasteryTextStyles.bodyMd.copyWith(
-                              color: MasteryColors.textPrimary,
-                              height: 1.55,
-                            ),
-                          ),
-                        ),
-                      ],
+              if (entry.ruleCard != null) ...[
+                RuleCardView(data: entry.ruleCard!),
+              ] else ...[
+                if (entry.introRule != null) ...[
+                  Text(
+                    entry.introRule!,
+                    style: MasteryTextStyles.bodyLg.copyWith(
+                      color: MasteryColors.textPrimary,
+                      height: 1.6,
                     ),
                   ),
+                ],
+                if (entry.introExamples.isNotEmpty) ...[
+                  const SizedBox(height: MasterySpacing.xl),
+                  Text(
+                    'Examples',
+                    style: MasteryTextStyles.eyebrow(
+                      color: tokens.textTertiary,
+                    ),
+                  ),
+                  const SizedBox(height: MasterySpacing.sm),
+                  for (final ex in entry.introExamples) ...[
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(top: 8, right: 10),
+                            child: Container(
+                              width: 5,
+                              height: 5,
+                              decoration: const BoxDecoration(
+                                color: MasteryColors.actionPrimary,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(
+                              ex,
+                              style: MasteryTextStyles.bodyMd.copyWith(
+                                color: MasteryColors.textPrimary,
+                                height: 1.55,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
                 ],
               ],
               const SizedBox(height: MasterySpacing.lg),

@@ -38,7 +38,81 @@ Rules:
 Authors who do not need a contrast highlight should leave the strings
 unmarked; the parser falls back to a plain text rendering.
 
-## 1.2 Learning Engine Metadata (Wave 1, additive)
+## 1.2 Rule Card (Wave H1, additive — preferred)
+
+Lessons authored after Wave H1 SHOULD carry an optional `rule_card`
+object alongside `intro_rule` / `intro_examples`. The card renders in
+a textbook-style panel (`RuleCard` widget in
+`app/lib/widgets/rule_card.dart`) — header plate, one-line rule
+statement, ✓ examples, multi-column pattern lists, and `Watch out!`
+callouts. When `rule_card` is missing, the renderer falls back to
+the legacy `intro_rule` parser (Wave 12.6 `_RuleCard` in
+`lesson_intro_screen.dart`), so older lessons keep working.
+
+```json
+{
+  "rule_card": {
+    "title": "verb + -ing form",
+    "rule": "Some verbs are usually followed directly by the -ing form, not by 'to + infinitive'.",
+    "examples": [
+      {"text": "I enjoy working with international clients.", "highlight": "working"}
+    ],
+    "pattern_lists": [
+      {
+        "label": "Verbs that take + -ing form",
+        "items": ["admit", "appreciate", "avoid", "can't help", "delay", "deny", "enjoy", "finish", "keep (on)", "mind", "miss", "postpone", "practise", "put off", "suggest"]
+      }
+    ],
+    "watch_outs": [
+      {"text": "Some of these verbs can also be followed by an object before the -ing form.", "example": "I can't stand people cheating in exams.", "highlight": "people cheating"},
+      {"text": "After a preposition, we almost always use an -ing form.", "example": "I'm interested in hearing more about that course.", "highlight": "in hearing"}
+    ]
+  }
+}
+```
+
+Rules:
+
+- `title` — short header plate, ≤ 50 chars; usually the textbook
+  pattern name (`verb + -ing form`, `present perfect with for / since`).
+- `rule` — one or two sentences in plain learner-facing English
+  stating *what the rule is*. No meta-talk ("In this lesson we will
+  see…"). Voice mirrors Murphy / Swan.
+- `examples` — 1-3 ✓ sentences that demonstrate the rule. Each item
+  has the full sentence and an optional `highlight` substring (the
+  renderer bolds it in dusty-rose). Highlight MUST be a literal
+  substring of `text`.
+- `pattern_lists` — 1-3 grouped lists of pattern members (verbs,
+  phrases, structures). Each list has a `label` and an array of
+  `items`. Lists with > 6 items render in 2-3 columns. Author the
+  list to be **representative**, not exhaustive — 15-30 items is
+  the sweet spot per the textbook reference; 5 is too few, 80 is a
+  dictionary.
+- `watch_outs` — optional `Watch out!` callouts for nuance,
+  exception, or common L1-driven slip. Each item has `text` (the
+  rule exception in plain English), an optional `example` (✓
+  sentence demonstrating it), and an optional `highlight` (literal
+  substring of `example`).
+- Authority chain for the rule wording, examples, and pattern list
+  membership: Murphy (level-appropriate edition) → Swan / PEU →
+  Cambridge English Grammar Profile (level fit). Never invent rules
+  not found in mainstream references.
+
+Source-of-truth conventions:
+
+- `rule_card` and `intro_rule` co-exist on a lesson (the legacy
+  string is kept for fallback rendering on older clients and for
+  the Wave 12.6 result-panel `See full rule →` link until that
+  surface migrates). When both are present, the client prefers
+  `rule_card`.
+- Backend `/skills` and `/skills/:skillId` routes surface the
+  `rule_card` from the source lesson alongside the legacy
+  `intro_rule` string.
+- Backend `/lesson-sessions/active` `skill_rule_snapshot` likewise
+  includes the `rule_card` so the result-panel `See full rule →`
+  sheet renders the textbook view, not the flat string.
+
+## 1.3 Learning Engine Metadata (Wave 1, additive)
 
 Every `Exercise` may carry the optional engine metadata fields below. They
 were introduced by `docs/plans/learning-engine-mvp-2.md` Wave 1 and are

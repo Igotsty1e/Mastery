@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import '../models/evaluation.dart';
 import '../theme/mastery_theme.dart';
+import 'rule_card.dart';
 
 /// Soft-bordered card with paper-like shadow. Used everywhere a primary
 /// content surface is needed.
@@ -475,14 +476,19 @@ class ResultPanel extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: MasterySpacing.xs),
-                Text(
-                  snapshot.introRule,
-                  style: MasteryTextStyles.bodyLg.copyWith(
-                    color: MasteryColors.textPrimary,
-                    height: 1.6,
+                if (snapshot.ruleCard != null) ...[
+                  RuleCardView(data: snapshot.ruleCard!),
+                ] else ...[
+                  Text(
+                    snapshot.introRule,
+                    style: MasteryTextStyles.bodyLg.copyWith(
+                      color: MasteryColors.textPrimary,
+                      height: 1.6,
+                    ),
                   ),
-                ),
-                if (snapshot.introExamples.isNotEmpty) ...[
+                ],
+                if (snapshot.ruleCard == null &&
+                    snapshot.introExamples.isNotEmpty) ...[
                   const SizedBox(height: MasterySpacing.xl),
                   Text(
                     'Examples',

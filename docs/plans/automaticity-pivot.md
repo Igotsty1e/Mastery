@@ -1,11 +1,15 @@
 # Automaticity pivot — roadmap
 
-**Status:** Waves 0 / A / B / C / D / G1–G7 shipped. Live web build
+**Status:** Waves 0 / A / B / C / D / G1–G9 shipped. Live web build
 serves first users at `https://mastery-web-igotsty1e.onrender.com`
-with real OpenAI grading (`gpt-4o-mini`), product analytics, and a
-calm 60-second countdown bar. Wave E (diagnostic redesign), Wave F
-(hint stripping), and the engine-tuning backlog item below are
-sketched but not started.
+with real OpenAI grading (`gpt-4o`), product analytics, and a
+calm 60-second countdown bar. Wave G9 reordered the first-touch
+flow to onboarding → diagnostic → first session, with the dashboard
+becoming a post-first-session reward. **Next up: Wave H1**
+(textbook-format rule cards) and **Wave H2** (dual-verdict AI judge,
+tutor critically evaluates alongside deterministic match). Wave E
+(diagnostic redesign), Wave F (hint stripping), and the
+engine-tuning backlog item are sketched but not started.
 
 The composition audit (`npm run audit:composition`) is a pre-merge
 CI gate alongside `vitest` in `.github/workflows/backend-test.yml`.
@@ -146,6 +150,128 @@ Lit-up the public web build for first users:
   no red, does NOT block submit, label `TIME` instead of `PACE`).
   Per-skill latency capture (Wave A) is unchanged so the engine
   tuning backlog item below still has its data stream.
+
+---
+
+## Wave H1 — Textbook-format rule cards (planned, next)
+
+**Why.** The shipped `intro_rule` field is a flat string with
+`\n\n`-separated sections. It looks like a paragraph dump, not a
+rule the learner can scan and reference. The reference image
+(textbook page on `-ing form` verbs) defines the target visual
+contract:
+
+- a header plate with the rule title (e.g.
+  `verb/noun/adjective phrase + -ing form`);
+- a one-line rule statement in the learner's grammar voice;
+- a ✓ example sentence (target form bolded);
+- a multi-column list of pattern members (4–6 columns, ~20–30
+  verbs/phrases) so the learner sees the *scope* of the rule, not
+  just the three examples we picked;
+- one or more `Watch out!` callouts for nuance / object-before-ing
+  / preposition-then-ing / common L1-driven slip.
+
+**Schema.** New `rule_card` object, additive to `intro_rule` (kept
+as fallback so older lessons keep rendering). Shape:
+
+```jsonc
+"rule_card": {
+  "title": "verb + -ing form",
+  "rule": "Some verbs are usually followed directly by the -ing form, not by `to + infinitive`.",
+  "examples": [
+    {"text": "I enjoy working with international clients.", "highlight": "working"}
+  ],
+  "pattern_lists": [
+    {
+      "label": "Verbs that take + -ing form",
+      "items": ["admit", "appreciate", "avoid", "can't help", "delay", "deny", "detest", "discuss", "dislike", "enjoy", "escape", "face", "fancy", "feel like", "finish", "give up", "involve", "keep (on)", "mention", "mind", "miss", "postpone", "practise", "put off", "resist", "risk", "suggest", "understand"]
+    }
+  ],
+  "watch_outs": [
+    {"text": "Some of these verbs can also be followed by an object before the -ing form.", "example": "I can't stand people cheating in exams."},
+    {"text": "After a preposition, we almost always use an -ing form.", "example": "I'm interested in hearing more about that course."}
+  ]
+}
+```
+
+Rendered in two places: the `LessonIntroScreen` (replaces the
+current flat-string render) and the `_RulesLibrarySheet` on the
+home dashboard. One Flutter widget, `RuleCard`, lives in
+`app/lib/widgets/rule_card.dart`. When `rule_card` is missing on a
+lesson the existing flat-string renderer is the fallback, so the
+ship can be incremental (one lesson at a time).
+
+**Content authoring** is gated behind the
+`english-grammar-methodologist` skill per `CLAUDE.md`. Authority
+chain: Murphy / Swan / EGP for verb lists, Cambridge English
+Grammar Profile for the level fit (B2-only for the current 5
+lessons).
+
+**Doc updates.** Add the schema to `content-contract.md`. Note in
+`exercise_structure.md §4` that lessons SHOULD ship a `rule_card`
+when authored fresh. The flat `intro_rule` stays valid as a
+historical / minimal form.
+
+---
+
+## Wave H2 — Dual-verdict AI judge (planned, follows H1)
+
+**Why.** Today the verdict logic is split by exercise type:
+`fill_blank` / `multiple_choice` / `listening_discrimination` are
+deterministic-match-only; `sentence_correction` /
+`sentence_rewrite` use AI as a borderline fallback;
+`short_free_sentence` is AI-only. The split has two failure modes:
+
+1. **False negatives on non-target slips.** A learner under a
+   gerund-vs-infinitive lesson types `enjoying` correctly but
+   misspells `restaurants`. The deterministic matcher fails the
+   item; the learner thinks they got the *grammar* wrong.
+2. **No critical evaluation on cheap types.** A learner can game
+   `multiple_choice` with surface-pattern matching and never get
+   feedback on whether they actually *understood* the form.
+
+Wave H2 makes the AI tutor a **second judge** on every item, with
+explicit knowledge of what's under test (`target_form`) and what
+isn't. The combiner grants `correct` if the deterministic match
+passes OR if the AI says "target was met, the only error is
+off-target". This is closer to how a human teacher grades:
+"yes, you used the gerund correctly — the spelling slip is a
+separate issue I'll mention but won't fail you on."
+
+**Cost.** +1 AI call per item across all six exercise types
+(today: only ~50% of items go through AI). Mitigation: short
+prompt, cheap model (`gpt-4o-mini` is back in play for the *judge*
+role since it's a structured yes/no on a known target), strict
+JSON schema response.
+
+**Schema additions.**
+
+- Lesson-level: `target_form` — single string describing what the
+  lesson teaches (e.g. `"-ing form after gerund-only verbs (enjoy,
+  avoid, suggest, mind, finish, keep, postpone)"`).
+- AI response (new): `{ target_met: bool, off_target_error: bool,
+  off_target_note: string|null }`. The new
+  `evaluateTargetVerdict(exercise, learnerAnswer, targetForm)`
+  call returns this shape. Existing `evaluateFreeSentence` /
+  `evaluateBorderline` calls stay as-is for the prompt-rewrite and
+  free-sentence paths; H2 adds the new judge alongside.
+
+**Combiner.** In `backend/src/lessonSessions/service.ts`:
+
+- `correct = deterministic.correct || (ai.target_met &&
+  !ai.off_target_error_blocks_score)`;
+- when `deterministic.correct === false` AND `ai.target_met ===
+  true` AND `ai.off_target_error === true`, the final verdict is
+  `correct` and the explanation appends a soft note: *"the form
+  was right; small spelling slip — `${off_target_note}`"*.
+- AI failures (timeout / 5xx / schema mismatch) fall back to the
+  deterministic verdict. The system stays honest under degraded AI.
+
+**Doc updates.** Update `LEARNING_ENGINE.md §6.3` (verdict model)
+to name the dual-judge architecture; add the `target_form` field
+to `content-contract.md`. Note in `backend-contract.md` that the
+AI judge is now part of the standard scoring path, not just the
+free-form / borderline fallback.
 
 ---
 

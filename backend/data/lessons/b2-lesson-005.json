@@ -9,6 +9,40 @@
     "I would love **to visit** Tokyo next summer.",
     "I am starting **to learn** Spanish online next month."
   ],
+  "rule_card": {
+    "title": "verb + -ing OR verb + to (no real change)",
+    "rule": "After a small set of verbs, both -ing and to + infinitive are accepted with little or no change in meaning at B2. Two predictable exceptions force the to-form.",
+    "examples": [
+      {"text": "She loves cooking for her family.", "highlight": "cooking"},
+      {"text": "She loves to cook for her family.", "highlight": "to cook"},
+      {"text": "I am starting to learn Spanish online next month.", "highlight": "to learn"}
+    ],
+    "pattern_lists": [
+      {
+        "label": "Both forms accepted (similar meaning)",
+        "items": [
+          "begin", "start", "continue", "intend", "bother", "like", "love", "hate", "prefer"
+        ]
+      }
+    ],
+    "watch_outs": [
+      {
+        "text": "After would like / would love / would prefer / would hate, use only to + infinitive.",
+        "example": "I would love to visit Tokyo next summer, not I would love visiting Tokyo.",
+        "highlight": "to visit"
+      },
+      {
+        "text": "After a progressive form (am / is / are starting; was / were beginning), prefer to + infinitive — two -ing forms in a row sound clumsy.",
+        "example": "I am starting to learn Spanish, not I am starting learning Spanish.",
+        "highlight": "starting to learn"
+      },
+      {
+        "text": "With like, the -ing form leans toward enjoyment of the activity, while the to-form can lean toward habit or the right thing to do — but at B2 both are interchangeable.",
+        "example": "I like swimming on Sundays. — I like to check my email first.",
+        "highlight": "like swimming"
+      }
+    ]
+  },
   "exercises": [
     {
       "exercise_id": "a1b2c3d4-0005-4000-8000-000000000031",
