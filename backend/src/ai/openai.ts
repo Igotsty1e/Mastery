@@ -140,52 +140,28 @@ export class OpenAiProvider implements AiProvider {
   async evaluateFreeSentence(
     args: AiFreeSentenceArgs
   ): Promise<AiEvaluationResult> {
+    // Wave G6 — simplified, lab-tested prompt. Earlier multi-step
+    // versions confused gpt-4o-mini and produced correct=true on
+    // gibberish / off-trigger / off-rule cases. The /debug/ai-probe
+    // endpoint with this exact shape passes 6/7 strict cases and
+    // fails only on tolerated typos (which the line below adds back).
     const prompt = [
-      `Grade a short English-grammar drill answer. Default to FALSE.`,
-      `Pass only when ALL three checks succeed.`,
-      ``,
-      `STEP 1 — TRIGGER. The TARGET_RULE / INSTRUCTION names a trigger`,
-      `verb or structure (e.g. "enjoy", "decide", "present perfect`,
-      `continuous", "the passive"). The STUDENT_ANSWER MUST literally`,
-      `use that exact trigger. Spelling typos of 1–2 chars in the`,
-      `trigger are OK ("enjoi" → "enjoy"). If the trigger is absent,`,
-      `return correct=false. Off-trigger sentences fail here.`,
-      ``,
-      `STEP 2 — RULE FORM. The trigger must be used in the form the`,
-      `rule prescribes. If the rule says "after enjoy, use -ing", the`,
-      `next verb must be in -ing. "enjoy to read" → false. "enjoy`,
-      `reading" → pass to step 3.`,
-      ``,
-      `STEP 3 — GRAMMATICALITY. The whole sentence must parse as`,
-      `standard English. Subject-verb agreement, articles, plausible`,
-      `tense logic. "Me reading books and enjoy them yes" → false`,
-      `(broken syntax). Random word salad → false.`,
-      ``,
-      `Worked examples (rule="after enjoy, the next verb takes -ing,`,
-      `not to + infinitive"):`,
-      `  "I enjoy reading novels."        → correct=true`,
-      `  "I enjoi reading novels."        → correct=true (typo OK)`,
-      `  "I enjoy to read novels."        → correct=false (rule fail)`,
-      `  "I want to swim every weekend."  → correct=false (no trigger)`,
-      `  "asdkfj qweryt zxcvb"            → correct=false (gibberish)`,
-      `  "1 + 1 = 2"                      → correct=false (no English`,
-      `                                     verb at all)`,
-      `  "Me reading books"               → correct=false (ungrammatical)`,
-      ``,
-      `When in doubt, return correct=false. False positives are`,
-      `worse than false negatives — the learner can re-attempt;`,
-      `they cannot retract an undeserved pass.`,
-      ``,
-      `feedback (string): short, <= 80 chars. On false, name the`,
-      `failing step ("trigger 'enjoy' missing" / "uses to+inf" /`,
-      `"ungrammatical"). Empty string allowed on true.`,
-      ``,
-      `Output strict JSON matching the schema. No prose.`,
-      ``,
-      `[TARGET_RULE]: ${JSON.stringify(args.targetRule)}`,
-      `[INSTRUCTION_TO_STUDENT]: ${JSON.stringify(args.instruction)}`,
-      `[ACCEPTED_EXAMPLES]: ${JSON.stringify(args.acceptedExamples)}`,
-      `[STUDENT_ANSWER]: ${JSON.stringify(args.userAnswer)}`,
+      'Grade an English-grammar drill answer.',
+      'TARGET_RULE: ' + JSON.stringify(args.targetRule),
+      'INSTRUCTION: ' + JSON.stringify(args.instruction),
+      'STUDENT_ANSWER: ' + JSON.stringify(args.userAnswer),
+      '',
+      'Return JSON {correct, feedback}.',
+      'correct=true ONLY if the answer literally uses the trigger from the rule',
+      'AND uses the form the rule prescribes AND is grammatical.',
+      'Otherwise false.',
+      '',
+      'Tolerate 1-2 character spelling typos in the trigger ' +
+        '(e.g. "enjoi" -> "enjoy") when the intended word is unambiguous. ' +
+        'Do not tolerate inflection, number, or determiner changes as typos.',
+      '',
+      'feedback: <= 80 chars. On false, name the specific failure ' +
+        '("uses to+inf" / "no trigger" / "ungrammatical"). Empty allowed on true.',
     ].join('\n');
 
     const body = {
