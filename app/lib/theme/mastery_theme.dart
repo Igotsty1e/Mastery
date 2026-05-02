@@ -278,7 +278,18 @@ TextStyle _fraunces({
   );
 }
 
-TextStyle _manrope({
+/// 2026-05-02 body-font swap: `_manrope` is renamed `_inter` to
+/// match the new family. The Manrope variable font shipped fine on
+/// iOS / desktop Flutter but mis-rendered on Brave / Chromium —
+/// the variable `wght` axis intermittently fell back to a generic
+/// serif at w700, observed in the wild on the prominent
+/// `InstructionBand` (Wave H3, fixed for that one widget by
+/// `533140d` then escalated repo-wide here). Inter Variable from
+/// rsms.me is shipped directly under `assets/fonts/`. We **do not**
+/// stamp `fontVariations` on the style — let Flutter's renderer
+/// instantiate the variable axis from the named `fontWeight` so the
+/// same code path works on every platform.
+TextStyle _inter({
   required double size,
   required double lineHeight,
   FontWeight weight = FontWeight.w500,
@@ -286,13 +297,12 @@ TextStyle _manrope({
   double letterSpacing = 0,
 }) {
   return TextStyle(
-    fontFamily: 'Manrope',
+    fontFamily: 'Inter',
     fontSize: size,
     height: lineHeight / size,
     fontWeight: weight,
     color: color,
     letterSpacing: letterSpacing,
-    fontVariations: [FontVariation('wght', weight.value.toDouble())],
   );
 }
 
@@ -305,44 +315,46 @@ class MasteryTextStyles {
       _fraunces(size: 40, lineHeight: 46, weight: FontWeight.w600);
   static TextStyle get headlineLg =>
       _fraunces(size: 32, lineHeight: 38, weight: FontWeight.w600);
-  static TextStyle get headlineMd => _manrope(
+  static TextStyle get headlineMd => _inter(
         size: 28,
         lineHeight: 34,
         weight: FontWeight.w700,
         letterSpacing: -0.2,
       );
-  static TextStyle get titleLg => _manrope(
+  static TextStyle get titleLg => _inter(
       size: 24, lineHeight: 30, weight: FontWeight.w700, letterSpacing: -0.1);
-  static TextStyle get titleMd => _manrope(
+  static TextStyle get titleMd => _inter(
       size: 20, lineHeight: 26, weight: FontWeight.w700, letterSpacing: -0.05);
-  static TextStyle get titleSm => _manrope(
+  static TextStyle get titleSm => _inter(
       size: 18,
       lineHeight: 24,
       weight: FontWeight.w700,
       letterSpacing: 0.05);
-  // Body styles carry positive letter-spacing on mobile so the
-  // Manrope glyphs do not visually fuse — the user-reported
-  // "letters blend together" issue on phones (2026-05-01).
-  static TextStyle get bodyLg => _manrope(
+  // Body styles carry positive letter-spacing on mobile to keep
+  // glyphs from visually fusing on phones — the user-reported
+  // "letters blend together" issue (2026-05-01). Calibrated
+  // against Inter Variable (the body-font swap on 2026-05-02);
+  // values are conservative and stay legible at every body size.
+  static TextStyle get bodyLg => _inter(
       size: 18,
       lineHeight: 30,
       weight: FontWeight.w500,
       letterSpacing: 0.1);
-  static TextStyle get bodyMd => _manrope(
+  static TextStyle get bodyMd => _inter(
       size: 16,
       lineHeight: 26,
       weight: FontWeight.w500,
       letterSpacing: 0.15);
-  static TextStyle get bodySm => _manrope(
+  static TextStyle get bodySm => _inter(
       size: 15,
       lineHeight: 24,
       weight: FontWeight.w500,
       letterSpacing: 0.2);
   static TextStyle get labelLg =>
-      _manrope(size: 16, lineHeight: 20, weight: FontWeight.w700);
-  static TextStyle get labelMd => _manrope(
+      _inter(size: 16, lineHeight: 20, weight: FontWeight.w700);
+  static TextStyle get labelMd => _inter(
       size: 14, lineHeight: 18, weight: FontWeight.w700, letterSpacing: 0.4);
-  static TextStyle get labelSm => _manrope(
+  static TextStyle get labelSm => _inter(
       size: 13, lineHeight: 16, weight: FontWeight.w700, letterSpacing: 0.6);
 
   /// Editorial display with italic styling (used for Mastery wordmark).
@@ -382,7 +394,7 @@ class MasteryTextStyles {
   static TextStyle eyebrow({
     Color color = MasteryColors.actionPrimary,
   }) =>
-      _manrope(
+      _inter(
         size: 12,
         lineHeight: 16,
         weight: FontWeight.w700,
@@ -452,7 +464,7 @@ class MasteryTheme {
       colorScheme: colorScheme,
       scaffoldBackgroundColor: MasteryColors.bgApp,
       canvasColor: MasteryColors.bgApp,
-      fontFamily: 'Manrope',
+      fontFamily: 'Inter',
       textTheme: textTheme,
       primaryTextTheme: textTheme,
       splashFactory: InkSparkle.splashFactory,

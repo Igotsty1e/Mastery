@@ -46,9 +46,9 @@ flutter:
         - asset: assets/fonts/Fraunces-Variable.ttf
         - asset: assets/fonts/Fraunces-Italic-Variable.ttf
           style: italic
-    - family: Manrope
+    - family: Inter
       fonts:
-        - asset: assets/fonts/Manrope-Variable.ttf
+        - asset: assets/fonts/Inter-Variable.ttf
     - family: IBMPlexMono
       fonts:
         - asset: assets/fonts/IBMPlexMono-Regular.ttf

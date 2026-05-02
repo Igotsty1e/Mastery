@@ -78,28 +78,27 @@ Method note: this list uses public Android install bands from Google Play as the
 
 ## Typography
 - **Display/Hero:** `Fraunces` — used for hero moments, lesson titles, and score moments. Adds editorial sophistication without feeling old-fashioned.
-- **Body:** `Manrope` — highly readable, modern, and excellent on mobile for explanatory text and long labels.
-- **UI/Labels:** `Manrope` SemiBold / Bold — all chips, buttons, field labels, tabs, and inline metadata.
+- **Body:** `Inter` (variable) — highly readable, modern, calibrated for screens. **Body-font swap 2026-05-02:** Manrope-Variable shipped originally but mis-rendered on Brave/Chromium (variable `wght` axis fell back to a generic serif at w700) and remained visually tight on small screens even with positive letter-spacing. Inter Variable from rsms.me is now the body family.
+- **UI/Labels:** `Inter` SemiBold / Bold — all chips, buttons, field labels, tabs, and inline metadata.
 - **Data/Tables:** `IBM Plex Mono` — optional, only for score fractions, progress percentages, and diagnostic microdata where tabular numerals help.
 - **Code:** `IBM Plex Mono`
-- **Loading strategy:** self-host all font files in Flutter assets. Do not rely on platform defaults or Google Fonts runtime fetches.
+- **Loading strategy:** self-host all font files in Flutter assets (`app/assets/fonts/`). Do not rely on platform defaults or Google Fonts runtime fetches. The rendering helper (`_inter` in `app/lib/theme/mastery_theme.dart`) sets `fontFamily` + named `fontWeight` only — **never** stamps `FontVariation` on the style. The variable axis path mis-renders on Chromium; named weights let Flutter's renderer instantiate the variable face cleanly on every platform.
 
 ### Type Scale
 - `display-xl`: 56/60, `Fraunces`, 600
 - `display-lg`: 48/52, `Fraunces`, 600
 - `display-md`: 40/46, `Fraunces`, 600
 - `headline-lg`: 32/38, `Fraunces`, 550
-- `headline-md`: 28/34, `Manrope`, 700
-- `title-lg`: 24/30, `Manrope`, 700
-- `title-md`: 20/26, `Manrope`, 700
-- `title-sm`: 18/24, `Manrope`, 700
-- `body-lg`: 18/30, `Manrope`, 500, letter-spacing **+0.1**
-- `body-md`: 16/26, `Manrope`, 500, letter-spacing **+0.15**
-- `body-sm`: 15/24, `Manrope`, 500, letter-spacing **+0.2**
-- `title-sm`: 18/24, `Manrope`, 700, letter-spacing **+0.05**
-- `label-lg`: 16/20, `Manrope`, 700
-- `label-md`: 14/18, `Manrope`, 700
-- `label-sm`: 13/16, `Manrope`, 700
+- `headline-md`: 28/34, `Inter`, 700
+- `title-lg`: 24/30, `Inter`, 700
+- `title-md`: 20/26, `Inter`, 700
+- `title-sm`: 18/24, `Inter`, 700, letter-spacing **+0.05**
+- `body-lg`: 18/30, `Inter`, 500, letter-spacing **+0.1**
+- `body-md`: 16/26, `Inter`, 500, letter-spacing **+0.15**
+- `body-sm`: 15/24, `Inter`, 500, letter-spacing **+0.2**
+- `label-lg`: 16/20, `Inter`, 700
+- `label-md`: 14/18, `Inter`, 700
+- `label-sm`: 13/16, `Inter`, 700
 
 ### Non-negotiable type rules
 - Default body copy is `16px` minimum.
@@ -113,10 +112,11 @@ Method note: this list uses public Android install bands from Google Play as the
   Scale; do not override to zero.
 - For the question-driven exercise headline (`InstructionBand`
   `prominent` mode), build the `TextStyle` directly with
-  `fontFamily: 'Manrope'`, `fontWeight: FontWeight.w600`, and
-  **no `fontVariations`**. The variable-axis path mis-renders at
-  w700 on Brave/Chromium and falls back to a generic serif (fixed
-  by `533140d`).
+  `fontFamily: 'Inter'`, `fontWeight: FontWeight.w600`, and
+  **no `fontVariations`**. The same rule applies repo-wide via
+  the `_inter` helper. (Original cause traced on `Manrope` —
+  Chromium fell back to a generic serif at w700; the body-font
+  swap to Inter on 2026-05-02 generalised the fix.)
 
 ## Color
 - **Approach:** balanced, warm, rose-led
