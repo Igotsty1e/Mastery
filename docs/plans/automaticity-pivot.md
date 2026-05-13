@@ -9,10 +9,14 @@ credit on non-target slips on fill_blank items, a question-driven
 exercise framing on Lessons 1, 3, 4, and 5 (Lesson 4 partial,
 preserving the `stop` recognition-contrast pair as fill_blank), and
 progressive hint stripping on `fill_blank` items based on per-skill
-lifetime attempts. Wave E (diagnostic redesign) and the
-engine-tuning backlog item are sketched but not started. Wave H2
-phase 2 was investigated 2026-05-14 and deferred under the current
-judge contract — see §Wave H2 phase 2 section below.
+lifetime attempts. Wave E (diagnostic redesign) was investigated
+2026-05-14 and split into three phases (E.1 engine + persistence,
+E.2 SFS-on-probe, E.3 client + report) after Codex paranoia found
+six structural blockers in the original single-PR scope — see
+§Wave E section below. The latency-driven engine-tuning backlog
+item is sketched but not started. Wave H2 phase 2 was investigated
+2026-05-14 and deferred under the current judge contract — see
+§Wave H2 phase 2 section below.
 
 The composition audit (`npm run audit:composition`) is a pre-merge
 CI gate alongside `vitest` in `.github/workflows/backend-test.yml`.
@@ -438,33 +442,103 @@ untouched as historical Wave-14.4-shipped log.
 
 ---
 
-## Wave E — Diagnostic redesign (planned)
+## Wave E — Diagnostic redesign (investigated 2026-05-14, deferred with structured phasing)
 
-Replace the shipped 5× `multiple_choice` placement probe with a
-mixed-evidence probe:
+Original intent: replace today's 5× `multiple_choice` placement probe
+with a mixed-evidence probe (2 fill_blank + 2 short_free_sentence +
+1 sentence_correction) and surface three signals separately
+(recognition / production / repair).
 
-- 2× `fill_blank` (medium evidence — controlled retrieval),
-- 2× `short_free_sentence` (strongest evidence — production with
-  `meaning_frame`),
-- 1× `sentence_correction` (strong evidence — repair).
+**Wave-level paranoia review on 2026-05-14 surfaced six substantive
+architectural blockers that make a single-PR ship dangerous.** The
+wave is now structurally split into three phases so each phase can
+ship under its own paranoia gate.
 
-Time-to-answer is recorded for each item via the existing
-`LatencyHistoryStore` capture path in `SessionController`. The
-post-probe screen reports three signals separately:
+### Architectural findings (Codex round 1 on `/tmp/wave-e-plan.md`)
 
-- recognition fluency (correct rate × speed on `fill_blank`),
-- production fluency (correct rate × speed on `short_free_sentence`),
-- repair accuracy (correct rate on `sentence_correction`).
+1. **Multi-type evaluator dispatch is not a local refactor.**
+   `makeDiagnosticRouter` doesn't receive `ai` today
+   (`backend/src/diagnostic/routes.ts:42`, `backend/src/app.ts:107`).
+   `submitDiagnosticAnswer` is hard-coded to MC-only validation +
+   evaluation + result shape (`backend/src/diagnostic/service.ts:92-183`).
+   Stored diagnostic responses do not carry `exercise_type` today
+   (`backend/src/diagnostic/repository.ts:19`). For SFS to live in the
+   probe, the router/service signatures widen, client-IP routing is
+   needed, and the type stored on the response MUST be derived
+   server-side from `expected.exercise.type` (NOT trusted from the
+   client) — otherwise the 3-signal report is spoofable.
 
-Expected output: a CEFR placement *plus* a weakest-link verdict
-("recognition is solid; production is the gap — that's where we'll
-push first"). This is honest diagnosis, not a placement test.
+2. **AI budget on the probe is not safe under restart/retry.** The
+   rate limiter is a hard `10/IP/60s`
+   (`backend/src/middleware/aiRateLimit.ts:6-7`). SFS is AI-only and
+   eagerly consumes quota. Two SFS calls per probe means 5 restarts/
+   retakes exhaust the bucket and the 6th probe within a minute hits
+   429. Network retries can double-burn without idempotency. The
+   probe path has no AI-result cache today.
 
-Implementation gating is content-bound — the probe items must be
-authored under the `english-grammar-methodologist` skill alongside
-the Wave C rewrite. Engine-side, the existing
-`SessionController` + `LatencyHistoryStore` plumbing is enough; no
-new client architecture is needed.
+3. **Probe SFS can prematurely clear the §6.4 mastery gate.** A
+   correct `strongest` attempt with non-empty `meaning_frame` flips
+   `productionGateCleared` immediately
+   (`backend/src/learner/service.ts:217`) and adds production weight
+   via `exerciseType` (`backend/src/learner/mastery.ts:46`). A learner
+   with 3 prior correct medium-tier attempts on a skill + one correct
+   diagnostic SFS arrives at the production gate AND the attempts
+   floor simultaneously — potentially jumping to `mastered` without
+   ever opening the lesson. Probe attempts MUST be capped or routed
+   through a separate `recordAttempt` variant that does not set
+   `productionGateCleared`.
+
+4. **CEFR math no longer calibrated once probe mixes evidence
+   families.** `cefr.ts:7-22` calibrates the percent thresholds to
+   5 weak-tier MC items. FB / SC / SFS have weights 2 / 3 / 5 per
+   `mastery.ts:43`. A 1:1 percent rule across mixed types is not
+   defensible. Wave E needs either weighted top-line derivation OR
+   a softer top-line contract that names the 3 signals as
+   authoritative and demotes the single CEFR letter to a tag.
+
+5. **Client probe phase needs typed input, not just the completion
+   screen.** Current `diagnostic_screen.dart` is MC-only end-to-end:
+   submit path hardcodes `exerciseType: 'multiple_choice'` (`:105`),
+   probe phase always renders `MultipleChoiceWidget` (`:322`). A
+   mixed-evidence probe requires per-type widget dispatch (same
+   pattern as `ExerciseScreen._ExerciseBody`) + submit-button gating
+   for typed inputs. The "Stays on your device" copy on
+   `diagnostic_proof_card.dart` also becomes false once SFS answers
+   hit OpenAI server-side.
+
+6. **Sentence_correction deterministic-only is not credible** for
+   Lesson 4's meaning-change verbs. Surface variants are exactly
+   where the SC AI fallback earns its keep
+   (`backend/src/evaluators/sentenceCorrection.ts:18`). A probe item
+   authored "deterministic-clean" risks frequent false negatives.
+
+### Structured phasing (parked, sequence not yet started)
+
+Wave E ships in three follow-up sub-waves, each gated by Codex
+paranoia like the other waves on this roadmap:
+
+- **E.1 — engine + persistence.** Widen `makeDiagnosticRouter` to
+  receive `ai`. Add multi-type evaluator dispatch in
+  `submitDiagnosticAnswer` (MC stays, FB + SC added; SFS DEFERRED
+  to E.2 because of finding #2 + #3). Persist server-derived
+  `exercise_type` on `diagnostic_responses[]` rows. Add a
+  `recordAttemptFromProbe` variant that records evidence with a
+  CAPPED tier (medium) and never flips `productionGateCleared` —
+  closes finding #3.
+- **E.2 — SFS in the probe (separate wave because of AI-budget +
+  idempotency design work).** Add an in-memory probe-AI cache keyed
+  by `(run_id, exercise_id, normalized_answer)` mirroring the
+  lesson-session cache. Reduce probe SFS to 1 item (not 2) to fit
+  the limiter on realistic restart paths. Update §6.4 mastery-gate
+  guards if the capped tier from E.1 still allows progression.
+- **E.3 — client + report.** Multi-type widget dispatch in
+  `_ProbePhase`, the 3-signal completion section, copy update on
+  `diagnostic_proof_card.dart`, top-line CEFR demotion to a tag
+  alongside the 3 signals. The CEFR-math redesign (finding #4)
+  lands here.
+
+Plan body for the failed single-PR attempt: `/tmp/wave-e-plan.md`.
+Recorded here so future sessions don't re-attempt the same shape.
 
 ---
 
