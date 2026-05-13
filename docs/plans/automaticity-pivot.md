@@ -146,8 +146,9 @@ Lit-up the public web build for first users:
   prod probes showed gpt-4o-mini ignored the longer multi-step
   prompt. 7/7 strict cases pass through the production session
   path. Default model bumped to `gpt-4o`; operator can override
-  via `OPENAI_MODEL` env var. `/debug/ai-probe` route stays
-  behind `DEBUG_PROBE_TOKEN` for future regressions.
+  via `OPENAI_MODEL` env var. The Wave G6 diagnostic probe route
+  (admin-gated, env-token authenticated) was retired 2026-05-14
+  once the grader had shipped clean through Waves H2/H3/F.
 - **G7** (`b3bdd59`) — `LatencyBand` retired, replaced by
   `CountdownBar` (60-second calm shrinking bar, green → amber,
   no red, does NOT block submit, label `TIME` instead of `PACE`).
@@ -588,10 +589,6 @@ into a Wave when picked up.
   Apple IdToken verification lands when the iOS build does.
 - **Custom domain** — operator's call. Bind via Render dashboard
   → CNAME on the registrar.
-- **Cleanup `/debug/ai-probe`** — diagnostic route shipped in G6.
-  Stays gated behind `DEBUG_PROBE_TOKEN` env var (route 404s
-  without it). Remove once we trust the production grader for a
-  full week without regression.
 
 ## Out of scope for this pivot
 

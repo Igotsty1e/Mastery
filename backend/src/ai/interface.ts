@@ -57,14 +57,6 @@ export interface DebriefAiResult {
   next_step: string | null;
 }
 
-export interface AiFreeSentenceRawProbe {
-  model: string;
-  response_keys: string[];
-  extracted_text: string;
-  refusal: string | null;
-  parsed: unknown;
-}
-
 /// Wave H2 — dual-verdict judge.
 ///
 /// Used after the deterministic matcher fails on a closed-form item
@@ -112,10 +104,6 @@ export interface AiProvider {
   /// items to a deterministic-fail when the method is missing so the
   /// runtime stays sane on a stub provider.
   evaluateFreeSentence?(args: AiFreeSentenceArgs): Promise<AiEvaluationResult>;
-  /// Wave G6 — diagnostic-only echo path. Returns the raw OpenAI
-  /// response shape so the operator can debug from outside Render's
-  /// log capture. Stub providers omit it.
-  evaluateFreeSentenceRaw?(args: AiFreeSentenceArgs): Promise<AiFreeSentenceRawProbe>;
   /// Wave H2 — dual-verdict judge for closed-form items. Optional;
   /// the service falls back to the deterministic verdict when the
   /// method is missing or throws. See `AiTargetVerdictArgs`.

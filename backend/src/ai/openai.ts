@@ -144,9 +144,9 @@ export class OpenAiProvider implements AiProvider {
   ): Promise<AiEvaluationResult> {
     // Wave G6 — simplified, lab-tested prompt. Earlier multi-step
     // versions confused gpt-4o-mini and produced correct=true on
-    // gibberish / off-trigger / off-rule cases. The /debug/ai-probe
-    // endpoint with this exact shape passes 6/7 strict cases and
-    // fails only on tolerated typos (which the line below adds back).
+    // gibberish / off-trigger / off-rule cases. This prompt passed
+    // 6/7 strict lab cases at the Wave G6 cutover (2026-05-01) and
+    // failed only on tolerated typos (which the line below adds back).
     const prompt = [
       'Grade an English-grammar drill answer.',
       'TARGET_RULE: ' + JSON.stringify(args.targetRule),
@@ -221,98 +221,6 @@ export class OpenAiProvider implements AiProvider {
       throw new Error('OpenAI response did not match expected schema');
     }
     return { correct, feedback };
-  }
-
-  /// Wave G6 — diagnostic-only entry point. Hits the same OpenAI
-  /// /responses endpoint the production evaluator uses, but returns
-  /// the raw decoded response object instead of the parsed
-  /// {correct, feedback} pair. Lets the operator inspect what the
-  /// model is actually returning when prod logs are not visible
-  /// (Render captures stdout/stderr but does not surface our
-  /// debug writes through the dashboard reliably). Used only by
-  /// the admin debug route in `src/admin/routes.ts`.
-  async evaluateFreeSentenceRaw(
-    args: AiFreeSentenceArgs
-  ): Promise<{
-    model: string;
-    response_keys: string[];
-    extracted_text: string;
-    refusal: string | null;
-    parsed: unknown;
-  }> {
-    // Reconstruct the same prompt + body used by the production
-    // path. We deliberately call into the same code path's body
-    // builder to guarantee parity.
-    return await this._sfsRequest(args);
-  }
-
-  private async _sfsRequest(args: AiFreeSentenceArgs): Promise<{
-    model: string;
-    response_keys: string[];
-    extracted_text: string;
-    refusal: string | null;
-    parsed: unknown;
-  }> {
-    const prompt = [
-      'Grade an English-grammar drill answer.',
-      'TARGET_RULE: ' + JSON.stringify(args.targetRule),
-      'INSTRUCTION: ' + JSON.stringify(args.instruction),
-      'STUDENT_ANSWER: ' + JSON.stringify(args.userAnswer),
-      'Return JSON {correct, feedback}. correct=true ONLY if the answer literally uses the trigger from the rule AND is grammatical. Otherwise false.',
-    ].join('\n');
-    const body = {
-      model: this.model,
-      input: [
-        { role: 'system', content: 'You are a strict English grammar evaluator.' },
-        { role: 'user', content: prompt },
-      ],
-      text: {
-        format: {
-          type: 'json_schema',
-          name: 'sfs_eval',
-          strict: true,
-          schema: {
-            type: 'object',
-            properties: {
-              correct: { type: 'boolean' },
-              feedback: { type: 'string' },
-            },
-            required: ['correct', 'feedback'],
-            additionalProperties: false,
-          },
-        },
-      },
-    };
-    const res = await fetch(`${this.baseUrl}/responses`, {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(body),
-      signal: args.signal,
-    });
-    if (!res.ok) {
-      const errBody = await res.text().catch(() => '');
-      throw new Error(`OpenAI ${res.status} ${res.statusText}: ${errBody.slice(0, 500)}`);
-    }
-    const json = await res.json();
-    const { text, refusal } = extractOutputText(json);
-    let parsed: unknown = null;
-    if (text) {
-      try {
-        parsed = JSON.parse(text);
-      } catch (_) {
-        parsed = { _parse_error: text.slice(0, 500) };
-      }
-    }
-    return {
-      model: this.model,
-      response_keys: Object.keys((json as Record<string, unknown> | null) ?? {}),
-      extracted_text: text.slice(0, 500),
-      refusal,
-      parsed,
-    };
   }
 
   /// Wave H2 — dual-verdict judge for closed-form items.
