@@ -51,7 +51,46 @@ class SessionController extends ChangeNotifier {
   /// retrieval speed, not the network).
   DateTime? _exerciseShownAt;
 
+  /// Wave F — snapshot of per-skill lifetime attempt counts at session
+  /// start, used by the fill_blank widget to decide the hint-reveal
+  /// mode (always / after 4s of inactivity / never) per
+  /// `docs/plans/automaticity-pivot.md` Wave F.
+  ///
+  /// Best-effort: populated from `LearnerSkillStore.allRecords()` after
+  /// session start resolves. If the store throws or returns nothing,
+  /// the map stays empty and the widget reads `always` for every skill
+  /// (safe fallback — the learner sees the hint, no info loss).
+  ///
+  /// Read once at session start to keep the hint mode stable across
+  /// the session — within a 10-item session a learner won't typically
+  /// cross the count==1 → count==2 threshold more than once per skill,
+  /// and a stable mode-per-exercise is better than a flicker on each
+  /// submission.
+  Map<String, int> _skillAttemptsAtStart = const <String, int>{};
+
+  /// Wave F — read-only accessor for the snapshot above. Returns an
+  /// empty map until session start resolves.
+  Map<String, int> get skillAttemptsAtStart => _skillAttemptsAtStart;
+
   SessionController(this._api) : _state = const SessionState();
+
+  /// Wave F — best-effort preload of the per-skill attempt snapshot at
+  /// session start. Wraps `LearnerSkillStore.allRecords()` so a store
+  /// failure cannot block the session from reaching `SessionPhase.ready`.
+  Future<void> _preloadSkillAttemptsSnapshot() async {
+    try {
+      final records = await LearnerSkillStore.allRecords();
+      final snapshot = <String, int>{};
+      for (final r in records) {
+        final total = r.evidenceSummary.values
+            .fold<int>(0, (sum, count) => sum + count);
+        snapshot[r.skillId] = total;
+      }
+      _skillAttemptsAtStart = snapshot;
+    } catch (_) {
+      _skillAttemptsAtStart = const <String, int>{};
+    }
+  }
 
   /// Wave 11.3 — V1 dynamic-session entry point. Calls `POST /sessions/start`,
   /// receives `{ session_id, first_exercise }`, and seeds a synthetic
@@ -74,6 +113,11 @@ class SessionController extends ChangeNotifier {
     try {
       final start = await _api.startSession();
       _sessionId = start.sessionId;
+      // Wave F — best-effort snapshot of per-skill attempts at session
+      // start. Used by the fill_blank widget to decide hint reveal mode.
+      // Errors here must not block session start (the widget's default
+      // is `always`, which is safe regardless).
+      await _preloadSkillAttemptsSnapshot();
       // Synthetic lesson — the title + level land on UI and are kept
       // stable for the duration of the session. Exercises grow as the
       // Decision Engine returns them.
@@ -129,6 +173,9 @@ class SessionController extends ChangeNotifier {
       final lesson = results[0] as Lesson;
       final session = results[1] as LessonSessionStart;
       _sessionId = session.sessionId;
+      // Wave F — best-effort snapshot of per-skill attempts at session
+      // start. Same contract as the dynamic-session path.
+      await _preloadSkillAttemptsSnapshot();
       _emit(_state.copyWith(
         lesson: lesson,
         phase: SessionPhase.ready,

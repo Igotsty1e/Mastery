@@ -354,6 +354,26 @@ Not good for:
   any other dimension under test (`§2.9 acceptance criteria`,
   `§6.6.1 image+audio edge case`).
 
+#### Runtime: progressive hint reveal (Wave F, 2026-05-14)
+
+Authoring keeps the hint in the JSON — the convention above is binding
+for every `fill_blank` item. **Runtime rendering** progressively strips
+the hint based on the learner's per-skill lifetime attempt count,
+read from `LearnerSkillStore.allRecords()` at session start (see
+`docs/plans/automaticity-pivot.md` Wave F):
+
+- attempt 1 on a new skill (count == 0): hint visible from t = 0.
+- attempt 2 (count == 1): hint hidden initially; revealed after 4 s of
+  input inactivity; each keystroke resets the timer.
+- attempt 3+ (count ≥ 2): hint not shown.
+
+The strip regex `(_{2,})\s*\([a-z][^)]*\)` is anchored to the blank
+token and preserves the `___` marker, so unrelated parentheticals
+elsewhere in the prompt are untouched. Per-device signal: per-skill
+attempts are read from the client-side store at session start and
+do not survive a device reset. Cycle-aware reset on `review_due`
+regressions is parked behind product feedback.
+
 ### Preferred difficulty profile
 
 - early-to-middle lesson
