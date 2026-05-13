@@ -1260,20 +1260,20 @@ any PR that introduces a violation. Existing violators are listed in
 `docs/plans/automaticity-pivot.md` Wave C TODO and ride out the rewrite
 queue under methodologist supervision.
 
-#### 6.7.5 Forward note — Wave H3 production floor lift (planned)
+#### 6.7.5 Forward note — Wave H3 production floor lift (in progress)
 
 The Wave H3 question-driven shift (`docs/plans/automaticity-pivot.md`)
 is on track to raise the §6.7.2 production floor from "≥ 1
-`short_free_sentence` per lesson" to "≥ 4". Phase 1 (Lesson 1) has
-already shipped past the new bar — 4 of its original 5 `fill_blank`
-items were converted to `short_free_sentence` with question-style
-instructions on 2026-05-01. Phases 2 + 3 will land the same
-conversion on Lessons 3 + 5 (clean fit) and a partial conversion on
-Lesson 4 (only the items where a question structurally pulls the
-target form). Lesson 2 stays `fill_blank`-dominant because the
-present-perfect contrast does not respond to question-pull. The §6.7
-numerical minimums will be edited in lockstep with that ship — until
-then, `≥ 1` remains the binding floor.
+`short_free_sentence` per lesson" to "≥ 4". Phase 1 (Lesson 1)
+shipped 2026-05-01; Phase 2 (Lessons 3 + 5) shipped 2026-05-14 —
+each of the three converted lessons now carries 5 `short_free_sentence`
+items, already past the future ≥ 4 bar. Phase 3 remains parked: a
+partial conversion on Lesson 4 (only the items where a question
+structurally pulls the target form). Lesson 2 stays `fill_blank`-dominant
+because the present-perfect contrast does not respond to question-pull.
+The §6.7 numerical minimums will be edited in lockstep with the
+Phase 3 ship — until then, `≥ 1` remains the binding floor so
+Lessons 2 + 4 don't fail audit mid-flight.
 
 ---
 

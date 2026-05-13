@@ -169,5 +169,36 @@ describe('OpenAiProvider — prompt injection hardening', () => {
       cap.restore();
     }
   });
+
+  // Wave H3 phase 2 — the Lesson 5 SFS items rely on dual-form acceptance
+  // ("after like, both verb-ing and to + base verb are correct"). Since the
+  // production prompt at openai.ts:150-167 does NOT substitute
+  // accepted_examples into the user prompt body, the dual-form rule MUST
+  // live inside target_rule and reach the model verbatim. This test pins
+  // that contract: any future prompt rewrite that drops the target_rule
+  // payload would silently break Lesson 5 grading.
+  it('evaluateFreeSentence prompt body carries the dual-form target_rule verbatim', async () => {
+    const provider = new OpenAiProvider({ apiKey: 'sk-test', model: 'gpt-4o-mini' });
+    const cap = captureFetchBody();
+    const lesson5TargetRule =
+      'After like, the verb that follows must be immediately either a verb-ing form or to + base verb; both are correct here with no meaningful difference. Reject answers that do not literally use like followed by one of these two forms.';
+    try {
+      await provider.evaluateFreeSentence({
+        targetRule: lesson5TargetRule,
+        instruction: 'What do you most like doing on a free evening? Start with «I like...».',
+        acceptedExamples: [
+          'I like reading thrillers with a glass of wine.',
+          'I like to call my sister and catch up on her week.',
+        ],
+        userAnswer: 'I like reading novels in the evening.',
+      });
+      const userContent: string = cap.body.input[1].content;
+      expect(userContent).toContain('verb-ing');
+      expect(userContent).toContain('to + base verb');
+      expect(userContent).toContain(JSON.stringify(lesson5TargetRule));
+    } finally {
+      cap.restore();
+    }
+  });
 });
 

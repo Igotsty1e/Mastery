@@ -37,9 +37,11 @@ export function projectExerciseForClient(exercise: Exercise): object {
     return { ...pub, ...stripImage(exercise) };
   }
   if (exercise.type === 'short_free_sentence') {
-    // Strip the model-only fields. `target_rule` and
-    // `accepted_examples` exist for the AI evaluator and would bias
-    // the learner's output.
+    // Strip the model-only fields. `target_rule` and `accepted_examples`
+    // would bias the learner's output if revealed, so they stay
+    // server-side. Even though the current grader prompt does not
+    // substitute `accepted_examples` in the body, the wire projection
+    // is intentionally conservative.
     const {
       target_rule: _tr,
       accepted_examples: _ae,

@@ -633,7 +633,11 @@ enforce these invariants when the family is wired into the runtime:
   against, so the deterministic gate is reduced to "answer is non-empty
   and provider has the method", and rule conformance is judged by
   `AiProvider.evaluateFreeSentence`. Authors keep `accepted_examples`
-  short (≤ 3) for grounding. The original target-state safeguard
+  short (≤ 3) as authoring-time references. The production grader
+  prompt at `backend/src/ai/openai.ts:150-167` no longer includes them
+  in the prompt body after the Wave G6 prompt rewrite (`docs/plans/automaticity-pivot.md`);
+  runtime uses them as the canonical-answer fallback on learner-facing
+  result surfaces only. The original target-state safeguard
   (deterministic structural + meaning-frame checks before AI) remains
   the engineering goal but is not yet enforced at the runtime; see
   `exercise_structure.md §5.5 Scoring discipline` for the target.

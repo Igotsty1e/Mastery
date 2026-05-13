@@ -126,9 +126,10 @@ const SentenceRewriteExerciseBaseSchema = z.object({
 // stays server-side — the wire projection strips it.
 //
 // `accepted_examples` is a 0-3 element list of sample-correct
-// sentences the model uses for grounding. Authors should keep this
-// list short to avoid biasing the model toward verbatim mimicry.
-// Empty arrays are allowed; the model still judges the rule.
+// sentences. Authoring-time reference and canonical-answer fallback
+// on result surfaces; the production grader prompt does not currently
+// include them in the prompt body (see `backend/src/ai/openai.ts`).
+// Empty arrays are allowed; the model judges from `target_rule` alone.
 //
 // There is no `prompt` field — `instruction` is the prompt.
 const ShortFreeSentenceExerciseBaseSchema = z.object({
