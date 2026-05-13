@@ -1255,6 +1255,20 @@ This is the §6.4 mastery gate showing up at the lesson level: a
 learner cannot finish a lesson without at least one chance to clear
 production on the rule.
 
+**Production-target lessons SHOULD ship `≥ 4 short_free_sentence` items**
+to give the engine enough strongest-tier evidence per session. **The
+current production-target set is Lessons 1, 3, 4, 5** (Wave H3 phases 1,
+2, 3 shipped this floor). Dropping any of these below 4 SFS is a
+regression unless a new named exception is added here.
+
+Recognition-contrast lessons MAY stay fill_blank-dominant with `≥ 1`
+`short_free_sentence`; the binding mechanical floor in
+`backend/scripts/audit-composition.ts` stays at `≥ 1` for that reason.
+**Lesson 2** (present perfect simple vs continuous) is the current
+named contrast exception — its target form is decided by recognition
+of meaning, not by question-pull production, per the methodologist
+verdict in `docs/plans/automaticity-pivot.md` Wave H3 phase 3.
+
 #### 6.7.3 `meaning_frame` is mandatory on strong / strongest tier
 
 Every item with `evidence_tier ∈ { strong, strongest }` must carry a
@@ -1280,20 +1294,29 @@ any PR that introduces a violation. Existing violators are listed in
 `docs/plans/automaticity-pivot.md` Wave C TODO and ride out the rewrite
 queue under methodologist supervision.
 
-#### 6.7.5 Forward note — Wave H3 production floor lift (in progress)
+#### 6.7.5 Wave H3 production floor lift — shipped (doc-only)
 
 The Wave H3 question-driven shift (`docs/plans/automaticity-pivot.md`)
-is on track to raise the §6.7.2 production floor from "≥ 1
-`short_free_sentence` per lesson" to "≥ 4". Phase 1 (Lesson 1)
-shipped 2026-05-01; Phase 2 (Lessons 3 + 5) shipped 2026-05-14 —
-each of the three converted lessons now carries 5 `short_free_sentence`
-items, already past the future ≥ 4 bar. Phase 3 remains parked: a
-partial conversion on Lesson 4 (only the items where a question
-structurally pulls the target form). Lesson 2 stays `fill_blank`-dominant
-because the present-perfect contrast does not respond to question-pull.
-The §6.7 numerical minimums will be edited in lockstep with the
-Phase 3 ship — until then, `≥ 1` remains the binding floor so
-Lessons 2 + 4 don't fail audit mid-flight.
+raised the §6.7.2 authoring target to "≥ 4 `short_free_sentence` per
+production-target lesson". Shipped across three phases:
+
+- **Phase 1 (2026-05-01)** — Lesson 1: 4 of 5 fill_blank → SFS.
+- **Phase 2 (2026-05-14)** — Lessons 3 + 5: 4 of 6 fill_blank → SFS each.
+- **Phase 3 (2026-05-14)** — Lesson 4: partial conversion preserving
+  the `stop` fill_blank pair (035/036) as the recognition-contrast
+  anchor; 03d retired; fresh `regret + -ing` SFS added on a new UUID.
+
+Each of Lessons 1, 3, 4, 5 now ships 5 SFS items, above the production
+target of ≥ 4. **Lesson 2 stays at ≥ 1 SFS** as the named
+recognition-contrast exception. The lift was implemented as a §6.7.2
+**policy edit only** — the binding mechanical floor in
+`audit-composition.ts` stays at ≥ 1. A mechanical lift via a lesson-
+level archetype enum was scoped during phase 3 planning and dropped:
+it would have conflated pedagogy with audit, and the audit script
+parses raw JSON without going through `LessonSchema`, so the schema
+default would not have materialised in the audit. If a future
+regression case ever justifies the added surface area, a small
+follow-up wave can revisit the mechanical lift.
 
 ---
 

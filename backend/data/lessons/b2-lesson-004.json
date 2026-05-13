@@ -14,9 +14,18 @@
     "title": "verb + -ing OR verb + to (meaning changes)",
     "rule": "A small group of verbs can take either form — but the meaning is different. The to-form usually points forward (a new action, duty, or purpose); the -ing form usually points back (a memory, an ongoing activity, a method tried).",
     "examples": [
-      {"text": "Please remember to lock the door before you leave tonight.", "highlight": "to lock"},
-      {"text": "I clearly remember locking the door this morning.", "highlight": "locking"},
-      {"text": "On the way home, we stopped to have a coffee at a small café.", "highlight": "to have"}
+      {
+        "text": "Please remember to lock the door before you leave tonight.",
+        "highlight": "to lock"
+      },
+      {
+        "text": "I clearly remember locking the door this morning.",
+        "highlight": "locking"
+      },
+      {
+        "text": "On the way home, we stopped to have a coffee at a small café.",
+        "highlight": "to have"
+      }
     ],
     "pattern_lists": [
       {
@@ -63,26 +72,34 @@
   "exercises": [
     {
       "exercise_id": "a1b2c3d4-0004-4000-8000-000000000031",
-      "type": "fill_blank",
+      "type": "short_free_sentence",
       "skill_id": "verb-both-forms-meaning-change",
       "primary_target_error": "conceptual_error",
-      "evidence_tier": "medium",
-      "instruction": "Complete the gap with the correct form of the verb in brackets.",
-      "prompt": "Please remember ___ (lock) the door before you leave tonight.",
-      "accepted_answers": ["to lock"],
+      "evidence_tier": "strongest",
+      "instruction": "What's one thing you absolutely need to remember to do tomorrow? Start with «I need to remember to...».",
+      "target_rule": "After remember, the verb that follows must be immediately to + base verb when the speaker is talking about a future obligation (something to be done later). The -ing form (remember doing X) means a past memory — that meaning is NOT the target here. Reject answers that do not use remember followed immediately by to + base verb.",
+      "accepted_examples": [
+        "I need to remember to call my mom about her birthday tomorrow.",
+        "I need to remember to send the contract draft before the deadline."
+      ],
+      "meaning_frame": "Talk about an important future task you must not forget.",
       "feedback": {
         "explanation": "You wrote 'locking', but the correct answer is 'to lock' because remember + to + infinitive means 'don't forget this future duty'. If 'remember' is followed by an action that has not happened yet → use to + infinitive."
       }
     },
     {
       "exercise_id": "a1b2c3d4-0004-4000-8000-000000000032",
-      "type": "fill_blank",
+      "type": "short_free_sentence",
       "skill_id": "verb-both-forms-meaning-change",
       "primary_target_error": "conceptual_error",
-      "evidence_tier": "medium",
-      "instruction": "Complete the gap with the correct form of the verb in brackets.",
-      "prompt": "I clearly remember ___ (lock) the door this morning, so it cannot be open now.",
-      "accepted_answers": ["locking"],
+      "evidence_tier": "strongest",
+      "instruction": "What do you clearly remember doing at your last big celebration? Start with «I clearly remember...».",
+      "target_rule": "After remember, the verb that follows must be immediately -ing form when the speaker is talking about a past memory or recall (a clear image of something that happened). The to + base verb form (remember to do X) means a future obligation — that meaning is NOT the target here. Reject answers that do not use remember followed immediately by -ing form.",
+      "accepted_examples": [
+        "I clearly remember opening presents with my whole family at my grandmother's house.",
+        "I clearly remember crossing the finish line of my first half-marathon."
+      ],
+      "meaning_frame": "Describe a vivid memory of a past celebration or milestone.",
       "feedback": {
         "explanation": "You wrote 'to lock', but the correct answer is 'locking' because remember + verb-ing means 'recall a past event from memory'. If 'remember' is followed by an action that already happened → use the -ing form."
       }
@@ -97,10 +114,22 @@
       "instruction": "Choose the correct option.",
       "prompt": "I'm sorry — I completely forgot ___ you about the change in schedule.",
       "options": [
-        { "id": "a", "text": "telling" },
-        { "id": "b", "text": "tell" },
-        { "id": "c", "text": "to tell" },
-        { "id": "d", "text": "told" }
+        {
+          "id": "a",
+          "text": "telling"
+        },
+        {
+          "id": "b",
+          "text": "tell"
+        },
+        {
+          "id": "c",
+          "text": "to tell"
+        },
+        {
+          "id": "d",
+          "text": "told"
+        }
       ],
       "correct_option_id": "c",
       "feedback": {
@@ -109,13 +138,17 @@
     },
     {
       "exercise_id": "a1b2c3d4-0004-4000-8000-000000000034",
-      "type": "fill_blank",
+      "type": "short_free_sentence",
       "skill_id": "verb-both-forms-meaning-change",
       "primary_target_error": "conceptual_error",
-      "evidence_tier": "medium",
-      "instruction": "Complete the gap with the correct form of the verb in brackets.",
-      "prompt": "I'll never forget ___ (meet) my mentor at that conference five years ago.",
-      "accepted_answers": ["meeting"],
+      "evidence_tier": "strongest",
+      "instruction": "What's something from your past you'll never forget? Start with «I'll never forget...».",
+      "target_rule": "After forget, the verb that follows must be immediately -ing form when the speaker is talking about a past memory or event (something they vividly recall). The to + base verb form (forget to do X) means a duty or action that should have happened but didn't — that meaning is NOT the target here. Reject answers that do not use forget followed immediately by -ing form.",
+      "accepted_examples": [
+        "I'll never forget meeting my mentor at that conference in Berlin.",
+        "I'll never forget walking into our new apartment for the first time."
+      ],
+      "meaning_frame": "Talk about a past moment that left a strong, lasting impression.",
       "feedback": {
         "explanation": "You wrote 'to meet', but the correct answer is 'meeting' because forget + verb-ing refers to a memorable past event — typically with 'never forget'. If 'forget' is followed by a vivid past memory → use the -ing form."
       }
@@ -128,7 +161,9 @@
       "evidence_tier": "medium",
       "instruction": "Complete the gap with the correct form of the verb in brackets.",
       "prompt": "On the way home, we stopped ___ (have) a coffee at a small café.",
-      "accepted_answers": ["to have"],
+      "accepted_answers": [
+        "to have"
+      ],
       "feedback": {
         "explanation": "You wrote 'having', but the correct answer is 'to have' because stop + to + infinitive means 'pause one activity in order to do another'. If 'stop' is followed by the *purpose* of the pause → use to + infinitive."
       }
@@ -141,7 +176,9 @@
       "evidence_tier": "medium",
       "instruction": "Complete the gap with the correct form of the verb in brackets.",
       "prompt": "Please stop ___ (interrupt) me — I cannot finish my thought.",
-      "accepted_answers": ["interrupting"],
+      "accepted_answers": [
+        "interrupting"
+      ],
       "feedback": {
         "explanation": "You wrote 'to interrupt', but the correct answer is 'interrupting' because stop + verb-ing means 'cease an ongoing action'. If 'stop' is followed by the action that should end → use the -ing form."
       }
@@ -155,10 +192,22 @@
       "instruction": "Choose the correct option.",
       "prompt": "He tried ___ the door, but his hands were too cold to grip the handle.",
       "options": [
-        { "id": "a", "text": "opening" },
-        { "id": "b", "text": "to open" },
-        { "id": "c", "text": "open" },
-        { "id": "d", "text": "opens" }
+        {
+          "id": "a",
+          "text": "opening"
+        },
+        {
+          "id": "b",
+          "text": "to open"
+        },
+        {
+          "id": "c",
+          "text": "open"
+        },
+        {
+          "id": "d",
+          "text": "opens"
+        }
       ],
       "correct_option_id": "b",
       "feedback": {
@@ -167,13 +216,17 @@
     },
     {
       "exercise_id": "a1b2c3d4-0004-4000-8000-000000000038",
-      "type": "fill_blank",
+      "type": "short_free_sentence",
       "skill_id": "verb-both-forms-meaning-change",
       "primary_target_error": "conceptual_error",
-      "evidence_tier": "medium",
-      "instruction": "Complete the gap with the correct form of the verb in brackets.",
-      "prompt": "If your laptop is slow, try ___ (restart) it before calling support.",
-      "accepted_answers": ["restarting"],
+      "evidence_tier": "strongest",
+      "instruction": "If your laptop keeps freezing, what's one quick thing you'd try doing before calling tech support? Start with «I'd try...».",
+      "target_rule": "After try, the verb that follows must be immediately -ing form when the speaker is testing or experimenting with a possible fix (the 'see if it helps' sense, like 'try restarting the computer'). The to + base verb form (try to do X) means making a deliberate effort to succeed at something — that meaning is NOT the target here. Reject answers that do not use try followed immediately by -ing form.",
+      "accepted_examples": [
+        "I'd try restarting it first before calling tech support.",
+        "I'd try clearing the cache and closing all the open browser tabs."
+      ],
+      "meaning_frame": "Suggest a quick experimental fix for a common tech problem.",
       "feedback": {
         "explanation": "You wrote 'to restart', but the correct answer is 'restarting' because try + verb-ing means 'experiment with this method to see if it works'. If 'try' is followed by a suggested method or trick → use the -ing form."
       }
@@ -245,20 +298,20 @@
       }
     },
     {
-      "exercise_id": "a1b2c3d4-0004-4000-8000-00000000003d",
+      "exercise_id": "a1b2c3d4-0004-4000-8000-000000000040",
       "type": "short_free_sentence",
       "skill_id": "verb-both-forms-meaning-change",
       "primary_target_error": "conceptual_error",
       "evidence_tier": "strongest",
-      "meaning_frame": "Describe a clear memory of a past personal event.",
-      "instruction": "Write a sentence using \"remember\" + -ing to describe a clear memory of a past event.",
-      "target_rule": "Remember + -ing reports a memory of a past event you experienced (recall). It is distinct from remember + to do, which means \"don't forget to do X in the future\". The -ing form is required for the recall meaning.",
+      "instruction": "What's something you regret doing earlier in your career, looking back now? Start with «I regret...».",
+      "target_rule": "After regret, the verb that follows must be immediately -ing form when the speaker is talking about a past action they wish they had not taken (the personal-regret sense). The to + base verb form (regret to + V) is the formal 'sorry to inform' construction (e.g. 'I regret to inform you that...') — that meaning is NOT the target here. Reject answers that do not use regret followed immediately by -ing form.",
       "accepted_examples": [
-        "I remember meeting her at the conference.",
-        "He remembers visiting Rome as a child."
+        "I regret leaving my last job so quickly without lining up the next one.",
+        "I regret skipping my Italian classes during the pandemic."
       ],
+      "meaning_frame": "Talk about a past career choice you wish you had handled differently.",
       "feedback": {
-        "explanation": "Remember + -ing names a memory of something you actually did. The to-infinitive form switches the meaning to forward-looking obligation (\"don't forget\"), so the -ing form is what the rule asks for here."
+        "explanation": "Regret + -ing names a past action you wish you had not taken — the personal-regret sense (\"I regret leaving my last job\"). The to + base verb form (regret to inform / regret to say) is the formal apologetic construction and does NOT fit the personal-regret question here. Use -ing for the looking-back sense."
       }
     }
   ]
