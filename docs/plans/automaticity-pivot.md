@@ -455,18 +455,39 @@ runtime decision. No content-side change.
 
 ## Backlog (parked, not started)
 
-- **Extend dual-verdict (Wave H2) to open-form types.** Today the
-  judge runs only on `fill_blank`. The other AI-graded families
-  (`sentence_correction`, `sentence_rewrite`, `short_free_sentence`)
-  use the existing AI evaluators (`evaluateSentenceCorrection`,
-  `evaluateFreeSentence`) — those evaluators implicitly judge the
-  target form, but they don't separate "target met but off-target
-  slip" from "target missed". Folding them into the
-  `evaluateTargetVerdict` shape (with the `target_form` lesson
-  field as explicit context) would give a consistent dual-judge
-  contract across all six exercise types. Cost: +1 AI call only on
-  borderline / open-form items (already part of those paths today),
-  prompt design per type.
+- **Extend dual-verdict (Wave H2) to open-form types — investigated
+  2026-05-14, deferred indefinitely under the current judge contract.**
+  The H2 phase 1 judge in `backend/src/ai/openai.ts:318-411` is
+  `target_form`-only: it lifts a wrong primary verdict to correct
+  when the answer demonstrates the target form, regardless of other
+  errors. That contract is safe for `fill_blank` because the primary
+  check (deterministic match) is purely structural — there is no
+  semantic check that a `target_form`-only judge could bypass.
+  For the three open-form types it is **not** safe:
+  - `short_free_sentence` is `strongest`-tier evidence requiring
+    meaning + form (`LEARNING_ENGINE.md §6.3, §6.4`). A
+    `target_form`-only lift would let a grammatically-bad sentence
+    pass on the strength of one correct form token, violating the
+    invariant.
+  - `sentence_correction` and `sentence_rewrite` primary AI
+    evaluators do explicit semantic-equivalence judgements against
+    the bounded `accepted_corrections` / `accepted_answers` set.
+    A `target_form`-only lift would override the primary's
+    correctly-rejected meaning-changing answers.
+  Conclusion: the wave cannot ship under the current judge shape.
+  Either (a) the judge contract is widened to also check the
+  type-appropriate semantic property (meaning equivalence for
+  SC/SR; meaning + form for SFS), which collapses back into a
+  duplicate of the primary evaluator and costs +2 AI calls per
+  borderline item, or (b) the judge stays fill_blank-only and the
+  off-target-slip transparency goal is achieved differently
+  (e.g. ask the primary evaluators to return a structured
+  `{correct, off_target_note}` shape instead of stacking a
+  separate judge). Option (b) is the cleaner path but is itself a
+  new wave (not "extend phase 1"). Plan body for the failed
+  attempt: `/tmp/h2-phase2-plan.md` (rev 2). Codex paranoia review
+  rounds 1 + 2 both BLOCK; recorded here so future sessions don't
+  re-attempt the same shape.
 
 These are decisions the founder explicitly tabled for a later
 session. Listed here so they don't get lost; each will graduate
