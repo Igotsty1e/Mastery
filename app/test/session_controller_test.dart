@@ -1055,4 +1055,100 @@ void main() {
           equals('same_rule_different_angle'));
     });
   });
+
+  // ── Wave F — per-skill attempts snapshot at session start ───────────────
+  group('SessionController.skillAttemptsAtStart', () {
+    setUp(() {
+      SharedPreferences.setMockInitialValues({});
+    });
+
+    Map<String, dynamic> dynamicStartDto() => {
+          'reason': 'linear_default',
+          'session_id': testSessionId,
+          'title': 'Today session',
+          'level': 'B2',
+          'exercise_count': 10,
+          'started_at': '2026-05-14T00:00:00.000Z',
+          'first_exercise': {
+            'exercise_id': 'a1b2c3d4-0001-4000-8000-000000000011',
+            'type': 'fill_blank',
+            'instruction': 'Complete the gap.',
+            'prompt': 'She ___ working.',
+          },
+        };
+
+    test(
+        'loadDynamicSession populates the per-skill attempts snapshot from LearnerSkillStore',
+        () async {
+      // Seed two skills with different attempt counts before session start.
+      await LearnerSkillStore.recordAttempt(
+        skillId: 'skill-a',
+        evidenceTier: EvidenceTier.medium,
+        correct: true,
+      );
+      await LearnerSkillStore.recordAttempt(
+        skillId: 'skill-b',
+        evidenceTier: EvidenceTier.strong,
+        correct: true,
+      );
+      await LearnerSkillStore.recordAttempt(
+        skillId: 'skill-b',
+        evidenceTier: EvidenceTier.strong,
+        correct: false,
+      );
+
+      final api = _authed((req) {
+        if (req.url.path.endsWith('/sessions/start')) {
+          return _jsonResponse(dynamicStartDto());
+        }
+        return _jsonResponse({'error': 'unmocked'}, status: 404);
+      });
+      final ctrl = SessionController(api);
+
+      await ctrl.loadDynamicSession();
+
+      expect(ctrl.state.phase, equals(SessionPhase.ready));
+      expect(ctrl.skillAttemptsAtStart, equals({'skill-a': 1, 'skill-b': 2}));
+    });
+
+    test(
+        'loadDynamicSession with empty store leaves the snapshot empty without erroring',
+        () async {
+      final api = _authed((req) {
+        if (req.url.path.endsWith('/sessions/start')) {
+          return _jsonResponse(dynamicStartDto());
+        }
+        return _jsonResponse({'error': 'unmocked'}, status: 404);
+      });
+      final ctrl = SessionController(api);
+
+      await ctrl.loadDynamicSession();
+
+      // Best-effort contract: empty store → empty snapshot, session still ready.
+      expect(ctrl.state.phase, equals(SessionPhase.ready));
+      expect(ctrl.skillAttemptsAtStart, isEmpty);
+    });
+
+    test('loadLesson (legacy path) also populates the snapshot', () async {
+      await LearnerSkillStore.recordAttempt(
+        skillId: 'skill-a',
+        evidenceTier: EvidenceTier.medium,
+        correct: true,
+      );
+      await LearnerSkillStore.recordAttempt(
+        skillId: 'skill-a',
+        evidenceTier: EvidenceTier.medium,
+        correct: false,
+      );
+
+      final api = _authed((req) => _routedDispatch(req,
+          lesson: _lessonJson(), sessionStart: sessionStartDto(_lessonId)));
+      final ctrl = SessionController(api);
+
+      await ctrl.loadLesson(_lessonId);
+
+      expect(ctrl.state.phase, equals(SessionPhase.ready));
+      expect(ctrl.skillAttemptsAtStart, equals({'skill-a': 2}));
+    });
+  });
 }

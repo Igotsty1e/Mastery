@@ -422,6 +422,7 @@ class _ExerciseBody extends StatelessWidget {
           enabled: enabled,
           onChanged: onAnswerChanged,
           onSubmitField: onTextSubmit,
+          hintMode: _hintModeFor(context, exercise.skillId),
         ),
       ExerciseType.multipleChoice => MultipleChoiceWidget(
           prompt: exercise.prompt ?? '',
@@ -450,5 +451,18 @@ class _ExerciseBody extends StatelessWidget {
           onChanged: onAnswerChanged,
         ),
     };
+  }
+
+  /// Wave F — pick the hint-reveal mode for the current fill_blank
+  /// exercise from the per-skill snapshot taken at session start.
+  /// `null`/missing skill IDs default to `always` (safe fallback;
+  /// hint visible). See `automaticity-pivot.md` Wave F for rationale.
+  HintRevealMode _hintModeFor(BuildContext context, String? skillId) {
+    if (skillId == null) return HintRevealMode.always;
+    final attempts =
+        context.read<SessionController>().skillAttemptsAtStart[skillId] ?? 0;
+    if (attempts >= 2) return HintRevealMode.never;
+    if (attempts == 1) return HintRevealMode.after4s;
+    return HintRevealMode.always;
   }
 }

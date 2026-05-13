@@ -1,15 +1,19 @@
 # Automaticity pivot — roadmap
 
-**Status:** Waves 0 / A / B / C / D / G1–G9 / H1 / H2 / H3 (phase 1 + phase 2)
+**Status:** Waves 0 / A / B / C / D / F / G1–G9 / H1 / H2 / H3 (phase 1 + phase 2)
 shipped. Live web build serves first users at
 `https://mastery-web-igotsty1e.onrender.com` with real OpenAI
 grading (`gpt-4o`), product analytics, a calm 60-second countdown
 bar, textbook-format rule cards, a dual-verdict AI judge that grants
-credit on non-target slips on fill_blank items, and a question-driven
-exercise framing on Lesson 1 (TTT — production-first, rule shown
-only after error). Wave E (diagnostic redesign), Wave F (hint
-stripping), and the engine-tuning backlog item are sketched but
-not started.
+credit on non-target slips on fill_blank items, a question-driven
+exercise framing on Lessons 1, 3, and 5 (TTT — production-first,
+rule shown only after error), and progressive hint stripping on
+`fill_blank` items based on per-skill lifetime attempts. Wave E
+(diagnostic redesign), Wave H3 phase 3 (Lesson 4 partial + §6.7
+floor lift), and the engine-tuning backlog item are sketched but
+not started. Wave H2 phase 2 was investigated 2026-05-14 and
+deferred under the current judge contract — see §Wave H2 phase 2
+section below.
 
 The composition audit (`npm run audit:composition`) is a pre-merge
 CI gate alongside `vitest` in `.github/workflows/backend-test.yml`.
@@ -436,20 +440,89 @@ new client architecture is needed.
 
 ---
 
-## Wave F — Hint stripping (planned)
+## Wave F — Hint stripping (shipped 2026-05-14)
 
 `fill_blank` items today always carry the base-form verb hint
-(e.g. `(work)`) per `exercise_structure.md §4.1`. Wave F lets the
-`DecisionEngine` strip the hint based on per-skill attempt count:
+(e.g. `(work)`) per `exercise_structure.md §4.1`. Wave F strips the
+hint progressively based on per-skill **lifetime attempts**, read from
+`LearnerSkillStore.allRecords()` at session start and stashed on
+`SessionController.skillAttemptsAtStart` so the hint mode stays
+stable across the session:
 
-- attempt 1 on a new skill: hint visible from t = 0;
-- attempt 2: hint reveals after 4 s of inactivity;
-- attempt 3+: hint not shown.
+- attempt 1 on a new skill (count == 0): hint visible from t = 0;
+- attempt 2 (count == 1): hint hidden initially, revealed after 4 s of input inactivity (each keystroke resets the timer);
+- attempt 3+ (count >= 2): hint not shown.
 
-Same idea as the latency band: speed up retrieval by removing
-scaffolding once the rule is internalised. Requires a small change
-to `Exercise.prompt` rendering and a new field on the per-attempt
-runtime decision. No content-side change.
+**Implementation:** client-only. `FillBlankWidget` now carries a
+`HintRevealMode` enum + a `Timer?` for the after-4s reveal +
+`stripFillBlankHint` regex anchored to the blank token
+(`(_{2,})\s*\([a-z][^)]*\)` — preserves the `___` marker, only
+strips parentheticals immediately after the blank). The widget keeps
+the existing `prompt` API and defaults `hintMode` to `always` so
+older call-sites stay safe. The `SessionController` preload is
+best-effort: a store failure produces an empty snapshot and the
+widget defaults every skill to `always` (the learner sees the hint
+— no info loss).
+
+**Pacing semantics decided: lifetime attempts.** Today the engine
+never resets `evidenceSummary` on `review_due` regressions, so
+scaffolding stays off once a learner has produced the form twice
+on this skill — even months later when the skill resurfaces for
+review. Pedagogically defensible: the goal of Wave F is *removing
+scaffolding once form is internalised*; review_due is the engine's
+signal to re-surface the skill, not to re-introduce scaffolding
+(the H1 rule-card sheet is the per-skill refresher when needed).
+Cycle-aware stripping is parked behind product feedback.
+
+**Tests:** `app/test/fill_blank_widget_test.dart` (7 widget cases:
+3 modes × hint/no-hint render, after-4s reveal + reset, unmount-with-pending-timer
+dispose safety, regex position preservation), `app/test/fill_blank_hint_corpus_test.dart`
+(loads every shipped fill_blank item and verifies the regex strips
+exactly the §4.1 hint pattern, idempotent), plus three new cases
+in `app/test/session_controller_test.dart` pinning the snapshot
+preload on both `loadDynamicSession()` and `loadLesson()` plus the
+empty-store best-effort contract.
+
+---
+
+## Wave H2 phase 2 — investigated, deferred (2026-05-14)
+
+The H2 phase 1 judge in `backend/src/ai/openai.ts:318-411` is
+`target_form`-only: it lifts a wrong primary verdict to correct when
+the answer demonstrates the target form, regardless of other errors.
+Safe for `fill_blank` because its primary check is purely structural
+(deterministic match) — no semantic gate the judge could bypass.
+
+Phase 2 was scoped to extend the judge to the three open-form types
+(`sentence_correction`, `sentence_rewrite`, `short_free_sentence`).
+Codex paranoia rounds 1 + 2 both BLOCK on the same architectural
+incompatibility:
+
+- `short_free_sentence` is `strongest`-tier evidence requiring
+  **meaning + form** (`LEARNING_ENGINE.md §6.3, §6.4, §6.5`). A
+  `target_form`-only lift would let a grammatically-bad sentence
+  pass on one correct form token, violating the invariant.
+- `sentence_correction` and `sentence_rewrite` primary AI evaluators
+  do explicit semantic-equivalence judgements against the bounded
+  `accepted_corrections` / `accepted_answers` set. A
+  `target_form`-only lift would override the primary's
+  correctly-rejected meaning-changing answers.
+
+The wave cannot ship under the current judge shape. Two alternative
+paths exist for a future wave:
+
+1. Widen the judge contract to ALSO check the type-appropriate
+   semantic property (meaning equivalence for SC/SR; meaning + form
+   for SFS). This effectively duplicates the primary evaluator and
+   costs +2 AI calls per borderline item.
+2. Restructure the **primary evaluators** to return a structured
+   `{correct, off_target_note}` shape directly, instead of stacking
+   a separate judge on top. Cleaner architecturally but is a new
+   wave (not "extend phase 1"). Likely path forward if product needs
+   off-target-slip transparency.
+
+Plan body for the failed attempt: `/tmp/h2-phase2-plan.md` (rev 2).
+Recorded here so future sessions don't re-attempt the same shape.
 
 ---
 
