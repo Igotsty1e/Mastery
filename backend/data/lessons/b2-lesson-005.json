@@ -14,15 +14,32 @@
     "title": "verb + -ing OR verb + to (no real change)",
     "rule": "After a small set of verbs, both -ing and to + infinitive are accepted with little or no change in meaning at B2. Two predictable exceptions force the to-form.",
     "examples": [
-      {"text": "She loves cooking for her family.", "highlight": "cooking"},
-      {"text": "She loves to cook for her family.", "highlight": "to cook"},
-      {"text": "I am starting to learn Spanish online next month.", "highlight": "to learn"}
+      {
+        "text": "She loves cooking for her family.",
+        "highlight": "cooking"
+      },
+      {
+        "text": "She loves to cook for her family.",
+        "highlight": "to cook"
+      },
+      {
+        "text": "I am starting to learn Spanish online next month.",
+        "highlight": "to learn"
+      }
     ],
     "pattern_lists": [
       {
         "label": "Both forms accepted (similar meaning)",
         "items": [
-          "begin", "start", "continue", "intend", "bother", "like", "love", "hate", "prefer"
+          "begin",
+          "start",
+          "continue",
+          "intend",
+          "bother",
+          "like",
+          "love",
+          "hate",
+          "prefer"
         ]
       }
     ],
@@ -47,13 +64,17 @@
   "exercises": [
     {
       "exercise_id": "a1b2c3d4-0005-4000-8000-000000000031",
-      "type": "fill_blank",
+      "type": "short_free_sentence",
       "skill_id": "verb-both-forms-little-change",
       "primary_target_error": "conceptual_error",
-      "evidence_tier": "medium",
-      "instruction": "Complete the gap with the correct form of the verb in brackets.",
-      "prompt": "I like ___ (read) novels before bed; it helps me fall asleep.",
-      "accepted_answers": ["reading", "to read"],
+      "evidence_tier": "strongest",
+      "instruction": "What do you most like doing on a free evening? Start with «I like...».",
+      "target_rule": "After like, the verb that follows must be immediately either a verb-ing form or to + base verb; both are correct here with no meaningful difference. Reject answers that do not literally use like followed by one of these two forms.",
+      "accepted_examples": [
+        "I like reading thrillers with a glass of wine.",
+        "I like to call my sister and catch up on her week."
+      ],
+      "meaning_frame": "Describe a relaxing evening activity you choose for yourself.",
       "feedback": {
         "explanation": "Both 'reading' and 'to read' are accepted here. After like, love, hate and prefer (without 'would') both -ing and to + infinitive are acceptable in standard B2 English with little or no change in meaning. If you see like / love / hate / prefer (without 'would') followed by another verb → either form is correct."
       }
@@ -68,10 +89,22 @@
       "instruction": "Choose the correct option.",
       "prompt": "Would you like ___ a cup of tea before the meeting starts?",
       "options": [
-        { "id": "a", "text": "having" },
-        { "id": "b", "text": "to have" },
-        { "id": "c", "text": "have" },
-        { "id": "d", "text": "had" }
+        {
+          "id": "a",
+          "text": "having"
+        },
+        {
+          "id": "b",
+          "text": "to have"
+        },
+        {
+          "id": "c",
+          "text": "have"
+        },
+        {
+          "id": "d",
+          "text": "had"
+        }
       ],
       "correct_option_id": "b",
       "feedback": {
@@ -80,26 +113,34 @@
     },
     {
       "exercise_id": "a1b2c3d4-0005-4000-8000-000000000033",
-      "type": "fill_blank",
+      "type": "short_free_sentence",
       "skill_id": "verb-both-forms-little-change",
       "primary_target_error": "conceptual_error",
-      "evidence_tier": "medium",
-      "instruction": "Complete the gap with the correct form of the verb in brackets.",
-      "prompt": "She loves ___ (cook) for her family on weekends.",
-      "accepted_answers": ["cooking", "to cook"],
+      "evidence_tier": "strongest",
+      "instruction": "What's something you love doing in your free time? Start with «I love...».",
+      "target_rule": "After love, the verb that follows must be immediately either a verb-ing form or to + base verb; both are correct here with no meaningful difference. Reject answers that do not literally use love followed by one of these two forms.",
+      "accepted_examples": [
+        "I love cooking new recipes I find on Instagram.",
+        "I love to hike in the mountains whenever the weather is good."
+      ],
+      "meaning_frame": "Talk about a free-time activity you do with genuine enthusiasm.",
       "feedback": {
         "explanation": "Both 'cooking' and 'to cook' are accepted here. After love (and like, hate, prefer) both forms are acceptable in standard B2 English with no real change in meaning. If you see love / like / hate / prefer (without 'would') → either form works."
       }
     },
     {
       "exercise_id": "a1b2c3d4-0005-4000-8000-000000000034",
-      "type": "fill_blank",
+      "type": "short_free_sentence",
       "skill_id": "verb-both-forms-little-change",
       "primary_target_error": "conceptual_error",
-      "evidence_tier": "medium",
-      "instruction": "Complete the gap with the correct form of the verb in brackets.",
-      "prompt": "I hate ___ (wait) at the airport when flights are delayed.",
-      "accepted_answers": ["waiting", "to wait"],
+      "evidence_tier": "strongest",
+      "instruction": "What kind of task do you hate doing at work? Start with «I hate...».",
+      "target_rule": "After hate, the verb that follows must be immediately either a verb-ing form or to + base verb; both are correct here with no meaningful difference. Reject answers that do not literally use hate followed by one of these two forms.",
+      "accepted_examples": [
+        "I hate writing long reports nobody will read.",
+        "I hate to chase colleagues for status updates over and over."
+      ],
+      "meaning_frame": "Name a kind of work task you strongly dislike doing.",
       "feedback": {
         "explanation": "Both 'waiting' and 'to wait' are accepted here. After hate (and like, love, prefer) both forms are acceptable in standard B2 English with no real change in meaning. If you see hate / like / love / prefer (without 'would') → either form works."
       }
@@ -112,7 +153,10 @@
       "evidence_tier": "medium",
       "instruction": "Complete the gap with the correct form of the verb in brackets.",
       "prompt": "He prefers ___ (work) from home on Fridays whenever possible.",
-      "accepted_answers": ["working", "to work"],
+      "accepted_answers": [
+        "working",
+        "to work"
+      ],
       "feedback": {
         "explanation": "Both 'working' and 'to work' are accepted here. After prefer (and like, love, hate) both forms are acceptable in standard B2 English with no real change in meaning. If you see prefer / like / love / hate (without 'would') → either form works."
       }
@@ -126,10 +170,22 @@
       "instruction": "Choose the correct option.",
       "prompt": "I would prefer ___ in a quieter office if that is possible.",
       "options": [
-        { "id": "a", "text": "working" },
-        { "id": "b", "text": "to work" },
-        { "id": "c", "text": "work" },
-        { "id": "d", "text": "worked" }
+        {
+          "id": "a",
+          "text": "working"
+        },
+        {
+          "id": "b",
+          "text": "to work"
+        },
+        {
+          "id": "c",
+          "text": "work"
+        },
+        {
+          "id": "d",
+          "text": "worked"
+        }
       ],
       "correct_option_id": "b",
       "feedback": {
@@ -144,20 +200,27 @@
       "evidence_tier": "medium",
       "instruction": "Complete the gap with the correct form of the verb in brackets.",
       "prompt": "We started ___ (plan) the project right after the holiday break.",
-      "accepted_answers": ["planning", "to plan"],
+      "accepted_answers": [
+        "planning",
+        "to plan"
+      ],
       "feedback": {
         "explanation": "Both 'planning' and 'to plan' are accepted here. After start (and begin) in a non-continuous tense, both forms are acceptable in standard B2 English with no real change in meaning. If you see start / begin (in a simple or perfect tense) followed by another verb → either form works."
       }
     },
     {
       "exercise_id": "a1b2c3d4-0005-4000-8000-000000000038",
-      "type": "fill_blank",
+      "type": "short_free_sentence",
       "skill_id": "verb-both-forms-little-change",
       "primary_target_error": "conceptual_error",
-      "evidence_tier": "medium",
-      "instruction": "Complete the gap with the correct form of the verb in brackets.",
-      "prompt": "She began ___ (study) Italian three years ago for her work.",
-      "accepted_answers": ["studying", "to study"],
+      "evidence_tier": "strongest",
+      "instruction": "What's something you began doing as a child and still enjoy now? Start with «I began...».",
+      "target_rule": "After begin (or began), the verb that follows must be immediately either a verb-ing form or to + base verb; both are correct here with no meaningful difference. Reject answers that do not literally use begin/began followed by one of these two forms.",
+      "accepted_examples": [
+        "I began playing chess when I was eight and still play every weekend.",
+        "I began to learn the guitar at twelve, and I haven't stopped since."
+      ],
+      "meaning_frame": "Talk about a long-standing personal pursuit that started in childhood.",
       "feedback": {
         "explanation": "Both 'studying' and 'to study' are accepted here. After begin (and start) in a non-continuous tense, both forms are acceptable in standard B2 English with no real change in meaning. If you see begin / start (in a simple or perfect tense) followed by another verb → either form works."
       }

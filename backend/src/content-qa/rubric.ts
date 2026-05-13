@@ -133,7 +133,7 @@ const TYPE_CRITERIA: Record<string, Criterion[]> = {
     {
       id: 'accepted_examples_quality',
       question:
-        'Are accepted_examples natural, varied, and aligned with target_rule — and not so few that the AI evaluator has nothing to anchor against?',
+        'Are accepted_examples natural, varied, and aligned with target_rule? Used today as authoring-time reference and as the canonical-answer fallback shown to learners after grading; the production AI grader does not see them in the prompt body.',
     },
   ],
   multi_blank: [

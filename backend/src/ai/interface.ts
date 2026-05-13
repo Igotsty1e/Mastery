@@ -19,10 +19,11 @@ export interface AiEvaluationResult {
 /// and (b) uses the target rule. The model judges rule conformance
 /// + grammar rather than equivalence to a known answer.
 ///
-/// `acceptedExamples` is optional — when present, the model uses
-/// them as concrete grounding for what "uses the rule" looks like.
-/// Authors should keep the list short (≤3) to avoid biasing the
-/// model toward verbatim mimicry.
+/// `acceptedExamples` is optional. The production OpenAI grader
+/// prompt does not currently include them in the prompt body; runtime
+/// uses them only as the canonical-answer fallback on result surfaces.
+/// Authors should keep the list short (≤3) to avoid biasing future
+/// grader implementations toward verbatim mimicry.
 export interface AiFreeSentenceArgs {
   targetRule: string;
   instruction: string;

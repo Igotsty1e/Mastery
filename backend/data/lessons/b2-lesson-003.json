@@ -14,15 +14,49 @@
     "title": "verb + to + infinitive",
     "rule": "After certain verbs we use the to + infinitive of the next verb, not the -ing form.",
     "examples": [
-      {"text": "After two long meetings, we decided to postpone the launch.", "highlight": "to postpone"},
-      {"text": "She hopes to finish the report before the weekend.", "highlight": "to finish"},
-      {"text": "He refused to answer any questions about his previous job.", "highlight": "to answer"}
+      {
+        "text": "After two long meetings, we decided to postpone the launch.",
+        "highlight": "to postpone"
+      },
+      {
+        "text": "She hopes to finish the report before the weekend.",
+        "highlight": "to finish"
+      },
+      {
+        "text": "He refused to answer any questions about his previous job.",
+        "highlight": "to answer"
+      }
     ],
     "pattern_lists": [
       {
         "label": "Verbs followed by to + infinitive",
         "items": [
-          "agree", "appear", "arrange", "ask", "choose", "decide", "deserve", "expect", "fail", "happen", "hesitate", "hope", "intend", "learn", "manage", "offer", "plan", "prepare", "pretend", "promise", "refuse", "seem", "tend", "threaten", "want", "wish"
+          "agree",
+          "appear",
+          "arrange",
+          "ask",
+          "choose",
+          "decide",
+          "deserve",
+          "expect",
+          "fail",
+          "happen",
+          "hesitate",
+          "hope",
+          "intend",
+          "learn",
+          "manage",
+          "offer",
+          "plan",
+          "prepare",
+          "pretend",
+          "promise",
+          "refuse",
+          "seem",
+          "tend",
+          "threaten",
+          "want",
+          "wish"
         ]
       }
     ],
@@ -53,7 +87,9 @@
       "evidence_tier": "medium",
       "instruction": "Complete the gap with the correct form of the verb in brackets.",
       "prompt": "I decided ___ (move) to a new flat after my promotion.",
-      "accepted_answers": ["to move"],
+      "accepted_answers": [
+        "to move"
+      ],
       "feedback": {
         "explanation": "You wrote a different form, but the correct answer is 'to move' because decide is followed by to + infinitive when another verb comes next. If you see 'decide' followed by another verb → use to + infinitive."
       }
@@ -68,10 +104,22 @@
       "instruction": "Choose the correct option.",
       "prompt": "After a long discussion, the team decided ___ the launch until Q3.",
       "options": [
-        { "id": "a", "text": "postponing" },
-        { "id": "b", "text": "to postpone" },
-        { "id": "c", "text": "postpone" },
-        { "id": "d", "text": "postponed" }
+        {
+          "id": "a",
+          "text": "postponing"
+        },
+        {
+          "id": "b",
+          "text": "to postpone"
+        },
+        {
+          "id": "c",
+          "text": "postpone"
+        },
+        {
+          "id": "d",
+          "text": "postponed"
+        }
       ],
       "correct_option_id": "b",
       "feedback": {
@@ -80,26 +128,34 @@
     },
     {
       "exercise_id": "a1b2c3d4-0003-4000-8000-000000000033",
-      "type": "fill_blank",
+      "type": "short_free_sentence",
       "skill_id": "verb-to-inf-after-aspirational-verbs",
       "primary_target_error": "contrast_error",
-      "evidence_tier": "medium",
-      "instruction": "Complete the gap with the correct form of the verb in brackets.",
-      "prompt": "She hopes ___ (finish) the project before the holidays.",
-      "accepted_answers": ["to finish"],
+      "evidence_tier": "strongest",
+      "instruction": "What's something you really hope to do before the end of this year? Start with «I hope to...».",
+      "target_rule": "After hope, the next verb takes `to + base verb` form; that's the target.",
+      "accepted_examples": [
+        "I hope to finish my Russian course this winter.",
+        "I hope to visit my parents in Almaty before December."
+      ],
+      "meaning_frame": "Talk about a personal goal you'd like to reach by year-end.",
       "feedback": {
         "explanation": "You wrote a different form, but the correct answer is 'to finish' because hope is followed by to + infinitive when describing a wish about the future. If you see 'hope' followed by another verb → use to + infinitive."
       }
     },
     {
       "exercise_id": "a1b2c3d4-0003-4000-8000-000000000034",
-      "type": "fill_blank",
+      "type": "short_free_sentence",
       "skill_id": "verb-to-inf-after-aspirational-verbs",
       "primary_target_error": "contrast_error",
-      "evidence_tier": "medium",
-      "instruction": "Complete the gap with the correct form of the verb in brackets.",
-      "prompt": "They are planning ___ (open) a second office in Berlin next year.",
-      "accepted_answers": ["to open"],
+      "evidence_tier": "strongest",
+      "instruction": "What are you planning to do this weekend? Start with «I'm planning to...».",
+      "target_rule": "After plan, the next verb takes `to + base verb` form; that's the target.",
+      "accepted_examples": [
+        "I'm planning to hike with friends on Saturday.",
+        "I'm planning to catch up on sleep and read a long novel."
+      ],
+      "meaning_frame": "Describe a concrete weekend intention.",
       "feedback": {
         "explanation": "You wrote a different form, but the correct answer is 'to open' because plan is followed by to + infinitive when describing a future intention. If you see 'plan' followed by another verb → use to + infinitive."
       }
@@ -113,10 +169,22 @@
       "instruction": "Choose the correct option.",
       "prompt": "I want ___ a few more questions before we finish the interview.",
       "options": [
-        { "id": "a", "text": "ask" },
-        { "id": "b", "text": "to ask" },
-        { "id": "c", "text": "asking" },
-        { "id": "d", "text": "asked" }
+        {
+          "id": "a",
+          "text": "ask"
+        },
+        {
+          "id": "b",
+          "text": "to ask"
+        },
+        {
+          "id": "c",
+          "text": "asking"
+        },
+        {
+          "id": "d",
+          "text": "asked"
+        }
       ],
       "correct_option_id": "b",
       "feedback": {
@@ -125,13 +193,17 @@
     },
     {
       "exercise_id": "a1b2c3d4-0003-4000-8000-000000000036",
-      "type": "fill_blank",
+      "type": "short_free_sentence",
       "skill_id": "verb-to-inf-after-aspirational-verbs",
       "primary_target_error": "form_error",
-      "evidence_tier": "medium",
-      "instruction": "Complete the gap with the correct form of the verb in brackets.",
-      "prompt": "He wants ___ (improve) his presentation skills before the conference.",
-      "accepted_answers": ["to improve"],
+      "evidence_tier": "strongest",
+      "instruction": "What's one thing you want to do better at work this year? Start with «I want to...».",
+      "target_rule": "After want, the next verb takes `to + base verb` form; that's the target.",
+      "accepted_examples": [
+        "I want to speak up more in meetings this year.",
+        "I want to delegate small tasks instead of doing everything myself."
+      ],
+      "meaning_frame": "Name one specific work behaviour you want to improve.",
       "feedback": {
         "explanation": "You wrote 'improve' or a similar form, but the correct answer is 'to improve' because want takes the full to + infinitive. If you see 'want' followed by another verb → always include 'to' before it."
       }
@@ -144,20 +216,26 @@
       "evidence_tier": "medium",
       "instruction": "Complete the gap with the correct form of the verb in brackets.",
       "prompt": "After a short break, she agreed ___ (sign) the new contract.",
-      "accepted_answers": ["to sign"],
+      "accepted_answers": [
+        "to sign"
+      ],
       "feedback": {
         "explanation": "You wrote a different form, but the correct answer is 'to sign' because agree is followed by to + infinitive when accepting an action. If you see 'agree' followed by another verb → use to + infinitive."
       }
     },
     {
       "exercise_id": "a1b2c3d4-0003-4000-8000-000000000038",
-      "type": "fill_blank",
+      "type": "short_free_sentence",
       "skill_id": "verb-to-inf-after-aspirational-verbs",
       "primary_target_error": "contrast_error",
-      "evidence_tier": "medium",
-      "instruction": "Complete the gap with the correct form of the verb in brackets.",
-      "prompt": "He refused ___ (answer) any questions about his previous job.",
-      "accepted_answers": ["to answer"],
+      "evidence_tier": "strongest",
+      "instruction": "What's a request from work you'd refuse to do, even if asked nicely? Start with «I'd refuse to...».",
+      "target_rule": "After refuse, the next verb takes `to + base verb` form; that's the target.",
+      "accepted_examples": [
+        "I'd refuse to work weekends without prior notice.",
+        "I'd refuse to take on someone else's project without extra time off."
+      ],
+      "meaning_frame": "Talk about a work boundary you'd defend under polite pressure.",
       "feedback": {
         "explanation": "You wrote a different form, but the correct answer is 'to answer' because refuse is followed by to + infinitive when declining an action. If you see 'refuse' followed by another verb → use to + infinitive."
       }

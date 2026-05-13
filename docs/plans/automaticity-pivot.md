@@ -1,6 +1,6 @@
 # Automaticity pivot — roadmap
 
-**Status:** Waves 0 / A / B / C / D / G1–G9 / H1 / H2 / H3 (phase 1)
+**Status:** Waves 0 / A / B / C / D / G1–G9 / H1 / H2 / H3 (phase 1 + phase 2)
 shipped. Live web build serves first users at
 `https://mastery-web-igotsty1e.onrender.com` with real OpenAI
 grading (`gpt-4o`), product analytics, a calm 60-second countdown
@@ -348,18 +348,61 @@ across most target structures); aligns with `LEARNING_ENGINE.md
 `MasteryTextStyles.titleMd` headline (no card chrome, no icon)
 instead of the small banded label. Other types are unchanged.
 
-**Phases 2 & 3 — planned, not shipped.**
+**Phase 2 — Lessons 3 + 5 (shipped 2026-05-14).**
 
-- **Phase 2** — same conversion on Lessons 3 + 5 (gerund-only
-  verbs / verbs with both forms — both fit question-pull
-  cleanly).
+- Lesson 3 (`b2-lesson-003.json`, `verb-to-inf-after-aspirational-verbs`):
+  converted 4 of 6 fill_blank items (`…033 hope`, `…034 plan`,
+  `…036 want`, `…038 refuse`) to `short_free_sentence` with
+  question instructions. Anchors literally include `to` to block
+  the `verb + to + NP` bypass route. `decide` (already has an
+  existing SFS at `…03d`) and `agree` (unique in this set because
+  `agreed to + NP` is grammatical) kept as fill_blank.
+- Lesson 5 (`b2-lesson-005.json`, `verb-both-forms-little-change`):
+  converted 4 of 6 fill_blank items (`…031 like`, `…033 love`,
+  `…034 hate`, `…038 begin`) to SFS. Anchors deliberately omit
+  `to` since both `-ing` and `to + V` are correct. Dual-form
+  acceptance is encoded inside `target_rule` (the production
+  grader prompt at `backend/src/ai/openai.ts:150-167` does not
+  substitute `accepted_examples` after the Wave G6 rewrite, so the
+  dual-form clause has to live in the rule text itself). `prefer`
+  excluded (noun-phrase escape — "I prefer thrillers" passes the
+  anchor without using the form); `start` excluded (already has
+  an existing SFS at `…03d`).
+- Each converted item preserves `exercise_id`, `skill_id`,
+  `primary_target_error`, `feedback`; `evidence_tier` upshifts
+  `medium → strongest` (SFS family). `accepted_examples` carry one
+  `-ing` and one `to + V` example for Lesson 5 (canonical-answer
+  fallback on result surfaces).
+- New mix on Lesson 3 / Lesson 5 (each): 5 short_free_sentence +
+  2 fill_blank + 2 multiple_choice + 2 sentence_correction +
+  2 sentence_rewrite = 13. Audit (`§6.7`) clean.
+- Plan, 5-round Codex paranoia loop, and ship sequence captured
+  in `/tmp/h3-phase2-plan.md` (rev 4, SIGN-OFF).
+
+**Adjacent drift fix shipped in the same PR.** Reworded six
+existing truth-surfaces that claimed `accepted_examples` ground the
+AI judgement — they don't, since the Wave G6 prompt rewrite. Surfaces
+updated: `docs/content-contract.md §2.3`, `LEARNING_ENGINE.md` SFS
+paragraph, `backend/src/data/lessonSchema.ts` inline comment,
+`backend/src/ai/interface.ts` `AiFreeSentenceArgs` JSDoc,
+`backend/src/data/exerciseProjection.ts` projection comment,
+`backend/src/content-qa/rubric.ts` rubric question. Also stripped a
+dangling `[ACCEPTED_EXAMPLES]` reference from the OpenAI grader
+system message (text-only; the value was never substituted into
+the user prompt). `docs/plans/learning-engine-v1.md:340` left
+untouched as historical Wave-14.4-shipped log.
+
+**Phase 3 — planned, not shipped.**
+
 - **Phase 3** — partial conversion on Lesson 4 (only the items
   where question-pull is structurally valid); leave Lesson 2 as
   fill_blank-dominant because the contrast itself is recognition.
 
 The composition policy (`exercise_structure.md §6.7`) is **not yet
 updated** — the new minimum (`≥4 short_free_sentence per lesson`)
-will land with Phase 2/3 alongside the bulk authoring.
+will land with Phase 3 alongside the Lesson 4 partial authoring.
+Until then, the binding floor remains `≥1` so Lessons 2 + 4 don't
+fail audit mid-flight.
 
 ---
 

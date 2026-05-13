@@ -296,9 +296,14 @@ as authored — see `docs/backend-contract.md`.
   to judge conformance. The wire projection strips it — the learner
   never sees it. Keep it precise: "Present perfect continuous
   describes an ongoing activity from a past start point."
-- `accepted_examples`: 0-3 sample-correct sentences for the AI to
-  ground its judgement. Authors should keep this short to avoid
-  biasing the model toward verbatim mimicry. Empty arrays are fine.
+- `accepted_examples`: 0-3 sample-correct sentences. Authoring-time
+  reference only; the production grader prompt
+  (`backend/src/ai/openai.ts:150-167`) does not currently include them
+  in the prompt body. Runtime uses them only as the `canonical_answer`
+  fallback rendered on learner-facing result surfaces (`ExerciseScreen`
+  result panel + `SummaryScreen`). Authors should keep the list short
+  (≤ 3) to avoid biasing future grader implementations toward verbatim
+  mimicry. Empty arrays are fine.
 - There is no `prompt` field — the `instruction` IS the prompt.
 - The evaluator is AI-only (no deterministic match — the answer
   space is open). The server consumes the AI rate-limit budget on
