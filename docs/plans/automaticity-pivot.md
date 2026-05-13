@@ -1,19 +1,18 @@
 # Automaticity pivot — roadmap
 
-**Status:** Waves 0 / A / B / C / D / F / G1–G9 / H1 / H2 / H3 (phase 1 + phase 2)
+**Status:** Waves 0 / A / B / C / D / F / G1–G9 / H1 / H2 / H3 (phases 1 + 2 + 3)
 shipped. Live web build serves first users at
 `https://mastery-web-igotsty1e.onrender.com` with real OpenAI
 grading (`gpt-4o`), product analytics, a calm 60-second countdown
 bar, textbook-format rule cards, a dual-verdict AI judge that grants
 credit on non-target slips on fill_blank items, a question-driven
-exercise framing on Lessons 1, 3, and 5 (TTT — production-first,
-rule shown only after error), and progressive hint stripping on
-`fill_blank` items based on per-skill lifetime attempts. Wave E
-(diagnostic redesign), Wave H3 phase 3 (Lesson 4 partial + §6.7
-floor lift), and the engine-tuning backlog item are sketched but
-not started. Wave H2 phase 2 was investigated 2026-05-14 and
-deferred under the current judge contract — see §Wave H2 phase 2
-section below.
+exercise framing on Lessons 1, 3, 4, and 5 (Lesson 4 partial,
+preserving the `stop` recognition-contrast pair as fill_blank), and
+progressive hint stripping on `fill_blank` items based on per-skill
+lifetime attempts. Wave E (diagnostic redesign) and the
+engine-tuning backlog item are sketched but not started. Wave H2
+phase 2 was investigated 2026-05-14 and deferred under the current
+judge contract — see §Wave H2 phase 2 section below.
 
 The composition audit (`npm run audit:composition`) is a pre-merge
 CI gate alongside `vitest` in `.github/workflows/backend-test.yml`.
@@ -396,17 +395,45 @@ system message (text-only; the value was never substituted into
 the user prompt). `docs/plans/learning-engine-v1.md:340` left
 untouched as historical Wave-14.4-shipped log.
 
-**Phase 3 — planned, not shipped.**
+**Phase 3 — Lesson 4 partial + §6.7 floor lift (shipped 2026-05-14).**
 
-- **Phase 3** — partial conversion on Lesson 4 (only the items
-  where question-pull is structurally valid); leave Lesson 2 as
-  fill_blank-dominant because the contrast itself is recognition.
-
-The composition policy (`exercise_structure.md §6.7`) is **not yet
-updated** — the new minimum (`≥4 short_free_sentence per lesson`)
-will land with Phase 3 alongside the Lesson 4 partial authoring.
-Until then, the binding floor remains `≥1` so Lessons 2 + 4 don't
-fail audit mid-flight.
+- Lesson 4 (`b2-lesson-004.json`, `verb-both-forms-meaning-change`):
+  partial conversion preserving the meaning-contrast pedagogy.
+  Converted 4 fill_blank items: 031 (`remember + to`, future
+  obligation), 032 (`remember + -ing`, past recall), 034 (`forget +
+  -ing`, past recall), 038 (`try + -ing`, experiment). Each carries
+  the strict 5-component `target_rule` contract — trigger / immediate
+  complement / target meaning / rejected counter-form / explicit
+  reject clause — because the meaning sense decides the form and the
+  production grader prompt at `backend/src/ai/openai.ts:150-167`
+  carries only the rule (not `accepted_examples`).
+- The `stop` fill_blank pair (035 `stop + to` purpose / 036
+  `stop + -ing` cease) stays as `fill_blank` — the cleanest
+  same-trigger different-meaning recognition-contrast anchor in the
+  lesson. MC items 033 (`forget`) and 037 (`try`) also keep
+  recognition coverage on those verbs.
+- The retired SFS at `…03d` (was `remember + -ing` — would have
+  duplicated the new 032 conversion) is dropped, not reauthored.
+  Reusing the exercise_id for new content would have silently mixed
+  item-level analytics in `backend/src/observability/exerciseStats.ts:19`.
+  A fresh SFS for `regret + -ing` (past-regret sense) takes the slot
+  on a new UUID (`…040`), bringing `regret` into the production tier
+  for the first time.
+- New mix on Lesson 4: 5 short_free_sentence + 2 fill_blank +
+  2 multiple_choice + 2 sentence_correction + 2 sentence_rewrite =
+  13. Composition audit (`§6.7`) clean.
+- **`§6.7.2` floor lift shipped as doc-only.** New policy: production-
+  target lessons (Lessons 1, 3, 4, 5) SHOULD ship `≥ 4` SFS;
+  recognition-contrast lessons (Lesson 2 is the named exception) MAY
+  stay at `≥ 1`. The binding mechanical floor in
+  `audit-composition.ts` stays at `≥ 1` — the previously-scoped
+  schema-field approach (a lesson-level archetype enum) was
+  dropped during planning because it would have conflated pedagogy
+  with audit and the audit script doesn't go through `LessonSchema`.
+  Future regression case can justify a mechanical lift via a small
+  follow-up wave.
+- Plan, 2-round Codex paranoia loop (BLOCK → SIGN-OFF), and ship
+  sequence captured in `/tmp/h3-phase3-plan.md`.
 
 ---
 
