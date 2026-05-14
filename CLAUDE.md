@@ -82,15 +82,30 @@ If the new doc doesn't fit any of these, you probably don't need a new doc — e
 
 AI debrief feature shipped 2026-04-25 updated `backend-contract.md`, `approved-spec.md`, and `mobile-architecture.md`, but missed the `evaluationSource` field reference in `mobile-architecture.md` after the field was deleted from the Flutter model in a follow-up cleanup. Fixed 2026-04-26. Caused by working from a memorised list instead of `grep`.
 
-## Skill routing — Mastery additions
+## Skill routing — Mastery (skills are PRIMARY, not optional)
 
-Baseline routes (e.g. `/review`, `/ship`, `/investigate`, `/plan-eng-review`) are
-in `~/.claude/COMPANY.md`. Mastery adds:
+**Baseline mandatory routing lives in `~/.claude/COMPANY.md` §GSTACK skills as primary execution layer.** That table is binding for Mastery too. Re-read it before starting work — every plan / review / ship / debug / QA goes through its named skill, not freehand.
 
-- **Lesson authoring**, exercise creation, distractor writing, answer-key
-  creation, explanation writing, curriculum expansion → invoke
-  `english-grammar-methodologist` first, then validate against the canonical
-  content docs (`GRAM_STRATEGY.md`, `exercise_structure.md`, `LEARNING_ENGINE.md`).
+**Common Mastery flows — through skills, not Bash one-liners:**
+
+| Mastery action | Use skill | NEVER do instead |
+|---|---|---|
+| Drafting any wave plan (`/tmp/wave-*.md`, `docs/plans/*.md`) | `/plan-eng-review` (or `/autoplan` for big waves) | Hand-rolled paranoia-loop prompts via `codex exec`. |
+| Cross-model adversarial review on the plan or the staged diff | `/codex` (`review` / `challenge` / `consult` modes) | `codex exec ...` from Bash. The skill carries session continuity + per-mode prompt templates. |
+| Pre-landing diff review on a Mastery PR | `/review` | Eyeballing the diff or relying only on `/codex` (it's a different layer — SQL safety, LLM trust boundary, conditional side-effects). |
+| Shipping a Mastery wave (commit + push + PR) | `/ship` | `gh pr create` by hand. |
+| Merging the PR + waiting for CI + post-deploy smoke | `/land-and-deploy` | `gh pr merge --squash` + manual `gh pr checks` polling. |
+| Live-site QA on `https://mastery-web-igotsty1e.onrender.com` | `/qa` (test + fix loop) or `/qa-only` (report) | `flutter test` + manual smoke as the primary gate. |
+| Visual / UI audit on a deployed Mastery screen | `/design-review` | Eyeball screenshots. |
+| Code quality dashboard before a refactor | `/health` | Run `tsc` / `vitest` separately and stitch results. |
+| Post-ship doc sweep (DESIGN.md / GRAM_STRATEGY.md / mobile-architecture.md / backend-contract.md / content-contract.md / approved-spec.md / LEARNING_ENGINE.md / automaticity-pivot.md) | `/document-release` | Walk every doc by hand. |
+| Capturing cross-wave architectural findings (e.g. "target_form-only judge incompatible with open-form types") | `/learn` | Inline notes in plan-docs only. |
+| Session retrospective | `/retro` | Hand-typed summary at end-of-session. |
+| Saving working context for next session | `/context-save` / `/context-restore` | Relying on the user as a relay. |
+
+**Mastery content authoring** (lesson, exercise, distractor, answer key, explanation, curriculum expansion) → invoke `english-grammar-methodologist` first, then validate against the canonical content docs (`GRAM_STRATEGY.md`, `exercise_structure.md`, `LEARNING_ENGINE.md`). This rule pre-dates the broader skill-routing table and stays binding.
+
+**The freehand check (Mastery edition):** before writing a wave plan, calling `codex exec`, drafting a paranoia-review prompt, or running `gh pr create` — stop and ask *"is there a skill in `~/.claude/SKILLS.md` that already does this?"*. If yes → invoke via Skill tool. The 2026-05-14 retro on this project established that 4 waves shipped freehand re-derived checklists round-by-round that the skills already encoded; this routing table is the fix.
 
 ## Deploy Configuration
 
