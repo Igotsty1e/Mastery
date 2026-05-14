@@ -172,16 +172,21 @@ Wave 2 cut. Fixed in the same wave:
 
 ## Wave 3 — remaining
 
-> Status update (2026-05-01):
+> Status update (2026-05-14):
 > - Item 2 (Flutter client wiring) — **shipped Wave 7.4**: login,
 >   refresh, account, logout-all, delete-account all wired.
-> - Item 3 (lesson UX cutover) — **partially shipped Wave 7.4 part 2B**:
->   `SessionController` runs on `/sessions/start` +
->   `/lesson-sessions/:sid/answers` + `/complete` + `/next`;
->   `LearnerSkillStore` is dual-mode. The **`/dashboard` last-lesson-
->   report rebind is still open** — `LastLessonStore` remains in-memory
->   device-local. See `app/lib/session/last_lesson_store.dart` and
->   the CLAUDE.md project-entry note.
+> - Item 3 (lesson UX cutover) — **shipped Wave 7.4 part 2B + closed
+>   2026-05-14 by Wave 0 retirement.** `SessionController` runs on
+>   `/sessions/start` + `/lesson-sessions/:sid/answers` + `/complete`
+>   + `/next`; `LearnerSkillStore` is dual-mode. The original
+>   sub-item — `/dashboard.last_lesson_report` Flutter rebind — is
+>   **moot:** the on-dashboard Last-lesson-report block was retired
+>   from the home screen in Wave 0 (automaticity pivot, 2026-05-01),
+>   so there is no client surface to feed.  `LastLessonStore`
+>   survives as a write-only data preserve for potential engine
+>   future-use; the backend `lesson_sessions.debrief_snapshot`
+>   remains the durable source of truth. See
+>   `docs/plans/automaticity-pivot.md §Wave 0`.
 > - Item 4 partial — Wave 8 legacy drop (2026-04-26) removed the
 >   unauth `/lessons/:id/answers` + `/result` routes.
 
@@ -192,13 +197,12 @@ Wave 2 cut. Fixed in the same wave:
    (Product-owner decision 2026-05-14: Apple Sign-In dropped from the
    roadmap; Google Identity Services is the chosen identity provider.)
 2. ~~Flutter client wiring.~~ Shipped Wave 7.4.
-3. **Lesson UX cutover (residual).** `SessionController` cutover and
-   the per-skill state migration are done; the **`/dashboard`
-   last-lesson-report rebind on the home screen remains open** —
-   today the Last lesson card reads from the in-memory
-   `LastLessonStore`, not from `GET /dashboard`. Tracked in this
-   doc until the Flutter client reads `/dashboard` for the
-   persistent surface.
+3. ~~**Lesson UX cutover (residual).**~~ Closed 2026-05-14. The
+   `SessionController` cutover and per-skill state migration shipped
+   in Wave 7.4 part 2B; the originally-tracked `/dashboard.
+   last_lesson_report` Flutter rebind became moot when Wave 0
+   (automaticity pivot, 2026-05-01) retired the on-dashboard
+   Last-lesson-report block. No remaining work on this item.
 4. **Retire transitional anonymous routes (residual).** Wave 8
    legacy drop removed the unauth `/lessons/:id/answers` and
    `/result` paths. Any Wave 1 in-memory store callers still wired

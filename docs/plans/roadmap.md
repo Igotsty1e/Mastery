@@ -342,7 +342,7 @@ Support richer content and scoring while keeping backend authority.
 - add richer result payloads if needed:
   - transcript (for listening items)
   - structured error codes
-- **Persistent Last Lesson Report** — backend portion shipped 2026-04-26 in Wave 2: the `/dashboard` endpoint returns `last_lesson_report` from the most recent completed `lesson_session` (with the persisted debrief snapshot). The Flutter client is **not yet rewired** against `/dashboard`; until the client cutover, the in-memory `LastLessonStore` singleton (`app/lib/session/last_lesson_store.dart`) is still authoritative on-device and the block disappears after app restart.
+- ~~**Persistent Last Lesson Report**~~ — Closed 2026-05-14 as moot. The Wave 2 backend `/dashboard.last_lesson_report` is still served, but the on-dashboard block consuming it was retired in Wave 0 (automaticity pivot, 2026-05-01). No Flutter rebind needed; if the surface ever returns, a fresh client wave will read `/dashboard` directly. `LastLessonStore` remains a write-only data preserve for potential engine future use.
 
 ---
 
