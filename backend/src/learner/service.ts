@@ -357,6 +357,68 @@ export async function recordAttempt(
   return next;
 }
 
+/**
+ * Probe-context wrapper around `recordAttempt`. Wave E.1 (deferred
+ * piece, shipped 2026-05-14) — placement-probe attempts must augment
+ * `learner_skills` (per V1 spec §15 "the probe AUGMENTS, never
+ * resets") but must NOT be allowed to clear the §6.4 mastery gate
+ * (`productionGateCleared`).
+ *
+ * The gate flips on a `(correct, evidence_tier='strongest',
+ * meaning_frame set)` triple per `recordAttempt` lines ~217-224.
+ * Today's bank only tags `multiple_choice + evidence_tier='weak'`
+ * items as `is_diagnostic: true`, so the flip is impossible today.
+ * Wave E.2 will tag `short_free_sentence + evidence_tier='strongest'`
+ * items as probe items; without this guard the very first SFS probe
+ * attempt would prematurely mark a brand-new learner as having
+ * cleared production mastery on a rule they have not yet seen
+ * presented.
+ *
+ * Mechanism: cap `evidenceTier` at `medium` before delegating to
+ * `recordAttempt`. `weak` and `medium` pass through unchanged;
+ * `strong` and `strongest` get demoted to `medium`. The capped tier
+ * cannot satisfy the gate's `=== 'strongest'` predicate, so the
+ * gate cannot flip from a probe attempt regardless of the bank
+ * authoring. Tier also influences `scoreDelta` and
+ * `evidenceSummary` — the demotion deliberately moderates the
+ * weight a single probe attempt carries since probe samples
+ * pre-instruction signal, not post-learning evidence.
+ *
+ * Same call signature as `recordAttempt` so callers can swap
+ * mechanically. `meaningFrame` is allowed to flow through (probe
+ * SFS items will carry one); it simply cannot fire the gate when
+ * paired with a non-strongest tier.
+ *
+ * **Known nuance, not closed by this wrapper.** `exerciseType`
+ * flows through untouched, which means `evidenceWeight(exerciseType)`
+ * still contributes the full per-type weight to
+ * `weightedCorrectSum`/`weightedTotalSum`. A probe SFS attempt that
+ * scores correct therefore still bumps weighted accuracy by 5. The
+ * §7.2 `mastered` status is gated behind `productionGateCleared`,
+ * which this wrapper holds at false, so probe attempts cannot push
+ * a fresh learner to `mastered`. They CAN, however, push toward
+ * `almost_mastered`. The Codex round 1 finding was specifically
+ * about the gate; weight-on-probe is a separate methodologist
+ * question for Wave E.2 (probably needs an in-probe `evidenceWeight`
+ * cap, or a probe-only attempts bucket separate from the lesson
+ * mastery calculation).
+ */
+export async function recordAttemptFromProbe(
+  db: AppDatabase,
+  userId: string,
+  skillId: string,
+  input: RecordAttemptInput
+): Promise<LearnerSkillRecord> {
+  const cappedTier: EvidenceTier =
+    input.evidenceTier === 'strong' || input.evidenceTier === 'strongest'
+      ? 'medium'
+      : input.evidenceTier;
+  return recordAttempt(db, userId, skillId, {
+    ...input,
+    evidenceTier: cappedTier,
+  });
+}
+
 export async function getSkillRecord(
   db: AppDatabase,
   userId: string,

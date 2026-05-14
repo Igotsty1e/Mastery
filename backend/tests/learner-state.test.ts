@@ -652,3 +652,106 @@ describe('Wave 7.4 part 2.4 — POST /me/state/bulk-import', () => {
     expect(res.status).toBe(400);
   });
 });
+
+// ────────────────────────────────────────────────────────────────────────
+// Wave E.1 followup — recordAttemptFromProbe capped-tier guard.
+//
+// Locks the §6.4 production-mastery gate so it cannot flip from a
+// placement-probe attempt regardless of bank authoring. Today's probe
+// pool is all `weak`-tier MC (no risk), but Wave E.2 will tag SFS +
+// `strongest`-tier items as probe items — the very first probe attempt
+// on a fresh learner would otherwise mark the gate cleared on a rule
+// they have not yet seen presented.
+// ────────────────────────────────────────────────────────────────────────
+
+import {
+  recordAttempt,
+  recordAttemptFromProbe,
+  getSkillRecord,
+} from '../src/learner/service';
+
+describe('Wave E.1 followup — recordAttemptFromProbe', () => {
+  it('does NOT flip productionGateCleared on a strongest-tier + meaning_frame correct attempt', async () => {
+    const { userId } = await login('probe-cap-1');
+    // Pre-condition: regular recordAttempt with the same inputs DOES flip
+    // the gate. Establish the baseline on a separate user.
+    const baseline = await login('probe-cap-baseline');
+    await recordAttempt(h.database.orm, baseline.userId, SKILL_A, {
+      evidenceTier: 'strongest',
+      correct: true,
+      meaningFrame: 'past completed action',
+      occurredAt: new Date(),
+      exerciseType: 'short_free_sentence',
+      outcome: 'correct',
+    });
+    const baselineRec = await getSkillRecord(
+      h.database.orm,
+      baseline.userId,
+      SKILL_A
+    );
+    expect(baselineRec.productionGateCleared).toBe(true); // baseline confirms gate flips for non-probe path
+
+    // recordAttemptFromProbe with the same input must NOT flip the gate.
+    await recordAttemptFromProbe(h.database.orm, userId, SKILL_A, {
+      evidenceTier: 'strongest',
+      correct: true,
+      meaningFrame: 'past completed action',
+      occurredAt: new Date(),
+      exerciseType: 'short_free_sentence',
+      outcome: 'correct',
+    });
+    const probeRec = await getSkillRecord(h.database.orm, userId, SKILL_A);
+    expect(probeRec.productionGateCleared).toBe(false);
+    // Attempt was still recorded (probe AUGMENTS).
+    expect(probeRec.attemptsCount).toBe(1);
+    // Tier was demoted to `medium` so the evidenceSummary reflects it.
+    expect(probeRec.evidenceSummary.medium).toBe(1);
+    expect(probeRec.evidenceSummary.strongest ?? 0).toBe(0);
+  });
+
+  it('passes through weak-tier attempts unchanged (today live probe pool)', async () => {
+    const { userId } = await login('probe-cap-weak');
+    await recordAttemptFromProbe(h.database.orm, userId, SKILL_A, {
+      evidenceTier: 'weak',
+      correct: true,
+      occurredAt: new Date(),
+      exerciseType: 'multiple_choice',
+      outcome: 'correct',
+    });
+    const rec = await getSkillRecord(h.database.orm, userId, SKILL_A);
+    expect(rec.attemptsCount).toBe(1);
+    expect(rec.evidenceSummary.weak).toBe(1);
+    // Weak-tier cannot flip the gate anyway, so this just confirms
+    // shape parity with recordAttempt for the live probe pool.
+    expect(rec.productionGateCleared).toBe(false);
+  });
+
+  it('demotes strong-tier to medium without flipping the gate', async () => {
+    const { userId } = await login('probe-cap-strong');
+    await recordAttemptFromProbe(h.database.orm, userId, SKILL_A, {
+      evidenceTier: 'strong',
+      correct: true,
+      meaningFrame: 'discrete past event',
+      occurredAt: new Date(),
+      exerciseType: 'sentence_correction',
+      outcome: 'correct',
+    });
+    const rec = await getSkillRecord(h.database.orm, userId, SKILL_A);
+    expect(rec.evidenceSummary.medium).toBe(1);
+    expect(rec.evidenceSummary.strong ?? 0).toBe(0);
+    expect(rec.productionGateCleared).toBe(false);
+  });
+
+  it('passes medium-tier through unchanged', async () => {
+    const { userId } = await login('probe-cap-medium');
+    await recordAttemptFromProbe(h.database.orm, userId, SKILL_A, {
+      evidenceTier: 'medium',
+      correct: true,
+      occurredAt: new Date(),
+      exerciseType: 'fill_blank',
+      outcome: 'correct',
+    });
+    const rec = await getSkillRecord(h.database.orm, userId, SKILL_A);
+    expect(rec.evidenceSummary.medium).toBe(1);
+  });
+});
