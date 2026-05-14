@@ -86,12 +86,25 @@ AI debrief feature shipped 2026-04-25 updated `backend-contract.md`, `approved-s
 
 **Baseline mandatory routing lives in `~/.claude/COMPANY.md` §GSTACK skills as primary execution layer.** That table is binding for Mastery too. Re-read it before starting work — every plan / review / ship / debug / QA goes through its named skill, not freehand.
 
-**Common Mastery flows — through skills, not Bash one-liners:**
+### Mandatory paranoia pipeline (every wave)
+
+Per the global rule (`~/.claude/CLAUDE.md §Two-checkpoint paranoia pipeline` + `~/.claude/COMPANY.md`), every Mastery wave passes through `/codex-paranoia` at TWO checkpoints:
+
+1. **Plan checkpoint** — BEFORE the first commit of the wave: `/codex-paranoia plan <plan-file>` against the wave's plan doc (`/tmp/wave-*.md` or `docs/plans/*.md`). All BLOCKERs fixed in the plan before code starts.
+2. **Wave checkpoint** — AFTER the wave's complete functional unit is implemented (full microservice, full module, full pipeline — NOT half), BEFORE `gh pr create`: `/codex-paranoia wave <commit-range>`. Codex reviews the full diff.
+
+Hard cap = 3 rounds per checkpoint. Round-3 BLOCK → STOP + escalate. Every Mastery wave PR carries a `Codex-Paranoia: SIGN-OFF round N/3` (or `ESCALATED` / `SKIPPED`) trailer in the commit body.
+
+Mastery wave examples that already shipped without this discipline (and would have benefited): Wave H3 (took 5 paranoia rounds hand-driven; would have either fit in 3 with structure or escalated cleanly), Wave E (single-PR scope failed Codex round 1, was deferred — exactly the kind of catch this pipeline structurally enforces).
+
+### Common Mastery flows — through skills, not Bash one-liners
 
 | Mastery action | Use skill | NEVER do instead |
 |---|---|---|
-| Drafting any wave plan (`/tmp/wave-*.md`, `docs/plans/*.md`) | `/plan-eng-review` (or `/autoplan` for big waves) | Hand-rolled paranoia-loop prompts via `codex exec`. |
-| Cross-model adversarial review on the plan or the staged diff | `/codex` (`review` / `challenge` / `consult` modes) | `codex exec ...` from Bash. The skill carries session continuity + per-mode prompt templates. |
+| Drafting any wave plan (`/tmp/wave-*.md`, `docs/plans/*.md`) | `/plan-eng-review` (or `/autoplan` for big waves) → then `/codex-paranoia plan` | Hand-rolled paranoia-loop prompts via `codex exec`. |
+| **Plan/doc agreement BEFORE implementation** | **`/codex-paranoia plan <file>`** | Starting to code on an unreviewed plan. |
+| **Post-wave code review BEFORE `gh pr create`** | **`/codex-paranoia wave <commit-range>`** | Opening a PR without the adversarial pass on the full diff. |
+| Cross-model adversarial review on the plan or the staged diff (single-shot, not pipeline) | `/codex` (`review` / `challenge` / `consult` modes) | `codex exec ...` from Bash. The skill carries session continuity + per-mode prompt templates. |
 | Pre-landing diff review on a Mastery PR | `/review` | Eyeballing the diff or relying only on `/codex` (it's a different layer — SQL safety, LLM trust boundary, conditional side-effects). |
 | Shipping a Mastery wave (commit + push + PR) | `/ship` | `gh pr create` by hand. |
 | Merging the PR + waiting for CI + post-deploy smoke | `/land-and-deploy` | `gh pr merge --squash` + manual `gh pr checks` polling. |
