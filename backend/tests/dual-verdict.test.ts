@@ -57,7 +57,7 @@ beforeEach(() => {
 async function login(subject: string) {
   const res = await inject(h.app, {
     method: 'POST',
-    path: '/auth/apple/stub/login',
+    path: '/auth/google/stub/login',
     json: { subject },
   });
   const body = res.json as { accessToken: string; user: { id: string } };

@@ -24,7 +24,7 @@ Wave 1 ships only what is needed to make Wave 2 a clean swap.
 | Table | Purpose |
 |---|---|
 | `users` | Opaque user row (`id`, `created_at`). No email field. |
-| `auth_identities` | One row per `(provider, subject)`. Future-proof: a single user can link multiple providers later. Provider values today: `apple_stub`. |
+| `auth_identities` | One row per `(provider, subject)`. Future-proof: a single user can link multiple providers later. Provider values today: `google_stub`. |
 | `auth_sessions` | One row per refresh token. Refresh tokens stored as `sha256` hex hash. Tracks `expires_at`, `revoked_at`, `user_agent`, `ip_address`. |
 | `user_profiles` | `display_name`, `level`. Created on first login. |
 | `audit_events` | Append-only audit log. `user_id` is nullable so tombstones survive a hard-delete. |
@@ -44,7 +44,7 @@ Drivers:
 
 | Method | Path | Notes |
 |---|---|---|
-| POST | `/auth/apple/stub/login` | Stub sign-in. **Not registered when `NODE_ENV=production`** unless `APPLE_STUB_ENABLED=1`. Real Apple verifier replaces the body parser later — response shape stays stable. First-login create path runs in a transaction so a race on `(provider, subject)` cannot leave an orphan `users` row. |
+| POST | `/auth/google/stub/login` | Stub sign-in. **Not registered when `NODE_ENV=production`** unless `GOOGLE_STUB_ENABLED=1`. Real Google ID-token verifier (Google Identity Services + Google JWKS) replaces the body parser later — response shape stays stable. First-login create path runs in a transaction so a race on `(provider, subject)` cannot leave an orphan `users` row. |
 | POST | `/auth/refresh` | Rotate via conditional UPDATE inside a transaction; concurrent refreshes with the same token only mint one new pair. Replay → 401. |
 | POST | `/auth/logout` | Revoke single session. Always 204 (no enumeration). |
 | POST | `/auth/logout-all` | Revoke every active session for the caller. |
@@ -59,13 +59,13 @@ Full request/response shapes live in `docs/backend-contract.md §Authentication 
 - `backend/tests/auth.tokens.test.ts` — HMAC sign/verify, expiry, tampering, plus the production-mode AUTH_SECRET guard (`assertAuthSecretConfigured`, sign/verify refusal).
 - `backend/tests/auth.route.test.ts` — login (new / repeat user), refresh rotation, logout, logout-all, audit + integration trail.
 - `backend/tests/me.route.test.ts` — `/me` happy path, profile update (strict body, level enum), partial update, hard-delete cascade + audit tombstone + re-login as a fresh user.
-- `backend/tests/auth.security.test.ts` — Apple-stub production gating, concurrent `/auth/refresh` atomicity, concurrent first-login dedupe, IP trust boundary on `auth_sessions.ipAddress`.
+- `backend/tests/auth.security.test.ts` — Google-stub production gating, concurrent `/auth/refresh` atomicity, concurrent first-login dedupe, IP trust boundary on `auth_sessions.ipAddress`.
 
 ### Env vars
 
 - `DATABASE_URL` — Postgres connection. Unset → in-memory PGlite (data lost on restart). Production must set this.
 - `AUTH_SECRET` — HMAC key for access tokens. **Required when `NODE_ENV=production`.** Boot fails loudly when missing; signing/verification also throws rather than fall back to the dev-only constant. Outside of production, a dev fallback key is used so unit tests work out of the box.
-- `APPLE_STUB_ENABLED` — set to `1` to expose `/auth/apple/stub/login` when `NODE_ENV=production` (e.g. for staging smoke tests). Unset in real production deploys; the route is not registered and the catchall returns `404 not_found`.
+- `GOOGLE_STUB_ENABLED` — set to `1` to expose `/auth/google/stub/login` when `NODE_ENV=production` (e.g. for staging smoke tests). Unset in real production deploys; the route is not registered and the catchall returns `404 not_found`.
 
 ### Migrations & extensions
 
@@ -185,10 +185,12 @@ Wave 2 cut. Fixed in the same wave:
 > - Item 4 partial — Wave 8 legacy drop (2026-04-26) removed the
 >   unauth `/lessons/:id/answers` + `/result` routes.
 
-1. **Real Sign In with Apple.** Replace `/auth/apple/stub/login` with
-   `/auth/apple/login`, which verifies Apple's `identityToken` JWT
-   against the public JWKS and extracts `sub` for the existing identity
-   model. The stub route stays on a feature flag for testing.
+1. **Real Sign In with Google.** Replace `/auth/google/stub/login`
+   with `/auth/google/login`, which verifies Google's `id_token` JWT
+   against the Google JWKS and extracts `sub` for the existing
+   identity model. The stub route stays on a feature flag for testing.
+   (Product-owner decision 2026-05-14: Apple Sign-In dropped from the
+   roadmap; Google Identity Services is the chosen identity provider.)
 2. ~~Flutter client wiring.~~ Shipped Wave 7.4.
 3. **Lesson UX cutover (residual).** `SessionController` cutover and
    the per-skill state migration are done; the **`/dashboard`

@@ -19,9 +19,9 @@ class AuthSessionExpired implements Exception {
 /// Wave 7.4 part 1 — auth orchestration layer. Sits between the
 /// application code and the bare HTTP client. Knows how to:
 ///
-/// 1. Sign in via the Apple stub (or the real Apple verifier when it
-///    lands) and persist the resulting refresh token in
-///    `AuthStorage`.
+/// 1. Sign in via the Google stub (or the real Google ID-token
+///    verifier when it lands) and persist the resulting refresh token
+///    in `AuthStorage`.
 /// 2. Add `Authorization: Bearer <access>` to every outbound request.
 /// 3. Transparently refresh the access token on a 401 response and
 ///    retry the original request once.
@@ -51,18 +51,18 @@ class AuthClient {
 
   static http.Client _defaultClient() => http.Client();
 
-  /// Apple stub login. The real Sign-In-with-Apple flow swaps the
-  /// `provider` and `subject` for an `identityToken` once the iOS
-  /// integration lands; the response shape stays the same so this
-  /// method's signature does not need to change.
-  Future<AuthTokens> signInWithAppleStub({required String subject}) async {
+  /// Google stub login. The real Sign-In-with-Google flow will swap
+  /// the `subject` payload for a Google `id_token` once the Google
+  /// Identity Services integration lands; the response shape stays
+  /// the same so this method's signature does not need to change.
+  Future<AuthTokens> signInWithGoogleStub({required String subject}) async {
     final resp = await _http.post(
-      Uri.parse('$baseUrl/auth/apple/stub/login'),
+      Uri.parse('$baseUrl/auth/google/stub/login'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'subject': subject}),
     );
     if (resp.statusCode != 200) {
-      throw AuthSessionExpired('apple_stub_login_${resp.statusCode}');
+      throw AuthSessionExpired('google_stub_login_${resp.statusCode}');
     }
     final tokens = AuthTokens.fromLoginJson(
       jsonDecode(resp.body) as Map<String, dynamic>,

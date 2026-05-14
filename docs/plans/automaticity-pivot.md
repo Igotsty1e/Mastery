@@ -662,8 +662,8 @@ into a Wave when picked up.
 - **Google Play release + real auth on Android** — target platform
   shift (2026-05-14). The first store ship is **Google Play**, not
   App Store. Submission process is in flight; final OK pending.
-  Current login is `signInWithAppleStub`. Real auth on the Android
-  build lands alongside the Google Play submission. Apple Sign-In
+  Current login is `signInWithGoogleStub`. Real auth on the Android
+  build lands alongside the Google Play submission. Google Sign-In
   + iOS build are deferred until after the Android channel is open.
   The stub keeps powering web + dev flows in the meantime.
 - **Custom domain** — operator's call. Bind via Render dashboard

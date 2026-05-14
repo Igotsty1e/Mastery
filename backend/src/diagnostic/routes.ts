@@ -10,7 +10,7 @@
 //
 // All routes require auth via the existing `requireAuth` middleware.
 // Wave 7.4 product call: skip-for-now is still allowed (silent stub
-// login on /auth/apple/stub/login covers the unauth case), and the
+// login on /auth/google/stub/login covers the unauth case), and the
 // Flutter client owns the routing decision; this route just lets the
 // app declare the cohort intent for D1 retention analysis.
 

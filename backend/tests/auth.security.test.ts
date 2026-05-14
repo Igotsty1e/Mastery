@@ -4,30 +4,30 @@ import { inject } from './helpers/inject';
 import { makeTestApp, type TestApp } from './helpers/db';
 import { authIdentities, authSessions, users } from '../src/db/schema';
 
-// Apple-stub gating happens at router-construction time (the route is not
+// Google-stub gating happens at router-construction time (the route is not
 // registered when production gating is on), so each gating case needs a
 // freshly built app. We rebuild inside the test bodies and restore env on
 // teardown.
 
-describe('apple-stub gating', () => {
+describe('google-stub gating', () => {
   const originalNodeEnv = process.env.NODE_ENV;
-  const originalFlag = process.env.APPLE_STUB_ENABLED;
+  const originalFlag = process.env.GOOGLE_STUB_ENABLED;
 
   function restoreEnv() {
     if (originalNodeEnv === undefined) delete process.env.NODE_ENV;
     else process.env.NODE_ENV = originalNodeEnv;
-    if (originalFlag === undefined) delete process.env.APPLE_STUB_ENABLED;
-    else process.env.APPLE_STUB_ENABLED = originalFlag;
+    if (originalFlag === undefined) delete process.env.GOOGLE_STUB_ENABLED;
+    else process.env.GOOGLE_STUB_ENABLED = originalFlag;
   }
 
   it('is reachable in non-production environments without an opt-in flag', async () => {
     delete process.env.NODE_ENV;
-    delete process.env.APPLE_STUB_ENABLED;
+    delete process.env.GOOGLE_STUB_ENABLED;
     const h = await makeTestApp();
     try {
       const res = await inject(h.app, {
         method: 'POST',
-        path: '/auth/apple/stub/login',
+        path: '/auth/google/stub/login',
         json: { subject: 'gate-dev' },
       });
       expect(res.status).toBe(200);
@@ -40,12 +40,12 @@ describe('apple-stub gating', () => {
   it('returns 404 in production when the opt-in flag is unset', async () => {
     process.env.NODE_ENV = 'production';
     process.env.AUTH_SECRET = 'gate-prod-secret';
-    delete process.env.APPLE_STUB_ENABLED;
+    delete process.env.GOOGLE_STUB_ENABLED;
     const h = await makeTestApp();
     try {
       const res = await inject(h.app, {
         method: 'POST',
-        path: '/auth/apple/stub/login',
+        path: '/auth/google/stub/login',
         json: { subject: 'gate-prod' },
       });
       expect(res.status).toBe(404);
@@ -57,15 +57,15 @@ describe('apple-stub gating', () => {
     }
   });
 
-  it('is reachable in production when explicitly enabled via APPLE_STUB_ENABLED=1', async () => {
+  it('is reachable in production when explicitly enabled via GOOGLE_STUB_ENABLED=1', async () => {
     process.env.NODE_ENV = 'production';
     process.env.AUTH_SECRET = 'gate-prod-secret';
-    process.env.APPLE_STUB_ENABLED = '1';
+    process.env.GOOGLE_STUB_ENABLED = '1';
     const h = await makeTestApp();
     try {
       const res = await inject(h.app, {
         method: 'POST',
-        path: '/auth/apple/stub/login',
+        path: '/auth/google/stub/login',
         json: { subject: 'gate-prod-on' },
       });
       expect(res.status).toBe(200);
@@ -90,7 +90,7 @@ afterAll(async () => {
 async function login(subject: string) {
   return inject(h.app, {
     method: 'POST',
-    path: '/auth/apple/stub/login',
+    path: '/auth/google/stub/login',
     json: { subject },
   });
 }
@@ -158,7 +158,7 @@ describe('session IP trust boundary', () => {
     // Public socket → XFF must be ignored.
     const res = await inject(h.app, {
       method: 'POST',
-      path: '/auth/apple/stub/login',
+      path: '/auth/google/stub/login',
       json: { subject: 'ip-spoof' },
       socketRemoteAddress: '5.5.5.5',
       headers: { 'x-forwarded-for': '8.8.8.8' },
@@ -175,7 +175,7 @@ describe('session IP trust boundary', () => {
   it('honours X-Forwarded-For when the socket itself is a trusted RFC 1918 proxy', async () => {
     const res = await inject(h.app, {
       method: 'POST',
-      path: '/auth/apple/stub/login',
+      path: '/auth/google/stub/login',
       json: { subject: 'ip-trusted' },
       socketRemoteAddress: '10.0.0.1',
       headers: { 'x-forwarded-for': '203.0.113.5' },

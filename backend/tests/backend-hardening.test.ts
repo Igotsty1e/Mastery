@@ -384,7 +384,7 @@ describe('CORS origin allowlist', () => {
       const origin = 'https://mastery-web-igotsty1e.onrender.com';
       const res = await inject(app, {
         method: 'OPTIONS',
-        path: '/auth/apple/stub/login',
+        path: '/auth/google/stub/login',
         headers: { origin },
       });
       expect(res.status).toBe(204);

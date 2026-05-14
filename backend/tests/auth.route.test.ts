@@ -24,17 +24,17 @@ afterAll(async () => {
 async function login(subject: string, displayName?: string) {
   const res = await inject(h.app, {
     method: 'POST',
-    path: '/auth/apple/stub/login',
+    path: '/auth/google/stub/login',
     json: { subject, displayName },
   });
   return res;
 }
 
-describe('POST /auth/apple/stub/login', () => {
+describe('POST /auth/google/stub/login', () => {
   it('rejects an invalid payload with 400', async () => {
     const res = await inject(h.app, {
       method: 'POST',
-      path: '/auth/apple/stub/login',
+      path: '/auth/google/stub/login',
       json: { subject: '' },
     });
     expect(res.status).toBe(400);
@@ -42,7 +42,7 @@ describe('POST /auth/apple/stub/login', () => {
   });
 
   it('creates a user, identity, profile, and session on first login', async () => {
-    const res = await login('apple-sub-001', 'Ada');
+    const res = await login('google-sub-001', 'Ada');
     expect(res.status).toBe(200);
     const body = res.json as Record<string, string | { id: string }>;
     expect(body.user).toMatchObject({ id: expect.any(String) });
@@ -58,8 +58,8 @@ describe('POST /auth/apple/stub/login', () => {
       .where(eq(authIdentities.userId, userId));
     expect(idents).toHaveLength(1);
     expect(idents[0]).toMatchObject({
-      provider: 'apple_stub',
-      subject: 'apple-sub-001',
+      provider: 'google_stub',
+      subject: 'google-sub-001',
     });
 
     const profile = await h.database.orm
@@ -86,14 +86,14 @@ describe('POST /auth/apple/stub/login', () => {
       .select()
       .from(integrationEvents);
     const linked = integrations.find(
-      (i) => i.externalId === 'apple_stub:apple-sub-001'
+      (i) => i.externalId === 'google_stub:google-sub-001'
     );
     expect(linked?.eventType).toBe('identity.linked');
   });
 
   it('returns the same user on repeat login with the same subject', async () => {
-    const first = await login('apple-sub-002');
-    const second = await login('apple-sub-002');
+    const first = await login('google-sub-002');
+    const second = await login('google-sub-002');
     expect(first.status).toBe(200);
     expect(second.status).toBe(200);
     const firstUser = (first.json as { user: { id: string } }).user.id;
@@ -109,7 +109,7 @@ describe('POST /auth/apple/stub/login', () => {
   });
 
   it('issues a working access token (verified by /me)', async () => {
-    const login1 = await login('apple-sub-003');
+    const login1 = await login('google-sub-003');
     const accessToken = (login1.json as { accessToken: string }).accessToken;
     const me = await inject(h.app, {
       method: 'GET',
@@ -126,7 +126,7 @@ describe('POST /auth/apple/stub/login', () => {
 
 describe('POST /auth/refresh', () => {
   it('rotates a valid refresh token and revokes the old one', async () => {
-    const start = await login('apple-sub-100');
+    const start = await login('google-sub-100');
     const original = (start.json as { refreshToken: string }).refreshToken;
     const res = await inject(h.app, {
       method: 'POST',
@@ -169,7 +169,7 @@ describe('POST /auth/refresh', () => {
 
 describe('POST /auth/logout', () => {
   it('revokes the session for the presented refresh token', async () => {
-    const start = await login('apple-sub-200');
+    const start = await login('google-sub-200');
     const refreshToken = (start.json as { refreshToken: string }).refreshToken;
 
     const out = await inject(h.app, {
@@ -199,8 +199,8 @@ describe('POST /auth/logout', () => {
 
 describe('POST /auth/logout-all', () => {
   it('revokes every active session for the user', async () => {
-    const a = await login('apple-sub-300');
-    const b = await login('apple-sub-300');
+    const a = await login('google-sub-300');
+    const b = await login('google-sub-300');
     const accessB = (b.json as { accessToken: string }).accessToken;
     const refreshA = (a.json as { refreshToken: string }).refreshToken;
     const refreshB = (b.json as { refreshToken: string }).refreshToken;

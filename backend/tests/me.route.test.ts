@@ -27,7 +27,7 @@ async function loginAs(
 ) {
   const res = await inject(h.app, {
     method: 'POST',
-    path: '/auth/apple/stub/login',
+    path: '/auth/google/stub/login',
     json: { subject, displayName },
     headers: acceptLanguage
       ? { 'accept-language': acceptLanguage }
@@ -305,7 +305,7 @@ describe('DELETE /me', () => {
     // Re-login with the same provider+subject creates a fresh user row.
     const reLogin = await inject(h.app, {
       method: 'POST',
-      path: '/auth/apple/stub/login',
+      path: '/auth/google/stub/login',
       json: { subject: 'me-sub-delete' },
     });
     expect(reLogin.status).toBe(200);

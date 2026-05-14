@@ -141,7 +141,7 @@ Backend находится в `backend/`.
 
 Уже есть foundation для авторизации и identity:
 
-- `POST /auth/apple/stub/login`
+- `POST /auth/google/stub/login`
 - `POST /auth/refresh`
 - `POST /auth/logout`
 - `POST /auth/logout-all`
@@ -317,7 +317,7 @@ Lesson runtime storage всё ещё partly in-memory.
 
 Также впереди:
 
-- реальный Sign in with Apple вместо stub login
+- реальный Continue with Google вместо stub login
 - wiring Flutter-клиента к auth flow
 - привязка lesson progress к authenticated user
 - настоящая persistence для last lesson report

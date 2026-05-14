@@ -45,7 +45,7 @@ work, written before the engine waves shipped. Snapshot:
 | Table | Purpose |
 |---|---|
 | `users` | Opaque user row (`id`, `created_at`). No email field. |
-| `auth_identities` | `(provider, subject)` rows. Future-proof for multi-provider linking. Today: `apple_stub`. |
+| `auth_identities` | `(provider, subject)` rows. Future-proof for multi-provider linking. Today: `google_stub`. |
 | `auth_sessions` | One row per refresh token (sha256 hashed at rest). `expires_at`, `revoked_at`, `user_agent`, `ip_address`. |
 | `user_profiles` | `display_name`, `level`. Created on first login. |
 | `audit_events` | Append-only log. Nullable `user_id` so tombstones survive hard-delete. |
@@ -62,7 +62,7 @@ work, written before the engine waves shipped. Snapshot:
 
 | Method | Path | Notes |
 |---|---|---|
-| POST | `/auth/apple/stub/login` | Stub sign-in. Not registered when `NODE_ENV=production` unless `APPLE_STUB_ENABLED=1`. Real Apple verifier swaps in later; response shape stays stable. |
+| POST | `/auth/google/stub/login` | Stub sign-in. Not registered when `NODE_ENV=production` unless `GOOGLE_STUB_ENABLED=1`. Real Google ID-token verifier (Google Identity Services + Google JWKS) swaps in later; response shape stays stable. |
 | POST | `/auth/refresh` | Conditional UPDATE inside a transaction; replay → 401. |
 | POST | `/auth/logout` | Revoke single session. Always 204 (no enumeration). |
 | POST | `/auth/logout-all` | Revoke every active session for the caller. |
@@ -86,7 +86,7 @@ work, written before the engine waves shipped. Snapshot:
 - `backend/tests/auth.tokens.test.ts` — HMAC sign/verify, expiry, tampering, production-mode `AUTH_SECRET` guard.
 - `backend/tests/auth.route.test.ts` — login (new / repeat user), refresh rotation, logout, logout-all, audit + integration trail.
 - `backend/tests/me.route.test.ts` — happy path, profile update strict body, level enum, hard-delete cascade + tombstone.
-- `backend/tests/auth.security.test.ts` — Apple-stub production gating, concurrent `/auth/refresh` atomicity, concurrent first-login dedupe, IP trust boundary.
+- `backend/tests/auth.security.test.ts` — Google-stub production gating, concurrent `/auth/refresh` atomicity, concurrent first-login dedupe, IP trust boundary.
 - `backend/tests/lesson-sessions.test.ts` — start/resume, foreign-user rejection, exercise/type validation, attempt-history immutability, latest-attempt-wins scoring, completion idempotency, progress aggregate including best-score retention, dashboard states, recommended-next.
 
 ### Hardening already addressed on the branch
@@ -159,10 +159,11 @@ top of it must:
    public Dart API (`recordAttempt`, `getRecord`, `allRecords`) so the
    `SessionController` and Wave 4 widgets do not need to change.
 3. Replace `ReviewScheduler` calls with API calls. Same public API.
-4. Add a sign-in flow gate: first launch → Apple Sign In → land on
-   onboarding ritual → dashboard. (Apple Sign In is required by
-   App Store policy when ANY social login exists; we only have stub
-   today, but the contract is the right one to lock in early.)
+4. Add a sign-in flow gate: first launch → Google Sign In → land on
+   onboarding ritual → dashboard. (Product-owner decision 2026-05-14:
+   Apple Sign-In dropped; Google Identity Services is the chosen
+   identity provider. We only have stub today, but the contract is
+   the right one to lock in early.)
 
 ### Render infrastructure
 
@@ -184,17 +185,17 @@ The shipped device-scoped state needs to either be:
 ## Sequence proposal
 
 1. **Branch hygiene (this wave's prep):** rebase `codex/auth-backend-foundation` onto current `main`. Resolve conflicts (the foundation branch was written before Waves 1–5; the conflicts will mostly be in `docs/`, `lessons.ts`, route file). Land it as a single PR or a sequence of PRs that lines up with Wave 7.1 / 7.2 below.
-2. **Wave 7.1 — auth surface only.** Apple stub + refresh + `/me` + `/me/profile` + hard-delete. No engine state yet. Flutter not wired (just like the foundation branch's Wave 1).
+2. **Wave 7.1 — auth surface only.** Google stub + refresh + `/me` + `/me/profile` + hard-delete. No engine state yet. Flutter not wired (just like the foundation branch's Wave 1).
 3. **Wave 7.2 — lesson sessions.** Server-owned `lesson_sessions` + `exercise_attempts` + `lesson_progress`. Migrate the legacy `/lessons/:id/answers` and `/lessons/:id/result` routes to the new auth-protected paths. Flutter still not wired here either; legacy routes stay alongside until 7.3.
 4. **Wave 7.3 — engine state migration.** New tables `learner_skills` and `learner_review_schedule` + `/me/skills/...` + `/me/reviews/due` endpoints. Flutter `LearnerSkillStore` and `ReviewScheduler` rewritten as thin API clients. Discard the SharedPreferences keys (option A above).
 5. **Wave 7.4 part 1 — AuthClient infra.** `AuthTokens` + `AuthStorage` (flutter_secure_storage 9.2.2) + `AuthClient` with refresh-on-401 retry-once. No UI gate yet. Build flag `MASTERY_AUTH_ENABLED` defaults to false.
-6. **Wave 7.4 part 2A — Sign-in surface + bulk-import endpoint.** `SignInScreen` (Apple stub + Skip), `HomeScreen` routes through it when `authEnabled && no token`, server `POST /me/state/bulk-import` with idempotent skip-if-server-row-exists semantics. `APPLE_STUB_ENABLED=1` set on Render. All dormant in default builds.
+6. **Wave 7.4 part 2A — Sign-in surface + bulk-import endpoint.** `SignInScreen` (Google stub + Skip), `HomeScreen` routes through it when `authEnabled && no token`, server `POST /me/state/bulk-import` with idempotent skip-if-server-row-exists semantics. `GOOGLE_STUB_ENABLED=1` set on Render. All dormant in default builds.
 7. **Wave 7.4 part 2B — Dual-mode storage + migration trigger (shipped 2026-04-26).** `LearnerSkillStore` + `ReviewScheduler` are now static facades over `LocalLearnerSkillBackend` / `RemoteLearnerSkillBackend` and `LocalReviewSchedulerBackend` / `RemoteReviewSchedulerBackend` respectively. On the `signedIn` outcome of `SignInScreen`, `LearnerStateMigrator` collects the local snapshot via the local backend, POSTs it through `/me/state/bulk-import`, then flips both facades to remote (idempotent — second device's import is reported in the `skipped_*` arrays). On the `skipped` outcome the facades stay local so guest mode keeps working. `scripts/render-build-web.sh` now bakes `MASTERY_AUTH_ENABLED=true` into the prod build. Legacy unauthenticated routes still live alongside as the engine waves 1–5 evaluator + dashboard wire-up; dropping them is tracked as a follow-up cleanup once production telemetry confirms zero unauthenticated traffic.
 
 ## Out of scope (explicit)
 
-- Real Apple Sign In verifier (replaces the `apple_stub` provider when we ship to App Store; orthogonal scope).
-- Email-based auth, password recovery, social providers other than Apple.
+- Real Google Sign In verifier (replaces the `google_stub` provider; verifies Google `id_token` against Google JWKS + extracts `sub`; orthogonal scope).
+- Email-based auth, password recovery, social providers other than Google.
 - Cross-device sync conflict resolution beyond "last write wins" (rare given engine state is largely additive).
 - Server-side enforcement of the §6.4 production gate (still client-derived in Wave 7; server stores it but the source of truth is the evaluator that wrote the strongest+correct attempt).
 
