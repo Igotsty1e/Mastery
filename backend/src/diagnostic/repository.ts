@@ -18,6 +18,12 @@ export type DiagnosticRunStatus =
 
 export interface DiagnosticResponseRow {
   exercise_id: string;
+  // Wave E.1 — the bank-trusted exercise type. Carried so the 3-signal
+  // derivation in `cefr.ts` (E.3) can group rows by type without
+  // re-fetching the bank. Optional on read so historical rows written
+  // before E.1 (which only contained MC probe items) parse without a
+  // migration; callers MUST set it on write going forward.
+  exercise_type?: 'multiple_choice' | 'fill_blank' | 'sentence_correction';
   skill_id: string | null;
   evidence_tier: string | null;
   correct: boolean;
