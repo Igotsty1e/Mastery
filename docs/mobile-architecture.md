@@ -202,10 +202,18 @@ Three internal phases driven by an enum, not Navigator routes:
 1. **Welcome** — editorial headline (`A short read on where you are.`)
    + proof card (`5 questions / ~2 minutes / Stays on your device`)
    + `Begin` / `Skip for now` CTAs.
-2. **Probe** — five `multiple_choice` items rendered through the
-   shipped `MultipleChoiceWidget`. **No instant correctness reveal**
-   — picking advances to the next question silently, per V1 spec
-   §10 ("the probe never penalises").
+2. **Probe** — five items rendered through the shipped widgets.
+   Today's bank tags five `multiple_choice` items as `is_diagnostic:
+   true`; the **server** dispatcher (`backend/src/diagnostic/
+   dispatch.ts`, Wave E.1, 2026-05-14) is ready to route MC + FB +
+   SC and persists the bank-trusted `exercise_type` on each
+   `responses[]` row, but until E.2 ships FB/SFS/SC probe content
+   the live probe runs all-MC. The Flutter probe screen
+   (`diagnostic_screen.dart`) is still MC-only end-to-end — multi-
+   type rendering + the 3-signal completion section land in E.3.
+   **No instant correctness reveal** — picking advances to the
+   next question silently, per V1 spec §10 ("the probe never
+   penalises").
 3. **Completion** — `display-md` headline `Your level: B2.` with a
    gold accent on the level letters + per-skill panel
    (`Practicing` / `Just started` `StatusBadge`s) + `Continue` /

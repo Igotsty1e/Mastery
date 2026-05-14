@@ -512,19 +512,12 @@ ship under its own paranoia gate.
    (`backend/src/evaluators/sentenceCorrection.ts:18`). A probe item
    authored "deterministic-clean" risks frequent false negatives.
 
-### Structured phasing (parked, sequence not yet started)
+### Structured phasing
 
 Wave E ships in three follow-up sub-waves, each gated by Codex
 paranoia like the other waves on this roadmap:
 
-- **E.1 — engine + persistence.** Widen `makeDiagnosticRouter` to
-  receive `ai`. Add multi-type evaluator dispatch in
-  `submitDiagnosticAnswer` (MC stays, FB + SC added; SFS DEFERRED
-  to E.2 because of finding #2 + #3). Persist server-derived
-  `exercise_type` on `diagnostic_responses[]` rows. Add a
-  `recordAttemptFromProbe` variant that records evidence with a
-  CAPPED tier (medium) and never flips `productionGateCleared` —
-  closes finding #3.
+- **E.1 — engine + persistence.** **Partially shipped 2026-05-14 (PR #71, squash 78eac3c).** Shipped: multi-type evaluator dispatch in `submitDiagnosticAnswer` via the new pure helper `evaluateProbeAttempt` (`backend/src/diagnostic/dispatch.ts`) — MC + FB + SC supported; SFS deferred to E.2. Persisted `exercise_type` on `diagnostic_responses[]` rows (optional field, no schema migration). Anti-spoof generalised: client `exercise_type` claim is cross-checked against the server's bank-trusted type and the bank wins. Post-deploy smoke confirms `/diagnostic/start` + `/answers` happy path + `400 exercise_type_mismatch` on spoofed claim. **Deferred to E.2:** the `recordAttemptFromProbe` capped-tier variant (`productionGateCleared` cannot flip from a strongest-tier SFS probe attempt) — only needed once SFS items can enter the probe, which is E.2 territory. 432/432 backend tests passing; 2 self-review rounds (Codex quota exhausted; queued review at 19:00 ICT).
 - **E.2 — SFS in the probe (separate wave because of AI-budget +
   idempotency design work).** Add an in-memory probe-AI cache keyed
   by `(run_id, exercise_id, normalized_answer)` mirroring the
