@@ -445,7 +445,7 @@ meta-label.
   - `incorrect result revealed`
 - Result reveal should feel teacher-like and decisive, never game-like or punitive.
 
-> Note: an earlier "first-exercise V2" direction (Brief B in `docs/plans/arrival-ritual.md`) proposed quieter chrome, no instruction band, and a Fraunces serif hero prompt. That brief was declined 2026-04-26 by the product owner. The current shipped chrome — rose-tinted `InstructionBand`, `MasteryCard` wrapper, single thin progress bar, body-text prompt — is the long-term contract.
+> Note: an earlier "first-exercise V2" direction proposed quieter chrome, no instruction band, and a Fraunces serif hero prompt. That redesign was declined 2026-04-26 by the product owner. The current shipped chrome — rose-tinted `InstructionBand`, `MasteryCard` wrapper, single thin progress bar, body-text prompt — is the long-term contract. See `docs/plans/arrival-ritual.md §History` for the audit trail.
 
 #### Listening exercise variant (`listening_discrimination`)
 - The exercise card shows the instruction band, then the Audio Player (component §14) where the prompt would normally sit.

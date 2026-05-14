@@ -40,13 +40,13 @@ Status: shipped 2026-04-26. Source of truth: `docs/plans/arrival-ritual.md`. Vis
 - Step transitions: shared-axis fade + slight rise; collapses to opacity-only when `MediaQuery.disableAnimations` is true.
 - Back link appears from Step 2 onward.
 
-#### First exercise — quieter chrome (Brief B, declined)
+#### First exercise — chrome redesign declined
 
-Status: declined 2026-04-26 by the product owner. A first attempt landed in 317a70c (bundled with the onboarding commit) and was reverted in f59599d. The current shipped exercise chrome — rose-tinted `InstructionBand`, `MasteryCard` wrapper, single `LinearProgressIndicator` + chevron-back top bar, body-text prompts — is the **long-term contract**, not a pre-V2 placeholder. Re-open the brief only if the decision is reversed.
+Status: declined 2026-04-26 by the product owner. A first attempt at a quieter "first-exercise V2" chrome landed in 317a70c (bundled with the onboarding commit) and was reverted in f59599d. The current shipped exercise chrome — rose-tinted `InstructionBand`, `MasteryCard` wrapper, single `LinearProgressIndicator` + chevron-back top bar, body-text prompts — is the **long-term contract**, not a pre-V2 placeholder. Do not redesign without an explicit reversal. Audit trail in `docs/plans/arrival-ritual.md §History`.
 
-#### Route transitions (Brief C, partial)
+#### Route transitions (partial)
 
-Status: shipped 2026-04-26. `MasteryFadeRoute` (`app/lib/widgets/mastery_route.dart`) renders a calm fade-through plus a 4% rise; collapses to opacity-only when `MediaQuery.disableAnimations` is on. Used for HomeScreen → LessonIntroScreen and LessonIntroScreen → ExerciseScreen, replacing the default sliding `MaterialPageRoute`. Onboarding step transitions already use the same motion contract. Exercise result-reveal motion is intentionally not done — the Brief B closure protects the exercise screen as the long-term contract.
+Status: shipped 2026-04-26. `MasteryFadeRoute` (`app/lib/widgets/mastery_route.dart`) renders a calm fade-through plus a 4% rise; collapses to opacity-only when `MediaQuery.disableAnimations` is on. Used for HomeScreen → LessonIntroScreen and LessonIntroScreen → ExerciseScreen, replacing the default sliding `MaterialPageRoute`. Onboarding step transitions already use the same motion contract. Exercise result-reveal motion is intentionally not done — the exercise screen is the long-term contract (see preceding section).
 
 #### Returning launch — Study Desk dashboard (shipped)
 
@@ -104,7 +104,7 @@ Renders one exercise at a time. Each exercise card shows an instruction band at 
 | `short_free_sentence` | Multi-line text field; question header instead of prompt |
 | `listening_discrimination` | Audio player + tappable option list |
 
-- Instruction is always shown, required, and sourced from the exercise `instruction` field. For non-`short_free_sentence` types, rendered as a rose-tinted `InstructionBand` with an icon — the long-term contract after Brief B was declined.
+- Instruction is always shown, required, and sourced from the exercise `instruction` field. For non-`short_free_sentence` types, rendered as a rose-tinted `InstructionBand` with an icon — the long-term contract after the first-exercise V2 chrome redesign was declined 2026-04-26.
 - **Wave H3 (2026-05-01) — `prominent` mode.** For `short_free_sentence` items the instruction IS the question, so the band drops its chrome and renders the text as a prominent `Inter` w600 20px headline above the answer field. The page reads as a real question (`"What do you really enjoy doing when you travel?"`), not a meta-label. Implementation: `InstructionBand(prominent: exercise.type == ExerciseType.shortFreeSentence)` in `lib/widgets/mastery_widgets.dart`. The headline TextStyle is built directly with `fontFamily: 'Inter'` + named weight (no `FontVariation` axes). The original Wave H3 ship used Manrope but Manrope's variable axis mis-rendered at w700 on Brave/Chromium and fell back to a serif; the repo-wide body-font swap to Inter on 2026-05-02 generalised the fix.
 - Submit button disabled until non-empty input provided.
 - On submit: POST to `/lesson-sessions/:sessionId/answers`.
