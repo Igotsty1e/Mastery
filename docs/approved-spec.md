@@ -216,7 +216,7 @@ cut over to the auth-protected lesson-session surface.
 
 The following will NOT be built in this MVP. Any request to add them is a scope change requiring spec revision.
 
-- ~~User authentication or accounts~~ **Post-MVP (Wave 7):** auth + server-owned learner state migration per `docs/plans/auth-server-state-wave7.md`. Backend foundation (Apple stub auth, refresh tokens, server-owned `lesson_sessions`, `/me`, audit log) is staged in this PR; Flutter wiring is Wave 7.4. The shipped MVP remains anonymous + in-memory until the auth surface is wired into the client.
+- ~~User authentication or accounts~~ **Post-MVP (Wave 7):** auth + server-owned learner state migration per `docs/plans/auth-server-state-wave7.md`. Backend foundation (Google stub auth, refresh tokens, server-owned `lesson_sessions`, `/me`, audit log) is staged in this PR; Flutter wiring is Wave 7.4. The shipped MVP remains anonymous + in-memory until the auth surface is wired into the client.
 - ~~Server-side progress persistence~~ **Post-MVP (Wave 7):** Drizzle + Postgres backs `lesson_sessions`, `exercise_attempts`, `lesson_progress` tables and the `/lessons/:id/sessions/*` + `/lesson-sessions/:id/*` + `/dashboard` endpoints. Legacy in-memory `src/store/memory.ts` stays alongside until the Flutter client cuts over. Local `SharedPreferences` (`LocalProgressStore`, `LearnerSkillStore`, `ReviewScheduler`) keeps working as device-scoped fallback during the migration window.
 - ~~Resume / save state~~ **Post-MVP (Wave 7):** server-owned sessions support cross-device resume (one active in-progress session per user+lesson, enforced by a partial unique index). The Flutter client wiring lands in Wave 7.4.
 - ~~Adaptive learning or difficulty adjustment~~ **Post-MVP (Waves 2–3):**

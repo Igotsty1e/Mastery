@@ -628,8 +628,9 @@ re-shaping the contract.
 - `auth_identities(id, user_id, provider, subject, created_at)` — one
   row per upstream identity. Unique on `(provider, subject)`. Multiple
   rows per user are supported so the same person can link additional
-  providers later. Provider values today: `apple_stub`. Production will
-  add `apple` once the real Sign In with Apple verifier ships.
+  providers later. Provider values today: `google_stub`. Production will
+  add `google` once the real Google ID-token verifier ships (Google
+  Identity Services + Google JWKS).
 - `user_profiles(user_id PK, display_name, level, created_at, updated_at)`
   — single profile row per user. Created on first login.
 - `auth_sessions(id, user_id, refresh_token_hash, created_at,
@@ -641,8 +642,8 @@ re-shaping the contract.
   user hard-delete.
 - `integration_events(id, source, event_type, external_id, payload,
   processed_at, created_at)` — placeholder inbox/outbox for upstream
-  webhooks (Apple notifications, future payment events). Wave 1 only
-  writes a single `identity.linked` row on user creation.
+  webhooks (Google account notifications, future payment events).
+  Wave 1 only writes a single `identity.linked` row on user creation.
 
 ### Token model
 
@@ -672,15 +673,15 @@ spoof its session IP or rate-limit bucket via XFF.
 
 Authenticated requests must send `Authorization: Bearer <accessToken>`.
 
-### POST /auth/apple/stub/login
+### POST /auth/google/stub/login
 
-Stub Apple sign-in for Wave 1. The real Apple verifier replaces the
+Stub Google sign-in for Wave 1. The real Google verifier replaces the
 body parser in a later wave; the **response shape stays stable** so
 mobile can code against it now.
 
 **Production gating.** This route is **not registered** when
 `NODE_ENV=production` unless an operator explicitly opts in by setting
-`APPLE_STUB_ENABLED=1` (e.g. for staging smoke checks). When unregistered
+`GOOGLE_STUB_ENABLED=1` (e.g. for staging smoke checks). When unregistered
 the catchall returns `404 not_found`, so the stub cannot be used to mint
 sessions on the production backend.
 
@@ -811,8 +812,8 @@ audit trail and the deletion can never disagree.
   now performs a silent stub-login under a stable per-install subject
   so guest mode still has a session.
 - **Wave 3 / not yet shipped**:
-  - `apple_stub` → real `apple` provider (verify `identityToken` JWT
-    against Apple's JWKS).
+  - `google_stub` → real `google` provider (verify Google `id_token`
+    JWT against Google's JWKS, extract `sub` claim).
   - In-flow resume UX (the server already supports it via the
     partial unique index on `(user_id, lesson_id) WHERE status =
     'in_progress'` and `GET /lessons/:id/sessions/current`).
@@ -976,7 +977,7 @@ Wave 7.4 part 2A — first-sign-in migration of device-scoped learner state. Aut
 ### Wave 7.4 part 2A status (2026-04-26)
 
 - **Shipped (server)**: `POST /me/state/bulk-import` with idempotent skip-if-server-row-exists semantics, full Zod validation, audit log of counts only, max 500 entries per array. 6 new test cases in `tests/learner-state.test.ts` covering auth, fresh import, idempotent skip, schedule-clobber prevention, oversized rejection, malformed payload rejection.
-- **Shipped (client)**: `SignInScreen` (Apple Sign-in stub + Skip), `AuthClient` token storage, `HomeScreen` routes through sign-in gate when `MASTERY_AUTH_ENABLED=true`.
+- **Shipped (client)**: `SignInScreen` (Google Sign-in stub + Skip), `AuthClient` token storage, `HomeScreen` routes through sign-in gate when `MASTERY_AUTH_ENABLED=true`.
 
 ### Wave 7.4 part 2B status (2026-04-26)
 
@@ -988,7 +989,7 @@ Wave 7.4 part 2A — first-sign-in migration of device-scoped learner state. Aut
 ### Wave 8 status (2026-04-26)
 
 - **Shipped (server)**: legacy unauthenticated `POST /lessons/:id/answers` and `GET /lessons/:id/result` removed. Three legacy test files (`evaluate.route.test.ts`, `result.route.test.ts`, `evaluate-summary.integration.test.ts`) deleted. Two rate-limiter integration `describe` blocks in `backend-hardening.test.ts` skipped (equivalent coverage on `/lesson-sessions/.../answers` already exists in `lesson-sessions.test.ts`). 281/281 backend tests passing (4 skipped).
-- **Shipped (client)**: Flutter `ApiClient` rewired through `AuthClient` for every mutation. New methods `startLessonSession`, `submitAnswer(sessionId, ...)`, `completeLessonSession`, `getResult(sessionId)`. `SessionController.loadLesson` now starts a server-owned session in parallel with the lesson content fetch. The build-time `MASTERY_AUTH_ENABLED` flag is gone — auth is mandatory in every shipped build. `SignInScreen.Skip-for-now` performs a silent Apple-stub sign-in under a stable per-install subject (`mastery_stub_subject_v1` in SharedPreferences) so a Skip + later Sign-in lands on the same backend user.
+- **Shipped (client)**: Flutter `ApiClient` rewired through `AuthClient` for every mutation. New methods `startLessonSession`, `submitAnswer(sessionId, ...)`, `completeLessonSession`, `getResult(sessionId)`. `SessionController.loadLesson` now starts a server-owned session in parallel with the lesson content fetch. The build-time `MASTERY_AUTH_ENABLED` flag is gone — auth is mandatory in every shipped build. `SignInScreen.Skip-for-now` performs a silent Google-stub sign-in under a stable per-install subject (`mastery_stub_subject_v1` in SharedPreferences) so a Skip + later Sign-in lands on the same backend user.
 - **Tests**: `session_controller_test.dart` rewired through `mountAuthedApiClient` helper (`app/test/helpers/api_test_helpers.dart`) — 24/24 passing. `widget_test.dart`, `happy_path_lesson_flow_test.dart`, `cross_wave_integration_test.dart` are disabled at runtime with explicit TODOs pending the same rewire (the underlying coverage moved to `session_controller_test.dart` for the SessionController paths). 133/133 active Flutter tests passing.
 
 ### Wave 9 status (2026-04-26) — observability infra

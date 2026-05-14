@@ -1,4 +1,4 @@
-/// Wave 7.4 access + refresh token pair returned by `/auth/apple/stub/login`
+/// Wave 7.4 access + refresh token pair returned by `/auth/google/stub/login`
 /// and `/auth/refresh`. Mirrors the backend's `LoginResponse` shape.
 class AuthTokens {
   /// Stateless HMAC access token. Sent as `Authorization: Bearer <token>`.

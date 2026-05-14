@@ -6,8 +6,9 @@
 // screen. Wave 8 (legacy drop): Skip is no longer "guest mode" — it
 // performs a silent stub-login under a stable per-install subject so
 // every subsequent request, including server-owned lesson sessions,
-// carries an Authorization header. Real Apple Sign-In replaces the
-// stub later without a contract change.
+// carries an Authorization header. Real Google ID-token verification
+// (Google Identity Services) replaces the stub later without a
+// contract change.
 //
 // Design tone: Editorial Notebook, matching the shipped onboarding
 // (`docs/plans/arrival-ritual.md`) — mono eyebrow, Fraunces-italic
@@ -24,15 +25,18 @@ import '../theme/mastery_theme.dart';
 /// route appropriately and (in the signed-in case) trigger the
 /// device-state bulk migration before clearing local stores.
 enum SignInOutcome {
-  /// Apple Sign In succeeded, refresh token persisted in secure
+  /// Google Sign In succeeded, refresh token persisted in secure
   /// storage. HomeScreen should now run the bulk-migration of any
   /// existing device-scoped state and then proceed to onboarding (if
   /// not seen) or the dashboard.
   signedIn,
 
-  /// Skip pressed. No session created. Existing device-scoped state
-  /// stays as-is. HomeScreen proceeds to onboarding (if not seen) or
-  /// the dashboard.
+  /// Skip pressed. A silent stub-login DID run under a stable
+  /// per-install subject (Wave 8 legacy drop made unauth requests
+  /// impossible), so a server session exists; the learner simply did
+  /// not go through the explicit Sign-in surface. Existing
+  /// device-scoped state stays as-is. HomeScreen proceeds to
+  /// onboarding (if not seen) or the dashboard.
   skipped,
 }
 
@@ -67,7 +71,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
   Future<void> _signIn() async {
     if (_busy) return;
-    Analytics.trackButton('sign_in_apple', screen: 'sign_in');
+    Analytics.trackButton('sign_in_google', screen: 'sign_in');
     setState(() {
       _busy = true;
       _error = null;
@@ -75,12 +79,12 @@ class _SignInScreenState extends State<SignInScreen> {
     try {
       // Stub flow: send a stable per-install subject so repeat sign-ins
       // on the same device land on the same backend user. The real
-      // Sign-In-with-Apple integration replaces this with the
-      // identityToken Apple returns after the native sheet.
-      // The stub is gated server-side by APPLE_STUB_ENABLED in
+      // Sign-In-with-Google integration replaces this with the
+      // Google `id_token` returned by Google Identity Services.
+      // The stub is gated server-side by GOOGLE_STUB_ENABLED in
       // production — see docs/plans/auth-server-state-wave7.md.
       final subject = await _stableStubSubject();
-      await widget.authClient.signInWithAppleStub(subject: subject);
+      await widget.authClient.signInWithGoogleStub(subject: subject);
       if (!mounted) return;
       widget.onResolved(SignInOutcome.signedIn);
     } catch (e) {
@@ -123,7 +127,7 @@ class _SignInScreenState extends State<SignInScreen> {
     });
     try {
       final subject = await _stableStubSubject();
-      await widget.authClient.signInWithAppleStub(subject: subject);
+      await widget.authClient.signInWithGoogleStub(subject: subject);
       if (!mounted) return;
       widget.onResolved(SignInOutcome.skipped);
     } catch (e) {
@@ -269,7 +273,7 @@ class _SignInActions extends StatelessWidget {
                           AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   )
-                : const Text('Sign in with Apple'),
+                : const Text('Continue with Google'),
           ),
           const SizedBox(height: MasterySpacing.sm),
           TextButton(

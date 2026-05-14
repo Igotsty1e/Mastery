@@ -32,7 +32,7 @@ export const users = pgTable('users', {
 });
 
 // One row per (provider, subject). A user can have multiple identities — e.g.
-// Apple sign-in today, an additional provider tomorrow — by linking more
+// Google sign-in today, an additional provider tomorrow — by linking more
 // rows to the same user_id. No email is stored on this layer; provider
 // subjects are the only stable identifier.
 export const authIdentities = pgTable(
@@ -128,7 +128,7 @@ export const auditEvents = pgTable(
   })
 );
 
-// Inbox/outbox-style log for async integrations (Apple webhooks, future
+// Inbox/outbox-style log for async integrations (Google webhooks, future
 // payment events, etc). Wave 1 only writes to this table from the stub
 // login flow as a placeholder for the production webhook surface.
 export const integrationEvents = pgTable(

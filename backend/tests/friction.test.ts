@@ -39,7 +39,7 @@ const EX_MC_1 = 'a1b2c3d4-0001-4000-8000-000000000035';
 async function login(subject: string) {
   const res = await inject(h.app, {
     method: 'POST',
-    path: '/auth/apple/stub/login',
+    path: '/auth/google/stub/login',
     json: { subject },
   });
   if (res.status !== 200) throw new Error(`login_${res.status}`);

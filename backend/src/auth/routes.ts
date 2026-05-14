@@ -24,10 +24,11 @@ import {
   type UiLanguage,
 } from '../users/uiLanguage';
 
-// Stub Apple login. Production will replace this surface with verified
-// `identityToken` parsing; the *output* contract (access + refresh tokens)
-// stays stable, so the mobile client codes against this shape today.
-const AppleStubLoginSchema = z.object({
+// Stub Google login. Production will replace this surface with verified
+// Google ID-token parsing (Google JWKS verification, `sub` claim
+// extraction); the *output* contract (access + refresh tokens) stays
+// stable, so the mobile client codes against this shape today.
+const GoogleStubLoginSchema = z.object({
   subject: z.string().min(1).max(256),
   displayName: z.string().min(1).max(80).optional(),
 });
@@ -51,13 +52,16 @@ function sessionContextFromReq(req: Request): SessionContext {
 }
 
 /**
- * The Apple-stub login bypasses any real identity verification and is only
- * intended for local dev, tests, and staging smoke checks. Production must
- * not expose it unless an operator explicitly opts in via env flag.
+ * The Google-stub login bypasses any real identity verification and is
+ * only intended for local dev, tests, and staging smoke checks.
+ * Production must not expose it unless an operator explicitly opts in
+ * via env flag. Exact-match `'1'` semantics — `'0'`, empty, `'true'`
+ * and whitespace all reject so a stray value cannot accidentally open
+ * the stub endpoint in production.
  */
-function isAppleStubEnabled(): boolean {
+function isGoogleStubEnabled(): boolean {
   if (process.env.NODE_ENV !== 'production') return true;
-  return process.env.APPLE_STUB_ENABLED === '1';
+  return process.env.GOOGLE_STUB_ENABLED === '1';
 }
 
 interface ResolveUserResult {
@@ -144,16 +148,16 @@ export function makeAuthRouter(db: AppDatabase): Router {
   const router = Router();
   const auth = requireAuth(db);
 
-  if (isAppleStubEnabled()) {
-    router.post('/auth/apple/stub/login', async (req, res, next) => {
+  if (isGoogleStubEnabled()) {
+    router.post('/auth/google/stub/login', async (req, res, next) => {
       try {
-        const parsed = AppleStubLoginSchema.safeParse(req.body);
+        const parsed = GoogleStubLoginSchema.safeParse(req.body);
         if (!parsed.success) {
           res.status(400).json({ error: 'invalid_payload' });
           return;
         }
         const { subject, displayName } = parsed.data;
-        const provider = 'apple_stub';
+        const provider = 'google_stub';
         const uiLanguage = pickUiLanguageFromAcceptLanguage(
           req.headers['accept-language']
         );

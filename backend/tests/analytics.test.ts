@@ -23,7 +23,7 @@ afterEach(async () => {
 async function login(subject: string) {
   const res = await inject(h.app, {
     method: 'POST',
-    path: '/auth/apple/stub/login',
+    path: '/auth/google/stub/login',
     json: { subject },
   });
   if (res.status !== 200) throw new Error(`login_${res.status}`);

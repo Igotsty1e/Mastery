@@ -150,7 +150,7 @@ class _HomeScreenState extends State<HomeScreen> {
       // SignInScreen as a safety net.
       try {
         final subject = await _stableStubSubject();
-        await _authClient!.signInWithAppleStub(subject: subject);
+        await _authClient!.signInWithGoogleStub(subject: subject);
         if (!mounted) return;
       } catch (_) {
         if (!mounted) return;
@@ -248,8 +248,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
   /// Wave 7.4 part 2.4 + Wave 8 — handles the SignInScreen outcome.
   ///
-  /// On the explicit `signedIn` outcome (Apple stub or real Apple
-  /// later) we run the bulk-migration of any device-scoped state
+  /// On the explicit `signedIn` outcome (Google stub or real Google
+  /// ID-token verification later) we run the bulk-migration of any device-scoped state
   /// (idempotent server-side) and switch the engine facades to the
   /// remote backend. The migrator already calls `useRemote(...)` for
   /// both stores; we additionally attach the AuthClient to the

@@ -17,7 +17,7 @@ The backend is the pedagogical authority for:
 | GET | `/lessons/:lessonId` | Lesson definition (secrets stripped) |
 | POST | `/lessons/:lessonId/answers` | Submit answer, get evaluation result |
 | GET | `/lessons/:lessonId/result` | Lesson score summary |
-| POST | `/auth/apple/stub/login` | Stub Apple sign-in — issues an access + refresh token pair |
+| POST | `/auth/google/stub/login` | Stub Google sign-in — issues an access + refresh token pair |
 | POST | `/auth/refresh` | Rotate a refresh token, returning a new pair |
 | POST | `/auth/logout` | Revoke a single session by refresh token |
 | POST | `/auth/logout-all` | Revoke every active session for the caller |
@@ -122,10 +122,10 @@ Postgres-compatible storage:
   `signAccessToken` / `verifyAccessToken` also refuse to fall back to
   the dev-only constant in production. Outside of production a dev
   fallback key is used so unit tests work out-of-the-box.
-- `APPLE_STUB_ENABLED` — set to `1` to keep `/auth/apple/stub/login`
-  exposed when `NODE_ENV=production` (only useful for staging smoke
-  tests). Unset in real production deploys; the route is not registered
-  and the catchall returns `404 not_found`.
+- `GOOGLE_STUB_ENABLED` — set to `1` (exact-match) to keep
+  `/auth/google/stub/login` exposed when `NODE_ENV=production` (only
+  useful for staging smoke tests). Unset in real production deploys;
+  the route is not registered and the catchall returns `404 not_found`.
 
 ### Postgres extension
 

@@ -109,11 +109,11 @@ void main() {
     });
   });
 
-  group('AuthClient.signInWithAppleStub', () {
+  group('AuthClient.signInWithGoogleStub', () {
     test('persists refresh token + user id on success', () async {
       final storage = _makeStorage();
       final mock = MockClient((req) async {
-        expect(req.url.path, '/auth/apple/stub/login');
+        expect(req.url.path, '/auth/google/stub/login');
         expect((jsonDecode(req.body) as Map)['subject'], 'tester');
         return _json({
           'accessToken': 'access-1',
@@ -123,20 +123,26 @@ void main() {
         });
       });
       final client = AuthClient(baseUrl: _base, http: mock, storage: storage);
-      final tokens = await client.signInWithAppleStub(subject: 'tester');
+      final tokens = await client.signInWithGoogleStub(subject: 'tester');
       expect(tokens.accessToken, 'access-1');
       expect(tokens.userId, 'user-1');
       expect(await storage.readRefresh(), 'refresh-1');
       expect(await storage.readUserId(), 'user-1');
     });
 
-    test('throws AuthSessionExpired on non-200 status', () async {
+    test('throws AuthSessionExpired with google_stub_login_<status> reason on non-200', () async {
       final storage = _makeStorage();
       final mock = MockClient((_) async => _json({'error': 'no'}, status: 401));
       final client = AuthClient(baseUrl: _base, http: mock, storage: storage);
       expect(
-        () => client.signInWithAppleStub(subject: 'tester'),
-        throwsA(isA<AuthSessionExpired>()),
+        () => client.signInWithGoogleStub(subject: 'tester'),
+        throwsA(
+          isA<AuthSessionExpired>().having(
+            (e) => e.reason,
+            'reason',
+            'google_stub_login_401',
+          ),
+        ),
       );
       expect(await storage.readRefresh(), isNull);
     });
@@ -148,7 +154,7 @@ void main() {
       String? observedAuthHeader;
       int loginCalls = 0;
       final mock = MockClient((req) async {
-        if (req.url.path == '/auth/apple/stub/login') {
+        if (req.url.path == '/auth/google/stub/login') {
           loginCalls++;
           return _json({
             'accessToken': 'access-1',
@@ -161,7 +167,7 @@ void main() {
         return _json({'ok': true});
       });
       final client = AuthClient(baseUrl: _base, http: mock, storage: storage);
-      await client.signInWithAppleStub(subject: 'tester');
+      await client.signInWithGoogleStub(subject: 'tester');
       final resp = await client.send('GET', Uri.parse('$_base/me'));
       expect(resp.statusCode, 200);
       expect(observedAuthHeader, 'Bearer access-1');
@@ -176,7 +182,7 @@ void main() {
       var meCalls = 0;
       final mock = MockClient((req) async {
         final path = req.url.path;
-        if (path == '/auth/apple/stub/login') {
+        if (path == '/auth/google/stub/login') {
           return _json({
             'accessToken': 'access-1',
             'refreshToken': 'refresh-1',
@@ -203,7 +209,7 @@ void main() {
         return _json({'unexpected': req.url.toString()}, status: 500);
       });
       final client = AuthClient(baseUrl: _base, http: mock, storage: storage);
-      await client.signInWithAppleStub(subject: 'tester');
+      await client.signInWithGoogleStub(subject: 'tester');
       final resp = await client.send('GET', Uri.parse('$_base/me'));
       expect(resp.statusCode, 200);
       expect(meCalls, 2);
@@ -215,7 +221,7 @@ void main() {
       final storage = _makeStorage();
       final mock = MockClient((req) async {
         final path = req.url.path;
-        if (path == '/auth/apple/stub/login') {
+        if (path == '/auth/google/stub/login') {
           return _json({
             'accessToken': 'access-1',
             'refreshToken': 'refresh-1',
@@ -232,7 +238,7 @@ void main() {
         return _json({}, status: 500);
       });
       final client = AuthClient(baseUrl: _base, http: mock, storage: storage);
-      await client.signInWithAppleStub(subject: 'tester');
+      await client.signInWithGoogleStub(subject: 'tester');
       expect(await storage.readRefresh(), 'refresh-1');
       expect(
         () => client.send('GET', Uri.parse('$_base/me')),
@@ -250,7 +256,7 @@ void main() {
       final storage = _makeStorage();
       final mock = MockClient((req) async {
         final path = req.url.path;
-        if (path == '/auth/apple/stub/login') {
+        if (path == '/auth/google/stub/login') {
           return _json({
             'accessToken': 'access-1',
             'refreshToken': 'refresh-1',
@@ -273,7 +279,7 @@ void main() {
         return _json({}, status: 500);
       });
       final client = AuthClient(baseUrl: _base, http: mock, storage: storage);
-      await client.signInWithAppleStub(subject: 'tester');
+      await client.signInWithGoogleStub(subject: 'tester');
       try {
         await client.send('GET', Uri.parse('$_base/me'));
         fail('expected throw');
@@ -331,7 +337,7 @@ void main() {
       final storage = _makeStorage();
       var logoutCalls = 0;
       final mock = MockClient((req) async {
-        if (req.url.path == '/auth/apple/stub/login') {
+        if (req.url.path == '/auth/google/stub/login') {
           return _json({
             'accessToken': 'a',
             'refreshToken': 'r',
@@ -346,7 +352,7 @@ void main() {
         return _json({}, status: 500);
       });
       final client = AuthClient(baseUrl: _base, http: mock, storage: storage);
-      await client.signInWithAppleStub(subject: 'x');
+      await client.signInWithGoogleStub(subject: 'x');
       await client.logout();
       expect(logoutCalls, 1);
       expect(await storage.readRefresh(), isNull);
@@ -369,7 +375,7 @@ void main() {
         throw Exception('network down');
       });
       final client = AuthClient(baseUrl: _base, http: mock, storage: storage);
-      await client.signInWithAppleStub(subject: 'x');
+      await client.signInWithGoogleStub(subject: 'x');
       await client.logout(); // must not throw
       expect(await storage.readRefresh(), isNull);
     });
