@@ -28,8 +28,9 @@
   - `docs/plans/dashboard-study-desk.md` — shipped Dashboard V2 contract.
     Adding a new card to the dashboard is a **per-screen visual change**
     per `CLAUDE.md §Behavior Rules` and needs explicit approval.
-  - `docs/plans/arrival-ritual.md` — Brief B (first-exercise V2 chrome)
-    was declined; the current exercise chrome is the long-term contract.
+  - `docs/plans/arrival-ritual.md` — the first-exercise V2 chrome
+    redesign was declined 2026-04-26; the current exercise chrome
+    is the long-term contract.
     **Wave 4 does not touch the exercise screen chrome.**
 
 ## 1. Goal
