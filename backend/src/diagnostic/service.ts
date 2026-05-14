@@ -25,7 +25,7 @@ import type { AppDatabase } from '../db/client';
 import { logAuditEvent } from '../auth/events';
 import { getBankEntry, getDiagnosticPool, type BankEntry } from '../data/exerciseBank';
 import { evaluateProbeAttempt, isProbeSupportedType } from './dispatch';
-import { recordAttempt } from '../learner/service';
+import { recordAttemptFromProbe } from '../learner/service';
 import type { EvidenceTier } from '../learner/types';
 import { userProfiles } from '../db/schema';
 import {
@@ -164,8 +164,15 @@ export async function submitDiagnosticAnswer(
   // every downstream invariant (recent_errors, weighted accuracy,
   // exercise_types_seen) stays consistent. The exerciseType passed
   // through is the server-trusted bank type, never the client claim.
+  //
+  // Wave E.1 followup — route through `recordAttemptFromProbe` so the
+  // bank's `evidence_tier` is capped at `medium`. Today's probe items
+  // are all `weak`-tier MC so this is a no-op for the live pool, but
+  // it locks the guard for Wave E.2 when SFS+`strongest` probe items
+  // arrive: the §6.4 production-mastery gate cannot flip from a
+  // first-touch probe attempt on a rule the learner has not yet seen.
   if (expected.exercise.skill_id && expected.exercise.evidence_tier) {
-    await recordAttempt(db, userId, expected.exercise.skill_id, {
+    await recordAttemptFromProbe(db, userId, expected.exercise.skill_id, {
       evidenceTier: expected.exercise.evidence_tier as EvidenceTier,
       correct: evalCorrect,
       primaryTargetError: expected.exercise.primary_target_error,
