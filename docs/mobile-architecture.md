@@ -50,24 +50,30 @@ Status: shipped 2026-04-26. `MasteryFadeRoute` (`app/lib/widgets/mastery_route.d
 
 #### Returning launch — Study Desk dashboard (shipped)
 
-Status: shipped 2026-04-26 (Dashboard V2 · Study Desk wave). Source of truth: `docs/plans/dashboard-study-desk.md`. Visual reference: `docs/design-mockups/dashboard-study-desk.html`. Implementation: `app/lib/screens/home_screen.dart` plus `LastLessonStore` (`app/lib/session/last_lesson_store.dart`) and the reusable `StatusBadge` widget in `app/lib/widgets/mastery_widgets.dart`.
+Status: shipped 2026-04-26 (Dashboard V2 · Study Desk wave); the Last-lesson-report block was retired from the dashboard surface in Wave 0 (automaticity pivot) — see `docs/plans/automaticity-pivot.md §Wave 0`. Source of truth: `docs/plans/dashboard-study-desk.md` (layout) + `docs/plans/automaticity-pivot.md §Wave 0` (Last-lesson-report retirement). Visual reference: `docs/design-mockups/dashboard-study-desk.html`. Implementation: `app/lib/screens/home_screen.dart` + the reusable `StatusBadge` widget in `app/lib/widgets/mastery_widgets.dart`. `LastLessonStore` (`app/lib/session/last_lesson_store.dart`) is still written by `SessionController` on summary fetch, but no longer read for dashboard rendering after the Wave 0 retirement.
 
 Layout, in locked order:
 
-1. **Header** — eyebrow `STUDY DESK`, time-based greeting (`Good morning / afternoon / evening`), one-line sub. Compact level dropdown trigger (`B2 ▾` → menu with A2/B1/C1 marked Locked, B2 marked Current — no real switching) and a static `M` avatar circle. Dropdown overlays via `showMenu`, does not push content.
+**Pre-Wave-0 reference layout (2026-04-26 ship):** Study Desk header eyebrow with time-based greeting + sub + static `M` avatar; Next-lesson hero; Last-lesson-report block; Current unit card with `All units ▾` trigger; Premium stub. **Wave 0 (automaticity pivot, 2026-05-01)** retired the header chrome + `M` avatar + Last-lesson-report block + collapsed the Rules card to a single trigger. **Wave 11.4 (2026-04-28)** then retired the Current unit card itself once the V1 dynamic flow assembled each session from the skill bank instead of a fixed lesson listing. The current shipped order is below.
+
+1. **Header** — compact level dropdown trigger only (`B2 ▾` → menu with A2/B1/C1 marked Locked, B2 marked Current — no real switching), right-aligned via `_DashboardHeader`. Dropdown overlays via `showMenu`, does not push content.
 2. **Next-lesson hero** — `Unit 01` eyebrow + `B2` tag + Fraunces serif lesson title + meta row (`N exercises · ~M min · Next lesson`) + one-sentence promise + a stacked progress cluster (label + fraction pill + thick rail) + a single primary CTA (`Start lesson` / `Continue lesson` / `Start next lesson` — last one disabled until multi-lesson backend lands).
-3. **Last lesson report** — only visible when `LastLessonStore.instance.record != null` (in-memory; lost on app restart). Block contains a `Lesson completed` eyebrow, lesson title, factual meta (when, exercises, mistakes), gold-soft `score pill`, debrief headline + body, optional `WATCH OUT` tail, and two actions: `Review mistakes` (pushes `SummaryScreen` with `initialScrollToMistakes: true`) and `See full report` (pushes `SummaryScreen` from the top). Wave 14.9 (2026-04-28) — both CTAs now thread the full `LessonResultResponse` through the record so the per-exercise mistake list renders + the deep-link scroll target exists. The pre-14.9 third CTA (`Open full summary` link in the eyebrow row) was a duplicate destination of `See full report` and has been removed.
-4. **Current unit** — `Unit 01` card with shipped `Verbs Followed by -ing` row marked `Current` or `Done`, plus a single stub locked row for the next lesson.
+3. **Review-due section** — conditional `ReviewDueSection` widget rendered when `ReviewScheduler.dueAt(now)` returns at least one skill (Wave 4 transparency-layer plumbing).
+4. **Rules trigger** — single `_RulesTrigger` button that opens a modal bottom sheet (`_RulesLibrarySheet`) showing the per-skill rule cards. **Wave 0** collapsed the pre-pivot expanded rules card to this single trigger.
 5. **Premium block** — visual stub at the bottom; gold-soft surface, no `onTap`. No monetisation in MVP.
 
-The original `Coming Next` block from the first ship was removed — future units now live behind an `All units ▾` trigger placed in the Current Unit section header. The trigger opens a popup listing units (`Current` / `Locked` states) and uses the same surface treatment as the level dropdown so the two read as one motion language. No real switching until the multi-unit backend lands.
+**Retired surfaces (kept here for audit trail):**
+
+- **Last lesson report** — pre-Wave-0 block that read from `LastLessonStore.instance.record` and contained a `Lesson completed` eyebrow, score pill, debrief, and `Review mistakes` / `See full report` actions. Retired in Wave 0; the data is still written to `LastLessonStore` and to the backend's `lesson_sessions.debrief_snapshot`, but no client surface renders it; the result is visible inline on `SummaryScreen` for the session that just completed.
+- **Current unit card** — pre-Wave-11.4 `Unit 01` card with the `Verbs Followed by -ing` row plus a locked stub + `All units ▾` trigger. Retired when Wave 11.4 switched to a V1 dynamic flow assembled by `DecisionEngine` from the skill bank. The hero CTA boots a dynamic session via `POST /sessions/start` (no lesson-id needed).
+- **Coming Next block** — first-ship layout had a forward-looking `Coming Next` card; removed before Wave 0 (kept here for the historical record).
 
 Lesson data:
 - On mount, fetches the lesson list via `GET /lessons` to populate the curriculum + level. Wave 11.4 removed the dependence on a single hardcoded lesson id; the dashboard CTA now boots a dynamic session via `POST /sessions/start`.
 - Reads locally stored completed-exercise count from `LocalProgressStore` (SharedPreferences).
 - On return from a completed lesson, re-fetches to refresh the card.
 
-Known scope deviations vs the spec text — see `docs/plans/dashboard-study-desk.md` Status section. The biggest one is **Last lesson report = in-memory only**; persistence is tracked as tech debt in `docs/plans/roadmap.md` (Workstream H).
+Known scope deviations vs the spec text — see `docs/plans/dashboard-study-desk.md §Status` (and the inline Wave 0 retirements above). The previous "Last lesson report = in-memory only" tech-debt note is **closed 2026-05-14**: the on-dashboard surface was retired in Wave 0, so the rebind it implied is moot — see `docs/plans/automaticity-pivot.md §Wave 0`. `LocalProgressStore` indirection for the completed-exercise count is the only remaining device-local read on the dashboard.
 
 ### LessonIntroScreen
 
@@ -135,17 +141,21 @@ Renders one exercise at a time. Each exercise card shows an instruction band at 
 
 Session state (current exercise, results, score) is in-memory and discarded when the lesson exits. Exercise progress (completed count per lesson) is persisted locally via `LocalProgressStore` (`app/lib/progress/local_progress_store.dart`) using `SharedPreferences`. This allows the dashboard progress card to survive app restarts.
 
-> **Wave 2 backend (2026-04-26).** The backend now owns persistent
-> `lesson_sessions`, `exercise_attempts`, and `lesson_progress` tables
-> behind the `/lessons/:id/sessions/start`, `/lessons/:id/sessions/current`,
-> `/lesson-sessions/:id/answers`, `/lesson-sessions/:id/complete`,
-> `/lesson-sessions/:id/result`, and `/dashboard` endpoints — see
-> `docs/backend-contract.md §Lesson Sessions (Wave 2)`. The Flutter client
-> is **not** rewired against this surface yet; `LocalProgressStore` and the
-> in-memory `LastLessonStore` remain authoritative on-device until the
-> client wave lands. The persistent backend obsoletes the
-> `LocalProgressStore` indirection and the in-memory `LastLessonStore`
-> singleton — both will retire when the client cuts over.
+> **Wave 2 backend (2026-04-26) — current status.** The backend owns
+> persistent `lesson_sessions`, `exercise_attempts`, and `lesson_progress`
+> tables behind the `/lessons/:id/sessions/start`,
+> `/lessons/:id/sessions/current`, `/lesson-sessions/:id/answers`,
+> `/lesson-sessions/:id/complete`, `/lesson-sessions/:id/result`, and
+> `/dashboard` endpoints — see `docs/backend-contract.md §Lesson Sessions
+> (Wave 2)`. The Flutter client cut over to the auth-protected lesson-
+> session endpoints in Wave 7.4 (`SessionController` now starts
+> `/sessions/start` and POSTs `/lesson-sessions/:id/answers` +
+> `/complete`). The `/dashboard.last_lesson_report` rebind that was
+> originally tracked in `docs/plans/auth-foundation.md §Wave 3` is
+> **moot** as of Wave 0 (automaticity pivot, 2026-05-01) — the on-
+> dashboard Last-lesson-report block was retired, so there is no
+> client surface to feed; `LastLessonStore` survives as an in-memory
+> store but is no longer read for rendering.
 
 Key data classes (see `app/lib/models/`):
 
@@ -153,7 +163,7 @@ Key data classes (see `app/lib/models/`):
 - `LessonResultAnswer` — per-exercise entry in the summary: `{exerciseId, correct, prompt?, canonicalAnswer?, explanation?}`
 - `LessonDebrief` — AI-generated post-lesson note: `{debriefType, headline, body, watchOut?, nextStep?, source}` (`source` ∈ `ai | fallback | deterministic_perfect`).
 - `LessonResultResponse` — full lesson result from the result endpoint: `{lessonId, totalExercises, correctCount, answers, conclusion?, debrief?}`
-- `LastLessonRecord` — in-memory snapshot held by `LastLessonStore` (`app/lib/session/last_lesson_store.dart`) so the dashboard "Last lesson report" block can render across navigation: `{lessonId, lessonTitle, completedAt, totalExercises, correctCount, debrief?, summary?}`. The optional `summary` carries the full `LessonResultResponse` (per-exercise answers + mistake list) so the dashboard CTAs (`Review mistakes`, `See full report`) re-render `SummaryScreen` with the same content the learner saw immediately after the lesson — no re-fetch. **Still not persistent** — survives intra-runtime navigation only; lost on app restart. The persisted backing is the planned `/dashboard.last_lesson_report.answers` rebind in `docs/plans/auth-foundation.md` Wave 3 (server already persists the debrief snapshot in `lesson_sessions.debrief_snapshot`; the Flutter cutover is the open piece).
+- `LastLessonRecord` — in-memory snapshot held by `LastLessonStore` (`app/lib/session/last_lesson_store.dart`): `{lessonId, lessonTitle, completedAt, totalExercises, correctCount, debrief?, summary?}`. Still written by `SessionController` on summary fetch, but **no longer read for any rendering surface** after Wave 0 (automaticity pivot, 2026-05-01) retired the on-dashboard Last-lesson-report block. The store is kept alive deliberately — the pivot doc notes the data may feed future engine-driven decisions; the backend's persistent backing (`lesson_sessions.debrief_snapshot`) is the durable source of truth.
 
 Session state is managed by `SessionController` / `SessionState` (see `app/lib/session/`). Discarded on exit. Client never stores `accepted_answers`, `accepted_corrections`, or `correct_option_id`.
 

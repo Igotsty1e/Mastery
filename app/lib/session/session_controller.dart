@@ -436,8 +436,12 @@ class SessionController extends ChangeNotifier {
       await _api.completeLessonSession(sessionId);
       final summary = await _api.getResult(sessionId);
       _emit(_state.copyWith(phase: SessionPhase.summary, summary: summary));
-      // Publish to the in-memory cross-screen store so the dashboard's
-      // "Last lesson report" block can render once the user pops back.
+      // Publish to the in-memory cross-screen store. The dashboard
+      // "Last lesson report" block that originally consumed this was
+      // retired in Wave 0 (automaticity pivot, 2026-05-01); the write
+      // is preserved as a data preserve for potential engine-driven
+      // future use. See `docs/plans/automaticity-pivot.md §Wave 0` and
+      // `app/lib/session/last_lesson_store.dart`.
       LastLessonStore.instance.recordLesson(LastLessonRecord(
         lessonId: _state.lesson!.lessonId,
         lessonTitle: _state.lesson!.title,
@@ -445,9 +449,10 @@ class SessionController extends ChangeNotifier {
         totalExercises: summary.totalExercises,
         correctCount: summary.correctCount,
         debrief: summary.debrief,
-        // Wave 14.9 — carry the full result so the dashboard's
-        // `Review mistakes` / `See full report` CTAs can render the
-        // per-exercise mistake list without a re-fetch.
+        // Wave 14.9 — record carries the full result. The pre-Wave-0
+        // consumers were the dashboard `Review mistakes` / `See full
+        // report` CTAs (both retired); kept here so a future consumer
+        // doesn't have to re-fetch.
         summary: summary,
       ));
     } catch (e, st) {

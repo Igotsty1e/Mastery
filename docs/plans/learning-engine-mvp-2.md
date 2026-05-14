@@ -64,7 +64,7 @@ update.
 | Onboarding | 2-step ritual `Promise → Assembly` ending in dashboard (`docs/plans/arrival-ritual.md`) — narrative, not diagnostic |
 | Transparency | Per-attempt result + curated explanation + post-lesson AI debrief. No per-skill UI, no "why this next" UI |
 | Versioning | None on exercise / skill / evaluator |
-| Persistence | In-memory session, plus `LocalProgressStore` (SharedPreferences) for completed-exercise count and `LastLessonStore` (in-memory only) for the dashboard report |
+| Persistence | In-memory session, plus `LocalProgressStore` (SharedPreferences) for completed-exercise count. `LastLessonStore` is still written but its on-dashboard consumer (the Last-lesson-report block) was retired in Wave 0 (automaticity pivot, 2026-05-01); it survives as a write-only data preserve. |
 | Error model in content | Implicit. Distractors and explanations target real learner errors but the four-then-six engine error codes are not yet declared on items |
 
 These statements must remain true until the wave that changes each one
@@ -278,9 +278,12 @@ Tasks:
 
 **Plus the small A teaser per `wave4-transparency-layer.md` §2.3:**
 `ReviewDueSection` (`app/lib/widgets/review_due_section.dart`) on the
-dashboard, between the Last lesson report and the current unit block.
-Collapses to nothing when `ReviewScheduler.dueAt(now)` is empty per the
-§11.4 calm-silence rule.
+dashboard. Pre-Wave-0 / Wave-11.4 it sat "between the Last lesson
+report and the current unit block"; both of those neighbours have
+since been retired (Wave 0 + Wave 11.4), so today the section sits
+between the next-lesson hero and the `_RulesTrigger`. Collapses to
+nothing when `ReviewScheduler.dueAt(now)` is empty per the §11.4
+calm-silence rule.
 
 Exit criteria:
 - ✅ a learner who finishes a session can see which skills moved and why

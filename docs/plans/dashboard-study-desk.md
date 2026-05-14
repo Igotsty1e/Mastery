@@ -2,15 +2,26 @@
 
 ## Status
 
-**Shipped 2026-04-26.**
+**Shipped 2026-04-26**, then heavily reduced by **Wave 0 (automaticity pivot, 2026-05-01)** — see `docs/plans/automaticity-pivot.md §Wave 0` — and **Wave 11.4 (2026-04-28)** dynamic-session cutover. Wave 0 removed:
 
-Implementation: `app/lib/screens/home_screen.dart` (returning-launch state) + a new singleton `LastLessonStore` (`app/lib/session/last_lesson_store.dart`) plus the reusable `StatusBadge` widget in `app/lib/widgets/mastery_widgets.dart`. Visual reference: `docs/design-mockups/dashboard-study-desk.html`.
+- the Study Desk header eyebrow + time-based greeting + sub line (only the level dropdown remains, right-aligned);
+- the static `M` avatar circle;
+- the on-dashboard Last-lesson-report block (data is still recorded server-side and shown inline on `SummaryScreen`);
+- the expanded Rules card (collapsed behind a single `_RulesTrigger` button that opens `_RulesLibrarySheet`).
+
+Wave 11.4 additionally removed:
+
+- the Current-unit card with the `Verbs Followed by -ing` row + locked stub + `All units ▾` trigger (the V1 dynamic flow assembles each session from the skill bank, so a fixed unit listing no longer reflects what the learner will see).
+
+The next-lesson hero, optional `ReviewDueSection`, RulesTrigger, and premium stub remain as shipped. Sections of this spec that describe the retired surfaces are kept for historical context and marked superseded below; **do not implement them without an explicit product-owner reversal of the Wave 0 / Wave 11.4 decisions**.
+
+Implementation: `app/lib/screens/home_screen.dart` (returning-launch state) + the reusable `StatusBadge` widget in `app/lib/widgets/mastery_widgets.dart`. Visual reference: `docs/design-mockups/dashboard-study-desk.html`. The singleton `LastLessonStore` (`app/lib/session/last_lesson_store.dart`) is still written by `SessionController` (data preserved for engine-driven future use), but no longer read for any rendering surface.
 
 Known scope deviations vs the spec text (recorded honestly so future passes don't drift):
 
-- **Last lesson report is in-memory on the client.** Wave 2 backend (2026-04-26) added `/dashboard.last_lesson_report`, sourced from the most recent completed `lesson_session` with its persisted debrief snapshot. The Flutter client is **not yet rewired** against `/dashboard`, so the on-device block is still backed by the in-memory `LastLessonStore` singleton and disappears across app restart. The Flutter client cutover is tracked in `docs/plans/auth-foundation.md §Wave 3 — remaining`.
+- ~~**Last lesson report is in-memory on the client.**~~ Superseded 2026-05-14. The Wave 2 backend `/dashboard.last_lesson_report` is still served, but the on-dashboard block consuming it was retired in Wave 0. The Flutter rebind that was planned for Wave 3 is moot; if the surface ever returns, a fresh client wave will read `/dashboard` directly.
 - **Hero progress cluster shows lesson-level exercise progress, not unit-level lesson progress.** The MVP backend ships a single lesson per unit, so the spec's `Lesson 2 / 5` style would be degenerate (`Lesson 1 / 1` always). Switch back when the multi-lesson worktree (`codex/b2-content`) lands.
-- **Coming Next block was removed** post-ship. Future units now live behind an `All units ▾` trigger in the Current Unit section header (see §9). Mirrors the level-dropdown pattern.
+- ~~**Coming Next block was removed** post-ship. Future units now live behind an `All units ▾` trigger in the Current Unit section header (see §9). Mirrors the level-dropdown pattern.~~ — **Superseded 2026-05-14:** the entire Current-unit card + `All units ▾` trigger were retired in Wave 11.4 along with the fixed lesson listing. The V1 dynamic flow boots a session directly from the next-lesson hero CTA via `POST /sessions/start`.
 - **Premium block is a visual stub.** No monetisation in MVP; the block exists as the last-row placeholder per spec.
 - **CTA `Start next lesson`** is wired but always disabled until a real next lesson exists. Activates automatically when the multi-lesson backend lands.
 
@@ -29,8 +40,8 @@ Its job is not to browse content.
 Its job is to keep the learner inside a prepared study rhythm:
 
 1. show the next lesson clearly
-2. keep the last lesson report within reach
-3. preserve textbook-like orientation inside the current unit
+2. ~~keep the last lesson report within reach~~ — **retired Wave 0 (2026-05-01)**; the post-lesson summary is visible inline on `SummaryScreen` only.
+3. ~~preserve textbook-like orientation inside the current unit~~ — **retired Wave 11.4 (2026-04-28)**; the V1 dynamic flow assembles each session from the skill bank, so the current-unit listing was retired along with it.
 
 The dashboard should feel like a **study desk**, not a feed and not a data panel.
 
@@ -41,7 +52,7 @@ The dashboard should feel like a **study desk**, not a feed and not a data panel
 The screen must balance:
 
 - **future** — what to study next
-- **memory** — what happened in the last lesson
+- ~~**memory** — what happened in the last lesson~~ — **retired Wave 0 (2026-05-01)**; the post-lesson summary is now visible inline on `SummaryScreen` only, not on the dashboard.
 - **structure** — where the learner is in the unit
 
 That balance should read in under a few seconds.
@@ -64,7 +75,9 @@ Rules:
 - opens a compact menu with `locked/current` states
 - must not dominate the top of the screen
 
-### 3.2 Last lesson report
+### 3.2 Last lesson report — superseded 2026-05-01
+
+> **Superseded.** The dashboard no longer renders a Last-lesson-report block as of Wave 0 (automaticity pivot, 2026-05-01) — see `docs/plans/automaticity-pivot.md §Wave 0`. The original V2 contract required it to be "visible at all times," but the pivot chose a leaner dashboard where the post-lesson result is visible inline in `SummaryScreen` only. The spec below is kept for historical reference; do not implement it without an explicit product-owner reversal.
 
 The dashboard must keep the **last lesson summary visible at all times**.
 
@@ -82,7 +95,7 @@ The pattern is:
 
 The next-lesson hero remains the main action.
 
-The last-lesson report is always present, but it is secondary.
+~~The last-lesson report is always present, but it is secondary.~~ Last-lesson report was retired in Wave 0 (see §3.2).
 
 ### 3.4 Unit states
 
