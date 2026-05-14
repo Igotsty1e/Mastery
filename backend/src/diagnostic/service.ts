@@ -24,7 +24,7 @@ import { and, eq } from 'drizzle-orm';
 import type { AppDatabase } from '../db/client';
 import { logAuditEvent } from '../auth/events';
 import { getBankEntry, getDiagnosticPool, type BankEntry } from '../data/exerciseBank';
-import { evaluateMultipleChoice } from '../evaluators/multipleChoice';
+import { evaluateProbeAttempt, isProbeSupportedType } from './dispatch';
 import { recordAttempt } from '../learner/service';
 import type { EvidenceTier } from '../learner/types';
 import { userProfiles } from '../db/schema';
@@ -128,25 +128,32 @@ export async function submitDiagnosticAnswer(
   if (expected.exercise.exercise_id !== input.exerciseId)
     throw new DiagnosticError(409, 'diagnostic_answer_out_of_order');
 
-  // V1 probe is multiple_choice only. Anything else is an authoring
-  // mistake the bank loader caught at boot, but we double-check.
-  if (expected.exercise.type !== 'multiple_choice')
+  // Wave E.1 — multi-type evaluator dispatch via `evaluateProbeAttempt`
+  // (see `./dispatch.ts`). The probe supports multiple_choice (V1
+  // baseline), fill_blank, and sentence_correction. short_free_sentence
+  // is intentionally deferred to E.2 (needs AI budget + cache +
+  // idempotency wiring before it can ride the probe path).
+  //
+  // Anti-spoof note: `input.exerciseType` is a client-supplied claim
+  // that we cross-check against `expected.exercise.type` (the server's
+  // authored bank entry). The bank entry wins; we 400 on mismatch so a
+  // client cannot smuggle an alternate type into the response stream.
+  const bankType = expected.exercise.type;
+  if (!isProbeSupportedType(bankType))
     throw new DiagnosticError(500, 'diagnostic_unsupported_type');
-  if (input.exerciseType !== 'multiple_choice')
+  if (input.exerciseType !== bankType)
     throw new DiagnosticError(400, 'exercise_type_mismatch');
 
-  const evalResult = evaluateMultipleChoice(
-    input.userAnswer,
-    expected.exercise.correct_option_id,
-    expected.exercise.options
-  );
+  const { correct: evalCorrect, canonicalAnswer: evalCanonical } =
+    evaluateProbeAttempt(expected.exercise, input.userAnswer);
 
   const submittedAt = input.submittedAt ?? new Date();
   const updated = await appendResponse(db, run.id, {
     exercise_id: expected.exercise.exercise_id,
+    exercise_type: bankType,
     skill_id: expected.exercise.skill_id ?? null,
     evidence_tier: expected.exercise.evidence_tier ?? null,
-    correct: evalResult.correct,
+    correct: evalCorrect,
     submitted_at: submittedAt.toISOString(),
   });
   if (!updated) throw new DiagnosticError(500, 'diagnostic_persist_failed');
@@ -155,16 +162,17 @@ export async function submitDiagnosticAnswer(
   // state per "the probe augments, does not reset" rule. We feed it
   // through the same recordAttempt path the lesson sessions use so
   // every downstream invariant (recent_errors, weighted accuracy,
-  // exercise_types_seen) stays consistent.
+  // exercise_types_seen) stays consistent. The exerciseType passed
+  // through is the server-trusted bank type, never the client claim.
   if (expected.exercise.skill_id && expected.exercise.evidence_tier) {
     await recordAttempt(db, userId, expected.exercise.skill_id, {
       evidenceTier: expected.exercise.evidence_tier as EvidenceTier,
-      correct: evalResult.correct,
+      correct: evalCorrect,
       primaryTargetError: expected.exercise.primary_target_error,
       meaningFrame: expected.exercise.meaning_frame,
       occurredAt: submittedAt,
-      exerciseType: 'multiple_choice',
-      outcome: evalResult.correct ? 'correct' : 'wrong',
+      exerciseType: bankType,
+      outcome: evalCorrect ? 'correct' : 'wrong',
     });
   }
 
@@ -173,10 +181,10 @@ export async function submitDiagnosticAnswer(
 
   return {
     run: updated,
-    result: evalResult.correct ? 'correct' : 'wrong',
-    canonicalAnswer: evalResult.canonical_answer,
+    result: evalCorrect ? 'correct' : 'wrong',
+    canonicalAnswer: evalCanonical,
     explanation: expected.exercise.feedback?.explanation ?? null,
-    evaluationSource: evalResult.evaluation_source,
+    evaluationSource: 'deterministic',
     nextExercise,
     runComplete,
   };

@@ -361,3 +361,180 @@ describe('Wave 12.2 — POST /diagnostic/skip', () => {
     expect(events.length).toBeGreaterThanOrEqual(1);
   });
 });
+
+// ────────────────────────────────────────────────────────────────────────
+// Wave E.1 — probe dispatch helper.
+//
+// Unit tests against the pure `evaluateProbeAttempt` helper so each
+// supported probe type runs through its production deterministic
+// evaluator. Synthetic fixtures only; no probe items of FB / SC types
+// are shipped in E.1 (content authoring lives in E.2 + methodologist
+// pass), so we cannot exercise these paths via the HTTP probe yet.
+// The dispatch must still be correct so E.2/E.3 ship onto a stable
+// foundation.
+// ────────────────────────────────────────────────────────────────────────
+
+import { evaluateProbeAttempt, isProbeSupportedType } from '../src/diagnostic/dispatch';
+import type { Exercise } from '../src/data/lessons';
+
+describe('Wave E.1 — evaluateProbeAttempt dispatch', () => {
+  it('routes multiple_choice to evaluateMultipleChoice', () => {
+    const ex: Exercise = {
+      exercise_id: 'a1b2c3d4-0001-4000-8000-test-mc0001',
+      type: 'multiple_choice',
+      instruction: 'pick one',
+      prompt: 'p',
+      options: [
+        { id: 'a', text: 'first' },
+        { id: 'b', text: 'second' },
+      ],
+      correct_option_id: 'b',
+    };
+    expect(evaluateProbeAttempt(ex, 'b').correct).toBe(true);
+    expect(evaluateProbeAttempt(ex, 'a').correct).toBe(false);
+    expect(evaluateProbeAttempt(ex, 'b').canonicalAnswer).toBe('second');
+  });
+
+  it('routes fill_blank to evaluateFillBlank (case-normalised match)', () => {
+    const ex: Exercise = {
+      exercise_id: 'a1b2c3d4-0001-4000-8000-test-fb0001',
+      type: 'fill_blank',
+      instruction: 'fill the blank',
+      prompt: 'I enjoy ___ tennis.',
+      accepted_answers: ['playing'],
+    };
+    expect(evaluateProbeAttempt(ex, 'playing').correct).toBe(true);
+    expect(evaluateProbeAttempt(ex, 'PLAYING').correct).toBe(true);
+    expect(evaluateProbeAttempt(ex, 'to play').correct).toBe(false);
+    expect(evaluateProbeAttempt(ex, '').correct).toBe(false);
+    expect(evaluateProbeAttempt(ex, 'playing').canonicalAnswer).toBe(
+      'playing'
+    );
+  });
+
+  it('routes sentence_correction to deterministic evaluator', () => {
+    const ex: Exercise = {
+      exercise_id: 'a1b2c3d4-0001-4000-8000-test-sc0001',
+      type: 'sentence_correction',
+      instruction: 'fix the sentence',
+      prompt: 'I am liking pizza.',
+      accepted_corrections: ['I like pizza.'],
+    };
+    expect(evaluateProbeAttempt(ex, 'I like pizza.').correct).toBe(true);
+    expect(evaluateProbeAttempt(ex, 'I am liking pizza.').correct).toBe(
+      false
+    );
+    expect(evaluateProbeAttempt(ex, 'I like pizza.').canonicalAnswer).toBe(
+      'I like pizza.'
+    );
+  });
+
+  it('treats sentence_correction borderline (null from deterministic) as wrong in the probe', () => {
+    // The deterministic SC evaluator returns null when the user's answer
+    // is close enough to be borderline (Levenshtein ≤ 3, length within
+    // 0.5×–2×). Lesson sessions defer borderline to AI; the probe must
+    // not — it stays free of AI rate-limit consumption.
+    const ex: Exercise = {
+      exercise_id: 'a1b2c3d4-0001-4000-8000-test-sc0002',
+      type: 'sentence_correction',
+      instruction: 'fix',
+      prompt: 'She have a dog.',
+      accepted_corrections: ['She has a dog.'],
+    };
+    // "She has a dog" (no period) — borderline distance from canonical
+    // by one missing punctuation. Normalisation usually equalises this;
+    // sniff for the borderline path by using a one-letter off variant.
+    // "She had a dog." — distance 1 from "She has a dog." → borderline.
+    const result = evaluateProbeAttempt(ex, 'She had a dog.');
+    expect(result.correct).toBe(false);
+    expect(result.canonicalAnswer).toBe('She has a dog.');
+  });
+
+  it('throws on unsupported type (short_free_sentence deferred to E.2)', () => {
+    const ex: Exercise = {
+      exercise_id: 'a1b2c3d4-0001-4000-8000-test-sfs0001',
+      type: 'short_free_sentence',
+      instruction: 'answer',
+      prompt: 'What did you do yesterday?',
+      target_rule: {
+        rule_id: 'r',
+        trigger: 'past simple',
+        immediate_complement: 'verb_past',
+        target_meaning: 'past completed action',
+        rejected_counter_form: 'present',
+        explicit_reject_clause: 'no present',
+      },
+      accepted_examples: ['I watched a movie.'],
+    } as unknown as Exercise;
+    expect(() => evaluateProbeAttempt(ex, 'I watched a film.')).toThrow(
+      /short_free_sentence is deferred to E\.2/
+    );
+  });
+});
+
+describe('Wave E.1 — isProbeSupportedType guard', () => {
+  it('accepts the three E.1 types', () => {
+    expect(isProbeSupportedType('multiple_choice')).toBe(true);
+    expect(isProbeSupportedType('fill_blank')).toBe(true);
+    expect(isProbeSupportedType('sentence_correction')).toBe(true);
+  });
+  it('rejects short_free_sentence + other types', () => {
+    expect(isProbeSupportedType('short_free_sentence')).toBe(false);
+    expect(isProbeSupportedType('sentence_rewrite')).toBe(false);
+    expect(isProbeSupportedType('listening_discrimination')).toBe(false);
+    expect(isProbeSupportedType('')).toBe(false);
+    expect(isProbeSupportedType('garbage')).toBe(false);
+  });
+});
+
+describe('Wave E.1 — anti-spoof exercise_type mismatch', () => {
+  it('rejects a client claiming fill_blank against an MC bank entry', async () => {
+    const { headers } = await login('e1-spoof');
+    const start = await startDiagnostic(headers);
+    const startBody = start.json as any;
+    const runId = startBody.run_id as string;
+    const ex = startBody.next_exercise;
+    // The bank shipped item is multiple_choice. Client claims fill_blank.
+    // The dispatcher must 400 before any evaluator runs.
+    const res = await inject(h.app, {
+      method: 'POST',
+      path: `/diagnostic/${runId}/answers`,
+      headers,
+      json: {
+        exercise_id: ex.exercise_id,
+        exercise_type: 'fill_blank',
+        user_answer: 'whatever',
+      },
+    });
+    expect(res.status).toBe(400);
+    expect((res.json as any).error).toBe('exercise_type_mismatch');
+  });
+});
+
+describe('Wave E.1 — responses[] carries exercise_type', () => {
+  it('persists the bank-trusted type on each row', async () => {
+    const { headers } = await login('e1-persist');
+    const start = await startDiagnostic(headers);
+    const startBody = start.json as any;
+    const runId = startBody.run_id as string;
+    const ex = startBody.next_exercise;
+    await inject(h.app, {
+      method: 'POST',
+      path: `/diagnostic/${runId}/answers`,
+      headers,
+      json: {
+        exercise_id: ex.exercise_id,
+        exercise_type: 'multiple_choice',
+        user_answer: 'a',
+      },
+    });
+    const rows = await h.database.orm
+      .select()
+      .from(diagnosticRuns)
+      .where(eq(diagnosticRuns.id, runId));
+    const responses = (rows[0].responses as any[]) ?? [];
+    expect(responses.length).toBe(1);
+    expect(responses[0].exercise_type).toBe('multiple_choice');
+    expect(responses[0].exercise_id).toBe(ex.exercise_id);
+  });
+});
